@@ -8,3 +8,4 @@
 /.lein-deps-sum
 /bin/
 /target/
+/.nrepl-port
