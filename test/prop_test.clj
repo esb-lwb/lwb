@@ -1,4 +1,4 @@
-; lwb Logic WorkBench -- Propositional Logic, test of operators
+; lwb Logic WorkBench -- Propositional Logic, tests
 
 ; Copyright (c) 2014 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
@@ -6,9 +6,11 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(ns lwb.prop.operator-test
+(ns lwb.prop-test
   (:require [clojure.test :refer :all]
             [lwb.prop :refer :all]))
+
+; Operators -----------------------------------------------------------
 
 (deftest nand-test
     (is (= false (nand true true)))
@@ -94,3 +96,52 @@
 
 (deftest ite-test'
   (is (= '(or (and i t) (and (not i) e) (macroexpand-1 '(ite i t e))))))
+
+; cnf -----------------------------------------------------------------
+
+(deftest literal?-test
+  (is (= true (literal? 'true)))
+  (is (= true (literal? 'p)))
+  (is (= true (literal? '(not q))))
+  (is (= false (literal? '(and p q))))
+  (is (= false (literal? '(and)))))
+  
+      
+(deftest impl-free-ops-test
+  (is (= true (impl-free true)))
+  (is (= false (impl-free false)))
+  (is (= '(not a) (impl-free '(not a))))
+  (is (= '(and a b) (impl-free '(and a b))))
+  (is (= '(and a b c) (impl-free '(and a b c))))
+  (is (= '(or a b) (impl-free '(or a b))))
+  (is (= '(or a b c) (impl-free '(or a b c))))
+  (is (= '(not (and a b)) (impl-free '(nand a b))))
+  (is (= '(not (or a b)) (impl-free '(nor a b))))
+  (is (= '(or (not a) b) (impl-free '(impl a b))))
+  (is (= '(not (or (not a) b)) (impl-free '(nimpl a b))))
+  (is (= '(or (not b) a) (impl-free '(cimpl a b))))
+  (is (= '(not (or (not b) a)) (impl-free '(ncimpl a b))))
+  (is (= '(and (or (not a) b) (or (not b) a)) (impl-free '(equiv a b))))
+  (is (= '(not (and (or (not a) b) (or (not b) a))) (impl-free '(xor a b))))
+  (is (= '(or (and i t) (and (not i) e)) (impl-free '(ite i t e))))
+ )   
+
+(deftest impl-free-ops-test'
+  (is (= '(not (and (or (not a) b) (or (not b) a))) (impl-free '(not (equiv a b)))))
+  (is (= '(or (not (or (not (or (not p) q)) q)) q) (impl-free '(impl (impl (impl p q) q) q)))))
+
+(deftest nnf-test
+  (is (= 'a (nnf 'a)))
+  (is (= 'true (nnf 'true)))
+  (is (= '(not a) (nnf '(not a))))
+  (is (= 'a (nnf '(not (not a)))))
+  (is (= '(not a) (nnf '(not (not (not a))))))
+  (is (= '(and a) (nnf '(and a))))
+  (is (= '(and a b) (nnf '(and a b))))
+  (is (= '(and a b c) (nnf '(and a b c))))
+  (is (= '(or (not a) (not b)) (nnf '(not (and a b)))))
+  (is (= '(or (not a) (not b) (not c)) (nnf '(not (and a b c)))))
+  (is (= '(and (not a) (not b)) (nnf '(not (or a b)))))
+  (is (= '(and (not a) (not b) (not c)) (nnf '(not (or a b c)))))
+  )
+  

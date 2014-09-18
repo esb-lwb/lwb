@@ -2867,7 +2867,15 @@ net.brehaut.ClojureTools = (function (SH) {
 })(SyntaxHighlighter);
 </script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="http://homepages.thm.de/~hg11260/lwb.html">lwb</a></h1><h2 class="project-version">1.0.0</h2><br /><p>lwb Logic WorkBench</p>
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.6.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#lwb.prop">lwb.prop</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.prop" name="lwb.prop"><h1 class="project-name">lwb.prop</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns lwb.prop)</pre></td></tr><tr><td class="docs"><h2>The operators of propositional logic</h2>
+</td><td class="codes"><pre class="brush: clojure">(ns lwb.prop)</pre></td></tr><tr><td class="docs"><h2>Representation of propositional formulae</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The propositional atoms are represented by Clojure symbols, 
+e.g. <code>p</code> or <code>q</code>.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The propositional constants for truth and falsity are represented
+by <code>true</code> and <code>false</code>, respectively.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>A propositional formula is an atom or a constant, or an expression composed
+of boolean operators, propositional atoms and constants in the usual
+lisppy syntax, e.g. <code>(impl (and p (not p)) q)</code>.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><h2>The operators of propositional logic</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><ul>
 <li>not -- unary, provided by Clojure</li>
 <li>and -- n-ary, provided by Clojure</li>
@@ -2891,61 +2899,54 @@ names after expansion</li>
 <li>The macros must not be changed to functions,
 because transformations (to cnf e.g.) use them with macroexpand!</li>
 </ol>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Logical negated and</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Logical negated and.</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro nand
   [phi psi]
   (list 'not 
-    (list 'and phi psi)))</pre></td></tr><tr><td class="docs"><p>Logical negated or</p>
+    (list 'and phi psi)))</pre></td></tr><tr><td class="docs"><p>Logical negated or.</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro nor
   [phi psi]
   (list 'not 
-        (list 'or phi psi)))</pre></td></tr><tr><td class="docs"><p>Logical implication (phi -> psi)</p>
+        (list 'or phi psi)))</pre></td></tr><tr><td class="docs"><p>Logical implication (phi -> psi).</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro impl
   [phi psi]
   (list 'or 
-        (list 'not phi) psi))</pre></td></tr><tr><td class="docs"><p>Logical negated implication (!(phi -> psi))</p>
+        (list 'not phi) psi))</pre></td></tr><tr><td class="docs"><p>Logical negated implication (!(phi -> psi)).</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro nimpl 
   [phi psi]
   (list 'not 
-        (list 'impl phi psi)))</pre></td></tr><tr><td class="docs"><p>Converse logical implication (phi &lt;- psi)</p>
+        (list 'impl phi psi)))</pre></td></tr><tr><td class="docs"><p>Converse logical implication (phi &lt;- psi).</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro cimpl
   [phi psi]
   (list 'or
-    (list 'not psi) phi))</pre></td></tr><tr><td class="docs"><p>Negated converse logical implication (!(phi &lt;- psi))</p>
+    (list 'not psi) phi))</pre></td></tr><tr><td class="docs"><p>Negated converse logical implication (!(phi &lt;- psi)).</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro ncimpl 
   [phi psi]
   (list 'not
-    (list 'cimpl phi psi)))</pre></td></tr><tr><td class="docs"><p>Logical equivalence (phi &lt;-> psi)</p>
+    (list 'cimpl phi psi)))</pre></td></tr><tr><td class="docs"><p>Logical equivalence (phi &lt;-> psi).</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro equiv
    [phi psi]
    (list 'and
          (list 'impl phi psi)
-         (list 'impl psi phi)))</pre></td></tr><tr><td class="docs"><p>Logical exclusive or</p>
+         (list 'impl psi phi)))</pre></td></tr><tr><td class="docs"><p>Logical exclusive or.</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro xor
   [phi psi]
   (list 'not
-        (list 'equiv phi psi)))</pre></td></tr><tr><td class="docs"><p>Logical if-then-else</p>
+        (list 'equiv phi psi)))</pre></td></tr><tr><td class="docs"><p>Logical if-then-else.</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro ite
   [i t e]
   (list 'or (list 'and i t)
             (list 'and (list 'not i) e))) </pre></td></tr><tr><td class="docs"><h2>Transformation to conjunctive normal form</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Normalize formula phi such that just the operators <code>not</code>, <code>and</code>, <code>or</code> are used</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that just the operators <code>not</code>, <code>and</code>, <code>or</code> are used.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn impl-free 
-  [formula]
-  (if (literal? formula)
-    ;then do the trivial case
-    formula
-    ;else proceed with recursion
-	  (let [op (first formula)]
-      (if (contains? #{'and 'or 'not} op)
-        ;then do not expand and macros, but proceed recursivley
-        (apply list op (map #(impl-free %) (rest formula)))
-        ;else expand one macro and proceed recursively
-        (binding [*ns* (find-ns 'logic.util)]
-          (let [expform (macroexpand-1 formula)]
-            (apply list
-              (first expform)
-              (map #(impl-free %) (rest expform)))))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_lwb.prop">lwb.prop</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  [phi]
+  (if (not (list? phi))
+    phi
+	  (let [op (first phi)]
+      (if (contains? #{'and 'or 'not} op) 
+        (list* op (map impl-free (rest phi)))
+          (let [exp-phi (macroexpand-1 phi)]
+            (list* (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_lwb.prop">lwb.prop</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack
