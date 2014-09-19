@@ -6,7 +6,8 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(ns lwb.prop)
+(ns lwb.prop
+  (:require [clojure.walk :refer (postwalk)]))
 
 ;; ## Representation of propositional formulae
 
@@ -18,7 +19,7 @@
 
 ;; A propositional formula is an atom or a constant, or an expression composed
 ;; of boolean operators, propositional atoms and constants in the usual
-;; lisppy syntax, e.g. `(impl (and p (not p)) q)`.
+;; lispy syntax, e.g. `(impl (and p (not p)) q)`.
 
 ;; ## The operators of propositional logic
 
@@ -97,6 +98,24 @@
   (list 'or (list 'and i t)
             (list 'and (list 'not i) e))) 
 
+;;# Constants and utility functions in the context of operators
+
+(def reserved-symbols 
+  "Reserved symbols, i.e. constants and operators in formulae."
+  #{'true 'false 'not 'and 'nand 'or 'nor 'impl 'nimpl 'cimpl 'ncimpl 'equiv 'xor 'ite})
+
+(def n-ary-ops
+  "Set of n-ary operators."
+  #{'and 'or})
+
+(defn n-ary?
+  "Is `op` n-ary?"
+  [op]
+  (contains? n-ary-ops op))
+
+
+;;## Thruth table
+
 
 ;;## Transformation to conjunctive normal form
 
@@ -145,7 +164,7 @@
   ([phi-1 phi-2 & more]
     (reduce distr (distr phi-1 phi-2) more)))
 
-(defn- nnf2cnf 
+(defn nnf2cnf 
   "Transforms the formula `phi` in nnf to cnf."
   [phi]
   (cond
@@ -153,10 +172,31 @@
     (= 'and (first phi)) (list* 'and (map nnf2cnf (rest phi)))
     (= 'or (first phi)) (apply distr (map nnf2cnf (rest phi)))))
 
+(defn flatten-ops
+  "Flats the formula `phi`.
+   Nested binary applications of n-ary operators will be transformed to the n-ary form,
+   e.g. `(and (and a b) c) => (and a b c)`."
+  [phi]
+  (let [flat-step (fn [sub-phi]
+						        (if (and (coll? sub-phi) (n-ary? (first sub-phi)))
+						          (let [op (first sub-phi)
+                            args (rest sub-phi)
+						                flat-filter (fn [op arg] (if (coll? arg) (= op (first arg)) false))
+						                flat (map #(rest %) (filter (partial flat-filter op) args))
+						                not-flat (filter (partial (complement flat-filter) op) args)]
+						            (apply concat `((~op) ~@flat ~not-flat)))
+					           sub-phi))]
+        (postwalk flat-step phi)))
+
+
 (defn cnf
   "Transforms the propositional formula `phi` to conjunctive normal form cnf."
   [phi]
-  (-> phi impl-free nnf cnf flatten-ast))
+  (-> phi impl-free nnf nnf2cnf flatten-ops))
+
+; Hint: The result is not reduced, e.g. it may contains a clause like (or (not q) q)
+;       or a clause like (or p q q q)
+;       ==> we need a function (reduce-cnf)
 
 
         

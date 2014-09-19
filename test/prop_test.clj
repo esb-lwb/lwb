@@ -144,4 +144,14 @@
   (is (= '(and (not a) (not b)) (nnf '(not (or a b)))))
   (is (= '(and (not a) (not b) (not c)) (nnf '(not (or a b c)))))
   )
+
+(deftest cnf-test
+  (is (= '(and (or a)) (cnf 'a)))
+  (is (= '(and (or a) (or b) (or c)) (cnf '(and a b c))))
+  (is (= '(and (or a b c)) (cnf '(or a (or b c)))))
+  (is (= '(and (or p q) (or (not p) (not q)) (cnf '(not (equiv p q))))))
+  ; the following example shows that the result of cnf is not reduced
+  (is (= '(and (or (not p) q q) (or (not q) q)))) (cnf '(impl (impl (impl p q) q) q))
+  #_(is (= '(and (or (not p) q)) (cnf '(impl (impl (impl p q) q) q))))
+)      
   
