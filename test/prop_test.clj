@@ -148,6 +148,18 @@
 (deftest cnf-test
   ; more precise: permutations of the clauses and the litreals in the clauses are possible
   ; and allowed
+  (is (= true (cnf '(and))))
+  (is (= true (cnf '(and true))))
+  (is (= true (cnf '(and true true))))
+  (is (= false (cnf '(and false))))
+  (is (= false (cnf '(and false true))))
+  (is (= false (cnf '(or))))
+  (is (= true (cnf '(or true))))
+  (is (= false (cnf '(or false))))
+  (is (= true (cnf '(or false true))))
+  (is (= false (cnf '(or false false))))
+  (is (= '(and (or p) (cnf '(or p)))))
+  (is (= '(and (or p) (cnf '(and p)))))
   (is (= '(and (or a)) (cnf 'a)))
   (is (= '(and (or a) (or b) (or c)) (cnf '(and a b c))))
   (is (= '(and (or a c b)) (cnf '(or a (or b c)))))

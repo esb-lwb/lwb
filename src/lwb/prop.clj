@@ -199,7 +199,7 @@
 						                flat (map #(rest %) (filter (partial flat-filter op) args))
 						                not-flat (filter (partial (complement flat-filter) op) args)]
 						            (apply concat `((~op) ~@flat ~not-flat)))
-					           sub-phi))]
+					             sub-phi))]
         (postwalk flat-step phi)))
 
 (defn- clause2sets
