@@ -8,7 +8,7 @@
 
 (ns lwb.prop
   (:require [clojure.walk :refer (postwalk)]
-            [clojure.set  :ref   (union intersection)]))
+            [clojure.set  :refer (union intersection)]))
 
 ;; ## Representation of propositional formulae
 
@@ -182,6 +182,7 @@
   [phi]
   (cond
     (literal? phi) (list 'and (list 'or phi))
+    (= '(or) phi) '(and (or))
     (= 'and (first phi)) (list* 'and (map nnf2cnf (rest phi)))
     (= 'or (first phi)) (apply distr (map nnf2cnf (rest phi)))))
 
@@ -238,8 +239,5 @@
   "Transforms the propositional formula `phi` to (standardized) conjunctive normal form cnf."
   [phi]
   (-> phi impl-free nnf nnf2cnf flatten-ops red-cnf))
-
-
-;needs more thinking and testing about border cases like (cnf '(or))
 
         
