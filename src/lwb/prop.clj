@@ -7,7 +7,8 @@
 ; the terms of this license.
 
 (ns lwb.prop
-  (:require [clojure.walk :refer (postwalk)]))
+  (:require [clojure.walk :refer (postwalk)]
+            [clojure.set  :ref   (union intersection)]))
 
 ;; ## Representation of propositional formulae
 
@@ -119,12 +120,24 @@
 
 ;;## Transformation to conjunctive normal form
 
+;; Conjunctive normal form in lwb is defined as a formula of the form
+;; `(and (or ...) (or ...) (or ...) ...)` where the clauses contain
+;; only literals, no constants --
+;; or the trivially true or false formulae.
+
+;; I.e. in lwb when transforming formula to cnf, we reduce it the this
+;; standard from.
+
+(defn atom?
+  "Checks whether 'phi' is a propositional atom or a constant."
+  [phi]
+  (or (symbol? phi) (instance? Boolean phi)))
+
 (defn literal?
   "Checks whether `phi` is a literal, i.e. a propositional atom or its negation."
   [phi]
-  (or (instance? Boolean phi)
-      (symbol? phi) 
-      (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) (symbol? (second phi)))))
+  (or (atom? phi) 
+      (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) (atom? (second phi)))))
   
 (defn impl-free 
   "Normalize formula `phi` such that just the operators `not`, `and`, `or` are used."
@@ -188,15 +201,45 @@
 					           sub-phi))]
         (postwalk flat-step phi)))
 
+(defn- clause2sets
+  "Transforms a clause `(or ...)` into a map of the sets of `:pos` atoms 
+   and `:neg`atoms in the clause."
+  [cl]
+  (apply merge-with union
+         (for [literal (rest cl)]
+					  (if (or (symbol? literal) (instance? Boolean literal))
+					      {:pos #{literal}}
+					      {:neg #{(second literal)}}))))
+
+(defn- red-clmap 
+  "Reduces a clause in the form `{:pos #{...} :neg #{...}`."
+  [{:keys [pos neg]}]
+  (cond
+    (> (count (intersection pos neg)) 0)
+      true
+    (contains? pos 'true)
+      true
+    (contains? neg 'false)
+      true
+    :else
+    (let [pos' (filter #(not= 'false %) pos), neg' (filter #(not= 'true %) neg)]
+      (conj (concat (list* pos') (map #(list 'not %) neg')) 'or))))
+
+(defn red-cnf
+  "Reduces a formula `ucnf` of the form `(and (or ...) (or ...) ...)`."
+  [ucnf]
+  (let [result (conj (list* (map #(red-clmap (clause2sets %)) (rest ucnf))) 'and)]
+    (cond
+      (some #{'(or)} result) false
+      (= (filter #(not= 'true %) result) '(and)) true
+      :else result)))
 
 (defn cnf
-  "Transforms the propositional formula `phi` to conjunctive normal form cnf."
+  "Transforms the propositional formula `phi` to (standardized) conjunctive normal form cnf."
   [phi]
-  (-> phi impl-free nnf nnf2cnf flatten-ops))
+  (-> phi impl-free nnf nnf2cnf flatten-ops red-cnf))
 
-; Hint: The result is not reduced, e.g. it may contains a clause like (or (not q) q)
-;       or a clause like (or p q q q)
-;       ==> we need a function (reduce-cnf)
 
+;needs more thinking and testing about border cases like (cnf '(or))
 
         

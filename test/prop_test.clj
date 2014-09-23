@@ -146,12 +146,12 @@
   )
 
 (deftest cnf-test
+  ; more precise: permutations of the clauses and the litreals in the clauses are possible
+  ; and allowed
   (is (= '(and (or a)) (cnf 'a)))
   (is (= '(and (or a) (or b) (or c)) (cnf '(and a b c))))
-  (is (= '(and (or a b c)) (cnf '(or a (or b c)))))
+  (is (= '(and (or a c b)) (cnf '(or a (or b c)))))
   (is (= '(and (or p q) (or (not p) (not q)) (cnf '(not (equiv p q))))))
-  ; the following example shows that the result of cnf is not reduced
-  (is (= '(and (or (not p) q q) (or (not q) q)))) (cnf '(impl (impl (impl p q) q) q))
-  #_(is (= '(and (or (not p) q)) (cnf '(impl (impl (impl p q) q) q))))
+  (is (= '(and (or q (not p)) (cnf '(impl (impl (impl p q) q) q)))))
 )      
   
