@@ -229,11 +229,11 @@
 (defn red-cnf
   "Reduces a formula `ucnf` of the form `(and (or ...) (or ...) ...)`."
   [ucnf]
-  (let [result (conj (list* (map #(red-clmap (clause2sets %)) (rest ucnf))) 'and)]
+  (let [result (filter #(not= 'true %) (map #(red-clmap (clause2sets %)) (rest ucnf)))]
     (cond
       (some #{'(or)} result) false
-      (= (filter #(not= 'true %) result) '(and)) true
-      :else result)))
+      (empty? result) true
+      :else (conj (list* (distinct result)) 'and))))
 
 (defn cnf
   "Transforms the propositional formula `phi` to (standardized) conjunctive normal form cnf."

@@ -146,7 +146,7 @@
   )
 
 (deftest cnf-test
-  ; more precise: permutations of the clauses and the litreals in the clauses are possible
+  ; more precise: permutations of the clauses and the literals in the clauses are possible
   ; and allowed
   (is (= true (cnf '(and))))
   (is (= true (cnf '(and true))))
@@ -158,12 +158,18 @@
   (is (= false (cnf '(or false))))
   (is (= true (cnf '(or false true))))
   (is (= false (cnf '(or false false))))
+
   (is (= '(and (or p) (cnf '(or p)))))
   (is (= '(and (or p) (cnf '(and p)))))
   (is (= '(and (or a)) (cnf 'a)))
   (is (= '(and (or a) (or b) (or c)) (cnf '(and a b c))))
   (is (= '(and (or a c b)) (cnf '(or a (or b c)))))
+  
   (is (= '(and (or p q) (or (not p) (not q)) (cnf '(not (equiv p q))))))
   (is (= '(and (or q (not p)) (cnf '(impl (impl (impl p q) q) q)))))
+  
+  (is (= '(and (or p)) (cnf '(ite true p false))))
+  (is (= '(and (or p)) (cnf '(ite false true p))))
+  (is (= '(and (or p) (or q (not p)) (or q)) (cnf '(ite p q false))))
 )      
   
