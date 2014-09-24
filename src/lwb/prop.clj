@@ -8,7 +8,8 @@
 
 (ns lwb.prop
   (:require [clojure.walk :refer (postwalk)]
-            [clojure.set  :refer (union intersection)]))
+            [clojure.set  :refer (union intersection)]
+            [clojure.math.combinatorics :refer (selections)]))
 
 ;; ## Representation of propositional formulae
 
@@ -101,32 +102,23 @@
 
 ;;# Constants and utility functions in the context of operators
 
-(def reserved-symbols 
-  "Reserved symbols, i.e. constants and operators in formulae."
-  #{'true 'false 'not 'and 'nand 'or 'nor 'impl 'nimpl 'cimpl 'ncimpl 'equiv 'xor 'ite})
+(defn operator?
+  "Is symb an operator of propositional logic?"
+  [symb]
+  (let [operators #{'not 'and 'nand 'or 'nor 'impl 'nimpl 
+                    'cimpl 'ncimpl 'equiv 'xor 'ite}]
+    (contains? operators symb)))
 
-(def n-ary-ops
-  "Set of n-ary operators."
-  #{'and 'or})
+(defn constant?
+  [symb]
+  "Is symb a constant of propositional logic?"
+  (or (= 'true symb) (= 'false symb)))
 
 (defn n-ary?
-  "Is `op` n-ary?"
+  "Is `op` an n-ary operator?"
   [op]
-  (contains? n-ary-ops op))
-
-
-;;## Thruth table
-
-
-;;## Transformation to conjunctive normal form
-
-;; Conjunctive normal form in lwb is defined as a formula of the form
-;; `(and (or ...) (or ...) (or ...) ...)` where the clauses contain
-;; only literals, no constants --
-;; or the trivially true or false formulae.
-
-;; I.e. in lwb when transforming formula to cnf, we reduce it the this
-;; standard from.
+  (let [n-ary-ops  #{'and 'or}]
+    (contains? n-ary-ops op)))
 
 (defn atom?
   "Checks whether 'phi' is a propositional atom or a constant."
@@ -139,6 +131,56 @@
   (or (atom? phi) 
       (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) (atom? (second phi)))))
   
+
+;;## Thruth table
+
+(defn atoms-of-phi
+  "Sorted set of the propositional atoms of formula `phi`."
+  [phi]
+  (if (coll? phi)
+    (apply sorted-set 
+           (filter #(not (or (operator? %) (constant? %))) (flatten phi)))
+    #{phi}))
+
+(defn eval-phi 
+  "Takes the formula `phi` and evaluates it with the given assignment vector. 
+  The last must be of the shape `['atom1 true, 'atom2 false, ...]` for the
+  propositional atoms of `phi`."
+  [phi assign-vec]
+  (binding [*ns* (find-ns 'lwb.prop)]
+    (eval `(let ~assign-vec ~phi))))
+
+(defn truth-table
+  "Truth table of `phi`."
+  [phi]
+  (let [atoms (atoms-of-phi phi)]
+    (if (> (count atoms) 10)
+      (throw (IllegalArgumentException. 
+               (str "This formula has more than 10 variables." 
+                    \newline 
+                    "The truth table would consist of more than 1024 rows," 
+                    "so you might want to use the SAT solver.")))
+	    
+	    (let [all-combs (selections [true false] (count atoms))
+	          assign-vecs (for [comb all-combs] (vec (interleave atoms comb)))]
+         {:formula phi
+          :header  (conj (vec atoms) :result)
+	        :table   (vec (for [assign-vec assign-vecs]
+                          (conj (vec (take-nth 2 (rest assign-vec)))
+                                (eval-phi phi assign-vec))))}))))
+
+
+;;## Transformation to conjunctive normal form
+
+;; Conjunctive normal form in lwb is defined as a formula of the form
+;; `(and (or ...) (or ...) (or ...) ...)` where the clauses contain
+;; only literals, no constants --
+;; or the trivially true or false formulae.
+
+;; I.e. in lwb when transforming formula to cnf, we reduce it the this
+;; standard from.
+
+
 (defn impl-free 
   "Normalize formula `phi` such that just the operators `not`, `and`, `or` are used."
   [phi]
