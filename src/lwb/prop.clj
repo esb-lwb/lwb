@@ -58,31 +58,31 @@
         (list 'or phi psi)))
 
 (defmacro impl
-  "Logical implication (phi -> psi)."
+  "Logical implication."
   [phi psi]
   (list 'or 
         (list 'not phi) psi))
 
 (defmacro nimpl 
-  "Logical negated implication (!(phi -> psi))."
+  "Negated logical implication."
   [phi psi]
   (list 'not 
         (list 'impl phi psi)))
 
 (defmacro cimpl
-  "Converse logical implication (phi <- psi)."
+  "Converse logical implication."
   [phi psi]
   (list 'or
     (list 'not psi) phi))
 
 (defmacro ncimpl 
-  "Negated converse logical implication (!(phi <- psi))."
+  "Negated converse logical implication."
   [phi psi]
   (list 'not
     (list 'cimpl phi psi)))
 
 (defmacro equiv
-   "Logical equivalence (phi <-> psi)."
+   "Logical equivalence."
    [phi psi]
    (list 'and
          (list 'impl phi psi)
@@ -103,15 +103,15 @@
 ;;# Constants and utility functions in the context of operators
 
 (defn operator?
-  "Is symb an operator of propositional logic?"
+  "Is `symb` an operator of propositional logic?"
   [symb]
   (let [operators #{'not 'and 'nand 'or 'nor 'impl 'nimpl 
                     'cimpl 'ncimpl 'equiv 'xor 'ite}]
     (contains? operators symb)))
 
 (defn constant?
+  "Is `symb` a constant of propositional logic?"
   [symb]
-  "Is symb a constant of propositional logic?"
   (or (= 'true symb) (= 'false symb)))
 
 (defn n-ary?
@@ -121,9 +121,10 @@
     (contains? n-ary-ops op)))
 
 (defn atom?
-  "Checks whether 'phi' is a propositional atom or a constant."
+  "Checks whether `phi` is a propositional atom or a constant.
+   `phi` must not be an operator."
   [phi]
-  (or (symbol? phi) (instance? Boolean phi)))
+  (or (symbol? phi) (constant? phi)))
 
 (defn literal?
   "Checks whether `phi` is a literal, i.e. a propositional atom or its negation."
@@ -134,6 +135,17 @@
 
 ;;## Thruth table
 
+;;# Representation of the truth table of a formula
+
+;; The truth table of a formula `phi` is represented as a map
+;; with the keys:
+
+;; `:formula` with the formula itself             
+;; `:header` a vector of the propositional atoms and the last entry 
+;;  named `:result`.          
+;; `:table` a vector of vectors of boolean assignments to the 
+;; corresponding atom in the header as well as the reult of the evaluation.
+
 (defn atoms-of-phi
   "Sorted set of the propositional atoms of formula `phi`."
   [phi]
@@ -143,16 +155,19 @@
     #{phi}))
 
 (defn eval-phi 
-  "Takes the formula `phi` and evaluates it with the given assignment vector. 
-  The last must be of the shape `['atom1 true, 'atom2 false, ...]` for the
+  "Evaluates the formula `phi` with the given assignment vector.        
+  `assign-vec` must be `['atom1 true, 'atom2 false, ...]` for the
   propositional atoms of `phi`."
   [phi assign-vec]
   (binding [*ns* (find-ns 'lwb.prop)]
     (eval `(let ~assign-vec ~phi))))
 
 (defn truth-table
-  "Truth table of `phi`."
-  [phi]
+  "Truth table of `phi`.   
+   If `mode` is `:true-only` the table contains only the valuations where
+   `phi` evaluates to `true`.   
+   For `mode` of `:false-only` accordingly."
+  ([phi]
   (let [atoms (atoms-of-phi phi)]
     (if (> (count atoms) 10)
       (throw (IllegalArgumentException. 
@@ -168,6 +183,41 @@
 	        :table   (vec (for [assign-vec assign-vecs]
                           (conj (vec (take-nth 2 (rest assign-vec)))
                                 (eval-phi phi assign-vec))))}))))
+  ([phi mode]
+    (let [tt (truth-table phi)]
+    (condp = mode
+      :true-only (assoc tt :table (vec (filter #(true? (last %)) (:table tt))))
+      :false-only (assoc tt :table (vec (filter #(false? (last %)) (:table tt))))
+      tt))))
+
+(defn print-table
+  "Pretty prints vector `header` and vector of vectors `table`.   
+   Pre: the size of items in header is >= size of items in the rows."
+  ; inspired from clojure.pprint
+  [header table]
+  (let [table'  (vec (map #(replace {true "T" false "F"} %) table)) 
+        widths  (map #(count (str %)) header)
+        spacers (map #(apply str (repeat % "-")) widths)
+        fmts    (map #(str "%" % "s") widths)
+        fmt-row (fn [leader divider trailer row]
+                  (str leader
+                     (apply str (interpose divider
+                        (for [[col fmt] (map vector row fmts)]
+                              (format fmt (str col)))))
+                       trailer))]
+    (println)
+    (println (fmt-row "| " " | " " |" header))
+    (println (fmt-row "|-" "-+-" "-|" spacers))
+    (doseq [row table']
+      (println (fmt-row "| " " | " " |" row)))))
+
+(defn print-truth-table 
+  "Pretty prints truth-table."
+  [{:keys [formula header table]}]
+  (let [table' (vec (map #(replace {true "T" false "F"} %) table))]
+    (println "Truth table")
+    (println formula)
+	  (print-table header table')))
 
 
 ;;## Transformation to conjunctive normal form
@@ -177,9 +227,8 @@
 ;; only literals, no constants --
 ;; or the trivially true or false formulae.
 
-;; I.e. in lwb when transforming formula to cnf, we reduce it the this
-;; standard from.
-
+;; I.e. in lwb when transforming formula to cnf, we reduce it to this
+;; standard form.
 
 (defn impl-free 
   "Normalize formula `phi` such that just the operators `not`, `and`, `or` are used."
@@ -193,7 +242,7 @@
             (list* (first exp-phi) (map impl-free (rest exp-phi))))))))
 
 (defn nnf
-  "Transforms an impl-free formula into negation normal form."
+  "Transforms an impl-free formula `phi` into negation normal form."
   [phi]
   (if (literal? phi) 
     phi
@@ -206,7 +255,7 @@
             (nnf (first second-more))))))))
 
 (defn- distr
-  "Application of the distributive laws to n formulae"
+  "Application of the distributive laws to the given formulae"
   ([phi] phi)
   ([phi-1 phi-2]
     (cond
@@ -220,7 +269,7 @@
     (reduce distr (distr phi-1 phi-2) more)))
 
 (defn nnf2cnf 
-  "Transforms the formula `phi` in nnf to cnf."
+  "Transforms the formula `phi` from nnf to cnf."
   [phi]
   (cond
     (literal? phi) (list 'and (list 'or phi))
@@ -229,7 +278,7 @@
     (= 'or (first phi)) (apply distr (map nnf2cnf (rest phi)))))
 
 (defn flatten-ops
-  "Flats the formula `phi`.
+  "Flattens the formula `phi`.      
    Nested binary applications of n-ary operators will be transformed to the n-ary form,
    e.g. `(and (and a b) c) => (and a b c)`."
   [phi]
@@ -258,15 +307,12 @@
   "Reduces a clause in the form `{:pos #{...} :neg #{...}`."
   [{:keys [pos neg]}]
   (cond
-    (> (count (intersection pos neg)) 0)
-      true
-    (contains? pos 'true)
-      true
-    (contains? neg 'false)
-      true
+    (> (count (intersection pos neg)) 0) true
+    (contains? pos 'true) true
+    (contains? neg 'false) true
     :else
-    (let [pos' (filter #(not= 'false %) pos), neg' (filter #(not= 'true %) neg)]
-      (conj (concat (list* pos') (map #(list 'not %) neg')) 'or))))
+      (let [pos' (filter #(not= 'false %) pos), neg' (filter #(not= 'true %) neg)]
+        (conj (concat (list* pos') (map #(list 'not %) neg')) 'or))))
 
 (defn red-cnf
   "Reduces a formula `ucnf` of the form `(and (or ...) (or ...) ...)`."
@@ -278,7 +324,7 @@
       :else (conj (list* (distinct result)) 'and))))
 
 (defn cnf
-  "Transforms the propositional formula `phi` to (standardized) conjunctive normal form cnf."
+  "Transforms `phi` to (standardized) conjunctive normal form cnf."
   [phi]
   (-> phi impl-free nnf nnf2cnf flatten-ops red-cnf))
 
