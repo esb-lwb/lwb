@@ -192,7 +192,8 @@
 
 (defn print-table
   "Pretty prints vector `header` and vector of vectors `table`.   
-   Pre: the size of items in header is >= size of items in the rows."
+   Pre: header and row in the table have the same no of item,
+        the size of items in header is >= size of items in the rows."
   ; inspired from clojure.pprint
   [header table]
   (let [table'  (vec (map #(replace {true "T" false "F"} %) table)) 
@@ -209,7 +210,7 @@
     (println (fmt-row "| " " | " " |" header))
     (println (fmt-row "|-" "-+-" "-|" spacers))
     (doseq [row table']
-      (println (fmt-row "| " " | " " |" row)))))
+      (println (fmt-row "| " " | " " |" row))))
 
 (defn print-truth-table 
   "Pretty prints truth-table."
@@ -217,7 +218,7 @@
   (let [table' (vec (map #(replace {true "T" false "F"} %) table))]
     (println "Truth table")
     (println formula)
-	  (print-table header table')))
+	  (print-table header table'))))
 
 
 ;;## Transformation to conjunctive normal form
