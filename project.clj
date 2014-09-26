@@ -12,5 +12,6 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/math.combinatorics "0.0.8"]]
+                 [org.clojure/math.combinatorics "0.0.8"]
+                 [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]]
   :plugins [[lein-marginalia "0.8.0"]])
