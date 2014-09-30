@@ -329,4 +329,9 @@
   [phi]
   (-> phi impl-free nnf nnf2cnf flatten-ops red-cnf))
 
+(defn cnf?
+  "Is `phi` in (standardized) conjunctive normal form?"
+  [phi]
+  (let [clause? (fn [psi](and (list? psi) (= 'or (first psi)) (every? literal? (rest psi))))]
+    (and (list? phi) (= 'and (first phi)) (every? clause? (rest phi)))))
         
