@@ -52,16 +52,21 @@
 ;; ## SAT4J
 
 (defn- sat4j-solve
+  "Checks whether the formula in `dimacs-map` is satisfiable.   
+   Returns nil if not, an assignment vector if it is satisfiable." 
   [dimacs-map]
-  (let [solver    (SolverFactory/newDefault)
-        reader    (DimacsReader. solver)
-        cl-set    (:cl-set dimacs-map)
-        num-atoms (:num-atoms dimacs-map)
-        num-cl    (:num-cl dimacs-map)]
+  (let [solver     (SolverFactory/newDefault)
+        cl-set     (:cl-set dimacs-map)
+        num-atoms  (:num-atoms dimacs-map)
+        num-cl     (:num-cl dimacs-map)
+        assign-vec (fn [model-vec int-atoms]
+                     (vec (flatten (map #(if (pos? %) [(ia %) true] [(ia (- %)) false]) v))))]
     (.newVar solver num-atoms)
     (.setExpectedNumberOfClauses solver num-cl)
 
     (doall (map #(.addClause solver (VecInt. (int-array %))) cl-set))
 
     (when (.isSatisfiable solver)
-      (.decode reader (.model solver)))))
+      (assign-vec (vec (.model solver)) (:int-atoms dimacs-map)))))
+
+(def v (sat4j-solve x))
