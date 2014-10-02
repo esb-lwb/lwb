@@ -8,8 +8,9 @@
 
 
 (ns lwb.prop.sat
-  (:require [lwb.prop :refer (atoms-of-phi)]
-            [clojure.set :refer (map-invert)])
+  (:require [lwb.prop :refer (atoms-of-phi operator?)]
+            [clojure.set :refer (map-invert)]
+            [clojure.zip :as z])
   (:import  (org.sat4j.minisat SolverFactory)
             (org.sat4j.minisat.core Solver)
             (org.sat4j.core VecInt)
@@ -60,7 +61,10 @@
         num-atoms  (:num-atoms dimacs-map)
         num-cl     (:num-cl dimacs-map)
         assign-vec (fn [model-vec int-atoms]
-                     (vec (flatten (map #(if (pos? %) [(ia %) true] [(ia (- %)) false]) v))))]
+                     (vec (flatten 
+                            (map #(if (pos? %) 
+                                    [(int-atoms %) true] 
+                                    [(int-atoms (- %)) false]) model-vec))))]
     (.newVar solver num-atoms)
     (.setExpectedNumberOfClauses solver num-cl)
 
@@ -70,3 +74,46 @@
       (assign-vec (vec (.model solver)) (:int-atoms dimacs-map)))))
 
 (def v (sat4j-solve x))
+
+
+;; ## Tseitin transformation
+
+(defn- tseitin-symbol-generator
+  "A function that generates unique tseitin symbols."
+  []
+  (let [prefix "ts_"
+        cnt    (atom 0)]
+    #(symbol (str prefix (swap! cnt inc)))))
+
+(defn- mark-phi
+  "Marks each operator of phi with a unique tseitin symbol."
+  [phi]
+  (let [tsg     (tseitin-symbol-generator)
+        zipper  (z/seq-zip phi)
+        mark-fn (fn [node] (vary-meta node assoc :tseitin-symbol (tsg)))]
+    (loop [loc zipper]
+      (if (z/end? loc)
+        (z/root loc)
+        (recur (z/next (if (operator? (z/node loc)) (z/edit loc mark-fn) loc)))))))
+
+(def phi1 '(and p (xor s t)))
+
+(def phi1' (mark-phi phi1))
+
+(defn- locs-phi
+  "Sequence of all the nodes in `phi`."
+  [phi]
+  (take-while (complement z/end?) (iterate z/next (z/seq-zip phi))))
+
+(locs-phi phi1)
+
+(defn- node-info
+  [loc]
+  (let [node (z/node loc)]
+    [node (meta node)]))
+
+(map node-info (locs-phi phi1'))
+
+;; now we can construct the tseitin formula from the annotated tree
+
+  ([z/node node
