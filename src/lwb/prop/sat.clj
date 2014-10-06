@@ -8,7 +8,7 @@
 
 
 (ns lwb.prop.sat
-  (:require [lwb.prop :refer (atoms-of-phi operator?)]
+  (:require [lwb.prop :refer (atoms-of-phi operator? locs-phi arity)]
             [clojure.set :refer (map-invert)]
             [clojure.zip :as z])
   (:import  (org.sat4j.minisat SolverFactory)
@@ -48,8 +48,6 @@
      :num-cl    (count cl-set)
      :cl-set    cl-set}))
 
-(def x (cnf2dimacs '(and (or p q) (or (not p) s))))
-
 ;; ## SAT4J
 
 (defn- sat4j-solve
@@ -68,12 +66,10 @@
     (.newVar solver num-atoms)
     (.setExpectedNumberOfClauses solver num-cl)
 
-    (doall (map #(.addClause solver (VecInt. (int-array %))) cl-set))
+    (dorun (map #(.addClause solver (VecInt. (int-array %))) cl-set))
 
     (when (.isSatisfiable solver)
       (assign-vec (vec (.model solver)) (:int-atoms dimacs-map)))))
-
-(def v (sat4j-solve x))
 
 
 ;; ## Tseitin transformation
@@ -86,7 +82,7 @@
     #(symbol (str prefix (swap! cnt inc)))))
 
 (defn- mark-phi
-  "Marks each operator of phi with a unique tseitin symbol."
+  "Marks each branch of phi with a unique tseitin symbol."
   [phi]
   (let [tsg     (tseitin-symbol-generator)
         zipper  (z/seq-zip phi)
@@ -94,13 +90,46 @@
     (loop [loc zipper]
       (if (z/end? loc)
         (z/root loc)
-        (recur (z/next (if (operator? (z/node loc)) (z/edit loc mark-fn) loc)))))))
-
-(defn- node-info
-  [loc]
-  (let [node (z/node loc)]
-    [node (meta node)]))
-
-(map node-info (locs-phi phi1'))
+        (recur (z/next (if (z/branch? loc) (z/edit loc mark-fn) loc)))))))
 
 ;; now we can construct the tseitin formula from the annotated tree
+
+(defn- tseitin-branch
+  "Analyzes branch and generates `[ts_branch (op and atom or tseitin-symbol of children)`."
+  [branch]
+  (let [children (map #(if (list? %) (:tseitin-symbol (meta  %))  %) (z/children branch))]
+    [(:tseitin-symbol (meta (z/node branch))) children]))
+                                 
+(map tseitin-branch (filter z/branch? (locs-phi (mark-phi '(and p (or q s))))))
+
+(defn- tseitin-cnf
+  [t [op & args]]
+  (case (arity op)
+    1
+    (let [a (first args)]
+      (case op
+         not '(and (or t a) (or (not t) (not a)))))
+    2
+    (let [a (first args) b (second args)]
+      (case op
+         nand   '(and (or t a) (or t b) (or (not t) (not a) (not b)))
+         nor    '(and (or (not t) (not a)) (or (not t) (not b)) (or t a b))
+         impl   '(and (or t a) (or t (not b)) (or (not t) (not a) b))
+         nimpl  '(and (or (not t) a) (or (not t) (not b)) (or t (not a) b))
+         cimpl  '(and (or t (not a)) (or t b) (or (not t) a (not b)))
+         ncimpl '(and (or (not t) (not a)) (or (not t) b) (or t a (notb )))
+         equiv  '(and (or (not t) a (not b)) (or (not t) (not a) b) (or t (not a) (not b)) (or t a b))
+         xor    '(and (or t (not a) b) (or t (not a) b) (or (not t) a b) (or (not t) (not a) (not b)))))
+    3
+    (let [a (first args) b (second args) c (last args)]
+      (case op
+         ite    '(and ...todo)))
+    -1 
+    (case op
+        and (apply list 'and
+            (apply list 'or t (map #(list 'not %) args))
+            (map #(list 'or (list 'not t) %) args))
+        or  (apply list 'and
+            (apply list 'or (list 'not t) args)
+            (map #(list 'or t (list 'not %)) args)))
+))
