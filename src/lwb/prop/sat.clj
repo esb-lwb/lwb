@@ -96,17 +96,6 @@
         (z/root loc)
         (recur (z/next (if (operator? (z/node loc)) (z/edit loc mark-fn) loc)))))))
 
-(def phi1 '(and p (xor s t)))
-
-(def phi1' (mark-phi phi1))
-
-(defn- locs-phi
-  "Sequence of all the nodes in `phi`."
-  [phi]
-  (take-while (complement z/end?) (iterate z/next (z/seq-zip phi))))
-
-(locs-phi phi1)
-
 (defn- node-info
   [loc]
   (let [node (z/node loc)]
@@ -115,5 +104,3 @@
 (map node-info (locs-phi phi1'))
 
 ;; now we can construct the tseitin formula from the annotated tree
-
-  ([z/node node

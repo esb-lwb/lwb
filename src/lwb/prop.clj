@@ -9,7 +9,8 @@
 (ns lwb.prop
   (:require [clojure.walk :refer (postwalk)]
             [clojure.set  :refer (union intersection)]
-            [clojure.math.combinatorics :refer (selections)]))
+            [clojure.math.combinatorics :refer (selections)]
+            [clojure.zip :as z]))
 
 ;; ## Representation of propositional formulae
 
@@ -114,6 +115,32 @@
   [symb]
   (or (= 'true symb) (= 'false symb)))
 
+(defn arity
+  "Arity of operator `op`.   
+   -1 means n-ary."  
+   [op]
+   (cond
+     (= op 'not) 1
+     (contains? #{'nand 'nor 'impl 'nimpl 'cimpl 'ncimpl 'equiv 'xor} op) 2
+     (= op 'ite) 3
+     (contains? #{'and 'or} op) -1))
+
+(defn unary?
+  "Is `op` a unary operator?"
+  [op]
+  (= op 'not))
+
+(defn binary?
+  "Is `op` a binary operator?"
+  [op]
+  (let [binary-ops  #{'nand 'nor 'impl 'nimpl 'cimpl 'ncimpl 'equiv 'xor}]
+    (contains? binary-ops op)))
+
+(defn ternary?
+  "Is `op` a ternary operator?"
+  [op]
+  (= op 'ite))
+
 (defn n-ary?
   "Is `op` an n-ary operator?"
   [op]
@@ -131,7 +158,46 @@
   [phi]
   (or (atom? phi) 
       (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) (atom? (second phi)))))
-  
+
+;;# Is a formula well-formed?
+
+(defn locs-phi
+  "Sequence of all the locations of a zipper generated from the formula `phi`."
+  [phi]
+  (take-while (complement z/end?) (iterate z/next (z/seq-zip phi))))
+ 
+(defn- check-loc
+  "Checks a location whether the subformula is well-formed.  
+   Throws an exception, if not."
+  [loc]
+  (let [node (z/node loc)]
+	  (if (z/branch? loc)
+	    (cond
+	      (not (list? node)) (throw (IllegalStateException. (str node " is not a list.")))
+	      (empty? node) (throw (IllegalStateException. "Formula has a branch '()'."))
+        (not (operator? (first node))) (throw (IllegalStateException. (str (first node) " in "  node " is not an operator.")))
+        :else (let [op (first node)
+                    cnt (dec (count (z/children loc)))]
+                (if (and (> (arity op) 0) (not= (arity op) cnt))
+                  (throw (IllegalStateException. (str op " has " cnt " operators."))))))
+                
+     ; else
+      (if (and (not= loc (z/leftmost loc)) (or (operator? node) (not (atom? node))))
+        (throw (IllegalStateException. (str node " is not an atom.")))))))
+
+(defn wff?
+  "Is `phi` a well-formed formula?   
+   `(wff? phi)` returns true or false   
+   `(wff? phi :msg)` returns true or a message on the error in `phi`."
+   ([phi]
+     (wff? phi :bool))
+   ([phi mode]
+     (let [loc-seq (locs-phi phi)]
+       (try
+         (dorun (map check-loc loc-seq))
+         true
+         (catch Exception e (if (= mode :msg) (.getMessage e) false))))))
+
 
 ;;## Thruth table
 
