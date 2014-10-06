@@ -117,7 +117,7 @@
 
 (defn arity
   "Arity of operator `op`.   
-   -1 means n-ary."  
+   -1 means n-ary, but better use `n-ary?`."  
    [op]
    (cond
      (= op 'not) 1
@@ -126,26 +126,24 @@
      (contains? #{'and 'or} op) -1))
 
 (defn unary?
-  "Is `op` a unary operator?"
+  "Is `op` an unary operator?"
   [op]
-  (= op 'not))
+  (= 1 (arity op)))
 
 (defn binary?
   "Is `op` a binary operator?"
   [op]
-  (let [binary-ops  #{'nand 'nor 'impl 'nimpl 'cimpl 'ncimpl 'equiv 'xor}]
-    (contains? binary-ops op)))
+  (= 2 (arity op)))
 
 (defn ternary?
   "Is `op` a ternary operator?"
   [op]
-  (= op 'ite))
+  (= 3 (arity op)))
 
 (defn n-ary?
   "Is `op` an n-ary operator?"
   [op]
-  (let [n-ary-ops  #{'and 'or}]
-    (contains? n-ary-ops op)))
+  (= -1 (arity op)))
 
 (defn atom?
   "Checks whether `phi` is a propositional atom or a constant.
