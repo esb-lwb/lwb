@@ -12,7 +12,7 @@
             [clojure.math.combinatorics :refer (selections)]
             [clojure.zip :as z]))
 
-;; ## Representation of propositional formulae
+;; # Representation of propositional formulae
 
 ;; The propositional atoms are represented by Clojure symbols, 
 ;; e.g. `p` or `q`.
@@ -39,7 +39,7 @@
 ;; * xor -- exclusive or, binary
 ;; * ite -- if-then-else, ternary
 
-;; # Hints
+;; ### Hints
 ;; 1. The operators are defined as macros
 ;; 2. We don't use syntax-quoting, because we don't want to have qualified
 ;;    names after expansion
@@ -101,7 +101,7 @@
   (list 'or (list 'and i t)
             (list 'and (list 'not i) e))) 
 
-;;# Constants and utility functions in the context of operators
+;;## Constants and utility functions in the context of operators
 
 (defn operator?
   "Is `symb` an operator of propositional logic?"
@@ -157,7 +157,7 @@
   (or (atom? phi) 
       (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) (atom? (second phi)))))
 
-;;# Is a formula well-formed?
+;;## Is a formula well-formed?
 
 (defn locs-phi
   "Sequence of all the locations of a zipper generated from the formula `phi`."
@@ -197,9 +197,9 @@
          (catch Exception e (if (= mode :msg) (.getMessage e) false))))))
 
 
-;;## Thruth table
+;;# Thruth table
 
-;;# Representation of the truth table of a formula
+;;## Representation of the truth table of a formula
 
 ;; The truth table of a formula `phi` is represented as a map
 ;; with the keys:
@@ -225,6 +225,8 @@
   [phi assign-vec]
   (binding [*ns* (find-ns 'lwb.prop)]
     (eval `(let ~assign-vec ~phi))))
+
+;## Calculation of the truth table
 
 (defn truth-table
   "Truth table of `phi`.   
@@ -285,8 +287,9 @@
 	  (print-table header table'))))
 
 
-;;## Transformation to conjunctive normal form
+;;# Transformation to conjunctive normal form
 
+;;## (Standardized) conjunctive normal form
 ;; Conjunctive normal form in lwb is defined as a formula of the form
 ;; `(and (or ...) (or ...) (or ...) ...)` where the clauses contain
 ;; only literals, no constants --
@@ -302,9 +305,9 @@
     phi
 	  (let [op (first phi)]
       (if (contains? #{'and 'or 'not} op) 
-        (list* op (map impl-free (rest phi)))
-          (let [exp-phi (macroexpand-1 phi)]
-            (list* (first exp-phi) (map impl-free (rest exp-phi))))))))
+        (apply list op (map impl-free (rest phi)))
+        (let [exp-phi (macroexpand-1 phi)]
+          (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))
 
 (defn nnf
   "Transforms an impl-free formula `phi` into negation normal form."
@@ -360,7 +363,7 @@
 
 (defn- clause2sets
   "Transforms a clause `(or ...)` into a map of the sets of `:pos` atoms 
-   and `:neg`atoms in the clause."
+   and `:neg` atoms in the clause."
   [cl]
   (apply merge-with union
          (for [literal (rest cl)]
@@ -369,7 +372,13 @@
 					      {:neg #{(second literal)}}))))
 
 (defn- red-clmap 
-  "Reduces a clause in the form `{:pos #{...} :neg #{...}`."
+  "Reduces a clause in the form `{:pos #{...} :neg #{...}`    
+   by considering:     
+   (1) :pos contains true  -> clause is trivially true,   
+   (2) :neg contains false -> clause is trivially true,   
+   (3) :pos contains false -> false can be deleted,   
+   (4) :neg contains true  -> true can be deleted."
+
   [{:keys [pos neg]}]
   (cond
     (> (count (intersection pos neg)) 0) true
@@ -396,6 +405,6 @@
 (defn cnf?
   "Is `phi` in (standardized) conjunctive normal form?"
   [phi]
-  (let [clause? (fn [psi](and (list? psi) (= 'or (first psi)) (every? literal? (rest psi))))]
+  (let [clause? (fn [psi] (and (list? psi) (= 'or (first psi)) (every? literal? (rest psi))))]
     (and (list? phi) (= 'and (first phi)) (every? clause? (rest phi)))))
         

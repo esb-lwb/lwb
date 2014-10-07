@@ -2870,7 +2870,8 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.prop
   (:require [clojure.walk :refer (postwalk)]
             [clojure.set  :refer (union intersection)]
-            [clojure.math.combinatorics :refer (selections)]))</pre></td></tr><tr><td class="docs"><h2>Representation of propositional formulae</h2>
+            [clojure.math.combinatorics :refer (selections)]
+            [clojure.zip :as z]))</pre></td></tr><tr><td class="docs"><h1>Representation of propositional formulae</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The propositional atoms are represented by Clojure symbols, 
 e.g. <code>p</code> or <code>q</code>.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The propositional constants for truth and falsity are represented
@@ -2893,7 +2894,7 @@ lispy syntax, e.g. <code>(impl (and p (not p)) q)</code>.</p>
 <li>xor -- exclusive or, binary</li>
 <li>ite -- if-then-else, ternary</li>
 </ul>
-</td><td class="codes"></td></tr><tr><td class="docs"><h1>Hints</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><h3>Hints</h3>
 
 <ol>
 <li>The operators are defined as macros</li>
@@ -2939,7 +2940,7 @@ because transformations (to cnf e.g.) use them with macroexpand!</li>
 </td><td class="codes"><pre class="brush: clojure">(defmacro ite
   [i t e]
   (list 'or (list 'and i t)
-            (list 'and (list 'not i) e))) </pre></td></tr><tr><td class="docs"><h1>Constants and utility functions in the context of operators</h1>
+            (list 'and (list 'not i) e))) </pre></td></tr><tr><td class="docs"><h2>Constants and utility functions in the context of operators</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>symb</code> an operator of propositional logic?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn operator?
   [symb]
@@ -2948,11 +2949,27 @@ because transformations (to cnf e.g.) use them with macroexpand!</li>
     (contains? operators symb)))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> a constant of propositional logic?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn constant?
   [symb]
-  (or (= 'true symb) (= 'false symb)))</pre></td></tr><tr><td class="docs"><p>Is <code>op</code> an n-ary operator?</p>
+  (or (= 'true symb) (= 'false symb)))</pre></td></tr><tr><td class="docs"><p>Arity of operator <code>op</code>. <br />
+   -1 means n-ary, but better use <code>n-ary?</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn arity
+   [op]
+   (cond
+     (= op 'not) 1
+     (contains? #{'nand 'nor 'impl 'nimpl 'cimpl 'ncimpl 'equiv 'xor} op) 2
+     (= op 'ite) 3
+     (contains? #{'and 'or} op) -1))</pre></td></tr><tr><td class="docs"><p>Is <code>op</code> an unary operator?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn unary?
+  [op]
+  (= 1 (arity op)))</pre></td></tr><tr><td class="docs"><p>Is <code>op</code> a binary operator?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn binary?
+  [op]
+  (= 2 (arity op)))</pre></td></tr><tr><td class="docs"><p>Is <code>op</code> a ternary operator?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn ternary?
+  [op]
+  (= 3 (arity op)))</pre></td></tr><tr><td class="docs"><p>Is <code>op</code> an n-ary operator?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn n-ary?
   [op]
-  (let [n-ary-ops  #{'and 'or}]
-    (contains? n-ary-ops op)))</pre></td></tr><tr><td class="docs"><p>Checks whether <code>phi</code> is a propositional atom or a constant.
+  (= -1 (arity op)))</pre></td></tr><tr><td class="docs"><p>Checks whether <code>phi</code> is a propositional atom or a constant.
    <code>phi</code> must not be an operator.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn atom?
   [phi]
@@ -2960,8 +2977,39 @@ because transformations (to cnf e.g.) use them with macroexpand!</li>
 </td><td class="codes"><pre class="brush: clojure">(defn literal?
   [phi]
   (or (atom? phi) 
-      (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) (atom? (second phi)))))</pre></td></tr><tr><td class="docs"><h2>Thruth table</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><h1>Representation of the truth table of a formula</h1>
+      (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) (atom? (second phi)))))</pre></td></tr><tr><td class="docs"><h2>Is a formula well-formed?</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Sequence of all the locations of a zipper generated from the formula <code>phi</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn locs-phi
+  [phi]
+  (take-while (complement z/end?) (iterate z/next (z/seq-zip phi))))</pre></td></tr><tr><td class="docs"><p>Checks a location whether the subformula is well-formed. <br />
+   Throws an exception, if not.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- check-loc
+  [loc]
+  (let [node (z/node loc)]
+	  (if (z/branch? loc)
+	    (cond
+	      (not (list? node)) (throw (IllegalStateException. (str node &quot; is not a list.&quot;)))
+	      (empty? node) (throw (IllegalStateException. &quot;Formula has a branch '()'.&quot;))
+        (not (operator? (first node))) (throw (IllegalStateException. (str (first node) &quot; in &quot;  node &quot; is not an operator.&quot;)))
+        :else (let [op (first node)
+                    cnt (dec (count (z/children loc)))]
+                (if (and (&gt; (arity op) 0) (not= (arity op) cnt))
+                  (throw (IllegalStateException. (str op &quot; has &quot; cnt &quot; operators.&quot;))))))
+     ; else
+      (if (and (not= loc (z/leftmost loc)) (or (operator? node) (not (atom? node))))
+        (throw (IllegalStateException. (str node &quot; is not an atom.&quot;)))))))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> a well-formed formula? <br />
+   <code>(wff? phi)</code> returns true or false <br />
+   <code>(wff? phi :msg)</code> returns true or a message on the error in <code>phi</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn wff?
+   ([phi]
+     (wff? phi :bool))
+   ([phi mode]
+     (let [loc-seq (locs-phi phi)]
+       (try
+         (dorun (map check-loc loc-seq))
+         true
+         (catch Exception e (if (= mode :msg) (.getMessage e) false))))))</pre></td></tr><tr><td class="docs"><h1>Thruth table</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><h2>Representation of the truth table of a formula</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The truth table of a formula <code>phi</code> is represented as a map
 with the keys:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p><code>:formula</code> with the formula itself <br />
@@ -2981,7 +3029,8 @@ corresponding atom in the header as well as the reult of the evaluation.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn eval-phi 
   [phi assign-vec]
   (binding [*ns* (find-ns 'lwb.prop)]
-    (eval `(let ~assign-vec ~phi))))</pre></td></tr><tr><td class="docs"><p>Truth table of <code>phi</code>. <br />
+    (eval `(let ~assign-vec ~phi))))</pre></td></tr><tr><td class="docs"><h2>Calculation of the truth table</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Truth table of <code>phi</code>. <br />
    If <code>mode</code> is <code>:true-only</code> the table contains only the valuations where
    <code>phi</code> evaluates to <code>true</code>. <br />
    For <code>mode</code> of <code>:false-only</code> accordingly.</p>
@@ -3033,8 +3082,10 @@ corresponding atom in the header as well as the reult of the evaluation.</p>
   (let [table' (vec (map #(replace {true &quot;T&quot; false &quot;F&quot;} %) table))]
     (println &quot;Truth table&quot;)
     (println formula)
-	  (print-table header table'))))</pre></td></tr><tr><td class="docs"><h2>Transformation to conjunctive normal form</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Conjunctive normal form in lwb is defined as a formula of the form
+	  (print-table header table'))))</pre></td></tr><tr><td class="docs"><h1>Transformation to conjunctive normal form</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><h2>(Standardized) conjuncetive normal form</h2>
+
+<p>Conjunctive normal form in lwb is defined as a formula of the form
 <code>(and (or ...) (or ...) (or ...) ...)</code> where the clauses contain
 only literals, no constants --
 or the trivially true or false formulae.</p>
@@ -3047,9 +3098,9 @@ standard form.</p>
     phi
 	  (let [op (first phi)]
       (if (contains? #{'and 'or 'not} op) 
-        (list* op (map impl-free (rest phi)))
-          (let [exp-phi (macroexpand-1 phi)]
-            (list* (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs"><p>Transforms an impl-free formula <code>phi</code> into negation normal form.</p>
+        (apply list op (map impl-free (rest phi)))
+        (let [exp-phi (macroexpand-1 phi)]
+          (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs"><p>Transforms an impl-free formula <code>phi</code> into negation normal form.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn nnf
   [phi]
   (if (literal? phi) 
@@ -3094,14 +3145,19 @@ standard form.</p>
 						            (apply concat `((~op) ~@flat ~not-flat)))
 					             sub-phi))]
         (postwalk flat-step phi)))</pre></td></tr><tr><td class="docs"><p>Transforms a clause <code>(or ...)</code> into a map of the sets of <code>:pos</code> atoms 
-   and <code>:neg</code>atoms in the clause.</p>
+   and <code>:neg</code> atoms in the clause.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- clause2sets
   [cl]
   (apply merge-with union
          (for [literal (rest cl)]
 					  (if (or (symbol? literal) (instance? Boolean literal))
 					      {:pos #{literal}}
-					      {:neg #{(second literal)}}))))</pre></td></tr><tr><td class="docs"><p>Reduces a clause in the form <code>{:pos #{...} :neg #{...}</code>.</p>
+					      {:neg #{(second literal)}}))))</pre></td></tr><tr><td class="docs"><p>Reduces a clause in the form <code>{:pos #{...} :neg #{...}</code> <br />
+   by considering: <br />
+   (1) :pos contains true  -> clause is trivially true, <br />
+   (2) :neg contains false -> clause is trivially true, <br />
+   (3) :pos contains false -> false can be deleted, <br />
+   (4) :neg contains true  -> true can be deleted.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- red-clmap 
   [{:keys [pos neg]}]
   (cond
@@ -3123,11 +3179,12 @@ standard form.</p>
   (-&gt; phi impl-free nnf nnf2cnf flatten-ops red-cnf))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) conjunctive normal form?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn cnf?
   [phi]
-  (let [clause? (fn [psi](and (list? psi) (= 'or (first psi)) (every? literal? (rest psi))))]
+  (let [clause? (fn [psi] (and (list? psi) (= 'or (first psi)) (every? literal? (rest psi))))]
     (and (list? phi) (= 'and (first phi)) (every? clause? (rest phi)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.prop.sat" name="lwb.prop.sat"><h1 class="project-name">lwb.prop.sat</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.prop.sat
-  (:require [lwb.prop :refer (atoms-of-phi)]
-            [clojure.set :refer (map-invert)])
+  (:require [lwb.prop :refer :all]
+            [clojure.set :refer (map-invert)]
+            [clojure.zip :as z])
   (:import  (org.sat4j.minisat SolverFactory)
             (org.sat4j.minisat.core Solver)
             (org.sat4j.core VecInt)
@@ -3158,21 +3215,81 @@ following entries:</p>
      :num-atoms num-atoms
      :int-atoms (map-invert atoms-int)
      :num-cl    (count cl-set)
-     :cl-set    cl-set}))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def x (cnf2dimacs '(and (or p q) (or (not p) s))))</pre></td></tr><tr><td class="docs"><h2>SAT4J</h2>
-</td><td class="codes"></td></tr><tr><td class="docs">
+     :cl-set    cl-set}))</pre></td></tr><tr><td class="docs"><h2>SAT4J</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Checks whether the formula in <code>dimacs-map</code> is satisfiable. <br />
+   Returns nil if not, an assignment vector if it is satisfiable.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- sat4j-solve
   [dimacs-map]
-  (let [solver    (SolverFactory/newDefault)
-        reader    (DimacsReader. solver)
-        cl-set    (:cl-set dimacs-map)
-        num-atoms (:num-atoms dimacs-map)
-        num-cl    (:num-cl dimacs-map)]
+  (let [solver     (SolverFactory/newDefault)
+        cl-set     (:cl-set dimacs-map)
+        num-atoms  (:num-atoms dimacs-map)
+        num-cl     (:num-cl dimacs-map)
+        assign-vec (fn [model-vec int-atoms]
+                     (vec (flatten 
+                            (map #(if (pos? %) 
+                                    [(int-atoms %) true] 
+                                    [(int-atoms (- %)) false]) model-vec))))]
     (.newVar solver num-atoms)
     (.setExpectedNumberOfClauses solver num-cl)
-    (doall (map #(.addClause solver (VecInt. (int-array %))) cl-set))
+    (dorun (map #(.addClause solver (VecInt. (int-array %))) cl-set))
     (when (.isSatisfiable solver)
-      (.decode reader (.model solver)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_lwb.prop">lwb.prop</li><li class="floating-toc-li" id="floating-toc_lwb.prop.sat">lwb.prop.sat</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+      (assign-vec (vec (.model solver)) (:int-atoms dimacs-map)))))</pre></td></tr><tr><td class="docs"><h2>Tseitin transformation</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>A function that generates unique tseitin symbols,
+   beginning with <code>ts_1</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- tseitin-symbol-generator
+  []
+  (let [prefix &quot;ts_&quot;
+        cnt    (atom 0)]
+    #(symbol (str prefix (swap! cnt inc)))))</pre></td></tr><tr><td class="docs"><p>Marks each branch of <code>phi</code> with a unique tseitin symbol. <br />
+   The root has the symbol <code>ts_1</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- mark-phi
+  [phi]
+  (let [tsg     (tseitin-symbol-generator)
+        zipper  (z/seq-zip phi)
+        mark-fn (fn [node] (vary-meta node assoc :tseitin-symbol (tsg)))]
+    (loop [loc zipper]
+      (if (z/end? loc)
+        (z/root loc)
+        (recur (z/next (if (z/branch? loc) (z/edit loc mark-fn) loc)))))))</pre></td></tr><tr><td class="docs"><p>Analyzes branch and generates equivalence formula for the branch. <br />
+   The formula is of the form <code>(equiv ts_x (atoms or tseitin symbols of children)</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- tseitin-branch
+  [branch]
+  (let [children (map #(if (list? %) (:tseitin-symbol (meta  %))  %) (z/children branch))]
+    (list 'equiv (:tseitin-symbol (meta (z/node branch))) children)))</pre></td></tr><tr><td class="docs"><p>Tseitin transformation for formula <code>phi</code>. <br />
+   (1) The formula is marked with tseitin symbols for the branches. <br />
+   (2) The tseitin equivalences for the branches are generated. <br />
+   (3) CNF of these is calculated
+   (4) the final formula with <code>ts_1</code> for the root is build and simplified.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn tseitin
+  [phi]
+  (cond
+    ; border cases
+    (constant? phi) phi
+    (atom? phi) (list 'and (list 'or phi))
+    ; actual transformation
+    :else
+		  (let [parts (map cnf (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi)))))]
+		    (flatten-ops (cons 'and (cons '(and (or ts_1)) parts))))))</pre></td></tr><tr><td class="docs"><p>Removes the tseitin-symbols and their value from an assignment vector.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- remove-tseitin-symbols
+  [assign-vec]
+  (let [zipper (z/vector-zip assign-vec)]
+    (loop [loc zipper]
+      (if (z/end? loc)
+        (z/root loc)
+        (recur (z/next (if (.startsWith (str (z/node loc)) &quot;ts_&quot;) (z/remove (z/next (z/remove loc))) loc)))))))</pre></td></tr><tr><td class="docs"><p>Gives an assignment vector for <code>phi</code> if the formula is satisfiable, nil if not. <br />
+   Mode <code>:all</code> gets sat to return a vector with all the satisfying assignments.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn sat
+  ([phi]
+    (sat phi :one))
+  ([phi mode]
+    (case mode
+      :all nil ;not yet implemented
+      ; default
+      (let [tcnf   (if (cnf? phi) phi (tseitin phi))
+            dimacs (cnf2dimacs tcnf)
+            res    (sat4j-solve dimacs)]
+        (if res
+          (remove-tseitin-symbols res) nil)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_lwb.prop">lwb.prop</li><li class="floating-toc-li" id="floating-toc_lwb.prop.sat">lwb.prop.sat</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

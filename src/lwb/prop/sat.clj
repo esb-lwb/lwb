@@ -8,7 +8,7 @@
 
 
 (ns lwb.prop.sat
-  (:require [lwb.prop :refer (atoms-of-phi operator? locs-phi arity)]
+  (:require [lwb.prop :refer :all]
             [clojure.set :refer (map-invert)]
             [clojure.zip :as z])
   (:import  (org.sat4j.minisat SolverFactory)
@@ -75,14 +75,16 @@
 ;; ## Tseitin transformation
 
 (defn- tseitin-symbol-generator
-  "A function that generates unique tseitin symbols."
+  "A function that generates unique tseitin symbols,
+   beginning with `ts_1`."
   []
   (let [prefix "ts_"
         cnt    (atom 0)]
     #(symbol (str prefix (swap! cnt inc)))))
 
 (defn- mark-phi
-  "Marks each branch of phi with a unique tseitin symbol."
+  "Marks each branch of `phi` with a unique tseitin symbol.   
+   The root has the symbol `ts_1`."
   [phi]
   (let [tsg     (tseitin-symbol-generator)
         zipper  (z/seq-zip phi)
@@ -92,44 +94,51 @@
         (z/root loc)
         (recur (z/next (if (z/branch? loc) (z/edit loc mark-fn) loc)))))))
 
-;; now we can construct the tseitin formula from the annotated tree
-
 (defn- tseitin-branch
-  "Analyzes branch and generates `[ts_branch (op and atom or tseitin-symbol of children)`."
+  "Analyzes branch and generates equivalence formula for the branch.  
+   The formula is of the form `(equiv ts_x (atoms or tseitin symbols of children)`."
   [branch]
   (let [children (map #(if (list? %) (:tseitin-symbol (meta  %))  %) (z/children branch))]
-    [(:tseitin-symbol (meta (z/node branch))) children]))
+    (list 'equiv (:tseitin-symbol (meta (z/node branch))) children)))
                                  
-(map tseitin-branch (filter z/branch? (locs-phi (mark-phi '(and p (or q s))))))
+(defn tseitin
+  "Tseitin transformation for formula `phi`.   
+   (1) The formula is marked with tseitin symbols for the branches.    
+   (2) The tseitin equivalences for the branches are generated.  
+   (3) CNF of these is calculated.    
+   (4) The final formula with `ts_1` for the root is build and simplified."
+  [phi]
+  (cond
+    ; border cases
+    (constant? phi) phi
+    (atom? phi) (list 'and (list 'or phi))
+    ; actual transformation
+    :else
+		  (let [parts (map cnf (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi)))))]
+		    (flatten-ops (cons 'and (cons '(and (or ts_1)) parts))))))
 
-(defn- tseitin-cnf
-  [t [op & args]]
-  (case (arity op)
-    1
-    (let [a (first args)]
-      (case op
-         not '(and (or t a) (or (not t) (not a)))))
-    2
-    (let [a (first args) b (second args)]
-      (case op
-         nand   '(and (or t a) (or t b) (or (not t) (not a) (not b)))
-         nor    '(and (or (not t) (not a)) (or (not t) (not b)) (or t a b))
-         impl   '(and (or t a) (or t (not b)) (or (not t) (not a) b))
-         nimpl  '(and (or (not t) a) (or (not t) (not b)) (or t (not a) b))
-         cimpl  '(and (or t (not a)) (or t b) (or (not t) a (not b)))
-         ncimpl '(and (or (not t) (not a)) (or (not t) b) (or t a (notb )))
-         equiv  '(and (or (not t) a (not b)) (or (not t) (not a) b) (or t (not a) (not b)) (or t a b))
-         xor    '(and (or t (not a) b) (or t (not a) b) (or (not t) a b) (or (not t) (not a) (not b)))))
-    3
-    (let [a (first args) b (second args) c (last args)]
-      (case op
-         ite    '(and ...todo)))
-    -1 
-    (case op
-        and (apply list 'and
-            (apply list 'or t (map #(list 'not %) args))
-            (map #(list 'or (list 'not t) %) args))
-        or  (apply list 'and
-            (apply list 'or (list 'not t) args)
-            (map #(list 'or t (list 'not %)) args)))
-))
+
+(defn- remove-tseitin-symbols
+  "Removes the tseitin-symbols and their value from an assignment vector."
+  [assign-vec]
+  (let [zipper (z/vector-zip assign-vec)]
+    (loop [loc zipper]
+      (if (z/end? loc)
+        (z/root loc)
+        (recur (z/next (if (.startsWith (str (z/node loc)) "ts_") (z/remove (z/next (z/remove loc))) loc)))))))
+    
+  
+(defn sat
+  "Gives an assignment vector for `phi` if the formula is satisfiable, nil if not.   
+   Mode `:all` gets sat to return a vector with all the satisfying assignments."
+  ([phi]
+    (sat phi :one))
+  ([phi mode]
+    (case mode
+      :all nil ;not yet implemented
+      ; default
+      (let [tcnf   (if (cnf? phi) phi (tseitin phi))
+            dimacs (cnf2dimacs tcnf)
+            res    (sat4j-solve dimacs)]
+        (if res
+          (remove-tseitin-symbols res) nil)))))
