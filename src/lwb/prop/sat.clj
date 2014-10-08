@@ -14,7 +14,7 @@
   (:import  (org.sat4j.minisat SolverFactory)
             (org.sat4j.minisat.core Solver)
             (org.sat4j.core VecInt)
-            (org.sat4j.specs IProblem)
+            (org.sat4j.specs IProblem ContradictionException)
             (org.sat4j.reader DimacsReader)))
 
 ;; ## Transformation of a formula in cnf to dimacs
@@ -63,24 +63,29 @@
                             (map #(if (pos? %) 
                                     [(int-atoms %) true] 
                                     [(int-atoms (- %)) false]) model-vec))))]
-    (.newVar solver num-atoms)
-    (.setExpectedNumberOfClauses solver num-cl)
+    (try 
+      (.newVar solver num-atoms)
+      (.setExpectedNumberOfClauses solver num-cl)
 
-    (dorun (map #(.addClause solver (VecInt. (int-array %))) cl-set))
+      (dorun (map #(.addClause solver (VecInt. (int-array %))) cl-set))
 
-    (when (.isSatisfiable solver)
-      (assign-vec (vec (.model solver)) (:int-atoms dimacs-map)))))
+      (when (.isSatisfiable solver)
+        (assign-vec (vec (.model solver)) (:int-atoms dimacs-map)))
+      (catch ContradictionException ce nil))))
 
 
 ;; ## Tseitin transformation
+
+(def tseitin-prefix
+  "Prefix for tseitin symbols."
+  "ts_")
 
 (defn- tseitin-symbol-generator
   "A function that generates unique tseitin symbols,
    beginning with `ts_1`."
   []
-  (let [prefix "ts_"
-        cnt    (atom 0)]
-    #(symbol (str prefix (swap! cnt inc)))))
+  (let [cnt    (atom 0)]
+    #(symbol (str tseitin-prefix (swap! cnt inc)))))
 
 (defn- mark-phi
   "Marks each branch of `phi` with a unique tseitin symbol.   
@@ -125,20 +130,31 @@
     (loop [loc zipper]
       (if (z/end? loc)
         (z/root loc)
-        (recur (z/next (if (.startsWith (str (z/node loc)) "ts_") (z/remove (z/next (z/remove loc))) loc)))))))
+        (recur (z/next (if (.startsWith (str (z/node loc)) tseitin-prefix) (z/remove (z/next (z/remove loc))) loc)))))))
+
+(defn- assign-vec2negated-cnf
+  "Transforms an assignment vector into a formula in cnf with negated truth value."
+  [assign-vec]
+  (let [pairs (partition 2 assign-vec)
+        negate (fn [[atom value]] (if value (list 'not atom) atom))]
+    (apply list 'or (map negate pairs))))
     
   
 (defn sat
   "Gives an assignment vector for `phi` if the formula is satisfiable, nil if not.   
-   Mode `:all` gets sat to return a vector with all the satisfying assignments."
+   Mode `:all` gets sat to return a sequence of all the satisfying assignments."
   ([phi]
     (sat phi :one))
   ([phi mode]
     (case mode
-      :all nil ;not yet implemented
+      :all 
+	      (loop  [f phi, results '()]
+	        (let [sol (sat f)]
+            (if (nil? sol) results
+	              (recur (list 'and (assign-vec2negated-cnf sol) f) (conj results sol)))))
       ; default
-      (let [tcnf   (if (cnf? phi) phi (tseitin phi))
-            dimacs (cnf2dimacs tcnf)
-            res    (sat4j-solve dimacs)]
-        (if res
-          (remove-tseitin-symbols res) nil)))))
+	      (let [tcnf   (if (cnf? phi) phi (tseitin phi))
+	            dimacs (cnf2dimacs tcnf)
+	            res    (sat4j-solve dimacs)]
+	        (if res
+	          (remove-tseitin-symbols res) nil)))))
