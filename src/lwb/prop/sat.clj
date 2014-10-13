@@ -50,6 +50,10 @@
 
 ;; ## SAT4J
 
+(def ^:dynamic *sat4j-timeout* 
+  "Timeout of Sat4j in seconds."
+  300)
+
 (defn- sat4j-solve
   "Checks whether the formula in `dimacs-map` is satisfiable.   
    Returns nil if not, an assignment vector if it is satisfiable." 
@@ -64,6 +68,7 @@
                                     [(int-atoms %) true] 
                                     [(int-atoms (- %)) false]) model-vec))))]
     (try 
+      (.setTimeout solver *sat4j-timeout*)
       (.newVar solver num-atoms)
       (.setExpectedNumberOfClauses solver num-cl)
 
@@ -142,19 +147,25 @@
   
 (defn sat
   "Gives an assignment vector for `phi` if the formula is satisfiable, nil if not.   
-   Mode `:all` gets sat to return a sequence of all the satisfying assignments."
+   If `phi` is trivially valid, the result is true.   
+   Mode `:all` returns a sequence of all the satisfying assignments."
   ([phi]
     (sat phi :one))
   ([phi mode]
-    (case mode
-      :all 
-	      (loop  [f phi, results '()]
-	        (let [sol (sat f)]
-            (if (nil? sol) results
-	              (recur (list 'and (assign-vec2negated-cnf sol) f) (conj results sol)))))
-      ; default
-	      (let [tcnf   (if (cnf? phi) phi (tseitin phi))
-	            dimacs (cnf2dimacs tcnf)
-	            res    (sat4j-solve dimacs)]
-	        (if res
-	          (remove-tseitin-symbols res) nil)))))
+    (cond
+	   ; border cases
+     (= phi 'true) true
+     (= phi 'false) nil
+     :else
+	     (case mode
+	       :all 
+		       (loop  [f phi, results '()]
+		        (let [sol (sat f)]
+	             (if (nil? sol) results
+		               (recur (list 'and (assign-vec2negated-cnf sol) f) (conj results sol)))))
+	       ; default
+		       (let [tcnf   (if (cnf? phi) phi (tseitin phi))
+		             dimacs (cnf2dimacs tcnf)
+		             res    (sat4j-solve dimacs)]
+		         (if res
+		           (remove-tseitin-symbols res) nil))))))

@@ -3083,7 +3083,7 @@ corresponding atom in the header as well as the reult of the evaluation.</p>
     (println &quot;Truth table&quot;)
     (println formula)
 	  (print-table header table'))))</pre></td></tr><tr><td class="docs"><h1>Transformation to conjunctive normal form</h1>
-</td><td class="codes"></td></tr><tr><td class="docs"><h2>(Standardized) conjuncetive normal form</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><h2>(Standardized) conjunctive normal form</h2>
 
 <p>Conjunctive normal form in lwb is defined as a formula of the form
 <code>(and (or ...) (or ...) (or ...) ...)</code> where the clauses contain
@@ -3188,7 +3188,7 @@ standard form.</p>
   (:import  (org.sat4j.minisat SolverFactory)
             (org.sat4j.minisat.core Solver)
             (org.sat4j.core VecInt)
-            (org.sat4j.specs IProblem)
+            (org.sat4j.specs IProblem ContradictionException)
             (org.sat4j.reader DimacsReader)))</pre></td></tr><tr><td class="docs"><h2>Transformation of a formula in cnf to dimacs</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The information in dimacs is organized as a map with the
 following entries:</p>
@@ -3216,7 +3216,9 @@ following entries:</p>
      :int-atoms (map-invert atoms-int)
      :num-cl    (count cl-set)
      :cl-set    cl-set}))</pre></td></tr><tr><td class="docs"><h2>SAT4J</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Checks whether the formula in <code>dimacs-map</code> is satisfiable. <br />
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Timeout of Sat4j in seconds.</p>
+</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *sat4j-timeout* 
+  300)</pre></td></tr><tr><td class="docs"><p>Checks whether the formula in <code>dimacs-map</code> is satisfiable. <br />
    Returns nil if not, an assignment vector if it is satisfiable.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- sat4j-solve
   [dimacs-map]
@@ -3229,18 +3231,22 @@ following entries:</p>
                             (map #(if (pos? %) 
                                     [(int-atoms %) true] 
                                     [(int-atoms (- %)) false]) model-vec))))]
-    (.newVar solver num-atoms)
-    (.setExpectedNumberOfClauses solver num-cl)
-    (dorun (map #(.addClause solver (VecInt. (int-array %))) cl-set))
-    (when (.isSatisfiable solver)
-      (assign-vec (vec (.model solver)) (:int-atoms dimacs-map)))))</pre></td></tr><tr><td class="docs"><h2>Tseitin transformation</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>A function that generates unique tseitin symbols,
+    (try 
+      (.setTimeout solver *sat4j-timeout*)
+      (.newVar solver num-atoms)
+      (.setExpectedNumberOfClauses solver num-cl)
+      (dorun (map #(.addClause solver (VecInt. (int-array %))) cl-set))
+      (when (.isSatisfiable solver)
+        (assign-vec (vec (.model solver)) (:int-atoms dimacs-map)))
+      (catch ContradictionException ce nil))))</pre></td></tr><tr><td class="docs"><h2>Tseitin transformation</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Prefix for tseitin symbols.</p>
+</td><td class="codes"><pre class="brush: clojure">(def tseitin-prefix
+  &quot;ts_&quot;)</pre></td></tr><tr><td class="docs"><p>A function that generates unique tseitin symbols,
    beginning with <code>ts_1</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- tseitin-symbol-generator
   []
-  (let [prefix &quot;ts_&quot;
-        cnt    (atom 0)]
-    #(symbol (str prefix (swap! cnt inc)))))</pre></td></tr><tr><td class="docs"><p>Marks each branch of <code>phi</code> with a unique tseitin symbol. <br />
+  (let [cnt    (atom 0)]
+    #(symbol (str tseitin-prefix (swap! cnt inc)))))</pre></td></tr><tr><td class="docs"><p>Marks each branch of <code>phi</code> with a unique tseitin symbol. <br />
    The root has the symbol <code>ts_1</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- mark-phi
   [phi]
@@ -3258,8 +3264,8 @@ following entries:</p>
     (list 'equiv (:tseitin-symbol (meta (z/node branch))) children)))</pre></td></tr><tr><td class="docs"><p>Tseitin transformation for formula <code>phi</code>. <br />
    (1) The formula is marked with tseitin symbols for the branches. <br />
    (2) The tseitin equivalences for the branches are generated. <br />
-   (3) CNF of these is calculated
-   (4) the final formula with <code>ts_1</code> for the root is build and simplified.</p>
+   (3) CNF of these is calculated. <br />
+   (4) The final formula with <code>ts_1</code> for the root is build and simplified.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn tseitin
   [phi]
   (cond
@@ -3276,20 +3282,35 @@ following entries:</p>
     (loop [loc zipper]
       (if (z/end? loc)
         (z/root loc)
-        (recur (z/next (if (.startsWith (str (z/node loc)) &quot;ts_&quot;) (z/remove (z/next (z/remove loc))) loc)))))))</pre></td></tr><tr><td class="docs"><p>Gives an assignment vector for <code>phi</code> if the formula is satisfiable, nil if not. <br />
-   Mode <code>:all</code> gets sat to return a vector with all the satisfying assignments.</p>
+        (recur (z/next (if (.startsWith (str (z/node loc)) tseitin-prefix) (z/remove (z/next (z/remove loc))) loc)))))))</pre></td></tr><tr><td class="docs"><p>Transforms an assignment vector into a formula in cnf with negated truth value.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- assign-vec2negated-cnf
+  [assign-vec]
+  (let [pairs (partition 2 assign-vec)
+        negate (fn [[atom value]] (if value (list 'not atom) atom))]
+    (apply list 'or (map negate pairs))))</pre></td></tr><tr><td class="docs"><p>Gives an assignment vector for <code>phi</code> if the formula is satisfiable, nil if not. <br />
+   If <code>phi</code> is trivially valid, the result is true. <br />
+   Mode <code>:all</code> gets sat to return a sequence of all the satisfying assignments.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat
   ([phi]
     (sat phi :one))
   ([phi mode]
-    (case mode
-      :all nil ;not yet implemented
-      ; default
-      (let [tcnf   (if (cnf? phi) phi (tseitin phi))
-            dimacs (cnf2dimacs tcnf)
-            res    (sat4j-solve dimacs)]
-        (if res
-          (remove-tseitin-symbols res) nil)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_lwb.prop">lwb.prop</li><li class="floating-toc-li" id="floating-toc_lwb.prop.sat">lwb.prop.sat</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+    (cond
+	   ; border cases
+     (= phi 'true) true
+     (= phi 'false) nil
+     :else
+	     (case mode
+	       :all 
+		       (loop  [f phi, results '()]
+		        (let [sol (sat f)]
+	             (if (nil? sol) results
+		               (recur (list 'and (assign-vec2negated-cnf sol) f) (conj results sol)))))
+	       ; default
+		       (let [tcnf   (if (cnf? phi) phi (tseitin phi))
+		             dimacs (cnf2dimacs tcnf)
+		             res    (sat4j-solve dimacs)]
+		         (if res
+		           (remove-tseitin-symbols res) nil))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_lwb.prop">lwb.prop</li><li class="floating-toc-li" id="floating-toc_lwb.prop.sat">lwb.prop.sat</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack
