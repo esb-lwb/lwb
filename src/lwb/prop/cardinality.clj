@@ -16,9 +16,11 @@
    at least k of the symbols in coll are true."
   [k coll]
   {:pre [(<= 1 k (count coll))]}
-  (map #(cons 'or %)(combinations coll (inc (- (count coll) k)))))
+  ;(map #(cons 'or %)(combinations coll (inc (- (count coll) k)))))
+  (map #(apply list 'or %)(combinations coll (inc (- (count coll) k)))))
 
-;(min-kof 1 '[p q])
+(min-kof 1 '[p q])
+(class (min-kof 1 '[p q]))
         
 
 (defn max-kof 

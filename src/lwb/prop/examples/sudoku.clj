@@ -10,7 +10,7 @@
 
 (ns lwb.prop.examples.sudoku
   (:require [clojure.java.io :refer (reader)])
-  (:require [lwb.prop.cardinality :refer (oneof max-kof)])
+  (:require [lwb.prop.cardinality :refer (oneof max-kof min-kof)])
   (:require [lwb.prop.sat :refer (sat)])
 )
 
@@ -92,9 +92,10 @@ sects-cl
 ;; ## Combining a puzzle and the rules to a proposition
 (defn sudoku-prop
   [puzzle]
-  (concat (cons 'and (puzzle-cl  puzzle)) rules-cl))
+  (apply list 'and (puzzle-cl  puzzle) rules-cl))
 
 (sudoku-prop "1...2...3...4...")
+(class (sudoku-prop "1...2...3...4..."))
 ;(sudoku-prop "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
 
 ;; ## Solving the puzzle
@@ -104,6 +105,11 @@ sects-cl
 
 (solve "1...2...3...4...")
 ;(solve "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
+
+
+(class (cons 'and(max-kof 1 '[p q r]) 'and))
+(sat (oneof '[p q r]))
+(sat (apply list 'and (min-kof 1 '[p q r])))
 
 ;; ## Parser for files containing puzzles
 ;; The parsers looks for lines with 81 characters, the digits 1-9 and the character .    
@@ -130,5 +136,3 @@ sects-cl
     (map make-cl (filter #(not (nil? %)) (map-indexed make-vec puzzle)))))
 
 #_(puzzle-cl "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
-
-
