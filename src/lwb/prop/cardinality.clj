@@ -31,7 +31,8 @@
   (if (= k 0)
     (map #(list 'not %) coll))
           (for [s (combinations coll (inc k))]
-            (cons 'or (map #(list 'not %) s))))
+            ;(cons 'or (map #(list 'not %) s))))
+            (apply list 'or (map #(list 'not %) s))))
 
 ;(max-kof 0 '[p q])
 ;(max-kof 1 '[p q])

@@ -85,20 +85,45 @@ sects-cl
         make-cl  (fn [vec] (list 'or (make-sym vec))) ]
     (map make-cl (filter #(not (nil? %)) (map-indexed make-vec puzzle)))))
 
-(puzzle-cl "1...2...3...4...")
+
+(def p4 (puzzle-cl "1...2...3...4..."))
 ;(puzzle-cl "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
 
 
 ;; ## Combining a puzzle and the rules to a proposition
 (defn sudoku-prop
   [puzzle]
-  (apply list 'and (puzzle-cl  puzzle) rules-cl))
+  (apply list 'and (concat (puzzle-cl  puzzle) rules-cl)))
 
-(sudoku-prop "1...2...3...4...")
+(def s4 (sudoku-prop "1...2...3...4..."))
 (class (sudoku-prop "1...2...3...4..."))
 ;(sudoku-prop "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
 
 ;; ## Solving the puzzle
+
+;; some helper for transforming the result of sat
+
+(defn true-only
+  "Sequence of true atoms in an assignment vector"
+  [assign-vec]
+  (loop [vec assign-vec, result []]
+    (if (empty? vec)
+      result
+      (let [atom (first vec) value (second vec)]
+        (recur (subvec vec 2) (if value (conj result atom) result))))))
+
+(def true-vec (true-only avec))
+
+(defn true-vec2solution
+  "Solution string from vector of true atoms"
+  [true-vec]
+  (let [vec (sort true-vec)]
+    (apply str (map #(nth (name %) 3) vec))))
+
+(true-vec2solution true-vec)
+
+
+
 (defn solve 
   [puzzle]
   (sat (sudoku-prop puzzle)))
@@ -106,10 +131,24 @@ sects-cl
 (solve "1...2...3...4...")
 ;(solve "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
 
+(sat (apply list 'and p4))
+; p4 ist okay
 
-(class (cons 'and(max-kof 1 '[p q r]) 'and))
-(sat (oneof '[p q r]))
+
+(sat (apply list 'and sects-cl))
+(sat (apply list 'and cell-cl))
+(sat (apply list 'and rows-cl))
+(sat (apply list 'and cols-cl))
+; klappen alle
+
+(def avec (sat s4))
+; klappt
+
 (sat (apply list 'and (min-kof 1 '[p q r])))
+; klappt
+(sat (apply list 'and (max-kof 1 '[p q r])))
+; klappt
+; also liegt es an max-kof
 
 ;; ## Parser for files containing puzzles
 ;; The parsers looks for lines with 81 characters, the digits 1-9 and the character .    
