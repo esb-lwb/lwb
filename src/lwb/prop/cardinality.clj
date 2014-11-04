@@ -45,11 +45,13 @@
   (condp = k
     0            (max-kof 0 coll)
     (count coll) (min-kof k coll)
-    (list (min-kof k coll) (max-kof k coll))))
+    (concat (min-kof k coll) (max-kof k coll))))
 
 ;(kof 1 '[p q])
 ;(kof 2 '[p q])
 ;(kof 0 '[p q])
+;(kof 1 '[p q r])
+;(kof 2 '[p q r])
 
 (defn oneof
   "(oneof k coll) -> a seq of clauses expressing that
