@@ -14,17 +14,20 @@
   (:require [lwb.prop.sat :refer (sat)])
 )
 
-(def n1 2)
-(def n2 4)
-(def n4 16)
+; n1 can be 2 or 3
+; the restriction is caused by our choice of a digit string as the
+; representation of a puzzle
+(def n1 3)
+(def n2 (* n1 n1))
+(def n4 (* n2 n2))
 (def nums (range 1 (inc n2)))
 
 ;; ## Format for sudoku in Clojure
-;; We represent a puzzle and a solution as a string of 81 digits
+;; We represent a puzzle and a solution as a string of n4 digits
 ;; or "." for an unknown value in the puzzle
 
 ;; ## Boolean encoding
-;; We have 9 * 9 atoms, expressing whether a cell with coordinates 'row' and 'col'
+;; We have n2 * n2 atoms, expressing whether a cell with coordinates 'row' and 'col'
 ;; has the value 'value'. The atoms are represented by symbols of the form 'cxyz',
 ;; with 'x' the row, 'y' the column and 'z' the value.
 
@@ -63,7 +66,7 @@ rows-cl
 cols-cl
 
            
-; Sequence of clauses expressing that each sector has at most one of the values 1..9
+; Sequence of clauses expressing that each sector has at most one of the values 1..n2
 (def sects-cl 
   (let [sects (let [s (partition n1 nums)] (for [s1 s, s2 s] (for [r s1 l s2] [r l])))
         syms (for [sect sects v nums] (map #(make-sym (conj % v)) sect))]
@@ -86,8 +89,7 @@ sects-cl
     (map make-cl (filter #(not (nil? %)) (map-indexed make-vec puzzle)))))
 
 
-(def p4 (puzzle-cl "1...2...3...4..."))
-;(puzzle-cl "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
+(def demopuzzle ".24...38.6.72.91.481.7.3.96.48...97...........69...51.75.9.8.414.16.57.9.96...83.")
 
 
 ;; ## Combining a puzzle and the rules to a proposition
@@ -95,14 +97,11 @@ sects-cl
   [puzzle]
   (apply list 'and (concat (puzzle-cl  puzzle) rules-cl)))
 
-(def s4 (sudoku-prop "1...2...3...4..."))
-(class (sudoku-prop "1...2...3...4..."))
-;(sudoku-prop "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
+(sudoku-prop demopuzzle)
 
 ;; ## Solving the puzzle
 
 ;; some helper for transforming the result of sat
-
 (defn true-only
   "Sequence of true atoms in an assignment vector"
   [assign-vec]
@@ -112,43 +111,48 @@ sects-cl
       (let [atom (first vec) value (second vec)]
         (recur (subvec vec 2) (if value (conj result atom) result))))))
 
-(def true-vec (true-only avec))
-
 (defn true-vec2solution
   "Solution string from vector of true atoms"
   [true-vec]
   (let [vec (sort true-vec)]
     (apply str (map #(nth (name %) 3) vec))))
 
-(true-vec2solution true-vec)
 
-
-
-(defn solve 
+(defn solve
+  "Solve Sudoku puzzle"
   [puzzle]
-  (sat (sudoku-prop puzzle)))
+  #_(sat (sudoku-prop puzzle))
+  (->> puzzle
+       (sudoku-prop)
+       (sat)
+       (true-only)
+       (true-vec2solution)))
 
-(solve "1...2...3...4...")
-;(solve "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
+#_(solve "1...2...3...4...")
 
-(sat (apply list 'and p4))
-; p4 ist okay
+(solve demopuzzle)
+
+;; ## Pretty-printing puzzles and solutions
+
+(defn pretty-print
+  [puzzle]
+  (let [rule "+-----+-----+-----+\n"]
+    (doseq [[row col ch] (map-indexed #(vector (inc (quot %1 n2)) (inc (rem %1 n2)) %2) puzzle)]
+      (if (and (= 1 col) (= 1 (mod row n1))) (print rule))
+      (cond (= 1 (mod col n1)) (print (str "|" ch))
+            (= 2 (mod col n1)) (print (str " " ch " "))
+            (= 0 (mod col n1)) (print ch)
+            )
+      (if (= 9 col) (print "|\n"))
+      )
+    (print rule)))
 
 
-(sat (apply list 'and sects-cl))
-(sat (apply list 'and cell-cl))
-(sat (apply list 'and rows-cl))
-(sat (apply list 'and cols-cl))
-; klappen alle
 
-(def avec (sat s4))
-; klappt
 
-(sat (apply list 'and (min-kof 1 '[p q r])))
-; klappt
-(sat (apply list 'and (max-kof 1 '[p q r])))
-; klappt
-; also liegt es an max-kof
+(pretty-print demopuzzle)
+
+(pretty-print (solve demopuzzle))
 
 ;; ## Parser for files containing puzzles
 ;; The parsers looks for lines with 81 characters, the digits 1-9 and the character .    
@@ -164,14 +168,3 @@ sects-cl
 
 #_(parse "resources/sudoku/easy50.txt")
 #_(parse "resources/sudoku/top95.txt")
-
-(defn puzzle-cl
-  "Clauses for the puzzle."
-  [puzzle]
-  (let [make-vec (fn [idx ch] (if (= ch \.) 
-                                  nil 
-                                  [(inc (quot idx 9)) (inc (rem idx 9)) (- (int ch) (int \0))]))
-        make-cl  (fn [vec] (list 'or (make-sym vec))) ]
-    (map make-cl (filter #(not (nil? %)) (map-indexed make-vec puzzle)))))
-
-#_(puzzle-cl "3...8.......7....51..............36...2..4....7...........6.13..452...........8..")
