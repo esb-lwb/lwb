@@ -276,16 +276,26 @@
     (println (fmt-row "| " " | " " |" header))
     (println (fmt-row "|-" "-+-" "-|" spacers))
     (doseq [row table']
-      (println (fmt-row "| " " | " " |" row))))
+      (println (fmt-row "| " " | " " |" row)))))
 
-(defn print-truth-table 
+(defn print-tt
   "Pretty prints truth-table."
   [{:keys [formula header table]}]
+    [formula header table]
   (let [table' (vec (map #(replace {true "T" false "F"} %) table))]
     (println "Truth table")
     (println formula)
-	  (print-table header table'))))
+	  (print-table header table)))
 
+(def tt (truth-table '(or p q)))
+(:formula tt)
+(:header tt)
+(:table tt)
+(let [{:keys [formula header table]} tt]
+  [formula header table])
+(:keys tt)
+
+(print-tt tt)
 
 ;;# Transformation to conjunctive normal form
 

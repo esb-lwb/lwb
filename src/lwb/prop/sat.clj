@@ -49,8 +49,7 @@
      :cl-set    cl-set}))
 
 ;; ## SAT4J
-
-(def ^:dynamic *sat4j-timeout* 
+(def ^:dynamic *sat4j-timeout*
   "Timeout of Sat4j in seconds."
   300)
 
@@ -127,7 +126,6 @@
 		  (let [parts (map cnf (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi)))))]
 		    (flatten-ops (cons 'and (cons '(and (or ts_1)) parts))))))
 
-
 (defn- remove-tseitin-symbols
   "Removes the tseitin-symbols and their value from an assignment vector."
   [assign-vec]
@@ -169,3 +167,23 @@
 		             res    (sat4j-solve dimacs)]
 		         (if res
 		           (remove-tseitin-symbols res) nil))))))
+
+(defn sat?
+  "Is `phi` satisfiable?"
+  [phi]
+  (if (nil? (sat phi)) false true))
+
+(defn valid?
+  "Is `phi` valid?"
+  [phi]
+  (not (sat? (list 'not phi))))
+
+;(sat? 'p)
+;(sat? '(or p q))
+;(sat? '(not (or p (not p))))
+;(sat? '(and p (not p)))
+
+;(valid? 'p)
+;(valid? '(and p q))
+;(valid? '(or p (not p)))
+;(valid? '(not (and p (not p))))
