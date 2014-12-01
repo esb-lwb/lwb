@@ -278,7 +278,7 @@
     (doseq [row table']
       (println (fmt-row "| " " | " " |" row)))))
 
-(defn print-tt
+(defn print-truth-table
   "Pretty prints truth-table."
   [{:keys [formula header table]}]
     [formula header table]
@@ -295,7 +295,7 @@
   [formula header table])
 (:keys tt)
 
-(print-tt tt)
+(print-truth-table tt)
 
 ;;# Transformation to conjunctive normal form
 

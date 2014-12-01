@@ -136,19 +136,16 @@ sects-cl
 
 (defn pretty-print
   [puzzle]
-  (let [rule "+-----+-----+-----+\n"]
+  (let [rule "+-------+-------+-------+\n"]
     (doseq [[row col ch] (map-indexed #(vector (inc (quot %1 n2)) (inc (rem %1 n2)) %2) puzzle)]
       (if (and (= 1 col) (= 1 (mod row n1))) (print rule))
-      (cond (= 1 (mod col n1)) (print (str "|" ch))
-            (= 2 (mod col n1)) (print (str " " ch " "))
-            (= 0 (mod col n1)) (print ch)
+      (cond (= 1 (mod col n1)) (print (str "| " ch ))
+            (= 2 (mod col n1)) (print (str " " ch ))
+            (= 0 (mod col n1)) (print (str " " ch " "))
             )
       (if (= 9 col) (print "|\n"))
       )
     (print rule)))
-
-
-
 
 (pretty-print demopuzzle)
 
@@ -158,13 +155,27 @@ sects-cl
 ;; The parsers looks for lines with 81 characters, the digits 1-9 and the character .    
 ;; Other lines in the file are ignored
 
-
-  
 (defn parse
   "Parses file with filename and returns a list of puzzles."
   [filename]
   (with-open [rdr (reader filename)]
     (into () (filter #(re-matches #"^([1-9]|\.){81}$" %) (line-seq rdr)))))
 
-#_(parse "resources/sudoku/easy50.txt")
-#_(parse "resources/sudoku/top95.txt")
+;; ## Benchmarks
+(defn bench1
+  []
+  (let [puzzles (parse "resources/sudoku/easy50.txt")]
+    (map solve puzzles)))
+
+(time
+  (doall (bench1)))
+;=> 7.6 sec
+
+(defn bench2
+  []
+  (let [puzzles (parse "resources/sudoku/top95.txt")]
+    (map solve puzzles)))
+
+(time
+  (doall (bench2)))
+;=> 14.5 sec
