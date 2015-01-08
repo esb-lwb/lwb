@@ -12,10 +12,8 @@
             [clojure.set :refer (map-invert)]
             [clojure.zip :as z])
   (:import  (org.sat4j.minisat SolverFactory)
-            (org.sat4j.minisat.core Solver)
             (org.sat4j.core VecInt)
-            (org.sat4j.specs IProblem ContradictionException)
-            (org.sat4j.reader DimacsReader)))
+            (org.sat4j.specs ContradictionException)))
 
 ;; ## Transformation of a formula in cnf to dimacs
 

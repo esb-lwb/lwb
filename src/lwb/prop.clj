@@ -287,15 +287,8 @@
     (println formula)
 	  (print-table header table)))
 
-(def tt (truth-table '(or p q)))
-(:formula tt)
-(:header tt)
-(:table tt)
-(let [{:keys [formula header table]} tt]
-  [formula header table])
-(:keys tt)
-
-(print-truth-table tt)
+#_(def tt (truth-table '(or p q)))
+#_(print-truth-table tt)
 
 ;;# Transformation to conjunctive normal form
 

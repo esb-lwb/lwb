@@ -7,23 +7,31 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-
 (ns lwb.prop.examples.sudoku
   (:require [clojure.java.io :refer (reader)])
   (:require [lwb.prop.cardinality :refer (oneof max-kof min-kof)])
   (:require [lwb.prop.sat :refer (sat)])
 )
 
-; n1 can be 2 or 3
-; the restriction is caused by our choice of a digit string as the
-; representation of a puzzle
-(def n1 3)
-(def n2 (* n1 n1))
-(def n4 (* n2 n2))
-(def nums (range 1 (inc n2)))
+;; Configuration
+(def n1
+  "Order of the grid"
+  3)
+(def n2
+  "Size of the units"
+  (* n1 n1))
+(def n4
+  "Number of cells"
+  (* n2 n2))
+
+(def entries
+  "Entries for cells"
+  (map #(char (+ (int \0) %)) (range 1 (inc n2))))
+
+;; A puzzle is represented as a vector of digits
 
 ;; ## Format for sudoku in Clojure
-;; We represent a puzzle and a solution as a string of n4 digits
+;; We represent a puzzle and a solution as a vector of n4 entries
 ;; or "." for an unknown value in the puzzle
 
 ;; ## Boolean encoding
@@ -36,51 +44,39 @@
   [[row col value]]
   (symbol (str "c" row col value)))
 
-#_(make-sym [1 1 9])
-
 ;; ## Rules of sudoku
-;; The rules as a sequence of clauses are collectoed in the Var 'rules'
+;; The rules as a sequence of clauses are collected in 'rules-cl'
 
 ; Sequence of clauses expressing that each cell has exactly one value
 (def cell-cl
-  (let [cell-syms (partition n2 (for [r nums c nums v nums]
+  (let [cell-syms (partition n2 (for [r entries, c entries, v entries]
                  (make-sym [r c v])))]
     (mapcat oneof cell-syms)))
   
-cell-cl
-
 ; Sequence of clauses expressing that each row has at most one of the values 1..n2
 (def rows-cl
-  (let [rows (partition n2 (for [r nums c nums] [r c]))
-        syms (for [row rows v nums] (map #(make-sym (conj % v)) row ))]
+  (let [rows (partition n2 (for [r entries c entries] [r c]))
+        syms (for [row rows v entries] (map #(make-sym (conj % v)) row ))]
     (mapcat #(max-kof 1 %) syms)))
-
-rows-cl
 
 ; Sequence of clauses expressing that each col has at most one of the values 1..n2
 (def cols-cl
-  (let [cols (partition n2 (for [r nums c nums] [c r]))
-        syms (for [col cols v nums] (map #(make-sym (conj % v)) col ))]
+  (let [cols (partition n2 (for [r entries c entries] [c r]))
+        syms (for [col cols v entries] (map #(make-sym (conj % v)) col ))]
     (mapcat #(max-kof 1 %) syms)))
 
-cols-cl
-
-           
-; Sequence of clauses expressing that each sector has at most one of the values 1..n2
-(def sects-cl 
-  (let [sects (let [s (partition n1 nums)] (for [s1 s, s2 s] (for [r s1 l s2] [r l])))
-        syms (for [sect sects v nums] (map #(make-sym (conj % v)) sect))]
+; Sequence of clauses expressing that each block has at most one of the values 1..n2
+(def blk-cl
+  (let [sects (let [s (partition n1 entries)] (for [s1 s, s2 s] (for [r s1 l s2] [r l])))
+        syms (for [sect sects v entries] (map #(make-sym (conj % v)) sect))]
     (mapcat #(max-kof 1 %) syms)))
-
-sects-cl
 
 ; Sequence of clauses expressing the rules of sudoku
-(def rules-cl (concat cell-cl rows-cl cols-cl sects-cl))
+(def rules-cl (concat cell-cl rows-cl cols-cl blk-cl))
 
-;; ## Encoding a puzzle as a sequence of clauses
-
+;; ## Encoding a the givens as a sequence of clauses
 (defn puzzle-cl
-  "Clauses for the puzzle."
+  "Clauses for the givens of the puzzle."
   [puzzle]
   (let [make-vec (fn [idx ch] (if (= ch \.) 
                                   nil 
@@ -88,20 +84,14 @@ sects-cl
         make-cl  (fn [vec] (list 'or (make-sym vec))) ]
     (map make-cl (filter #(not (nil? %)) (map-indexed make-vec puzzle)))))
 
-
-(def demopuzzle ".24...38.6.72.91.481.7.3.96.48...97...........69...51.75.9.8.414.16.57.9.96...83.")
-
-
 ;; ## Combining a puzzle and the rules to a proposition
 (defn sudoku-prop
   [puzzle]
-  (apply list 'and (concat (puzzle-cl  puzzle) rules-cl)))
-
-(sudoku-prop demopuzzle)
+  (apply list 'and (concat (puzzle-cl puzzle) rules-cl)))
 
 ;; ## Solving the puzzle
 
-;; some helper for transforming the result of sat
+;; some helpers for transforming the result of sat
 (defn true-only
   "Sequence of true atoms in an assignment vector"
   [assign-vec]
@@ -112,44 +102,47 @@ sects-cl
         (recur (subvec vec 2) (if value (conj result atom) result))))))
 
 (defn true-vec2solution
-  "Solution string from vector of true atoms"
+  "Solution from vector of true atoms"
   [true-vec]
   (let [vec (sort true-vec)]
-    (apply str (map #(nth (name %) 3) vec))))
-
+    (mapv #(nth (name %) 3) vec)))
 
 (defn solve
   "Solve Sudoku puzzle"
   [puzzle]
-  #_(sat (sudoku-prop puzzle))
   (->> puzzle
        (sudoku-prop)
        (sat)
        (true-only)
        (true-vec2solution)))
 
-#_(solve "1...2...3...4...")
-
-(solve demopuzzle)
-
 ;; ## Pretty-printing puzzles and solutions
 
 (defn pretty-print
+  "Pretty-printing Sudoku of order 3."
   [puzzle]
   (let [rule "+-------+-------+-------+\n"]
     (doseq [[row col ch] (map-indexed #(vector (inc (quot %1 n2)) (inc (rem %1 n2)) %2) puzzle)]
       (if (and (= 1 col) (= 1 (mod row n1))) (print rule))
-      (cond (= 1 (mod col n1)) (print (str "| " ch ))
-            (= 2 (mod col n1)) (print (str " " ch ))
-            (= 0 (mod col n1)) (print (str " " ch " "))
-            )
+      (if (= 1 (mod col n1)) (print (str "| " ch " ")) (print (str ch " ")))
       (if (= 9 col) (print "|\n"))
       )
     (print rule)))
 
-(pretty-print demopuzzle)
+stop -- the following is the interactive part
 
-(pretty-print (solve demopuzzle))
+;; Sequence of clauses for the rules of Sudoku
+
+rules-cl
+
+;; ## Example of a puzzle
+(def puzzle (vec ".24...38.6.72.91.481.7.3.96.48...97...........69...51.75.9.8.414.16.57.9.96...83."))
+
+puzzle
+
+(pretty-print puzzle)
+
+(pretty-print (solve puzzle))
 
 ;; ## Parser for files containing puzzles
 ;; The parsers looks for lines with 81 characters, the digits 1-9 and the character .    
@@ -159,23 +152,38 @@ sects-cl
   "Parses file with filename and returns a list of puzzles."
   [filename]
   (with-open [rdr (reader filename)]
-    (into () (filter #(re-matches #"^([1-9]|\.){81}$" %) (line-seq rdr)))))
+    (into () (map vec (filter #(re-matches #"^([1-9]|\.){81}$" %) (line-seq rdr))))))
 
 ;; ## Benchmarks
-(defn bench1
-  []
-  (let [puzzles (parse "resources/sudoku/easy50.txt")]
-    (map solve puzzles)))
+(defn bench
+ [puzzles]
+ (time
+  (do
+    (dorun (map solve puzzles))
+    :done)))
 
-(time
-  (doall (bench1)))
-;=> 7.6 sec
+;; easy50.txt
+(def easy50 (parse "resources/sudoku/easy50.txt"))
 
-(defn bench2
-  []
-  (let [puzzles (parse "resources/sudoku/top95.txt")]
-    (map solve puzzles)))
+easy50
 
-(time
-  (doall (bench2)))
-;=> 14.5 sec
+(bench easy50)
+;=> 6.5 secs
+
+;; top95.txt
+(def top95 (parse "resources/sudoku/top95.txt"))
+
+top95
+
+(bench top95)
+;=> 12 secs
+
+;; hardest.txt
+(def hardest (parse "resources/sudoku/hardest.txt"))
+
+hardest
+(count hardest)
+;=> 11
+
+(bench hardest)
+;=> 1.4 secs
