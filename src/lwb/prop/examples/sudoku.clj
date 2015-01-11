@@ -167,7 +167,8 @@ puzzle
 
 easy50
 
-(bench easy50)
+(dotimes [_ 10]
+  (bench easy50))
 ;=> 6.5 secs
 
 ;; top95.txt
@@ -175,15 +176,14 @@ easy50
 
 top95
 
-(bench top95)
+(dotimes [_ 10]
+  (bench top95))
 ;=> 12 secs
 
 ;; hardest.txt
 (def hardest (parse "resources/sudoku/hardest.txt"))
 
-hardest
-(count hardest)
-;=> 11
-
-(bench hardest)
+(dotimes [_ 10]
+  (bench hardest))
 ;=> 1.4 secs
+
