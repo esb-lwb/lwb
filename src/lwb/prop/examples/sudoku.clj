@@ -52,7 +52,7 @@
   (let [cell-syms (partition n2 (for [r entries, c entries, v entries]
                  (make-sym [r c v])))]
     (mapcat oneof cell-syms)))
-  
+
 ; Sequence of clauses expressing that each row has at most one of the values 1..n2
 (def rows-cl
   (let [rows (partition n2 (for [r entries c entries] [r c]))
@@ -67,8 +67,8 @@
 
 ; Sequence of clauses expressing that each block has at most one of the values 1..n2
 (def blk-cl
-  (let [sects (let [s (partition n1 entries)] (for [s1 s, s2 s] (for [r s1 l s2] [r l])))
-        syms (for [sect sects v entries] (map #(make-sym (conj % v)) sect))]
+  (let [blks (let [s (partition n1 entries)] (for [s1 s, s2 s] (for [r s1 l s2] [r l])))
+        syms (for [blk blks v entries] (map #(make-sym (conj % v)) blk))]
     (mapcat #(max-kof 1 %) syms)))
 
 ; Sequence of clauses expressing the rules of sudoku
@@ -101,20 +101,19 @@
       (let [atom (first vec) value (second vec)]
         (recur (subvec vec 2) (if value (conj result atom) result))))))
 
-(defn true-vec2solution
-  "Solution from vector of true atoms"
-  [true-vec]
-  (let [vec (sort true-vec)]
+(defn solution
+  "Solution from assigment vector"
+  [assign-vec]
+  (let [vec (sort (true-only assign-vec))]
     (mapv #(nth (name %) 3) vec)))
 
 (defn solve
   "Solve Sudoku puzzle"
   [puzzle]
-  (->> puzzle
+  (-> puzzle
        (sudoku-prop)
        (sat)
-       (true-only)
-       (true-vec2solution)))
+       (solution)))
 
 ;; ## Pretty-printing puzzles and solutions
 
