@@ -40,13 +40,13 @@ ite | if-then-else | ternary
 
 ### Functions for propositions
 
-#### `wff?` 
+#### Well-formed propositions
 
 Is `phi` a well-formed proposition?   
 `(wff? phi)` returns true or false   
 `(wff? phi :msg)` returns true or a message on the error in `phi`.   
 
-#### `truth-table`
+#### Truth table
 
 The truth table of a proposition is represented as a map with the keys:   
 `:prop`  the proposition itself   
@@ -59,12 +59,12 @@ The truth table of a proposition is represented as a map with the keys:
 `(truth-table phi :false-only)` gives only the rows that evaluate to false   
 `(print-truth-table tt)` prints truth table `tt`  
 
-#### `cnf` and `cnf?`
+#### Conjunctive normal form
 
 `(cnf phi)` transforms proposition `phi` to conjunctive normal form   
 `(cnf? phi)` checks whether `phi` is cnf
 
-#### Satisfiability (namespace `lwb.prop.sat`)
+#### Satisfiability (namespace lwb.prop.sat)
 
 `(tseitin phi)` transforms `phi` to a proposition in cnf that is equivalent  
      to `phi` with respect to satisfiability
@@ -78,14 +78,11 @@ followed by an assigned thruth value, e.g., `[p true q false]`
 `(sat? phi)` Is `phi` satisfiable?    
 `(valid? phi)` Is `phi` valid?
 
-#### Cardinality constraints (namespace `lwb.prop.cardinality`)
+#### Cardinality constraints (namespace lwb.prop.cardinality)
 
-`(min-kof k coll)` -> a seq of clauses expressing that  at least k of the atoms in coll are true
-
-`(max-kof k coll)` -> a seq of clauses expressing that  at most k of the atoms in coll are true
-
-`(kof k coll)` -> a seq of clauses expressing that exactly k of the atoms in coll are true
-
+`(min-kof k coll)` -> a seq of clauses expressing that  at least k of the atoms in coll are true    
+`(max-kof k coll)` -> a seq of clauses expressing that  at most k of the atoms in coll are true    
+`(kof k coll)` -> a seq of clauses expressing that exactly k of the atoms in coll are true    
 `(oneof k coll)` -> a seq of clauses expressing that exactly 1 atoms in coll is true
 
 
