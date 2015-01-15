@@ -7,6 +7,8 @@ lwb is a playground, it's work in progress.
 
 ## Propositional Logic
 
+Namespace `lwb.prop` 
+
 ### Representation of propositions in Clojure
 
 Atomic propostions, short atoms are represented by Clojure symbols,
@@ -38,18 +40,53 @@ ite | if-then-else | ternary
 
 ### Functions for propositions
 
-Is `phi` a well-formed proposition?
-`(wff? phi)` returns true or false
-`(wff? phi :msg)` returns true or a message on the error in `phi`."
+#### `wff?` 
 
-The truth table of a proposition is represented as a map with the keys:
-`:prop`  the proposition itself
-`:header` a vector of the atoms and the last entry `:result`
-`:table` a vector of vectors of boolean assignments to the corresponding atom
-         in the header as well as the result of the evaluation.
-`(truth-table phi)` returns the truth table of proposition `phi` (with <= 10 atoms)
-`(truth-table phi :true-only)` gives only the rows that evaluate to true
-`(truth-table phi :false-only)` gives only the rows that evaluate to false
+Is `phi` a well-formed proposition?   
+`(wff? phi)` returns true or false   
+`(wff? phi :msg)` returns true or a message on the error in `phi`.   
+
+#### `truth-table`
+
+The truth table of a proposition is represented as a map with the keys:   
+`:prop`  the proposition itself   
+`:header` a vector of the atoms and the last entry `:result`   
+`:table` a vector of vectors of boolean assignments to the corresponding atom   
+         in the header as well as the result of the evaluation.   
+         
+`(truth-table phi)` returns the truth table of proposition `phi` (with <= 10 atoms)   
+`(truth-table phi :true-only)` gives only the rows that evaluate to true   
+`(truth-table phi :false-only)` gives only the rows that evaluate to false   
+`(print-truth-table tt)` prints truth table `tt`  
+
+#### `cnf` and `cnf?`
+
+`(cnf phi)` transforms proposition `phi` to conjunctive normal form   
+`(cnf? phi)` checks whether `phi` is cnf
+
+#### Satisfiability (namespace `lwb.prop.sat`)
+
+`(tseitin phi)` transforms `phi` to a proposition in cnf that is equivalent  
+     to `phi` with respect to satisfiability
+     
+An assignment vector is a vector of the atoms of a proposition each one
+followed by an assigned thruth value, e.g., `[p true q false]`      
+
+`(sat phi)` returns an assignment vector if `phi` is satisfiable, `nil` otherwise   
+`(sat phi :all)` returns a sequence of all satisfying valuations   
+
+`(sat? phi)` Is `phi` satisfiable?    
+`(valid? phi)` Is `phi` valid?
+
+#### Cardinality constraints (namespace `lwb.prop.cardinality`)
+
+`(min-kof k coll)` -> a seq of clauses expressing that  at least k of the atoms in coll are true
+
+`(max-kof k coll)` -> a seq of clauses expressing that  at most k of the atoms in coll are true
+
+`(kof k coll)` -> a seq of clauses expressing that exactly k of the atoms in coll are true
+
+`(oneof k coll)` -> a seq of clauses expressing that exactly 1 atoms in coll is true
 
 
 ## License
