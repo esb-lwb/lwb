@@ -64,13 +64,15 @@ The truth table of a proposition is represented as a map with the keys:
 `(cnf phi)` transforms proposition `phi` to conjunctive normal form   
 `(cnf? phi)` checks whether `phi` is cnf
 
-#### Satisfiability (namespace lwb.prop.sat)
+#### Satisfiability 
 
-`(tseitin phi)` transforms `phi` to a proposition in cnf that is equivalent  
-     to `phi` with respect to satisfiability
+Namespace `lwb.prop.sat`
+
+`(tseitin phi)` transforms `phi` to a proposition in cnf that is equivalent 
+to `phi` with respect to satisfiability
      
 An assignment vector is a vector of the atoms of a proposition each one
-followed by an assigned thruth value, e.g., `[p true q false]`      
+followed by an assigned truth value, e.g., `[p true q false]`      
 
 `(sat phi)` returns an assignment vector if `phi` is satisfiable, `nil` otherwise   
 `(sat phi :all)` returns a sequence of all satisfying valuations   
@@ -78,7 +80,9 @@ followed by an assigned thruth value, e.g., `[p true q false]`
 `(sat? phi)` Is `phi` satisfiable?    
 `(valid? phi)` Is `phi` valid?
 
-#### Cardinality constraints (namespace lwb.prop.cardinality)
+#### Cardinality constraints 
+
+Namespace `lwb.prop.cardinality`
 
 `(min-kof k coll)` -> a seq of clauses expressing that  at least k of the atoms in coll are true    
 `(max-kof k coll)` -> a seq of clauses expressing that  at most k of the atoms in coll are true    
@@ -92,3 +96,6 @@ Copyright (C) 2014 by Burkhardt Renz, based on work of Markus Bader and
 Daniel Kirsten, Technische Hochschule Mittelhessen (THM).
 
 Distributed under the Eclipse Public License, the same as Clojure.
+
+lwb uses [SAT4J](http://www.sat4j.org), licensed under both the Eclipse Public License and the 
+GNU LGPL licence.
