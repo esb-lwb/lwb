@@ -201,11 +201,11 @@
 
 ;;## Representation of the truth table of a formula
 
-;; The truth table of a formula `phi` is represented as a map
+;; The truth table of a proposition `phi` is represented as a map
 ;; with the keys:
 
-;; `:formula` with the formula itself             
-;; `:header` a vector of the propositional atoms and the last entry 
+;; `:prop` with the proposition itself
+;; `:header` a vector of the atoms and the last entry
 ;;  named `:result`.          
 ;; `:table` a vector of vectors of boolean assignments to the 
 ;; corresponding atom in the header as well as the reult of the evaluation.
@@ -244,7 +244,7 @@
 	    
 	    (let [all-combs (selections [true false] (count atoms))
 	          assign-vecs (for [comb all-combs] (vec (interleave atoms comb)))]
-         {:formula phi
+         {:prop phi
           :header  (conj (vec atoms) :result)
 	        :table   (vec (for [assign-vec assign-vecs]
                           (conj (vec (take-nth 2 (rest assign-vec)))
@@ -280,11 +280,11 @@
 
 (defn print-truth-table
   "Pretty prints truth-table."
-  [{:keys [formula header table]}]
-    [formula header table]
+  [{:keys [prop header table]}]
+    [prop header table]
   (let [table' (vec (map #(replace {true "T" false "F"} %) table))]
     (println "Truth table")
-    (println formula)
+    (println prop)
 	  (print-table header table)))
 
 #_(def tt (truth-table '(or p q)))

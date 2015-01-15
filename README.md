@@ -36,6 +36,20 @@ equiv | equivalence | binary
 xor | exclusive or | binary
 ite | if-then-else | ternary
 
+### Functions for propositions
+
+Is `phi` a well-formed proposition?
+`(wff? phi)` returns true or false
+`(wff? phi :msg)` returns true or a message on the error in `phi`."
+
+The truth table of a proposition is represented as a map with the keys:
+`:prop`  the proposition itself
+`:header` a vector of the atoms and the last entry `:result`
+`:table` a vector of vectors of boolean assignments to the corresponding atom
+         in the header as well as the result of the evaluation.
+`(truth-table phi)` returns the truth table of proposition `phi` (with <= 10 atoms)
+`(truth-table phi :true-only)` gives only the rows that evaluate to true
+`(truth-table phi :false-only)` gives only the rows that evaluate to false
 
 
 ## License
