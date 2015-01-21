@@ -24,7 +24,7 @@
   "Number of cells"
   (* n2 n2))
 
-(def entries
+(def digits
   "Entries for cells"
   (map #(char (+ (int \0) %)) (range 1 (inc n2))))
 
@@ -36,8 +36,8 @@
 
 ;; ## Boolean encoding
 ;; We have n2 * n2 atoms, expressing whether a cell with coordinates 'row' and 'col'
-;; has the value 'value'. The atoms are represented by symbols of the form 'cxyz',
-;; with 'x' the row, 'y' the column and 'z' the value.
+;; has the value 'value'. The atoms are represented by symbols of the form 'cxyd',
+;; with 'x' the row, 'y' the column and 'd' the value.
 
 (defn- make-sym 
   "Makes a symbol from [row, col, value]."
@@ -49,26 +49,25 @@
 
 ; Sequence of clauses expressing that each cell has exactly one value
 (def cell-cl
-  (let [cell-syms (partition n2 (for [r entries, c entries, v entries]
-                 (make-sym [r c v])))]
+  (let [cell-syms (partition n2 (for [x digits, y digits, d digits] (make-sym [x y d])))]
     (mapcat oneof cell-syms)))
 
 ; Sequence of clauses expressing that each row has at most one of the values 1..n2
 (def rows-cl
-  (let [rows (partition n2 (for [r entries c entries] [r c]))
-        syms (for [row rows v entries] (map #(make-sym (conj % v)) row ))]
+  (let [rows (partition n2 (for [r digits c digits] [r c]))
+        syms (for [row rows d digits] (map #(make-sym (conj % d)) row ))]
     (mapcat #(max-kof 1 %) syms)))
 
 ; Sequence of clauses expressing that each col has at most one of the values 1..n2
 (def cols-cl
-  (let [cols (partition n2 (for [r entries c entries] [c r]))
-        syms (for [col cols v entries] (map #(make-sym (conj % v)) col ))]
+  (let [cols (partition n2 (for [r digits c digits] [c r]))
+        syms (for [col cols d digits] (map #(make-sym (conj % d)) col ))]
     (mapcat #(max-kof 1 %) syms)))
 
 ; Sequence of clauses expressing that each block has at most one of the values 1..n2
 (def blk-cl
-  (let [blks (let [s (partition n1 entries)] (for [s1 s, s2 s] (for [r s1 l s2] [r l])))
-        syms (for [blk blks v entries] (map #(make-sym (conj % v)) blk))]
+  (let [blks (let [s (partition n1 digits)] (for [s1 s, s2 s] (for [r s1 l s2] [r l])))
+        syms (for [blk blks d digits] (map #(make-sym (conj % d)) blk))]
     (mapcat #(max-kof 1 %) syms)))
 
 ; Sequence of clauses expressing the rules of sudoku
@@ -120,19 +119,20 @@
 (defn pretty-print
   "Pretty-printing Sudoku of order 3."
   [puzzle]
-  (let [rule "+-------+-------+-------+\n"]
+  (let [ruler "+-------+-------+-------+\n"]
     (doseq [[row col ch] (map-indexed #(vector (inc (quot %1 n2)) (inc (rem %1 n2)) %2) puzzle)]
-      (if (and (= 1 col) (= 1 (mod row n1))) (print rule))
+      (if (and (= 1 col) (= 1 (mod row n1))) (print ruler))
       (if (= 1 (mod col n1)) (print (str "| " ch " ")) (print (str ch " ")))
       (if (= 9 col) (print "|\n"))
       )
-    (print rule)))
+    (print ruler)))
 
 stop -- the following is the interactive part
 
 ;; Sequence of clauses for the rules of Sudoku
 
 rules-cl
+(count rules-cl)
 
 ;; ## Example of a puzzle
 (def puzzle (vec ".24...38.6.72.91.481.7.3.96.48...97...........69...51.75.9.8.414.16.57.9.96...83."))

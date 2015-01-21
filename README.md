@@ -11,7 +11,7 @@ Namespace `lwb.prop`
 
 ### Representation of propositions in Clojure
 
-Atomic propostions, short atoms are represented by Clojure symbols,
+Atomic propositions, short atoms, are represented by Clojure symbols,
 e.g., `p` or `q`.
 
 The propositional constants for truth and falsity are represented
@@ -19,7 +19,7 @@ by `true` and `false`, respectively.
 
 A proposition is an atom or a constant, or an expression composed
 of boolean operators, propositional atoms and constants in the usual
-lispy syntax, e.g. `(impl p (impl q p)`.
+lispy syntax, e.g., `(impl p (impl q p)`.
 
 ### The operators of propositional logic
 
