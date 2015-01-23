@@ -176,12 +176,3 @@
   [phi]
   (not (sat? (list 'not phi))))
 
-;(sat? 'p)
-;(sat? '(or p q))
-;(sat? '(not (or p (not p))))
-;(sat? '(and p (not p)))
-
-;(valid? 'p)
-;(valid? '(and p q))
-;(valid? '(or p (not p)))
-;(valid? '(not (and p (not p))))

@@ -16,7 +16,6 @@
    at least k of the symbols in coll are true."
   [k coll]
   {:pre [(<= 1 k (count coll))]}
-  ;(map #(cons 'or %)(combinations coll (inc (- (count coll) k)))))
   (map #(apply list 'or %)(combinations coll (inc (- (count coll) k)))))
 
 (min-kof 1 '[p q])
@@ -31,15 +30,8 @@
   (if (= k 0)
     (map #(list 'not %) coll))
           (for [s (combinations coll (inc k))]
-            ;(cons 'or (map #(list 'not %) s))))
             (apply list 'or (map #(list 'not %) s))))
 
-;(max-kof 0 '[p q])
-;(max-kof 1 '[p q])
-
-;(max-kof 0 '[p q r])
-;(max-kof 1 '[p q r])
-;(max-kof 2 '[p q r])
 
 (defn kof
   "(kof k coll) -> a seq of clauses expressing that
@@ -50,12 +42,6 @@
     (count coll) (min-kof k coll)
     (concat (min-kof k coll) (max-kof k coll))))
 
-;(kof 1 '[p q])
-;(kof 2 '[p q])
-;(kof 0 '[p q])
-;(kof 1 '[p q r])
-;(kof 2 '[p q r])
-
 (defn oneof
   "(oneof k coll) -> a seq of clauses expressing that
    exactly 1 symbol in coll ist true."
@@ -64,6 +50,3 @@
     false
     (kof 1 coll)))
 
-;(oneof '[p q])
-;(oneof '[p q r])
-;(oneof '[p q])

@@ -187,3 +187,4 @@ top95
 ;=> 137 msecs per puzzle
 
 ; average 139 msecs per puzzle
+

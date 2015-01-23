@@ -87,7 +87,7 @@ Namespace `lwb.prop.cardinality`
 `(min-kof k coll)` -> a seq of clauses expressing that  at least k of the atoms in coll are true    
 `(max-kof k coll)` -> a seq of clauses expressing that  at most k of the atoms in coll are true    
 `(kof k coll)` -> a seq of clauses expressing that exactly k of the atoms in coll are true    
-`(oneof k coll)` -> a seq of clauses expressing that exactly 1 atoms in coll is true
+`(oneof coll)` -> a seq of clauses expressing that exactly 1 atoms in coll is true
 
 
 ## License
