@@ -188,3 +188,18 @@ top95
 
 ; average 139 msecs per puzzle
 
+(def p88 (nth top95 88))
+(def p92 (nth top95 92))
+
+(- 81 (count (filter zero? p88)))
+; => 17
+(time (solve p88))
+; 445 msecs
+
+(pretty-print p88)
+(pretty-print (solve p88))
+
+(- 81 (count (filter zero? p92)))
+; => 17
+(time (solve p92))
+; 186 msecs
