@@ -34,9 +34,12 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Leiningen: clojure-complete:0.2.3" level="project" />
-    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.6.0" level="project" />
-    <orderEntry type="library" name="Leiningen: org.clojure/math.combinatorics:0.0.8" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.7.0" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/math.combinatorics:0.1.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.nrepl:0.2.6" level="project" />
     <orderEntry type="library" name="Leiningen: org.ow2.sat4j/org.ow2.sat4j.core:2.3.5" level="project" />
+    <orderEntry type="library" name="Leiningen: potemkin:0.3.13" level="project" />
+    <orderEntry type="library" name="Leiningen: clj-tuple:0.2.1" level="project" />
+    <orderEntry type="library" name="Leiningen: riddley:0.1.7" level="project" />
   </component>
 </module>

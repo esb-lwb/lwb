@@ -9,8 +9,7 @@
 (ns lwb.prop
   (:require [clojure.walk :refer (postwalk)]
             [clojure.set  :refer (union intersection)]
-            [clojure.math.combinatorics :refer (selections)]
-            [clojure.zip :as z]))
+            [clojure.math.combinatorics :refer (selections)]))
 
 ;; # Representation of propositional formulae
 
@@ -29,65 +28,24 @@
 ;; * not -- unary, provided by Clojure
 ;; * and -- n-ary, provided by Clojure
 ;; * or  -- n-ary, provided by Clojure
-;; * nand -- negated and, binary
-;; * nor -- negated or, binary
 ;; * impl -- implication, binary
-;; * nimpl -- negated implication, binary
-;; * cimpl -- converse implication, binary
-;; * ncimpl -- negated converse implication, binary
 ;; * equiv -- equivalence, binary
 ;; * xor -- exclusive or, binary
 ;; * ite -- if-then-else, ternary
 
-;; ### Hints
-;; 1. The operators are defined as macros
-;; 2. We don't use syntax-quoting, because we don't want to have qualified
-;;    names after expansion
-;; 3. The macros must not be changed to functions,
-;;    because transformations (to cnf e.g.) use them with macroexpand!
-
-(defmacro nand
-  "Logical negated and."
-  [phi psi]
-  (list 'not 
-    (list 'and phi psi)))
-
-(defmacro nor
-  "Logical negated or."
-  [phi psi]
-  (list 'not 
-        (list 'or phi psi)))
 
 (defmacro impl
   "Logical implication."
   [phi psi]
-  (list 'or 
+  (list 'or
         (list 'not phi) psi))
 
-(defmacro nimpl 
-  "Negated logical implication."
-  [phi psi]
-  (list 'not 
-        (list 'impl phi psi)))
-
-(defmacro cimpl
-  "Converse logical implication."
-  [phi psi]
-  (list 'or
-    (list 'not psi) phi))
-
-(defmacro ncimpl 
-  "Negated converse logical implication."
-  [phi psi]
-  (list 'not
-    (list 'cimpl phi psi)))
-
 (defmacro equiv
-   "Logical equivalence."
-   [phi psi]
-   (list 'and
-         (list 'impl phi psi)
-         (list 'impl psi phi)))
+  "Logical equivalence."
+  [phi psi]
+  (list 'and
+        (list 'impl phi psi)
+        (list 'impl psi phi)))
 
 (defmacro xor
   "Logical exclusive or."
@@ -99,31 +57,36 @@
   "Logical if-then-else."
   [i t e]
   (list 'or (list 'and i t)
-            (list 'and (list 'not i) e))) 
+        (list 'and (list 'not i) e)))
 
-;;## Constants and utility functions in the context of operators
+;; ## Utility functions in the context of operators
 
-(defn operator?
+(defn op?
   "Is `symb` an operator of propositional logic?"
   [symb]
-  (let [operators #{'not 'and 'nand 'or 'nor 'impl 'nimpl 
-                    'cimpl 'ncimpl 'equiv 'xor 'ite}]
+  (let [operators #{'not 'and 'or 'impl 'equiv 'xor 'ite}]
     (contains? operators symb)))
 
-(defn constant?
-  "Is `symb` a constant of propositional logic?"
+(defn torf?
+  "Is `symb` a constant of logic, i.e. `true` or `false`?"
   [symb]
   (or (= 'true symb) (= 'false symb)))
 
+(defn atom?
+  "Is `symb` an atomar proposition?"
+  [symb]
+  (and (symbol? symb) (not (op? symb)) (not (torf? symb))))
+
 (defn arity
   "Arity of operator `op`.   
-   -1 means n-ary, but better use `n-ary?`."  
-   [op]
-   (cond
-     (= op 'not) 1
-     (contains? #{'nand 'nor 'impl 'nimpl 'cimpl 'ncimpl 'equiv 'xor} op) 2
-     (= op 'ite) 3
-     (contains? #{'and 'or} op) -1))
+   -1 means n-ary, but better use `n-ary?`.
+   requires: `op` an operator."
+  [op]
+  (cond
+    (= op 'not) 1
+    (contains? #{'impl 'equiv 'xor} op) 2
+    (= op 'ite) 3
+    (contains? #{'and 'or} op) -1))
 
 (defn unary?
   "Is `op` an unary operator?"
@@ -140,66 +103,50 @@
   [op]
   (= 3 (arity op)))
 
-(defn n-ary?
+(defn nary?
   "Is `op` an n-ary operator?"
   [op]
   (= -1 (arity op)))
+;; ## Is a formula well-formed?
 
-(defn atom?
-  "Checks whether `phi` is a propositional atom or a constant.
-   `phi` must not be an operator."
+(declare wff?)
+
+(defn op-expr?
   [phi]
-  (or (symbol? phi) (constant? phi)))
+  (if (not (op? (first phi)))
+    false
+    (let [a (arity (first phi))
+          c (dec (count phi))]
+      (if (and (not= a -1) (not= a c))
+        (throw (IllegalStateException. (str "expected operator with arity " a ", got " phi)))
+        (every? wff? (rest phi))))))
 
-(defn literal?
-  "Checks whether `phi` is a literal, i.e. a propositional atom or its negation."
+(defn simple-expr?
   [phi]
-  (or (atom? phi) 
-      (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) (atom? (second phi)))))
+  (or (torf? phi) (atom? phi)))
 
-;;## Is a formula well-formed?
-
-(defn locs-phi
-  "Sequence of all the locations of a zipper generated from the formula `phi`."
+(defn compound-expr?
   [phi]
-  (take-while (complement z/end?) (iterate z/next (z/seq-zip phi))))
- 
-(defn- check-loc
-  "Checks a location whether the subformula is well-formed.  
-   Throws an exception, if not."
-  [loc]
-  (let [node (z/node loc)]
-	  (if (z/branch? loc)
-	    (cond
-	      (not (list? node)) (throw (IllegalStateException. (str node " is not a list.")))
-	      (empty? node) (throw (IllegalStateException. "Formula has a branch '()'."))
-        (not (operator? (first node))) (throw (IllegalStateException. (str (first node) " in "  node " is not an operator.")))
-        :else (let [op (first node)
-                    cnt (dec (count (z/children loc)))]
-                (if (and (> (arity op) 0) (not= (arity op) cnt))
-                  (throw (IllegalStateException. (str op " has " cnt " operators."))))))
-                
-     ; else
-      (if (and (not= loc (z/leftmost loc)) (or (operator? node) (not (atom? node))))
-        (throw (IllegalStateException. (str node " is not an atom.")))))))
+  (cond
+    (not (list? phi)) (throw (IllegalStateException. (str "expected list, got " phi)))
+    (empty? phi) (throw (IllegalStateException. "expected not empty list, got '()'."))
+    (not (op? (first phi))) (throw (IllegalStateException. (str "expected operator, got " phi)))
+    :else (or (op-expr? phi)))) 
 
 (defn wff?
-  "Is `phi` a well-formed formula?   
+  "Is the proposition `phi` well-formed ?
    `(wff? phi)` returns true or false   
    `(wff? phi :msg)` returns true or a message on the error in `phi`."
-   ([phi]
-     (wff? phi :bool))
-   ([phi mode]
-     (let [loc-seq (locs-phi phi)]
-       (try
-         (dorun (map check-loc loc-seq))
-         true
-         (catch Exception e (if (= mode :msg) (.getMessage e) false))))))
+  ([phi]
+   (wff? phi :bool))
+  ([phi mode]
+   (try
+     (or (simple-expr? phi) (compound-expr? phi))
+     (catch Exception e (if (= mode :msg) (.getMessage e) false)))))
 
+;; # Thruth table
 
-;;# Thruth table
-
-;;## Representation of the truth table of a formula
+;; ## Representation of the truth table of a formula
 
 ;; The truth table of a proposition `phi` is represented as a map
 ;; with the keys:
@@ -215,7 +162,7 @@
   [phi]
   (if (coll? phi)
     (apply sorted-set 
-           (filter #(not (or (operator? %) (constant? %))) (flatten phi)))
+           (filter #(not (or (op? %) (torf? %))) (flatten phi)))
     #{phi}))
 
 (defn eval-phi 
@@ -301,6 +248,13 @@
 ;; I.e. in lwb when transforming formula to cnf, we reduce it to this
 ;; standard form.
 
+(defn literal?
+  "Checks whether `phi` is a literal, i.e. a propositional atom or its negation."
+  [phi]
+  (or (atom? phi) (torf? phi)
+      (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) 
+           (or (atom? (second phi)) (torf? (second phi))))))
+
 (defn impl-free 
   "Normalize formula `phi` such that just the operators `not`, `and`, `or` are used."
   [phi]
@@ -354,7 +308,7 @@
    e.g. `(and (and a b) c) => (and a b c)`."
   [phi]
   (let [flat-step (fn [sub-phi]
-						        (if (and (coll? sub-phi) (n-ary? (first sub-phi)))
+						        (if (and (coll? sub-phi) (nary? (first sub-phi)))
 						          (let [op (first sub-phi)
                             args (rest sub-phi)
 						                flat-filter (fn [op arg] (if (coll? arg) (= op (first arg)) false))
@@ -410,4 +364,4 @@
   [phi]
   (let [clause? (fn [psi] (and (list? psi) (= 'or (first psi)) (every? literal? (rest psi))))]
     (and (list? phi) (= 'and (first phi)) (every? clause? (rest phi)))))
-        
+       

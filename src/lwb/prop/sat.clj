@@ -176,3 +176,7 @@
   [phi]
   (not (sat? (list 'not phi))))
 
+
+(def example '(nimpl (and a1 a2) x))
+
+(cnf example)
