@@ -78,7 +78,7 @@
 ;; We import the operators and so forth from propositional logic
 (pot/import-vars
   [lwb.prop impl equiv xor ite
-            op? torf? atom?])
+            op? torf?])
 
 ;; ## Quantors in predicate logic
 (defn quantor?
