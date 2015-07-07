@@ -131,7 +131,7 @@
     (not (list? phi)) (throw (IllegalStateException. (str "expected list, got " phi)))
     (empty? phi) (throw (IllegalStateException. "expected not empty list, got '()'."))
     (not (op? (first phi))) (throw (IllegalStateException. (str "expected operator, got " phi)))
-    :else (or (op-expr? phi)))) 
+    :else (op-expr? phi))) 
 
 (defn wff?
   "Is the proposition `phi` well-formed ?
