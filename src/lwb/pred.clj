@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2014 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2015 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -37,8 +37,13 @@
 ;;  :f [:func  2]
 ;;  :a [:prop  0]
 ;;  :p [:pred  1]}
-;; defines a signature comoprising the constant `c`, the binary function `f`,
+;; defines a signature comprising the constant `:c`, the binary function `f`,
 ;; the proposition `a`, and the unary predicate `p`.
+
+;; Constants are represented as keywords in Clojure. Thus it's not necessary
+;; to declare them in the signature. The declaration in the signature is just
+;; the documentation, but even an undeclared keyword ist recognized and accepted
+;; in a formula.
 
 ;; ## Utility functions for signatures
 
@@ -47,9 +52,9 @@
   (and (symbol? symb) (= (first ((keyword symb) sig)) type)))
 
 (defn const?
-  "Is `symb` a constant in the signatur `sig`"
-  [symb sig]
-  (sig-what :const symb sig))
+  "Is `keyword` a constant?"
+  [kw]
+  (keyword? kw))
 
 (defn func?
   "Is `symb` a function in the signatur `sig`"
@@ -99,7 +104,7 @@
   (if (not (symbol? symb))
     false
     (not (or (op? symb) (torf? symb) (quantor? symb) (eq? symb)
-             (const? symb sig) (func? symb sig) (pred? symb sig) (prop? symb sig)))))
+             (func? symb sig) (pred? symb sig) (prop? symb sig)))))
 
 ;; ## Well-formed first-order formulae
 ;; The check whether a formula is well-formed reflects the grammer of
@@ -124,8 +129,8 @@
   "Is `symb` a single term with respect to `sig`?"
   [symb sig]
   (if (not (symbol? symb))
-    false
-    (or (var? symb sig) (const? symb sig))))
+    (const? symb)
+    (var? symb sig)))
 
 (defn term?
   "Is `texpr` a term?"
