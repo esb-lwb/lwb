@@ -117,7 +117,7 @@
   [phi]
   (cond
     ; border cases
-    (constant? phi) phi
+    (torf? phi) phi
     (atom? phi) (list 'and (list 'or phi))
     ; actual transformation
     :else

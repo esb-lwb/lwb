@@ -92,3 +92,5 @@
   (is (= true (wff? '(forall [x] (exists [y] (P2 x y))) sig)))
   (is (= true (wff? '(P2 x y) sig)))
   (is (= true (wff? '(ite (P2 x y) r (eq :c :d)) sig))))
+
+(run-tests)

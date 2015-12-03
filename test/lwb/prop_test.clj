@@ -198,4 +198,5 @@
   (is (= '(and (or p)) (cnf '(ite false true p))))
   (is (= '(and (or p) (or q (not p)) (or q)) (cnf '(ite p q false))))
 )      
-  
+
+(run-tests)
