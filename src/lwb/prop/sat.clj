@@ -121,7 +121,7 @@
     (atom? phi) (list 'and (list 'or phi))
     ; actual transformation
     :else
-		  (let [parts (map cnf (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi)))))]
+		  (let [parts (map cnf (map tseitin-branch (filter z/branch? (compound-expr? (mark-phi phi)))))]
 		    (flatten-ops (cons 'and (cons '(and (or ts_1)) parts))))))
 
 (defn- remove-tseitin-symbols
