@@ -33,8 +33,11 @@
                      ;; sort the line-numbers asc
                      lines-2 (if (zero? (count lines-1))
                                ""
-                               (str "(" (str/join " " (sort (str/split lines-1 #"\s+(?=[^\])}]*([\[({]|$))"))) ")"))]
-                 (str name lines-2)))]
+                               (str "(" (str/join " " (sort (str/split lines-1 #"\s+(?=[^\])}]*([\[({]|$))"))) ")"))
+                                          user-inputs (subs (:rule item) (.lastIndexOf (:rule item) "["))
+                                          user-inputs-1 (if (> (count user-inputs) 2)
+                                                          (str " " user-inputs) nil)]
+                                  (str name lines-2 user-inputs-1)))]
     (print (pp/cl-format nil "~3d: " line))
     (when (pos? depth)
       (print " ")

@@ -464,7 +464,7 @@ In case there is nothing to choose or the num is invalid, throws an exception."
         optional-items   (:optional info)
         ;; seperate ids (from lines) and inputs (from user-input))
         obligatory-ids   (map get-item-id (filter map? obligatory-items))
-        obligatory-user-input (remove map? obligatory-items)
+        obligatory-user-input (into [] (remove map? obligatory-items))
         
         obligatory-args (into [] (map item-to-rule-arg obligatory-items))
         optional-args   (into [] (map item-to-rule-arg optional-items))        
@@ -501,7 +501,7 @@ In case there is nothing to choose or the num is invalid, throws an exception."
         optional-items   (:optional info)
         optional-ids     (map get-item-id optional-items)
         ;; seperate user-inputs from obligatory-items
-        obligatory-user-input (remove map? obligatory-items)
+        obligatory-user-input (into [] (remove map? obligatory-items))
         obligatory-args (into [] (map item-to-rule-arg obligatory-items))
         optional-args   (into [] (map item-to-rule-arg optional-items))
         rule-result (apply rules/apply-rule (conj [rule false] obligatory-args optional-args ))]
