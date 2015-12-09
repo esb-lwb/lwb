@@ -19,7 +19,7 @@
 
 ;; ## Signatures
 
-;; A signature for a langugae of predicate logic comprises the definition
+;; A signature for a language of predicate logic comprises the definition
 ;; of
 
 ;; * constants (which can be seen as functions with arity 0),
@@ -42,7 +42,7 @@
 
 ;; Constants are represented as keywords in Clojure. Thus it's not necessary
 ;; to declare them in the signature. The declaration in the signature is just
-;; the documentation, but even an undeclared keyword ist recognized and accepted
+;; the documentation, but even an undeclared keyword is recognized and accepted
 ;; in a formula.
 
 ;; ## Utility functions for signatures
@@ -201,8 +201,8 @@
 
 (defn wff?
   "Is the first order formula `phi` well-formed, with respect to signature `sig` ?
-   `(fof-wff? phi sig)` returns true or false   
-   `(fof-wff? phi sig :msg)` returns true or a message on the error in `phi`."
+   `(wff? phi sig)` returns true or false   
+   `(wff? phi sig :msg)` returns true or a message on the error in `phi`."
   ([phi sig]
    (wff? phi sig :bool))
   ([phi sig mode]
