@@ -125,12 +125,17 @@
               (throw (IllegalStateException. (str "expected arity " a ", got " texpr)))
               (every? #(term? % sig) (rest texpr))))))
 
+(defn nullary-func?
+  "Is `symb` a function of arity `0` with respect to `sig`?"
+  [symb sig]
+  (and (func? symb sig) (= (arity symb sig) 0)))
+
 (defn simple-term?
   "Is `symb` a single term with respect to `sig`?"
   [symb sig]
   (if (not (symbol? symb))
     (const? symb)
-    (var? symb sig)))
+    (or (var? symb sig) (nullary-func? symb sig))))
 
 (defn term?
   "Is `texpr` a term?"
@@ -210,4 +215,34 @@
      (or (simple-expr? phi sig) (compound-expr phi sig))
      (catch Exception e (if (= mode :msg) (.getMessage e) false)))))
 
+
+;; ## Models
+
+;; A model is a "world" consisting of a universe, as well as functions and relations 
+;; on the universe. A model assigns concrete functions and relations to the
+;; function symbols and relation symbols defined in a signature.
+
+;; Models are represented in Clojure as maps.
+;; The key `:univ` denotes the universe, the value is a set of constants
+;; Functions are given by the keyword build from the name of the function, 
+;; together with a vector consisting of the keyword `:func`, the arity of the
+;; function and the function itsself.
+;; Propositions are given by the keyword build from the name of the
+;; proposition together with a vector consisting of the keyword `:prop`,
+;; the arity `0` and the value for the proposition i.e. `true` or `false`.   
+;; Relations are given by the keyword build from the name of the corresponding
+;; predicate symbol together with a vector consisting of the keyword `:pred`, 
+;; the arity of the relation and a set of vectors representing the relation
+
+;; Example for a group of 2 elements:
+;; {:univ #{:0 :1}
+;;  :op   [:func 2 (fn [x y] (body of function for group operation))]
+;;  :inv  [:func 1 (fn [x] (body of function for inverse))]
+;;  :unit [:func 0 :0]}
+
+(defn eval-phi
+  "Evaluates the formula `phi` with respect to the given 
+   model."
+  [phi model]
+  (model))
 

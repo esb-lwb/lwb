@@ -15,6 +15,7 @@
 
 (def sig {:c  [:const 0]
           :d  [:const 0]
+          :f0 [:func 0]
           :f1 [:func 1]
           :f2 [:func 2]
           :f3 [:func 3]
@@ -65,6 +66,7 @@
 
 (deftest term-test
   (is (= true (term? 'x sig)))
+  (is (= true (term? 'f0 sig)))
   (is (= true (term? '(f1 y) sig)))
   (is (= true (term? '(f1 :c) sig)))
   (is (= true (term? '(f3 x y z) sig)))
@@ -80,6 +82,7 @@
 
 (deftest equality-test
   (is (= true (equality? '(eq x y) sig)))
+  (is (= true (equality? '(eq x f0) sig)))
   (is (= true (equality? '(eq x (f1 y)) sig)))
   (is (= true (equality? '(eq (f1 :c) :d) sig)))
   (is (= true (equality? '(eq (f3 x y z) x) sig)))
