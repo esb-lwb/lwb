@@ -271,7 +271,7 @@
     (eval `(let ~assign-vec ~phi)))))
 
 (defmacro make-pred 
-  "Generates a predicate indicating that the given parameters
+  "Generates a predicate indicating that the parameters to the predicate
    fulfill the given relation"
   [rel]
   `(fn [& ~'more] (contains? ~rel (vec ~'more))))
