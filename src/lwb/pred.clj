@@ -232,7 +232,8 @@
 ;; the arity `0` and the value for the proposition i.e. `true` or `false`.   
 ;; Relations are given by the keyword build from the name of the corresponding
 ;; predicate symbol together with a vector consisting of the keyword `:pred`, 
-;; the arity of the relation and a set of vectors representing the relation
+;; the arity of the relation and a predicate constrcuted by `make-pred` from
+;; the provided relation.
 
 ;; Example for a group of 2 elements:
 ;; {:univ #{:0 :1}
@@ -240,9 +241,55 @@
 ;;  :inv  [:func 1 (fn [x] (body of function for inverse))]
 ;;  :unit [:func 0 :0]}
 
+;; Example for a family:
+;; {:univ #{:eve :adam :joe :susan :anne}
+;;  :mother [:pred 2 (fn [mother child] (let [rel #{[:eve :joe] [:eve :susan] [:susan :anne]}]
+;;                                        (contains? rel [mother child])))]}
+
+;; Construct an assignment vector from a model, i.e. bindings of the model elements 
+;; to symbols according to given keywords
+;; :pre well-formed model
+
+(defn- modelmap 
+   "Checks type of entry in model and returns binding appropriate to type."
+  [[keyw value]]
+  (if (= keyw :univ)
+    ['univ value]
+    [(symbol (name keyw)) (nth value 2)])))
+
+(defn- model2assign-vec
+  "Makes an assignment vector form the given model"
+  [model]
+  (vec (mapcat modelmap model)))
+
 (defn eval-phi
   "Evaluates the formula `phi` with respect to the given 
    model."
   [phi model]
-  (model))
+  (let [assign-vec (model2assign-vec model)]
+  (binding [*ns* (find-ns 'lwb.pred)]
+    (eval `(let ~assign-vec ~phi)))))
+
+(defmacro make-pred 
+  "Generates a predicate indicating that the given parameters
+   fulfill the given relation"
+  [rel]
+  `(fn [& ~'more] (contains? ~rel (vec ~'more))))
+
+;; example for a model 
+(def m
+  {:univ #{:0 :1}
+   :op   [:func 2 (fn [x y] (+ x y))]
+   :inv  [:func 1 (fn [x] (- x))]
+   :unit [:func 0 :0]
+   :r    [:pred 2 (make-pred #{[:1 :1] [:2 :2]})]
+   :s    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
+   :p    [:prop 0 'true]})
+
+(eval-phi 'univ m)
+(eval-phi '(r :1 :1) m)
+(eval-phi '(inv 1) m)
+(eval-phi '(op 1 2) m)
+(eval-phi 'p m)
+
 
