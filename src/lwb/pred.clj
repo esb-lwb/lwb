@@ -9,6 +9,7 @@
 (ns lwb.pred
   (:refer-clojure :exclude [var?])
   (:require [lwb.prop :as prop]
+            [clojure.zip :as zip]
             [potemkin :as pot]))
 
 
@@ -255,7 +256,7 @@
   [[keyw value]]
   (if (= keyw :univ)
     ['univ value]
-    [(symbol (name keyw)) (nth value 2)])))
+    [(symbol (name keyw)) (nth value 2)]))
 
 (defn- model2assign-vec
   "Makes an assignment vector form the given model"
@@ -291,5 +292,47 @@
 (eval-phi '(inv 1) m)
 (eval-phi '(op 1 2) m)
 (eval-phi 'p m)
+
+
+;; First step in evaluation of a formula of predicate logic:
+;; Unfold the variables in quantor expression, e.g.
+;; `(forall [x y] (...))` -> `(forall [x] (forall [y] (...)))`
+
+(defn- quant-expr? [loc]
+  "Is loc a quantor expression with multiple variables?"
+  (and (zip/branch? loc)
+       (or (= (-> loc zip/down zip/node) 'forall) (= (-> loc zip/down zip/node) 'exists))
+       (> (count (-> loc zip/down zip/right zip/node)) 1))))
+
+(defn- unfold-quant [loc]
+  "New quantor expression with first variable pulled out"
+  (let [quantor (-> loc zip/down zip/node)
+        var-vec (-> loc zip/down zip/right zip/node)
+        var1-vec [(first var-vec)]
+        varr-vec (vec (rest var-vec))
+        right (-> loc zip/down zip/right zip/right zip/node)
+        edited-loc (zip/edit loc (fn [loc] `(~quantor ~var1-vec (~quantor ~varr-vec ~right))))]
+    (-> edited-loc zip/down zip/right)))
+
+(defn unfold-vars [phi]
+  "phi with unfolded varas in all quantor expressions"
+  (loop [loc (zip/seq-zip (seq phi))]
+    (if (zip/end? loc)
+      (zip/root loc)
+      (recur (zip/next
+               (if (quant-expr? loc)
+                 (unfold-quant loc)
+                 loc))))))
+
+;; examples
+(def grp-ass '(forall [x y z] (eq (op x (op y z)) (op (op x y) z))))
+(def grp-ass' '(exists [x y z] (eq (op x (op y z)) (op (op x y) z))))
+(def grp-unit '(forall [x] (eq (op x unit) x)))
+(def grp-comm '(forall [x y] (eq (op x y) ((op y x)))))
+
+(unfold-vars grp-ass)
+(unfold-vars grp-ass')
+(unfold-vars grp-unit)
+(unfold-vars grp-comm)
 
 
