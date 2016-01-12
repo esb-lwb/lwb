@@ -10,6 +10,7 @@
   (:refer-clojure :exclude [var?])
   (:require [lwb.prop :as prop]
             [clojure.zip :as zip]
+            [clojure.walk :as walk]
             [potemkin :as pot]))
 
 
@@ -96,7 +97,7 @@
 (defn eq?
   "Is `symb` equality in predicate logic??"
   [symb]
-  (= 'eq symb))
+  (= '= symb))
 
 ;; ## Variables
 (defn var?
@@ -299,10 +300,15 @@
 ;; `(forall [x y] (...))` -> `(forall [x] (forall [y] (...)))`
 
 (defn- quant-expr? [loc]
-  "Is loc a quantor expression with multiple variables?"
+  "Is loc a quantor expression?"
   (and (zip/branch? loc)
-       (or (= (-> loc zip/down zip/node) 'forall) (= (-> loc zip/down zip/node) 'exists))
-       (> (count (-> loc zip/down zip/right zip/node)) 1))))
+       (or (= (-> loc zip/down zip/node) 'forall) 
+           (= (-> loc zip/down zip/node) 'exists))))
+
+(defn- quant-expr+? [loc]
+  "Is loc a quantor expression with multiple variables?"
+  (and (quant-expr? loc)
+       (> (count (-> loc zip/down zip/right zip/node)) 1)))
 
 (defn- unfold-quant [loc]
   "New quantor expression with first variable pulled out"
@@ -320,16 +326,17 @@
     (if (zip/end? loc)
       (zip/root loc)
       (recur (zip/next
-               (if (quant-expr? loc)
+               (if (quant-expr+? loc)
                  (unfold-quant loc)
                  loc))))))
 
 ;; examples
-(def grp-ass '(forall [x y z] (eq (op x (op y z)) (op (op x y) z))))
-(def grp-ass' '(exists [x y z] (eq (op x (op y z)) (op (op x y) z))))
-(def grp-unit '(forall [x] (eq (op x unit) x)))
-(def grp-comm '(forall [x y] (eq (op x y) ((op y x)))))
+(def grp-ass '(forall [x y z] (= (op x (op y z)) (op (op x y) z))))
+(def grp-ass' '(exists [x y z] (= (op x (op y z)) (op (op x y) z))))
+(def grp-unit '(forall [x] (= (op x unit) x)))
+(def grp-comm '(forall [x y] (= (op x y) ((op y x)))))
 
+(wff? grp-ass {:op [:func 2]} :msg) 
 (unfold-vars grp-ass)
 (unfold-vars grp-ass')
 (unfold-vars grp-unit)
