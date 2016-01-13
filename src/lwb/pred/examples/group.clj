@@ -61,3 +61,34 @@
 (eval-phi grp-inv c6)
 (eval-phi grp-unit c6)
 (eval-phi grp-comm c6)
+
+;; Symmetric group with 6 elements
+;; smallest non-abelian group
+
+(defn s6-op [x y]
+  (let [s6-table [[:0	:1	:2	:3	:4	:5]
+                  [:1	:0  :4	:5 	:2	:3]
+                  [:2	:5	:0	:4	:3	:1]
+                  [:3	:4	:5	:0	:1	:2]
+                  [:4	:3	:1	:2	:5	:0]
+                  [:5	:2	:3	:1	:0	:4]]
+        numx (Integer/parseInt (name x)) 
+        numy (Integer/parseInt (name y))]
+    (get-in s6-table [numx numy])))
+
+(defn s6-inv [x]
+  (let [s6-invs [:0 :1 :2 :3 :5 :4]
+        numx (Integer/parseInt (name x))]
+    (get s6-invs numx)))
+
+(def s6
+  {:univ #{:0 :1 :2 :3 :4 :5}
+   :op   [:func 2 s6-op]
+   :inv  [:func 1 s6-inv]
+   :unit [:func 0 :0]})
+
+(eval-phi grp-ass s6)
+(eval-phi grp-inv s6)
+(eval-phi grp-unit s6)
+(eval-phi grp-comm s6)
+; => false
