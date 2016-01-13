@@ -43,9 +43,9 @@
   (is (= false (quantor? 'all)))
   (is (= true  (eq?  'eq)))
   (is (= false (eq?  '=)))
-  (is (= true  (var?  'x sig)))
-  (is (= true  (var?  'y sig)))
-  (is (= false (var?  :c sig)))
+  (is (= true (logvar? 'x sig)))
+  (is (= true (logvar? 'y sig)))
+  (is (= false (logvar? :c sig)))
   (is (= true  (prop?  'r  sig)))
   (is (= false (pred?  'f3 sig))))
 

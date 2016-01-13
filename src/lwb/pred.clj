@@ -7,7 +7,6 @@
 ; the terms of this license.
 
 (ns lwb.pred
-  (:refer-clojure :exclude [var?])
   (:require [lwb.prop :as prop]
             [clojure.zip :as zip]
             [clojure.walk :as walk]
@@ -100,8 +99,8 @@
   (= '= symb))
 
 ;; ## Variables
-(defn var?
-  "Is `symb` a variable with respect to signature `sig`?"
+(defn logvar?
+  "Is `symb` a logical variable with respect to signature `sig`?"
   [symb sig]
   (if (not (symbol? symb))
     false
@@ -137,7 +136,7 @@
   [symb sig]
   (if (not (symbol? symb))
     (const? symb)
-    (or (var? symb sig) (nullary-func? symb sig))))
+    (or (logvar? symb sig) (nullary-func? symb sig))))
 
 (defn term?
   "Is `texpr` a term?"
@@ -166,7 +165,7 @@
 (defn decl?
   "Is the given vector a vector of variables with respect to signature `sig`?"
   [decl sig]
-  (if (and (vector? decl) (every? #(var? % sig) decl)) 
+  (if (and (vector? decl) (every? #(logvar? % sig) decl)) 
     true
     (throw (IllegalStateException. (str "expected vector of variables, got " decl)))))
 
@@ -259,18 +258,10 @@
     ['univ value]
     [(symbol (name keyw)) (nth value 2)]))
 
-(defn- model2assign-vec
+(defn model2assign-vec
   "Makes an assignment vector form the given model"
   [model]
   (vec (mapcat modelmap model)))
-
-(defn eval-phi
-  "Evaluates the formula `phi` with respect to the given 
-   model."
-  [phi model]
-  (let [assign-vec (model2assign-vec model)]
-  (binding [*ns* (find-ns 'lwb.pred)]
-    (eval `(let ~assign-vec ~phi)))))
 
 (defmacro make-pred 
   "Generates a predicate indicating that the parameters to the predicate
@@ -288,11 +279,6 @@
    :s    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
    :p    [:prop 0 'true]})
 
-(eval-phi 'univ m)
-(eval-phi '(r :1 :1) m)
-(eval-phi '(inv 1) m)
-(eval-phi '(op 1 2) m)
-(eval-phi 'p m)
 
 
 ;; First step in evaluation of a formula of predicate logic:
@@ -321,7 +307,7 @@
     (-> edited-loc zip/down zip/right)))
 
 (defn unfold-vars [phi]
-  "phi with unfolded varas in all quantor expressions"
+  "phi with unfolded vars in all quantor expressions"
   (loop [loc (zip/seq-zip (seq phi))]
     (if (zip/end? loc)
       (zip/root loc)
@@ -331,15 +317,78 @@
                  loc))))))
 
 ;; examples
-(def grp-ass '(forall [x y z] (= (op x (op y z)) (op (op x y) z))))
-(def grp-ass' '(exists [x y z] (= (op x (op y z)) (op (op x y) z))))
-(def grp-unit '(forall [x] (= (op x unit) x)))
-(def grp-comm '(forall [x y] (= (op x y) ((op y x)))))
+(comment
+  (def grp-ass '(forall [x y z] (= (op x (op y z)) (op (op x y) z))))
+  (def grp-ass' '(exists [x y z] (= (op x (op y z)) (op (op x y) z))))
+  (def grp-unit '(forall [x] (= (op x unit) x)))
+  (def grp-comm '(forall [x y] (= (op x y) ((op y x)))))
 
-(wff? grp-ass {:op [:func 2]} :msg) 
-(unfold-vars grp-ass)
-(unfold-vars grp-ass')
-(unfold-vars grp-unit)
-(unfold-vars grp-comm)
+  (wff? grp-ass {:op [:func 2]} :msg)
+  (def grp-ass1 (unfold-vars grp-ass))
+  (def grp-ass2 (unfold-vars grp-ass'))
+  (unfold-vars grp-unit)
+  (unfold-vars grp-comm)
+  )
 
+
+(defn- no-more-quant? [phi]
+  "does phi have no more quantors?"
+  (not (first 
+         (filter #(or (= 'forall %) (= 'exists %)) 
+                 (flatten phi)))))
+
+(comment
+  (no-more-quant? grp-ass)
+  (no-more-quant? (rest grp-ass))
+  )
+
+(defn- expand-quant [univ loc]
+  "expands a quantor into an proposition 
+   (and ...) for the forall quantor,
+   (or ...)  for the exists quantor,
+   by replacing the variables by the items in the universe"
+  (let [quantor (-> loc zip/down zip/node)
+        var-vec (-> loc zip/down zip/right zip/node)
+        var     (first var-vec)
+        body (-> loc zip/down zip/right zip/right zip/node)
+        edit-func (fn [loc]
+                    (let [body-seq (for [item univ] (walk/postwalk-replace {var item} body))]
+                      (if (= quantor 'forall)
+                        (list* 'and body-seq)
+                        (list* 'or body-seq))))]
+        (zip/edit loc edit-func)))
+  
+(defn- elim-quant [univ phi]
+  "eliminates all quantors in phi by expaning them"
+  (loop [loc (zip/seq-zip (seq phi))]
+    (if (zip/end? loc)
+      (zip/root loc)
+      (recur (zip/next
+             (if (quant-expr? loc)
+               (expand-quant univ loc)
+               loc))))))
+
+(defn pred2prop [univ phi]
+  "Given a universe, phi is transformed into a proposition.
+   phi has to have unfolded vars, i.e. each quantor has exactly 1 var!"
+  (let [phi' (loop [cur phi]
+              (if (no-more-quant? cur)
+                cur
+                (recur (elim-quant univ cur))))]
+    (prop/flatten-ops phi')))
+
+(comment
+  (pred2prop #{:0 :1 :2} grp-ass2)
+  (pred2prop #{:0 :1} grp-ass1)
+  (pred2prop #{:0 :1} '(and (forall [x] (forall [y] (r x y))) (exists [z] (p z))))
+  )
+
+(defn eval-phi
+  "Evaluates the formula `phi` with respect to the given 
+   model."
+  [phi model]
+  (let [assign-vec (model2assign-vec model)
+        phi' (pred2prop (:univ model) (unfold-vars phi))]
+    (binding [*ns* (find-ns 'lwb.pred)]
+      (eval `(let ~assign-vec ~phi')))))
 
