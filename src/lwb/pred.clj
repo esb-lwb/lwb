@@ -233,18 +233,19 @@
 ;; the arity `0` and the value for the proposition i.e. `true` or `false`.   
 ;; Relations are given by the keyword build from the name of the corresponding
 ;; predicate symbol together with a vector consisting of the keyword `:pred`, 
-;; the arity of the relation and a predicate constrcuted by `make-pred` from
+;; the arity of the relation and a predicate constructed by `make-pred` from
 ;; the provided relation.
 
 ;; Example for a group of 2 elements:
-;; {:univ #{:0 :1}
+;; {:univ #{0 1}
 ;;  :op   [:func 2 (fn [x y] (body of function for group operation))]
 ;;  :inv  [:func 1 (fn [x] (body of function for inverse))]
-;;  :unit [:func 0 :0]}
+;;  :unit [:func 0 0]}
+;; see lwb.pred.examples.groups
 
 ;; Example for a family:
 ;; {:univ #{:eve :adam :joe :susan :anne}
-;;  :mother [:pred 2 (fn [mother child] (let [rel #{[:eve :joe] [:eve :susan] [:susan :anne]}]
+;;  :mother [:pred 2 '(fn [mother child] (let [rel #{[:eve :joe] [:eve :susan] [:susan :anne]}]
 ;;                                        (contains? rel [mother child])))]}
 
 ;; Construct an assignment vector from a model, i.e. bindings of the model elements 
@@ -279,6 +280,11 @@
    :s    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
    :p    [:prop 0 'true]})
 
+(defn sig-from-model [model]
+  "Returns the signature from a given model"
+  (let [f #(not= (key %) :univ)
+        m (fn [[key [v1 v2]]] [key [v1 v2]])] 
+    (into {} (map m (filter f model)))))
 
 
 ;; First step in evaluation of a formula of predicate logic:
