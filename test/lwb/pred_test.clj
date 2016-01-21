@@ -85,14 +85,14 @@
   (is (= true (equality? '(= x (f1 y)) sig)))
   (is (= true (equality? '(= (f1 :c) :d) sig)))
   (is (= true (equality? '(= (f3 x y z) x) sig)))
-  (is (thrown? IllegalStateException (equality? '(eq r x) sig))))
+  (is (thrown? IllegalStateException (equality? '(= r x) sig))))
 
 (deftest wff-test
   (is (= true (wff? '(forall [x y] (P2 x y)) sig)))
   (is (= true (wff? '(exists [x y] (and (P1 x) (P1 y))) sig)))
-  (is (= true (wff? '(exists [x y] (and (P1 x) (eq x y))) sig)))
+  (is (= true (wff? '(exists [x y] (and (P1 x) (= x y))) sig)))
   (is (= true (wff? '(forall [x] (exists [y] (P2 x y))) sig)))
   (is (= true (wff? '(P2 x y) sig)))
-  (is (= true (wff? '(ite (P2 x y) r (eq :c :d)) sig))))
+  (is (= true (wff? '(ite (P2 x y) r (= :c :d)) sig))))
 
 (run-tests)
