@@ -53,7 +53,7 @@
   (and (symbol? symb) (= (first ((keyword symb) sig)) type)))
 
 (defn const?
-  "Is `keyword` a constant?"
+  "Is `kw` a constant?"
   [kw]
   (keyword? kw))
 
@@ -270,21 +270,25 @@
   [rel]
   `(fn [& ~'more] (contains? ~rel (vec ~'more))))
 
-;; example for a model 
-(def m
-  {:univ #{:0 :1}
-   :op   [:func 2 (fn [x y] (+ x y))]
-   :inv  [:func 1 (fn [x] (- x))]
-   :unit [:func 0 :0]
-   :r    [:pred 2 (make-pred #{[:1 :1] [:2 :2]})]
-   :s    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
-   :p    [:prop 0 'true]})
-
 (defn sig-from-model [model]
   "Returns the signature from a given model"
   (let [f #(not= (key %) :univ)
-        m (fn [[key [v1 v2]]] [key [v1 v2]])] 
+        m (fn [[key [v1 v2]]] [key [v1 v2]])]
     (into {} (map m (filter f model)))))
+
+(comment
+  ;; example for a model 
+  (def m
+    {:univ #{:0 :1}
+     :op   [:func 2 (fn [x y] (+ x y))]
+     :inv  [:func 1 (fn [x] (- x))]
+     :unit [:func 0 :0]
+     :r    [:pred 2 (make-pred #{[:1 :1] [:2 :2]})]
+     :s    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
+     :p    [:prop 0 'true]})
+
+  (sig-from-model m)
+  )
 
 
 ;; First step in evaluation of a formula of predicate logic:
@@ -335,7 +339,6 @@
   (unfold-vars grp-unit)
   (unfold-vars grp-comm)
   )
-
 
 (defn- no-more-quant? [phi]
   "does phi have no more quantors?"

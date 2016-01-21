@@ -107,6 +107,7 @@
   "Is `op` an n-ary operator?"
   [op]
   (= -1 (arity op)))
+
 ;; ## Is a formula well-formed?
 
 (declare wff?)
@@ -234,8 +235,10 @@
     (println prop)
 	  (print-table header table)))
 
-#_(def tt (truth-table '(or p q)))
-#_(print-truth-table tt)
+(comment
+  (def tt (truth-table '(or p q)))
+  (print-truth-table tt)
+  )
 
 ;;# Transformation to conjunctive normal form
 

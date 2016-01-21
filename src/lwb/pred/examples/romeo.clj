@@ -70,7 +70,7 @@
    :G    [:pred 1 odd?]
    :L    [:pred 2 #(< %1 %2)]})
 
-; Both worlds habe the same signature
+; Both worlds have the same signature
 (= (sig-from-model s-world) (sig-from-model a-world))
 ; => true
 

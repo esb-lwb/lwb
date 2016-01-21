@@ -101,6 +101,11 @@
         (z/root loc)
         (recur (z/next (if (z/branch? loc) (z/edit loc mark-fn) loc)))))))
 
+(defn- locs-phi
+  "Sequence of all the locations of a zipper generated from the formula `phi`."
+  [phi]
+  (take-while (complement z/end?) (iterate z/next (z/seq-zip phi))))
+
 (defn- tseitin-branch
   "Analyzes branch and generates equivalence formula for the branch.  
    The formula is of the form `(equiv ts_x (atoms or tseitin symbols of children)`."
@@ -121,7 +126,7 @@
     (atom? phi) (list 'and (list 'or phi))
     ; actual transformation
     :else
-		  (let [parts (map cnf (map tseitin-branch (filter z/branch? (compound-expr? (mark-phi phi)))))]
+		  (let [parts (map cnf (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi)))))]
 		    (flatten-ops (cons 'and (cons '(and (or ts_1)) parts))))))
 
 (defn- remove-tseitin-symbols
@@ -177,6 +182,17 @@
   (not (sat? (list 'not phi))))
 
 
-(def example '(nimpl (and a1 a2) x))
 
-(cnf example)
+(comment
+  (def example '(impl (and a1 a2) x))
+  (cnf example)
+  (tseitin example)
+  (sat example)
+  (sat? example)
+  (valid? example)
+
+  (valid? '(and p (not p)))
+  (sat? '(and p (not p)))
+  (sat? '(or p (not p)))
+  (valid? '(or p (not p)))
+  )
