@@ -41,8 +41,7 @@
   (is (= true  (torf? 'true)))
   (is (= true  (quantor? 'forall)))
   (is (= false (quantor? 'all)))
-  (is (= true  (eq?  'eq)))
-  (is (= false (eq?  '=)))
+  (is (= true  (eq?  '=)))
   (is (= true (logvar? 'x sig)))
   (is (= true (logvar? 'y sig)))
   (is (= false (logvar? :c sig)))
@@ -62,7 +61,7 @@
 (deftest eq?-test
   (is (= false (eq? 'not)))
   (is (= false (eq? '[xor])))
-  (is (= true (eq? 'eq))))
+  (is (= true (eq? '=))))
 
 (deftest term-test
   (is (= true (term? 'x sig)))
@@ -81,11 +80,11 @@
   (is (thrown? IllegalStateException (predicate? '(P2 x x x) sig))))
 
 (deftest equality-test
-  (is (= true (equality? '(eq x y) sig)))
-  (is (= true (equality? '(eq x f0) sig)))
-  (is (= true (equality? '(eq x (f1 y)) sig)))
-  (is (= true (equality? '(eq (f1 :c) :d) sig)))
-  (is (= true (equality? '(eq (f3 x y z) x) sig)))
+  (is (= true (equality? '(= x y) sig)))
+  (is (= true (equality? '(= x f0) sig)))
+  (is (= true (equality? '(= x (f1 y)) sig)))
+  (is (= true (equality? '(= (f1 :c) :d) sig)))
+  (is (= true (equality? '(= (f3 x y z) x) sig)))
   (is (thrown? IllegalStateException (equality? '(eq r x) sig))))
 
 (deftest wff-test
