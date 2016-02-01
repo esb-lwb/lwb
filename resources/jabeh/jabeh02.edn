@@ -1,0 +1,14 @@
+; not so easy
+
+{
+ :col-holes [2 2 2 3 1 1 1 0]
+ :row-holes [1 1 3 2 1 1 1 2]
+ :field [[u u u u u u u u]
+         [u u u u u u u u]
+         [u u 5 1 3 2 u u]
+         [u u u u u u u u]
+         [u u u u 7 u u u]
+         [u u u u u u u u]
+         [u u 7 7 u u u u]
+         [u u u u u u u u]]
+ }

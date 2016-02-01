@@ -1,0 +1,15 @@
+; Example from
+; http://blogs.ams.org/mathgradblog/2015/09/15/fresh-beginnings/
+
+{
+ :col-holes [2 2 1 2 1 1 1 2]
+ :row-holes [1 1 2 1 2 2 2 1]
+ :field [[u u u 2 u u u u]
+         [u u u u 6 u u u]
+         [u u u u u 5 u 7]
+         [u u 4 u 7 u u u]
+         [1 u u 4 6 8 u u]
+         [u u u u u u u u]
+         [u u u 1 u u 7 u]
+         [u u u u u u u u]]
+ }

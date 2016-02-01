@@ -35,7 +35,8 @@
     </orderEntry>
     <orderEntry type="library" name="Leiningen: clj-tuple:0.2.1" level="project" />
     <orderEntry type="library" name="Leiningen: clojure-complete:0.2.3" level="project" />
-    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.7.0" level="project" />
+    <orderEntry type="library" name="Leiningen: net.mikera/core.matrix:0.44.0" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.8.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/core.logic:0.8.10" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/math.combinatorics:0.1.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.macro:0.1.2" level="project" />

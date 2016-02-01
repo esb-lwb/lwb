@@ -195,4 +195,9 @@
   (sat? '(and p (not p)))
   (sat? '(or p (not p)))
   (valid? '(or p (not p)))
+  
+  (def prop '(or c000))
+  prop
+  (sat prop)
+
   )

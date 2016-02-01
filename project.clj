@@ -13,8 +13,9 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.logic "0.8.10"]
+                 [net.mikera/core.matrix "0.44.0"]
                  [org.clojure/tools.macro "0.1.2"]
                  [org.clojure/math.combinatorics "0.1.1"]
                  [potemkin "0.3.13"]
                  [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]]
-  :plugins [[lein-marginalia "0.8.0"]])
+  :jvm-opts ["-Xms2G"])

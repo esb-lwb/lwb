@@ -1,0 +1,15 @@
+; shinro-book-free.pdf
+; Mirror 2 (page 65)
+
+{
+ :col-holes [0 2 2 2 2 2 2 0]
+ :row-holes [4 0 0 2 2 0 0 4]
+ :field [[u u u u u u u u]
+         [u u 7 u u 1 u u]
+         [3 3 u u u u 5 5]
+         [3 u u u u u u 5]
+         [1 u u u u u u 7]
+         [1 1 u u u u 7 7]
+         [u u 5 u u 3 u u]
+         [u u u u u u u u]]
+ }
