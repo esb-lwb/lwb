@@ -14,6 +14,43 @@
   (:require [clojure.core.matrix :refer (emap)])
   (:require [clojure.string :as str]))
 
+;; The puzzle is given by a map with the keys :col-holes,
+;; :row-holes and :field
+;; e.g.
+(comment
+  (def p
+    {:col-holes [2 2 1 2 1 1 1 2]
+     :row-holes [1 1 2 1 2 2 2 1]
+     :field     [[u u u 2 u u u u]
+                 [u u u u 6 u u u]
+                 [u u u u u 5 u 7]
+                 [u u 4 u 7 u u u]
+                 [1 u u 4 6 8 u u]
+                 [u u u u u u u u]
+                 [u u u 1 u u 7 u]
+                 [u u u u u u u u]]})
+  )
+
+;; :col-holes is a vector of the number of holes in the columns
+;; :row-holes is a vector of the number of holes in te rows
+;; :field is the field with
+;; u = an unknown state of the cell
+;; a number = an arrow, decoding the direction at cell x as follows
+;;             7 8 1
+;;             6 x 2
+;;             5 4 3 
+
+;; The encoding of the puzzle in the propositional logic:
+;; We represent each cell as an atomic proposition  build from the
+;; index of the cell by make-sym.
+;; If the atom is true, there is a hole, false otherwise
+
+;; The constraints are
+;; - the number of true atoms in a row is given by the corresponding number in :row-holes,
+;; - the number of true atoms in a columns is given by the corresponding number in :col-holes,
+;; - the atom for a cell with an arrow is false, and
+;; - in the direction of the arrow one of the corresponding atoms has to be true
+
 (def u
   "A symbol for an unknown state of a cell in the puzzle"
   \.)
@@ -200,27 +237,31 @@
 
 ;; Examples
 
-(defn test-puzzle [file]
-  (print-puzzle-and-solution (load-file (str "resources/jabeh/" file ".edn"))))
+(comment
+  (defn test-puzzle [file]
+    (print-puzzle-and-solution (load-file (str "resources/jabeh/" file ".edn"))))
 
-(test-puzzle "jabeh01")
-(test-puzzle "jabeh02")
-(test-puzzle "jabeh03")
-(test-puzzle "jabeh04")
-(test-puzzle "jabeh05")
-(test-puzzle "jabeh06")
+  (test-puzzle "jabeh01")
+  ved
+  (test-puzzle "jabeh02")
+  (test-puzzle "jabeh03")
+  (test-puzzle "jabeh04")
+  (test-puzzle "jabeh05")
+  (test-puzzle "jabeh06")
+  (test-puzzle "jabeh07")
 
 
-;; Benchmarks
-;; load, run, print
-(defn bench
-  [puzzles]
-  (time
-    (do
-      (dorun (map test-puzzle puzzles))
-      :done)))
+  ;; Benchmarks
+  ;; load, run, print
+  (defn bench
+    [puzzles]
+    (time
+      (do
+        (dorun (map test-puzzle puzzles))
+        :done)))
 
-(dotimes [_ 10]
-  (bench ["jabeh01" "jabeh02" "jabeh03" "jabeh04" "jabeh05" "jabeh06"]))
-; => 180 msec / 6 = 30 msec per puzzle
+  (dotimes [_ 10]
+    (bench ["jabeh01" "jabeh02" "jabeh03" "jabeh04" "jabeh05" "jabeh06"]))
+  ; => 180 msec / 6 = 30 msec per puzzle
 
+  )
