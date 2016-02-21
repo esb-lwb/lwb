@@ -74,3 +74,59 @@
 (eval-phi phi6 world-5-11)
 ; => false
 
+;; Exercise 5.1 from Volker Halbach's Exercises Booklet
+
+(def ds
+  {:univ #{1 2 3}
+   :a    [:func 0 1]
+   :b    [:func 0 3]
+   :P    [:pred 1 (make-pred #{[2]})]
+   :R    [:pred 2 (make-pred #{[1 2] [2 3] [1 3]})]})      
+
+;; (i)
+(eval-phi '(P a) ds)
+; => false; a is not in P
+
+;; (ii)
+(eval-phi '(R a b) ds)
+; => true; [1 3] is in R
+
+;; (iii)
+(eval-phi '(R b a) ds)
+; => false; [3 1] is not in R
+
+;; (iv)
+(eval-phi '(equiv (R a b) (R b a)) ds)
+; => false; see (ii) and (iii)
+
+;; (v)
+(eval-phi '(or (R b b) (and (not (P a)) (not (R a a)))) ds)
+; => true; the second part is true
+
+;; (vi)
+(eval-phi '(exists [x] (R a x)) ds)
+; => true; e.g. x = 2
+
+;; (vii)
+(eval-phi '(exists [x] (and (R a x) (R x b))) ds)
+; => true; e.g. x = 2
+
+;; (viii)
+(eval-phi '(or (P b) (exists [x] (R x x))) ds)
+; => false; 3 ist not in P, and R is not symmetric
+
+;; (ix)
+(eval-phi '(forall [x] (exists [y] (R x y))) ds)
+; => false; [3 ?] is not in R
+
+;; (x)
+(eval-phi '(forall [x] (impl (P x) (and (exists [y] (R y x)) (exists [y] (R x y))))) ds)
+; => true; x is 2, [1 2] in R and [2 3] in R
+
+;; (xi)
+(eval-phi '(forall [x] (impl (P x) (exists [y] (and (R y x) (R x y))))) ds)
+; => false; x is 2, but no pair and its mirrored one
+
+
+
+ 

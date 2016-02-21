@@ -9,7 +9,7 @@
 
 (ns lwb.prop.examples.truthtable
   (:require [lwb.prop :refer :all])
-  (:require [lwb.prop.sat :refer [valid?]]))
+  (:require [lwb.prop.sat :refer [valid? sat?]]))
 
 (defn ptt
   [phi]
@@ -69,3 +69,54 @@
 
 (valid? '(equiv (and (not phi) (not psi)) (not (or phi psi))))
 ; => true
+
+(valid? `(~'equiv ~phi5 ~'(not (or phi psi))))
+; =>
+
+;; Exercise 2.5 from Volkar Halbach's Exercises Booklet
+
+; Modus ponens
+(ptt '(impl (and P (impl P Q)) Q))
+
+; Modus tollens
+(ptt '(impl (and (not Q) (impl P Q)) (not P)))
+
+; Law of the excluded middle
+(ptt '(or P (not P)))
+
+; Law of contradiction
+(ptt '(not (and P (not P))))
+
+; Consequentia mirabilis
+(ptt '(impl (impl (not P) P) P))
+
+; Classical dilemma
+(ptt '(impl (and (impl P Q) (impl (not P) Q)) Q))
+
+; de Morgan
+(ptt '(equiv (not (and P Q)) (or (not P) (not Q))))
+
+; de Morgan
+(ptt '(equiv (not (or P Q)) (and (not P) (not Q))))
+
+; Ex falso quoidlibet
+(ptt '(impl (and P (not P)) Q))
+
+;; Exercise 2.6
+
+(def phi261 '(and P P))
+(and (sat? phi261) (not (valid? phi261)))
+; neither a tautology nor a contradiction
+
+(def phi262 '(equiv (impl (impl P Q) R) (impl P (impl Q R))))
+(and (sat? phi262) (not (valid? phi262)))
+; neither a tautology nor a contradiction
+
+(def phi263 '(equiv (equiv P (equiv Q R)) (equiv (equiv P Q) R)))
+(valid? phi263)
+; a tautology
+
+(def phi264 '(equiv (not (impl P Q)) (or P (not Q))))
+(and (sat? phi264) (not (valid? phi264)))
+; neither a tautology nor a contradiction
+
