@@ -8,14 +8,15 @@
 ; the terms of this license.
 
 (ns lwb.vis
-  (:require [clojure.zip :as zip]))
+  (:require [clojure.zip :as zip]
+            [clojure.string :as str]
+            [clojure.java.shell :as shell]))
 
 (def ^:private tikz-header
   "\\documentclass{standalone}
    \\usepackage[english]{babel}
    \\usepackage{tikz-qtree}
-   \\tikzset{every tree node/.style={rectangle,rounded corners=5mm}}
-   \\tikzset{edge from parent/.append style={->}}
+   \\tikzset{every tree node/.style={shape=rectangle,minimum size=6mm,rounded corners=3mm,draw}}
    \\begin{document}
    \\begin{tikzpicture}
    \\Tree")
@@ -25,14 +26,18 @@
    \\end{document}")
 
 (defn- first?
+  "Is loc the most left location of siblings?"
   [loc]
   (nil? (-> loc zip/left)))
 
 (defn- end?
+  "Is loc a node marked with :end?"
   [loc]
   (= :end (-> loc zip/node)))
 
 (defn- mark-end-of-branch [phi]
+  "To facilitate the generation of code in tikz, we mark the ends of
+   lists with :end"
   (loop [loc (zip/seq-zip (seq phi))]
     (if (zip/end? loc)
       (zip/root loc)
@@ -42,23 +47,58 @@
                    (-> inserted-loc zip/leftmost))
                  loc))))))
 
-(mark-end-of-branch '(and (or p q) q))
+(defn- process-head
+  "Generates texcode for the head of a list"
+  [node]
+  (let [symbols {:and   "\\land"
+                 :or    "\\lor"
+                 :not   "\\lnot"
+                 :impl  "\\to"
+                 :equiv "\\leftrightarrow"
+                 :true  "\\top"
+                 :false "\\bot"}
+        key      (keyword (name node))]
+      (if (contains? symbols key)
+        (str " [.\\node{$" (key symbols) "$};")
+        (str " [.\\node{$" node "$};")))) 
+
+(defn- process-quantor
+  "Generates texcode for qunators"
+  [node vars]
+  (let [quantors {:forall "\\forall"
+                  :exists "\\exists"}
+        key      (keyword (name node))]
+    (str " [.\\node{$" (key quantors) " " 
+         (str/join "\\, " vars) "$};")))
+
+(defn- process-atom
+  "Generates texcode for atoms;
+   Since '{' and '}' are a reserved character in Clojure, 
+   one can use '<' and '>'
+   as characters for grouping subscripts e.g."
+  [node]
+  (let [node-str   (str node)
+        node-str'  (str/replace node-str \< \{)
+        node-str'' (str/replace node-str' \> \})]
+    (str " $" node-str'' "$"))
+  )
 
 (defn- mapfn
+  "Mapping function that generates the tikz code from the traversing of the tree."
   [loc]
   (let [n (zip/node loc)]
     (cond
-      (vector? n)       ""                                  ; already processed
-      (first? loc)                                          ; head with special case of quantor
+      (vector? n)       "" ; already processed
+      (first? loc)         ; head with special case of quantor
                         (if (or (= n 'forall) (= n 'exists))
                           (let [n' (-> loc zip/next zip/node)]
-                            (str " [.\\node{$" n " " n' "$}; "))
-                          (str " [.\\node{$" n "$};"))
-      (end? loc)       " ]"                                 ; last in list
-      :else (str " $" n "$"))))                             ; in the middle of the list
+                            (process-quantor n n'))
+                          (process-head n))
+      (end? loc)       " ]"    ; last in list
+      :else (process-atom n ))))   ; in the middle of the list
 
 (defn- vis-tikz-body
-  "Visualization with tikz"
+  "Visualization with tikz, the body"
   [phi]
   (let [phi' (mark-end-of-branch phi)
         loc (zip/seq-zip (seq phi'))]
@@ -67,10 +107,6 @@
                               (take-while (complement zip/end?)
                                   (iterate zip/next loc)))))))
 
-(vis-tikz-body '(and (or p q) q))
-(vis-tikz-body '(or (and (or p q) q) r))
-(vis-tikz-body '(forall [x] (or p q) q))
-
 (defn vis
   "Visualisation of the syntax tree of formula phi.
    Generates code for tikz."
@@ -78,13 +114,28 @@
   (let [tikz-body (vis-tikz-body phi)]
     (str tikz-header "\n" tikz-body "\n" tikz-footer)))
 
-(println (vis '(and (or p q) q)))
+(defn vis-pdf
+  "Makes a pdf file with the visualisation of the syntaxtree of phi.
+  <file> is the name of the file to be generated, must have no extension.
+  The function uses the shell command 'texi2pdf' that compiles tex code,
+  and 'open' to show the generated file."
+  [phi filename]
+  (let [tex-code (vis phi)]
+    (spit (str filename ".tex") tex-code)
+    (shell/sh "texi2pdf" (str filename ".tex"))
+    (shell/sh "open" (str filename ".pdf"))))
 
-(def grp-axioms-classic
-  '(and
-     (forall [x y z] (= (op x (op y z)) (op (op x y) z)))
-     (exists [unit] (and
-                      (forall [x] (= (op x unit) x))
-                      (forall [x] (exists [inv] (= (op x  inv) unit)))))))
-(println (vis grp-axioms-classic))
+;; Examples
+(comment
+  (vis-pdf '(and (or p_<12> q) q) "simple")
 
+  (def grp-axioms-classic
+    '(and
+       (forall [x y z] (= (op x (op y z)) (op (op x y) z)))
+       (exists [unit] (and
+                        (forall [x] (= (op x unit) x))
+                        (forall [x] (exists [inv] (= (op x inv) unit)))))))
+  (vis-pdf grp-axioms-classic "group-axioms")
+
+  (vis-pdf '(or (and (or p q) q) r) "simple2")
+  )
