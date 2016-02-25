@@ -14,6 +14,8 @@
 
 (def ^:private tikz-header
   "\\documentclass{standalone}
+   \\standaloneconfig{border=8pt}
+   \\usepackage{MnSymbol}
    \\usepackage[english]{babel}
    \\usepackage{tikz-qtree}
    \\tikzset{every tree node/.style={shape=rectangle,minimum size=6mm,rounded corners=3mm,draw}}
@@ -56,14 +58,18 @@
                  :impl  "\\to"
                  :equiv "\\leftrightarrow"
                  :true  "\\top"
-                 :false "\\bot"}
+                 :false "\\bot"
+                 :always "\\medsquare"
+                 :finally "\\lozenge"
+                 :asap    "\\medcircle"
+                 :until   "\\mathcal{U}"}
         key      (keyword (name node))]
       (if (contains? symbols key)
         (str " [.\\node{$" (key symbols) "$};")
         (str " [.\\node{$" node "$};")))) 
 
 (defn- process-quantor
-  "Generates texcode for qunators"
+  "Generates texcode for quantors"
   [node vars]
   (let [quantors {:forall "\\forall"
                   :exists "\\exists"}
@@ -135,7 +141,17 @@
        (exists [unit] (and
                         (forall [x] (= (op x unit) x))
                         (forall [x] (exists [inv] (= (op x inv) unit)))))))
+  
   (vis-pdf grp-axioms-classic "group-axioms")
 
   (vis-pdf '(or (and (or p q) q) r) "simple2")
+  
+  (def ltl-phi
+    '(and
+       (always p)
+       (finally q)
+       (asap r)
+       (until s t)))
+  
+  (vis-pdf ltl-phi "ltl")
   )
