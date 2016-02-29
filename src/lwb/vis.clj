@@ -59,6 +59,8 @@
                  :equiv "\\leftrightarrow"
                  :true  "\\top"
                  :false "\\bot"
+                 :xor "\\oplus"
+                 :ite "\\mathsf{ite}"
                  :always "\\medsquare"
                  :finally "\\lozenge"
                  :asap    "\\medcircle"
@@ -106,7 +108,8 @@
 (defn- vis-tikz-body
   "Visualization with tikz, the body"
   [phi]
-  (let [phi' (mark-end-of-branch phi)
+  (let [phi-n (if (symbol? phi) (list phi) phi) ; special case
+        phi'  (mark-end-of-branch phi-n)
         loc (zip/seq-zip (seq phi'))]
     (apply str
            (map mapfn (filter (complement zip/branch?) 
@@ -141,17 +144,26 @@
        (exists [unit] (and
                         (forall [x] (= (op x unit) x))
                         (forall [x] (exists [inv] (= (op x inv) unit)))))))
-  
+
   (vis-pdf grp-axioms-classic "group-axioms")
 
   (vis-pdf '(or (and (or p q) q) r) "simple2")
-  
+
   (def ltl-phi
     '(and
        (always p)
        (finally q)
        (asap r)
        (until s t)))
-  
+
   (vis-pdf ltl-phi "ltl")
+
+  ; Exercise 4
+  ; (a)
+  (println (vis 'P))
+  ; (b)
+  (println (vis '(and P Q)))
+  ; (c)
+  (println (vis '(impl (and P (not Q)) (not P))))
+  (println (vis '(or p_1 (and P_2 (impl P_3 P_4) )))
   )
