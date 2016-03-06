@@ -23,8 +23,9 @@
 
 ;; functions for removing duplicate entries from the proof
 (defn find-duplicates
-  "Finds duplicates entries inside the proof that can be deleted. Returns a map with the deletable ids as key and the replacement items as value.
-Only items without rule, in the same scope and the same subproof will be markes as deletable"
+  "Finds duplicates entries inside the proof that can be deleted.
+   Returns a map with the deletable ids as key and the replacement items as value.
+   Only items without rule, in the same scope and the same subproof will be markes as deletable"
   ([proof] (find-duplicates proof proof))
   ([proof sub]
     (let [scope (get-scope proof (last sub))
@@ -40,7 +41,7 @@ Only items without rule, in the same scope and the same subproof will be markes 
     
 (defn adjust-ids
   "Replaces all occurences of a certain ID inside proof with another.
-Provide ids as a map with keys = IDs to replace | vals = replacement"
+   Provide ids as a map with keys = IDs to replace | vals = replacement"
   [proof ids]
   (let [regex (java.util.regex.Pattern/compile (clojure.string/join "|" (map #(str "\\b" % "\\b") (map key ids))))
         smap  (apply merge (map #(hash-map (str (key %)) (if (list? (val %))
@@ -117,7 +118,7 @@ Provide ids as a map with keys = IDs to replace | vals = replacement"
 ;; NEW LOGIC (insert your new special forms here) 
 (defn substitution
   "Substitutes an variable identifier inside a predicate formula with another
-e.g. (substitution '(P x) 'x 'Z) => (P Z)"
+   e.g. (substitution '(P x) 'x 'Z) => (P Z)"
   [formula old new]
   (cond
     (not (list? formula))
@@ -125,7 +126,8 @@ e.g. (substitution '(P x) 'x 'Z) => (P Z)"
                             "Maybe you have to provide optional arguments for the step you trying to accomplish.")))
     
     (contains? (set (flatten formula)) new)
-    (throw (Exception. (str "Substitution failed. The identifier \"" new "\" is already used inside the formula \"" formula "\"")))
+    (throw (Exception.
+             (str "Substitution failed. The identifier \"" new "\" is already used inside the formula \"" formula "\"")))
     
     :else (clojure.walk/postwalk-replace {old new} formula)))
 
@@ -133,9 +135,9 @@ e.g. (substitution '(P x) 'x 'Z) => (P Z)"
 
 (defn infer
   "Creates a (sub)proof for premises and formula in the structure needed for further actions.
-\"premises\" can be a single object, a vector of objects or skipped
-\"formula\" needs to be a single object
-\"superproof?\" decides if its a proof or subproof" 
+   \"premises\" can be a single object, a vector of objects or skipped
+   \"formula\" needs to be a single object
+   \"superproof?\" decides if its a proof or subproof"
   ([formula] (infer [] formula))
   ([premises formula & [superproof?]]
     (let [desc (if superproof? :premise :assumption)
@@ -158,7 +160,7 @@ e.g. (substitution '(P x) 'x 'Z) => (P Z)"
 
 (defn proof
   "Creates a new superproof
-This is the entry point for new deductions"
+   This is the entry point for new deductions"
   ([formula] (proof [] formula))
   ([premises formula]
     (reset! id 0)
@@ -190,7 +192,7 @@ This is the entry point for new deductions"
 
 (defn get-item-id
   "Returns the id for the item. 
-Item can also be a subproof (vector)"
+   Item can also be a subproof (vector)"
   [item]
   (if (not (vector? item))
     (:id item)
@@ -200,7 +202,7 @@ Item can also be a subproof (vector)"
 ;; functions for creating new proof items from given bodies
 (defn init-vars
   "Replaces the automatically created variables from core.logic (\"_0\", \"_1\" etc.)
-with new unique identifiers (\"V1\", \"V2\" etc.)"
+   with new unique identifiers (\"V1\", \"V2\" etc.)"
   [bodies]
   (let [vars (set (filter #(.startsWith (str %) "_") (flatten bodies)))
         smap (reduce #(assoc %1 %2 (new-var)) {} vars)
@@ -226,8 +228,9 @@ with new unique identifiers (\"V1\", \"V2\" etc.)"
 
 (defn create-item
   "Creates a new item from body and [optional] rule
-IMPORTANT: This function is only used by \"create-items\", because this ensures that no lazy-sequences are left inside the new items. 
-If you only want to create one item use --> (first (create-items bodies))"
+   IMPORTANT: This function is only used by \"create-items\", because this ensures
+   that no lazy-sequences are left inside the new items.
+   If you only want to create one item use --> (first (create-items bodies))"
   ([body] (create-item body nil))
   ([body rule]
 	  (let [newbody (eval-body body)]
@@ -242,7 +245,8 @@ If you only want to create one item use --> (first (create-items bodies))"
   ([bodies] (create-items bodies nil))
   ([bodies rule]
     (let [newb (init-vars bodies)
-          ;; to ensure that all bodies of all items are either symbols or lists, convert all lazy-seq (they come from rule evaluation) to lists
+          ;; to ensure that all bodies of all items are either symbols or lists,
+          ;; convert all lazy-seq (they come from rule evaluation) to lists
           non-lazy (clojure.walk/postwalk (fn [node]
                                             (if (instance? clojure.lang.LazySeq node)
                                               (apply list node)
@@ -253,7 +257,7 @@ If you only want to create one item use --> (first (create-items bodies))"
 ;; functions for advancing the proofs state (steps, choose-options, rename-vars)
 (defn check-args
   "Checks the arguments for errors and irregularities. 
-If nothing is found returns a map with additional information for further proceeding."
+   If nothing is found returns a map with additional information for further proceeding."
   [proof rule args forward?]
   ;; seperate lines and user-inputs and check the right number of user-inputs
   (let [lines       (filter number? args)
@@ -355,7 +359,7 @@ If nothing is found returns a map with additional information for further procee
 
 (defn choose-option
   "Chooses option num on line to be inserted into proof.
-In case there is nothing to choose or the num is invalid, throws an exception."
+   In case there is nothing to choose or the num is invalid, throws an exception."
   [proof line num]
   (let [item (get-item proof line)
         options (:body item)
@@ -389,17 +393,20 @@ In case there is nothing to choose or the num is invalid, throws an exception."
         {:name       (:name rule)
          :given      [(first (drop 2 given))]
          :conclusion [(first (drop 2 conclusion))]}
-        (throw (Exception. (str "The rule \"" rule "\" is not usable for an inside step due to the two different time points of the premise and the conclusion"))))
+        (throw (Exception.
+                 (str "The rule \"" rule "\" is not usable for an inside step due to the two different time points of the premise and the conclusion"))))
       rule)))
 
 (defn step-f-inside
   [proof rule line]
   (cond
     (> (rules/rule-givens rule) 1)
-    (throw (Exception. (str "The rule " rule " needs more than 1 premise. Inside-Steps can only be executed with rules that need exactly 1 premise.")))
+    (throw (Exception.
+             (str "The rule " rule " needs more than 1 premise. Inside-Steps can only be executed with rules that need exactly 1 premise.")))
     
     (> (rules/rule-conclusions rule) 1)
-    (throw (Exception. (str "The rule " rule " has more than 1 conclusion. Inside-Steps only work with rules that have exactly 1 conclusion.")))
+    (throw (Exception.
+             (str "The rule " rule " has more than 1 conclusion. Inside-Steps only work with rules that have exactly 1 conclusion.")))
     
     (not (number? line))
     (throw (Exception. (str "\"" line "\" is not a line number.")))
@@ -462,7 +469,7 @@ In case there is nothing to choose or the num is invalid, throws an exception."
         todo-item        (:todo info)        
         obligatory-items (:obligatories info)
         optional-items   (:optional info)
-        ;; seperate ids (from lines) and inputs (from user-input))
+        ;; separate ids (from lines) and inputs (from user-input))
         obligatory-ids   (map get-item-id (filter map? obligatory-items))
         obligatory-user-input (into [] (remove map? obligatory-items))
         
@@ -500,7 +507,7 @@ In case there is nothing to choose or the num is invalid, throws an exception."
         obligatory-items (:obligatories info)
         optional-items   (:optional info)
         optional-ids     (map get-item-id optional-items)
-        ;; seperate user-inputs from obligatory-items
+        ;; separate user-inputs from obligatory-items
         obligatory-user-input (into [] (remove map? obligatory-items))
         obligatory-args (into [] (map item-to-rule-arg obligatory-items))
         optional-args   (into [] (map item-to-rule-arg optional-items))
