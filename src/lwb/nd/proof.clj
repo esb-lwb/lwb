@@ -11,8 +11,8 @@
 ;; utility functions
 (defn get-item
   "Returns the item from proof on line. 
-line x => returns item on line x
-line [x y] => returns subproof starting on line x (including all contained items and/or subproofs)"
+   line x => returns item on line x
+   line [x y] => returns subproof starting on line x (including all contained items and/or subproofs)"
   [proof line]
   (if (not (vector? line))
     (nth (flatten proof) (dec line))
@@ -44,8 +44,8 @@ line [x y] => returns subproof starting on line x (including all contained items
 
 (defn get-scope
   "Returns the scope for an item inside a proof
-e.g. proof = [1 2 [3 4] [5 6 7] 8] & item = 5
-=> scope = [1 2 [3 4] 5 6 7]"
+   e.g. proof = [1 2 [3 4] [5 6 7] 8] & item = 5
+   => scope = [1 2 [3 4] 5 6 7]"
   [proof item]
   (if (contains? (set proof) item)
     proof
@@ -60,7 +60,7 @@ e.g. proof = [1 2 [3 4] [5 6 7] 8] & item = 5
 
 (defn proved?
   "Checks if a proof is fully proved.
-If not throws an Exception with a description which lines are still unproved"
+   If not throws an Exception with a description which lines are still unproved"
   [proof]
   (if (empty? proof)
     (throw (Exception. "The proof is empty/There is no proof")))
@@ -73,10 +73,11 @@ If not throws an Exception with a description which lines are still unproved"
                      (vector? (first p)) (recur (into [] (concat (first p) (subvec p 1))) u)
                      :else (recur (subvec p 1) u)))]
     (if (not-empty unproved)
-      (throw (Exception. (str "There are still unproved lines inside the proof (" (clojure.string/join " " (map #(id-to-line proof %) (map :id unproved))) ")")))
+      (throw (Exception. (str "There are still unproved lines inside the proof
+        (" (clojure.string/join " " (map #(id-to-line proof %) (map :id unproved))) ")")))
       true)))
-;; -----------------
 
+;; -----------------
 ;; functions for editing the proof
 (defn edit-proof
   [proof item newitem mode]

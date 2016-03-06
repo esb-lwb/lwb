@@ -45,7 +45,7 @@
 
 (defn import-trivials
   "Imports all trivial-theorems from filename into the internal trivial-theorems-storage.
-Existing trivial-theorems will be kept."
+   Existing trivial-theorems will be kept."
   [filename]
   (with-open [reader (io/reader filename)]
     (loop [item (read (PushbackReader. reader) false nil)

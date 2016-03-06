@@ -102,7 +102,3 @@
           forward? (:forwards (val rule))
           backward? (:backwards (val rule))]
       (println (str name ": \t" given " -> " conclusion)))))
-    
-    
- 
-  
