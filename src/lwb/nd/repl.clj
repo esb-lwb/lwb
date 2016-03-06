@@ -43,7 +43,7 @@
   (show))
 
 (defn step-f-inside
-  "Executs a forward step inside the chosen line"
+  "Executes a forward step inside the chosen line"
   [rule line]
   (swap! last_steps conj @p)
   (swap! p #(apply deduc/step-f-inside (conj (list rule line) %)))
