@@ -26,7 +26,7 @@
     
 (defn gen-args
   "Generates the top level arguments for the logic function
-a (and a b) (not b) => [a and2 not3]"
+   a (and a b) (not b) => [a and2 not3]"
   [given]
   (let [numbers (take (count given) (iterate inc 1))]
     (into [] (map #(gen-arg %1 %2) given numbers))))
@@ -34,11 +34,11 @@ a (and a b) (not b) => [a and2 not3]"
 
 (defn get-term-arg
   "Converts a given arg into a term argument
-a => (list a)
-truth => (list (quote truth)) - \"truth\" is a keyword
-(and a b) => (list (concat (list (quote and)) (list a) (list b)))
-[x (not y)] => (list (apply vector (concat (list x) (list (concat (list (quote not)) (list y))))))
-(all functions are written with their related namespace)"
+   a => (list a)
+   truth => (list (quote truth)) - \"truth\" is a keyword
+   (and a b) => (list (concat (list (quote and)) (list a) (list b)))
+   [x (not y)] => (list (apply vector (concat (list x) (list (concat (list (quote not)) (list y))))))
+   (all functions are written with their related namespace)"
   [arg]
   (cond
     (contains? keywords arg) (list `list (list `quote arg))
@@ -51,7 +51,7 @@ truth => (list (quote truth)) - \"truth\" is a keyword
 
 (defn gen-term
   "Converts a given list into a quoted sequence 
-(and a b) => `(~'and ~a ~b)"
+   (and a b) => `(~'and ~a ~b)"
   [given]
   (let [args (map #(get-term-arg %) (rest given))
         operator (list `list (list `quote (first given)))
@@ -61,7 +61,7 @@ truth => (list (quote truth)) - \"truth\" is a keyword
 
 (defn gen-body-row
   "Converts an argument and an given input into a unify-logic-row:
-[and1 (and a b)] -> (== and1 `(~'and ~a ~b))"
+   [and1 (and a b)] -> (== and1 `(~'and ~a ~b))"
   [arg g]
   (cond 
     (contains? keywords g) `(== ~arg ~(list `quote arg))
@@ -95,7 +95,7 @@ truth => (list (quote truth)) - \"truth\" is a keyword
 
 (defn gen-result-row
   "Converts a result-variable and an input into a unify-logic-row
-q1 (and a b) => (== q1 `(~'and ~a ~b))"
+   q1 (and a b) => (== q1 `(~'and ~a ~b))"
   [q c]
   `(== ~q ~(cond 
               (contains? keywords c) (list `quote c)
@@ -120,9 +120,9 @@ q1 (and a b) => (== q1 `(~'and ~a ~b))"
 
 (defn gen-logic-function
   "Takes given and conclusions from a rule and builds a core.logic function that will represent that rule
-e.g. \"and-i\" [a b] => [(and a b)]
-(fn [a b q1] 
-  (fresh [] 
+   e.g. \"and-i\" [a b] => [(and a b)]
+   (fn [a b q1]
+    (fresh []
     (== q1 `(~'and ~a ~b))))"
   [prereq given conclusion]
   (let [qs   (map #(symbol (str %1 %2)) (take (count conclusion) (cycle ['q])) (take (count conclusion) (iterate inc 1)))
@@ -138,7 +138,8 @@ e.g. \"and-i\" [a b] => [(and a b)]
 
 ;; utility functions
 (defn make-rule
-  "Takes either a map or the name of an existing rule or theorem to create the appropriate core.logic-function for this rule"
+  "Takes either a map or the name of an existing rule or theorem to create
+   the appropriate core.logic-function for this rule"
   [rule]
   (cond
     (map? rule)
@@ -199,10 +200,13 @@ e.g. \"and-i\" [a b] => [(and a b)]
          
 ;; NOTE - right now "apply-rule" can't separate arguments from lines and user-inputs, which may cause absurd behavior 
 (defn apply-rule 
-  "Applies the rule/theorem (rule [string or map]) either forwards or backwards (forward?) on the given parameters (args & optional).
-The obligatory arguments (args) will always be the first arguments passed to the core.logic function (in different permutations).
-The optional arguments (optional) will be mixed with the generated logical arguments and will passed last to the core-logic function (in different permutations).
-This way it is ensured that \"given\"-arguments will never handled as \"conclusion\"-arguments and vice versa."
+  "Applies the rule/theorem (rule [string or map]) either forwards or backwards (forward?)
+   on the given parameters (args & optional).
+   The obligatory arguments (args) will always be the first arguments passed to
+   the core.logic function (in different permutations).
+   The optional arguments (optional) will be mixed with the generated logical arguments and
+   will passed last to the core-logic function (in different permutations).
+   This way it is ensured that \"given\"-arguments will never handled as \"conclusion\"-arguments and vice versa."
   [rule forward? args & [optional]]
   (let [rule-map (cond
                    (map? rule) rule
@@ -227,7 +231,7 @@ This way it is ensured that \"given\"-arguments will never handled as \"conclusi
 
 (defn apply-trivials
   "Applies all trivial theorems to the given form and returns the first successful result.
-To extend the predefined trivial theorems use the \"import-trivials\" function (ns: io)"
+   To extend the predefined trivial theorems use the \"import-trivials\" function (ns: io)"
   [form]
   (let [names (map #(subs % 1) (map str (map key @trivials)))
         f (fn [name arg]
@@ -235,6 +239,4 @@ To extend the predefined trivial theorems use the \"import-trivials\" function (
         results (map #(f % form) names)
         res (first (drop-while empty? results))]
     res))
- 
- 
  
