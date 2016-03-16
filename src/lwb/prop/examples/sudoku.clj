@@ -10,7 +10,7 @@
 (ns lwb.prop.examples.sudoku
   (:require [clojure.java.io :refer (reader)])
   (:require [lwb.prop.cardinality :refer (oneof max-kof min-kof)])
-  (:require [lwb.prop.sat :refer (sat)])
+  (:require [lwb.prop.sat :refer (sat true-only)])
 )
 
 ;; Configuration
@@ -91,15 +91,6 @@
 ;; ## Solving the puzzle
 
 ;; some helpers for transforming the result of sat
-(defn true-only
-  "Sequence of true atoms in an assignment vector"
-  [assign-vec]
-  (loop [vec assign-vec, result []]
-    (if (empty? vec)
-      result
-      (let [atom (first vec) value (second vec)]
-        (recur (subvec vec 2) (if value (conj result atom) result))))))
-
 (defn solution
   "Solution from assigment vector"
   [assign-vec]
