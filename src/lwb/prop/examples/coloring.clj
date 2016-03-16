@@ -36,7 +36,7 @@
 
 (def colors ["red" "green" "blue"])
 
-; States an terrirories of Australia:
+; States and territories of Australia:
 ; 	wa = Western Australia,
 ;   nt = Northern Territory,
 ;   sa = South Australia,
