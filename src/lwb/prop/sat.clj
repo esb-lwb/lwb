@@ -191,7 +191,14 @@
   [phi]
   (not (sat? (list 'not phi))))
 
-
+(defn true-only
+  "Sequence of true atoms in an assignment vector"
+  [assign-vec]
+  (loop [vec assign-vec, result []]
+    (if (empty? vec)
+      result
+      (let [atom (first vec) value (second vec)]
+        (recur (subvec vec 2) (if value (conj result atom) result))))))
 
 (comment
   (def example '(impl (and a1 a2) x))
