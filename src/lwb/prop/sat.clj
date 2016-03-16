@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Propositional Logic SAT
 
-; Copyright (c) 2014 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2016 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -64,7 +64,7 @@
                             (map #(if (pos? %) 
                                     [(int-atoms %) true] 
                                     [(int-atoms (- %)) false]) model-vec))))]
-    (try 
+    (try
       (.setTimeout solver *sat4j-timeout*)
       (.newVar solver num-atoms)
       (.setExpectedNumberOfClauses solver num-cl)
@@ -73,7 +73,7 @@
 
       (when (.isSatisfiable solver)
         (assign-vec (vec (.model solver)) (:int-atoms dimacs-map)))
-      (catch ContradictionException ce nil))))
+      (catch ContradictionException _ nil))))
 
 
 ;; ## Tseitin transformation
@@ -106,11 +106,21 @@
   [phi]
   (take-while (complement z/end?) (iterate z/next (z/seq-zip phi))))
 
+(defn- iterate-while
+  "Iterate beginning with `x` while `f` returns not nil"
+  [f x]
+   (lazy-seq (when x (cons x (iterate-while f (f x))))))
+
+(defn- children-locs
+  "Sequence of Children locs at branch"
+  [branch]
+  (iterate-while z/right (z/down branch)))
+
 (defn- tseitin-branch
   "Analyzes branch and generates equivalence formula for the branch.  
-   The formula is of the form `(equiv ts_x (atoms or tseitin symbols of children)`."
+   The formula is of the form `(equiv ts_x (atoms or tseitin symbol of children)`."
   [branch]
-  (let [children (map #(if (list? %) (:tseitin-symbol (meta  %))  %) (z/children branch))]
+  (let [children (map #(if (z/branch? %) (:tseitin-symbol (meta  (z/node %)))  (z/node %)) (children-locs branch))]
     (list 'equiv (:tseitin-symbol (meta (z/node branch))) children)))
                                  
 (defn tseitin
@@ -200,4 +210,7 @@
   prop
   (sat prop)
 
+  (def example-from-lecture '(or P1 (and P2 (impl P3 P4))))
+  (tseitin example-from-lecture)
+  (sat example-from-lecture)
   )
