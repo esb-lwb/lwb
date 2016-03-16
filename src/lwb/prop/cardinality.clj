@@ -42,7 +42,7 @@
     (concat (min-kof k coll) (max-kof k coll))))
 
 (defn oneof
-  "(oneof k coll) -> a seq of clauses expressing that
+  "(oneof coll) -> a seq of clauses expressing that
    exactly 1 symbol in coll ist true."
   [coll]
   (if (empty? coll)
