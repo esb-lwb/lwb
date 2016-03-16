@@ -128,8 +128,8 @@
   (min-kof 1 (map make-sym (next-cells puzzle direction [r c]))))
 
 (defn- arrow-cell?
-  "Checks whether [[row col] value] is a cell with a value that's an arrow."
-  [[[row col] value]]
+  "Checks whether [[_ _] value] is a cell with a value that's an arrow."
+  [[[_ _] value]]
   (not= value u))
 
 (defn- neg-sym [sym]
@@ -242,7 +242,6 @@
     (print-puzzle-and-solution (load-file (str "resources/jabeh/" file ".edn"))))
 
   (test-puzzle "jabeh01")
-  ved
   (test-puzzle "jabeh02")
   (test-puzzle "jabeh03")
   (test-puzzle "jabeh04")
@@ -262,6 +261,6 @@
 
   (dotimes [_ 10]
     (bench ["jabeh01" "jabeh02" "jabeh03" "jabeh04" "jabeh05" "jabeh06"]))
-  ; => 180 msec / 6 = 30 msec per puzzle
+  ; => 150 msec
 
   )
