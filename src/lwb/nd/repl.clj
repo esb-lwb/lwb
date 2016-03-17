@@ -63,11 +63,11 @@
   (swap! p deduc/choose-option line num)
   (show))
 
-(defn rename-var
-  "Rename a variable"
+(defn unify
+  "Unifies symbols"
   [old new]
   (swap! last_steps conj @p)
-  (swap! p deduc/rename-var old new)
+  (swap! p deduc/unify old new)
   (show))
 
 (defn trivial
@@ -98,7 +98,7 @@
   (for [rule @io/rules]
     (let [name (subs (str (key rule)) 1)
           given (:given (val rule))
-          conclusion (:conclusion (val rule))
-          forward? (:forwards (val rule))
-          backward? (:backwards (val rule))]
+          conclusion (:conclusion (val rule))]
+          ;forward? (:forwards (val rule))
+          ;backward? (:backwards (val rule))]
       (println (str name ": \t" given " -> " conclusion)))))

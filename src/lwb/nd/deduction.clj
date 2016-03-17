@@ -254,7 +254,7 @@
       (map #(create-item % rule) non-lazy))))
 ;; --------------------------------------------------------
 
-;; functions for advancing the proofs state (steps, choose-options, rename-vars)
+;; functions for advancing the proofs state (steps, choose-options, unify)
 (defn check-args
   "Checks the arguments for errors and irregularities. 
    If nothing is found returns a map with additional information for further proceeding."
@@ -339,8 +339,8 @@
 	               :obligatories obligatories 
 	               :optional optional})))))
 
-(defn rename-var
-  "Replaces all instances of old inside the proof with new"
+(defn unify
+  "Unifies all instances of `old` inside the `proof` with `new`."
   [proof old new]
   (if (symbol? old)
     (check-duplicates
@@ -355,7 +355,7 @@
               :else node)
             node)) 
         proof))
-    (throw (Exception. (str "\"" old "\" is not a symbol. You can only rename symbols (not lists, vectors, etc.)")))))
+    (throw (Exception. (str "\"" old "\" is not a symbol. You can only unify symbols (not lists, vectors, etc.)")))))
 
 (defn choose-option
   "Chooses option num on line to be inserted into proof.
@@ -412,7 +412,7 @@
     (throw (Exception. (str "\"" line "\" is not a line number.")))
     
     :else
-    (let [info (check-args proof rule [line] true)
+    (let [;info (check-args proof rule [line] true)
           r (prep-temporal (rules/get-rule rule))
           rule-exe (fn [node]
                      (let [res (apply rules/apply-rule (conj [r true] [node] []))]
