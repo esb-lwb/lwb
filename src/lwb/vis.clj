@@ -18,7 +18,11 @@
    \\usepackage{MnSymbol}
    \\usepackage[english]{babel}
    \\usepackage{tikz-qtree}
-   \\tikzset{every tree node/.style={shape=rectangle,minimum size=6mm,rounded corners=3mm,draw}}
+   \\tikzset{every tree node/.style={shape=rectangle,minimum size=6mm,rounded corners=3mm,draw},
+      edge from parent/.style={draw, edge from parent path={(\\tikzparentnode) -- (\\tikzchildnode)}},
+      sibling distance=8pt
+   }
+
    \\begin{document}
    \\begin{tikzpicture}
    \\Tree")
