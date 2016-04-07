@@ -17,5 +17,6 @@
                  [org.clojure/tools.macro "0.1.2"]
                  [org.clojure/math.combinatorics "0.1.1"]
                  [potemkin "0.4.3"]
-                 [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]]
+                 [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]
+                 [de.fosd.typechef/javabdd_repackaged_2.10 "0.1"]]
   :jvm-opts ["-Xms2G"])
