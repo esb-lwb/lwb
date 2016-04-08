@@ -96,10 +96,128 @@
     (build-bdd-inner bddf atom-map phi)))
 
 (type 'false)
-(build-bdd (init-bddf :small) '(and p q))
+(def bdd1 (build-bdd (init-bddf :small) '(and p q)))
 (build-bdd (init-bddf :small) 'p)
 (build-bdd (init-bddf :small) 'true)
 (build-bdd (init-bddf :small) 'false)
+
+(def bdd1 (build-bdd (init-bddf :small) phi1))
+; how to represent the bdd in clojure?
+
+(.toString bdd1)
+(.var bdd1)
+(.level bdd1)
+(.level (.high bdd1))
+(.high bdd1)
+(.low (.high bdd1))
+(.level (.low (.high bdd1)))
+(.low bdd1)
+(.low (.low bdd1))
+
+(.low (.low (.low bdd1)))
+(.high (.low (.low bdd1)))
+(.var (.low (.high (.low (.low bdd1)))))
+
+
+; durchlaufe bdd und indexiere
+; setzt voraus, dass es nicht true ist oder false, diese Fälle müssen extra behandelt werden
+
+(defrecord Node [no var hi-no lo-no])
+
+(def graph (atom {}))
+
+(def false-node ['false (Node. 0 'false 0 0)])
+(def true-node  ['true  (Node. 1 'true 1 1)])
+
+(swap! graph conj false-node)
+(swap! graph conj true-node)
+@graph
+
+
+
+; sammelt alle Pfade durch den Graphen auf
+#_(defn traverse [bdd result]
+  (cond
+    (.isZero bdd) (conj result "false")
+    (.isOne  bdd) (conj result "true")
+    :else (concat
+             (traverse (.high bdd) (conj result (.var bdd)))
+             (traverse (.low  bdd) (conj result (.var bdd))))))
+
+(traverse bdd1 [])
+bdd1
+
+; next number for node in graph
+(defn- next-no [graph]
+  (inc (apply max (map :no (vals graph)))))
+
+@graph
+(next-no @graph)
+
+; is there already an entry for the bdd
+(contains? @graph 'p)
+(contains? @graph 'true)
+
+; is the entry with key already visited?
+(defn- visited? [sym graph]
+  (println "visited?" sym)
+  (not (nil? (:hi-no (get graph sym)))))
+
+(visited? 'true @graph)
+(visited? 'false @graph)
+(visited? 'p @graph)
+
+(defn- init-entry [sym graph]
+  (println "init" sym)
+  ;(println "next-no" (next-no @graph))
+  (if (not (contains? @graph sym))
+    (swap! graph conj [sym (Node.  (next-no @graph) sym nil nil)])))
+
+(defn- child-atom [bdd] ; checks child
+  (cond
+    (.isZero bdd) 'false
+    (.isOne  bdd) 'true
+    :else (.var bdd)))
+
+(defn- process [bdd graph]
+  (let [sym (.var bdd)]
+    (println "process")
+    (init-entry sym graph)
+    (if (visited? sym @graph)
+      graph                    ; already visited -> nothing to do
+      (let [hi-sym (child-atom (.high bdd))
+            lo-sym (child-atom (.low  bdd))]
+        (println "hi-atom" hi-sym)
+        (println "lo-atom" lo-sym)
+        (init-entry hi-sym graph)
+        (init-entry lo-sym graph)
+        (let [hi-no (:no (get @graph hi-sym))
+              x (println "hi-no" hi-no)
+              lo-no (:no (get @graph lo-sym))
+              y (println "lo-no" lo-no)
+              no    (:no (get @graph sym))]
+          (swap! graph conj [sym (Node. no sym hi-no lo-no)]))))))
+
+(defn- traverse-inner [bdd graph]
+  (cond
+    (.isZero bdd) graph
+    (.isOne  bdd) graph
+    :else (do
+            (process bdd graph)
+            (traverse-inner (.high bdd) graph)
+            (traverse-inner (.low  bdd) graph))))
+
+(defn traverse [bdd]
+  (let [result (atom {})
+        false-node ['false (Node. 0 'false 0 0)]
+        true-node  ['true  (Node. 1 'true  1 1)]]
+    (swap! result conj false-node)
+    (swap! result conj true-node)
+    (traverse-inner bdd result)))
+
+(traverse bdd1)
+
+
 
 ; TODO: represent the table as a clojure object
 (defn bdd-table
@@ -126,6 +244,14 @@
 
 (with-bddf [bddf (init-bddf :small)]
            (bdd-table bddf 'true))
+
+(defn bdd-set
+  [bddf phi]
+  (let [bdd  (build-bdd bddf phi)]
+    (.printSet bdd)))
+
+(with-bddf [bddf (init-bddf :small)]
+           (bdd-set bddf phi1))
 
 ; TODO: use the clojure representation of a bdd to generate dot code
 (defn bdd-dot
