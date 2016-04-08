@@ -164,7 +164,7 @@
   (if (coll? phi)
     (apply sorted-set 
            (filter #(not (or (op? %) (torf? %))) (flatten phi)))
-    #{phi}))
+    (filter #(not (torf? %)) #{phi})))
 
 (defn eval-phi 
   "Evaluates the formula `phi` with the given assignment vector.        
@@ -230,7 +230,7 @@
   "Pretty prints truth-table."
   [{:keys [prop header table]}]
     [prop header table]
-  (let [table' (vec (map #(replace {true "T" false "F"} %) table))]
+  (do
     (println "Truth table")
     (println prop)
 	  (print-table header table)))
