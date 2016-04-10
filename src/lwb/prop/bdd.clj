@@ -8,13 +8,13 @@
 ; the terms of this license.
 
 (ns lwb.prop.bdd
-  (:require [lwb.prop :refer :all])
+  (:require [lwb.prop :refer :all]
+            [clojure.java.shell :as shell])
   (:import  (net.sf.javabdd JFactory BDD)))
 
 ; Example
-(def phi1 '(and (or a b) (not (or c d))))
-(def phi2 '(and p (not p)))
-(def phi3 '(or p (not p)))
+(def phi1 '(or (and a c) (and b d)))
+(def phi2 '(and (or a b) (not (or c d))))
 
 ; function from prop
 (atoms-of-phi phi1)
@@ -62,6 +62,7 @@
 
 (atoms-as-bdds (init-bddf :small) '(and p q))
 (atoms-as-bdds (init-bddf :small) 'true)
+(atoms-as-bdds (init-bddf :small) phi1)
 
 (def ^:private functions
   ^{:doc "mapping of operators to BDD functions"}
@@ -95,34 +96,14 @@
   (let [atom-map (atoms-as-bdds bddf phi)]
     (build-bdd-inner bddf atom-map phi)))
 
-(type 'false)
-(def bdd1 (build-bdd (init-bddf :small) '(and p q)))
-(build-bdd (init-bddf :small) 'p)
-(build-bdd (init-bddf :small) 'true)
-(build-bdd (init-bddf :small) 'false)
-
 (def bdd1 (build-bdd (init-bddf :small) phi1))
+(def bdd2 (build-bdd (init-bddf :small) phi2))
 ; how to represent the bdd in clojure?
-
-(.toString bdd1)
-(.var bdd1)
-(.level bdd1)
-(.level (.high bdd1))
-(.high bdd1)
-(.low (.high bdd1))
-(.level (.low (.high bdd1)))
-(.low bdd1)
-(.low (.low bdd1))
-
-(.low (.low (.low bdd1)))
-(.high (.low (.low bdd1)))
-(.var (.low (.high (.low (.low bdd1)))))
-
 
 ; durchlaufe bdd und indexiere
 ; setzt voraus, dass es nicht true ist oder false, diese Fälle müssen extra behandelt werden
 
-(defrecord Node [no var hi-no lo-no])
+(defrecord Node [no var lo-no hi-no])
 
 (def graph (atom {}))
 
@@ -133,19 +114,7 @@
 (swap! graph conj true-node)
 @graph
 
-
-
-; sammelt alle Pfade durch den Graphen auf
-#_(defn traverse [bdd result]
-  (cond
-    (.isZero bdd) (conj result "false")
-    (.isOne  bdd) (conj result "true")
-    :else (concat
-             (traverse (.high bdd) (conj result (.var bdd)))
-             (traverse (.low  bdd) (conj result (.var bdd))))))
-
-(traverse bdd1 [])
-bdd1
+; TODO: naming of functions
 
 ; next number for node in graph
 (defn- next-no [graph]
@@ -154,49 +123,36 @@ bdd1
 @graph
 (next-no @graph)
 
-; is there already an entry for the bdd
-(contains? @graph 'p)
-(contains? @graph 'true)
 
 ; is the entry with key already visited?
-(defn- visited? [sym graph]
-  (println "visited?" sym)
-  (not (nil? (:hi-no (get graph sym)))))
+(defn- visited? [bdd-i graph]
+  (not (nil? (:lo-no (get graph bdd-i)))))
 
 (visited? 'true @graph)
 (visited? 'false @graph)
-(visited? 'p @graph)
 
-(defn- init-entry [sym graph]
-  (println "init" sym)
-  ;(println "next-no" (next-no @graph))
-  (if (not (contains? @graph sym))
-    (swap! graph conj [sym (Node.  (next-no @graph) sym nil nil)])))
+(defn- init-entry [bdd graph]
+  (if (not (contains? @graph bdd))
+    (swap! graph conj [bdd (Node.  (next-no @graph) (.var bdd) nil nil)])))
 
-(defn- child-atom [bdd] ; checks child
+(defn- child-bdd [bdd] ; checks child
   (cond
     (.isZero bdd) 'false
     (.isOne  bdd) 'true
-    :else (.var bdd)))
+    :else bdd))
 
 (defn- process [bdd graph]
-  (let [sym (.var bdd)]
-    (println "process")
-    (init-entry sym graph)
-    (if (visited? sym @graph)
+    (init-entry bdd graph)
+    (if (visited? bdd @graph)
       graph                    ; already visited -> nothing to do
-      (let [hi-sym (child-atom (.high bdd))
-            lo-sym (child-atom (.low  bdd))]
-        (println "hi-atom" hi-sym)
-        (println "lo-atom" lo-sym)
-        (init-entry hi-sym graph)
-        (init-entry lo-sym graph)
-        (let [hi-no (:no (get @graph hi-sym))
-              x (println "hi-no" hi-no)
-              lo-no (:no (get @graph lo-sym))
-              y (println "lo-no" lo-no)
-              no    (:no (get @graph sym))]
-          (swap! graph conj [sym (Node. no sym hi-no lo-no)]))))))
+      (let [lo-bdd (child-bdd (.low bdd))
+            hi-bdd (child-bdd (.high  bdd))]
+        (init-entry lo-bdd graph)
+        (init-entry hi-bdd graph)
+        (let [lo-no (:no (get @graph lo-bdd))
+              hi-no (:no (get @graph hi-bdd))
+              no    (:no (get @graph bdd))]
+          (swap! graph conj [bdd (Node. no (.var bdd) lo-no hi-no)]))))))
 
 (defn- traverse-inner [bdd graph]
   (cond
@@ -204,9 +160,10 @@ bdd1
     (.isOne  bdd) graph
     :else (do
             (process bdd graph)
-            (traverse-inner (.high bdd) graph)
-            (traverse-inner (.low  bdd) graph))))
+            (traverse-inner (.low  bdd) graph)
+            (traverse-inner (.high bdd) graph))))
 
+; TODO: naming and bordercases phi = 'true e.g.
 (defn traverse [bdd]
   (let [result (atom {})
         false-node ['false (Node. 0 'false 0 0)]
@@ -218,6 +175,70 @@ bdd1
 (traverse bdd1)
 
 
+; TODO:
+
+(defn bdd-i
+  "bdd-i generates the internal bdd for `phi`
+   within the context of the JFactory."
+  [phi]
+  phi)
+
+
+(defn bdd
+  "bbd initializes the JFaxctory with a reasonable
+   size depending on the number of atoms in `phi`,
+   generates the internal bdd and transforms it to
+   the represantation of the bdd in Cloujre."
+  [phi]
+  phi)
+
+(defn sat
+  "Gives an assignment vector for `phi` if the formula is satisfiable, nil if not.
+   If `phi` is trivially valid, the result is true.
+   Mode `:all` returns a sequence of all the satisfying assignments."
+  ([phi]
+   (sat phi :one))
+  ([phi mode]
+   (cond
+     ; border cases
+     (= phi 'true) true
+     (= phi 'false) nil
+     :else
+     (case mode
+       :all
+       phi
+       ; TODO
+       ; default
+       phi
+       ; TODO
+       ))))
+
+(defn sat?
+  "Is `phi` satisfiable?"
+  [phi]
+  (if (nil? (sat phi)) false true))
+
+(defn valid?
+  "Is `phi` valid?"
+  [phi]
+  (not (sat? (list 'not phi))))
+
+(defn vis
+  "Visualisation of the bdd for the formula `phi`.
+   Generates code for graphviz (dot)."
+  [phi]
+  phi)
+
+(defn vis-pdf
+  "Makes a pdf file with the visualisation of the bdd for `phi`.
+  <filename> is the name of the file to be generated, must have no extension.
+  The function uses the shell command 'dot' that generates the pdf from dot code,
+  and 'open' to show the generated file."
+  [phi filename]
+  (let [dot-code (vis phi)]
+    (spit (str filename ".dot") dot-code)
+    (shell/sh "dot" (str "-Tpdf" filename ".dot") (str "-o" filename ".pdf"))
+    (shell/sh "open" (str filename ".pdf"))))
 
 ; TODO: represent the table as a clojure object
 (defn bdd-table
@@ -237,21 +258,8 @@ bdd1
            (bdd-table bddf '(impl p q)))
 (with-bddf [bddf (init-bddf :small)]
            (bdd-table bddf '(or (not p) q)))
-
-(wff? 'true)
-
-
-
 (with-bddf [bddf (init-bddf :small)]
            (bdd-table bddf 'true))
-
-(defn bdd-set
-  [bddf phi]
-  (let [bdd  (build-bdd bddf phi)]
-    (.printSet bdd)))
-
-(with-bddf [bddf (init-bddf :small)]
-           (bdd-set bddf phi1))
 
 ; TODO: use the clojure representation of a bdd to generate dot code
 (defn bdd-dot
@@ -261,9 +269,11 @@ bdd1
 
 (with-bddf [bddf (init-bddf :small)]
            (bdd-dot bddf phi1))
+
 (with-bddf [bddf (init-bddf :small)]
            (bdd-dot bddf phi2))
-(with-bddf [bddf (init-bddf :small)]
-           (bdd-dot bddf phi3))
 
 ; TODO: sat with bdd
+
+
+
