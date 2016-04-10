@@ -121,15 +121,15 @@
                                   (iterate zip/next loc)))))))
 
 (defn vis
-  "Visualisation of the syntax tree of formula phi.
+  "Visualisation of the syntax tree of formula `phi`.
    Generates code for tikz."
   [phi]
   (let [tikz-body (vis-tikz-body phi)]
     (str tikz-header "\n" tikz-body "\n" tikz-footer)))
 
 (defn vis-pdf
-  "Makes a pdf file with the visualisation of the syntaxtree of phi.
-  <file> is the name of the file to be generated, must have no extension.
+  "Makes a pdf file with the visualisation of the syntax tree of `phi`.
+  <filename> is the name of the file to be generated, must have no extension.
   The function uses the shell command 'texi2pdf' that compiles tex code,
   and 'open' to show the generated file."
   [phi filename]
