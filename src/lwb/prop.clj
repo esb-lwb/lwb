@@ -164,7 +164,9 @@
   (if (coll? phi)
     (apply sorted-set 
            (filter #(not (or (op? %) (torf? %))) (flatten phi)))
-    (filter #(not (torf? %)) #{phi})))
+    (if (torf? phi)
+      #{}
+      #{phi})))
 
 (defn eval-phi 
   "Evaluates the formula `phi` with the given assignment vector.        
