@@ -38,19 +38,16 @@
    (init-bddf :medsize) inits the JFactory for medium size formulae,
    (init-bddf :large)   inits the JFactory for large formulae,
    (init-bddf nodesize cachesize) inits the JFactory
-   'Typical values for nodesize are 10.000 nodes for small test examples
-   and up to 1.000.000 nodes for large examples. A cache size of 10.000 seems
-   to work good even for large examples, but lesser values should do it for smaller
-   examples.' (from the documentation of bdd_init of buddy."
+   'Typical values according to the documentation of bdd_init of buddy."
   ([type]
    (case type
      :small (init-bddf 10000 1000))
      :medsize (init-bddf 100000 10000)
-   (init-bddf 1000000 10000))
+   (init-bddf 1000000 100000))
   ([nodesize cachesize]
    (JFactory/init nodesize cachesize)))
 
-(defn- atoms-as-bdds
+(defn- atoms-as-bddis
   "the JavaBDD Factory `bddf` returns a map of BDD Objects for each atom of formula `phi`."
   [bddf phi]
   (let [atoms (atoms-of-phi phi), c (count atoms)]
@@ -60,12 +57,12 @@
         (.setVarNum bddf c)
         (zipmap atoms (map #(.ithVar bddf %) (range c)))))))
 
-(atoms-as-bdds (init-bddf :small) '(and p q))
-(atoms-as-bdds (init-bddf :small) 'true)
-(atoms-as-bdds (init-bddf :small) phi1)
+(atoms-as-bddis (init-bddf :small) '(and p q))
+(atoms-as-bddis (init-bddf :small) 'true)
+(atoms-as-bddis (init-bddf :small) phi1)
 
 (def ^:private functions
-  ^{:doc "mapping of operators to BDD functions"}
+  ^{:doc "mapping of operators to JavaBDD methods"}
   {'not   #(.not   ^BDD %1)
    'and   #(.and   ^BDD %1 ^BDD %2)
    'or    #(.or    ^BDD %1 ^BDD %2)
@@ -74,7 +71,7 @@
    'xor   #(.xor   ^BDD %1 ^BDD %2)
    'ite   #(.ite   ^BDD %1 ^BDD %2 ^BDD %3)})
 
-(defn- build-bdd-inner
+(defn- build-bddi-recur
   [bddf atom-map phi]
   (if (simple-expr? phi)
     (cond (= phi 'true) (.one bddf)
@@ -82,22 +79,22 @@
           :else (get atom-map phi))
     (let [op (first phi)]
       (case (arity op)
-        1 ((functions op) (build-bdd-inner bddf atom-map (second phi)))
-        2 ((functions op) (build-bdd-inner bddf atom-map (second phi))
-            (build-bdd-inner bddf atom-map (nth phi 2)))
-        3 ((functions op) (build-bdd-inner bddf atom-map (second phi))
-            (build-bdd-inner bddf atom-map (nth phi 2))
-            (build-bdd-inner bddf atom-map (nth phi 3)))
-        -1 (reduce (functions op) (map #(build-bdd-inner bddf atom-map %1) (rest phi)))
+        1 ((functions op) (build-bddi-recur bddf atom-map (second phi)))
+        2 ((functions op) (build-bddi-recur bddf atom-map (second phi))
+            (build-bddi-recur bddf atom-map (nth phi 2)))
+        3 ((functions op) (build-bddi-recur bddf atom-map (second phi))
+            (build-bddi-recur bddf atom-map (nth phi 2))
+            (build-bddi-recur bddf atom-map (nth phi 3)))
+        -1 (reduce (functions op) (map #(build-bddi-recur bddf atom-map %1) (rest phi)))
         ))))
 
-(defn build-bdd
+(defn build-bddi
   [bddf phi]
-  (let [atom-map (atoms-as-bdds bddf phi)]
-    (build-bdd-inner bddf atom-map phi)))
+  (let [atom-map (atoms-as-bddis bddf phi)]
+    (build-bddi-recur bddf atom-map phi)))
 
-(def bdd1 (build-bdd (init-bddf :small) phi1))
-(def bdd2 (build-bdd (init-bddf :small) phi2))
+(def bddi1 (build-bddi (init-bddf :small) phi1))
+(def bddi2 (build-bddi (init-bddf :small) phi2))
 ; how to represent the bdd in clojure?
 
 ; durchlaufe bdd und indexiere
@@ -116,65 +113,76 @@
 
 ; TODO: naming of functions
 
-; next number for node in graph
+; next number for a new node in the representation of the bdd
+; Remark: could be implemented as a sequence generator, which
+; is more efficient.
 (defn- next-no [graph]
   (inc (apply max (map :no (vals graph)))))
 
 @graph
 (next-no @graph)
 
-
 ; is the entry with key already visited?
-(defn- visited? [bdd-i graph]
-  (not (nil? (:lo-no (get graph bdd-i)))))
+(defn- visited? [bddi graph]
+  (not (nil? (:lo-no (get graph bddi)))))
 
 (visited? 'true @graph)
 (visited? 'false @graph)
 
-(defn- init-entry [bdd graph]
-  (if (not (contains? @graph bdd))
-    (swap! graph conj [bdd (Node.  (next-no @graph) (.var bdd) nil nil)])))
+; inserts new entry for bddi in atom graph
+(defn- init-node [bddi a-graph]
+  (if (not (contains? @a-graph bddi))
+    (swap! a-graph conj [bddi (Node.  (next-no @graph) (.var bddi) nil nil)])))
 
-(defn- child-bdd [bdd] ; checks child
+; gives key of bddi in graph
+(defn- key-bddi [bddi]
   (cond
-    (.isZero bdd) 'false
-    (.isOne  bdd) 'true
-    :else bdd))
+    (.isZero bddi) 'false
+    (.isOne  bddi) 'true
+    :else bddi))
 
-(defn- process [bdd graph]
-    (init-entry bdd graph)
-    (if (visited? bdd @graph)
-      graph                    ; already visited -> nothing to do
-      (let [lo-bdd (child-bdd (.low bdd))
-            hi-bdd (child-bdd (.high  bdd))]
-        (init-entry lo-bdd graph)
-        (init-entry hi-bdd graph)
-        (let [lo-no (:no (get @graph lo-bdd))
-              hi-no (:no (get @graph hi-bdd))
-              no    (:no (get @graph bdd))]
-          (swap! graph conj [bdd (Node. no (.var bdd) lo-no hi-no)]))))))
+; processes a bbdi and changes a-graph
+(defn- process [bddi a-graph]
+    (init-node bddi a-graph)
+    (if (visited? bddi @a-graph)
+      a-graph                    ; already visited -> nothing to do
+      (let [lo-bddi (key-bddi (.low  bddi))
+            hi-bddi (key-bddi (.high bddi))]
+        (init-node lo-bddi a-graph)
+        (init-node hi-bddi a-graph)
+        (let [lo-no (:no (get @a-graph lo-bddi))
+              hi-no (:no (get @a-graph hi-bddi))
+              no    (:no (get @a-graph bddi))]
+          (swap! graph conj [bddi (Node. no (.var bddi) lo-no hi-no)])))))
 
-(defn- traverse-inner [bdd graph]
+(defn- build-bdd-recur [bddi a-graph]
   (cond
-    (.isZero bdd) graph
-    (.isOne  bdd) graph
+    (.isZero bddi) a-graph
+    (.isOne  bddi) a-graph
     :else (do
-            (process bdd graph)
-            (traverse-inner (.low  bdd) graph)
-            (traverse-inner (.high bdd) graph))))
+            (process bddi a-graph)
+            (build-bdd-recur (.low  bddi) a-graph)
+            (build-bdd-recur (.high bddi) a-graph))))
 
-; TODO: naming and bordercases phi = 'true e.g.
-(defn traverse [bdd]
-  (let [result (atom {})
-        false-node ['false (Node. 0 'false 0 0)]
-        true-node  ['true  (Node. 1 'true  1 1)]]
-    (swap! result conj false-node)
-    (swap! result conj true-node)
-    (traverse-inner bdd result)))
+(defn build-bdd
+  "Generates a Clojure representation of the given `bddi`.
+   Must be called within the context of a BDD Factory."
+  [bddi]
+  (cond
+    (.isZero bddi) [(Node. 0 'false 0 0)]
+    (.isOne  bddi) [(Node. 1 'true  1 1)]
+    :else
+    (let [a-graph (atom {})
+          false-node ['false (Node. 0 'false 0 0)]
+          true-node  ['true  (Node. 1 'true  1 1)]]
+      (swap! a-graph conj false-node)
+      (swap! a-graph conj true-node)
+      (into[] (vals @(build-bdd-recur bddi a-graph))))))
 
-(traverse bdd1)
+(build-bdd bddi1)
 
 
+; the preferred interface to lwb/prob/bdd:
 ; TODO:
 
 (defn bdd-i
@@ -185,7 +193,7 @@
 
 
 (defn bdd
-  "bbd initializes the JFaxctory with a reasonable
+  "bbd initializes the JFactory with a reasonable
    size depending on the number of atoms in `phi`,
    generates the internal bdd and transforms it to
    the represantation of the bdd in Cloujre."
