@@ -149,7 +149,7 @@
                         (forall [x] (= (op x unit) x))
                         (forall [x] (exists [inv] (= (op x inv) unit)))))))
 
-  (vis-pdf grp-axioms-classi\nc "group-axioms")
+  (vis-pdf grp-axioms-classic "group-axioms")
 
   (vis-pdf '(or (and (or p q) q) r) "simple2")
 
