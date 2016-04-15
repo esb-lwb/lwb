@@ -1,4 +1,4 @@
-; lwb Logic WorkBench -- Propositional Logic bdd
+; lwb Logic WorkBench -- Propositional Logic - Binary Decision Diagrams
 
 ; Copyright (c) 2016 Mathias Gutenbrunner, Jens Lehnhäuser and Burkhardt Renz, THM.
 ; All rights reserved.
@@ -7,21 +7,20 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
+; Binary decision diagrams from formula of the propositional logic are build
+; using the JavaBDD library, see http://javabdd.sourceforge.net. JavaBDD is an
+; implementation in Java of the C/C++ library BuDDy (see http://buddy.sourceforge.net/manual/main.html).
+; Our library is just a rather thin wrapper for JavaBDD in Clöojure.
+
 (ns lwb.prop.bdd
   (:require [lwb.prop :refer :all]
+            [clojure.string :as str]
             [clojure.java.shell :as shell])
   (:import  (net.sf.javabdd JFactory BDD)))
 
-; Example
-(def phi1 '(or (and a c) (and b d)))
-(def phi2 '(and (or a b) (not (or c d))))
-
-; function from prop
-(atoms-of-phi phi1)
-
 ; All functions with binary decision diagrams have to be executed in the
-; context of an initialized BDDFactory, see the documentation of JavaBDD and buddy.
-; Due to the construction of buddy and JavaBDD the used factory is a singleton.
+; context of an initialized BDDFactory, see the documentation of JavaBDD and BuDDy.
+; Due to the construction of BuDDy and JavaBDD the factory is a singleton.
 (defmacro with-bddf
   "`binding` is a vector that assigns a BDDFactory to a symbol.
    The body is evaluated in a try block, finally the BDDFactory
@@ -30,7 +29,7 @@
   `(let ~binding
      (try ~@body
      (catch Exception e# (str "caught: " (.getMessage e#)))
-     (finally (.done ~(binding 0))))))
+     (finally (.done ^JFactory ~(binding 0))))))
 
 ; Initializing the JFactory
 (defn init-bddf
@@ -38,12 +37,12 @@
    (init-bddf :medsize) inits the JFactory for medium size formulae,
    (init-bddf :large)   inits the JFactory for large formulae,
    (init-bddf nodesize cachesize) inits the JFactory
-   'Typical values according to the documentation of bdd_init of buddy."
+   'Typical values according to the documentation of bdd_init of BuDDy."
   ([type]
    (case type
-     :small (init-bddf 10000 1000))
+     :small   (init-bddf 10000 1000))
      :medsize (init-bddf 100000 10000)
-   (init-bddf 1000000 100000))
+     (init-bddf 1000000 100000))
   ([nodesize cachesize]
    (JFactory/init nodesize cachesize)))
 
@@ -56,15 +55,11 @@
     (if (zero? c)
       {}
       (do
-        (.setVarNum bddf c)
-        (zipmap atoms (map #(.ithVar bddf %) (range c)))))))
-
-(atoms-as-bddis (init-bddf :small) '(and p q))
-(atoms-as-bddis (init-bddf :small) 'true)
-(atoms-as-bddis (init-bddf :small) phi1)
+        (.setVarNum ^JFactory bddf c)
+        (zipmap atoms (map #(.ithVar ^JFactory bddf %) (range c)))))))
 
 (def ^:private functions
-  ^{:doc "Mapping of operators used with prop to JavaBDD methods"}
+  ^{:doc "Mapping of operators of prop to JavaBDD methods"}
   {'not   #(.not   ^BDD %1)
    'and   #(.and   ^BDD %1 ^BDD %2)
    'or    #(.or    ^BDD %1 ^BDD %2)
@@ -77,11 +72,11 @@
   "Inner part of the function that builds a BDD object using the BDD Factory."
   [bddf atom-map phi]
   (if (simple-expr? phi)
-    (cond (= phi 'true) (.one bddf)
-          (= phi 'false) (.zero bddf)
+    (cond (= phi 'true)  (.one  ^JFactory bddf)
+          (= phi 'false) (.zero ^JFactory bddf)
           :else (get atom-map phi))
-    (let [op (first phi)]
-      (case (arity op)
+    (let [op (first phi) a (arity op)]
+      (case a
         1 ((functions op) (build-bddi-recur bddf atom-map (second phi)))
         2 ((functions op) (build-bddi-recur bddf atom-map (second phi))
             (build-bddi-recur bddf atom-map (nth phi 2)))
@@ -97,11 +92,8 @@
   (let [atom-map (atoms-as-bddis bddf phi)]
     (build-bddi-recur bddf atom-map phi)))
 
-(def bddi1 (build-bddi (init-bddf :small) phi1))
-(def bddi2 (build-bddi (init-bddf :small) phi2))
-
-; From the internal daat structure of a binary decision diagram, we
-; build a Clojure data structure represnting the bdd.
+; From the internal data structure of a binary decision diagram, we
+; build a Clojure data structure representing the bdd.
 
 ; The bdd is a vector of node, each node has a unique identifiying `no`,
 ; the symbol for the `atom` of the node, as well as the number of the
@@ -113,8 +105,8 @@
 ;; Definition of a Node in the representation of the bdd
 (defrecord Node [no atom lo-no hi-no])
 
-(def false-node (Node. 0 'false 0 0))
-(def true-node  (Node. 1 'true 1 1))
+(def ^:private false-node (Node. 0 'false 0 0))
+(def ^:private true-node  (Node. 1 'true 1 1))
 
 ; While building the vector of nodes for a bddi we use a
 ; map
@@ -126,52 +118,43 @@
 (defn- visited? [bddi bdd-map]
   (not (nil? (:lo-no (get bdd-map bddi)))))
 
-(visited? 'true base-map)
-(visited? 'false base-map)
-
-(nil? (get base-map bddi1))
-(nil? (get base-map 'true))
-
-
 ; inserts new entry for bddi in transient bdd-map
 ; returns bdd-map
 (defn- init-node [bddi bdd-map]
   (if (nil? (get bdd-map bddi))
-    (conj! bdd-map [bddi (Node. (count bdd-map) (.var bddi) nil nil)])
+    (conj! bdd-map [bddi (Node. (count bdd-map) (.var ^BDD bddi) nil nil)])
     bdd-map))
-
-(init-node bddi1 (transient base-map))
-(persistent! (init-node bddi1 (transient base-map)))
 
 ; gives key of bddi in graph
 (defn- key-bddi [bddi]
   (cond
-    (.isZero bddi) 'false
-    (.isOne  bddi) 'true
+    (.isZero ^BDD bddi) 'false
+    (.isOne  ^BDD bddi) 'true
     :else bddi))
 
 ; processes a bbdi and manipulates transient bdd-map
 ; returns bdd-map
 (defn- process [bddi bdd-map]
   (let [map1 (init-node bddi bdd-map)]
-    (if (visited? bddi bdd-map)
-      bdd-map                    ; already visited -> nothing to do
-      (let [lo-bddi (key-bddi (.low  bddi))
+    (if (visited? bddi map1)
+      map1                    ; already visited -> nothing to do
+      (let [lo-bddi (key-bddi (.low  ^BDD bddi))
             map2 (init-node lo-bddi map1)
-            hi-bddi (key-bddi (.high bddi))
-            map2 (init-node hi-bddi map2)
-            lo-no (:no (get map2 lo-bddi))
-            hi-no (:no (get map2 hi-bddi))
-            no    (:no (get map2 bddi))]
-          (conj! map2 [bddi (Node. no (.var bddi) lo-no hi-no)])))))
+            hi-bddi (key-bddi (.high ^BDD bddi))
+            map3 (init-node hi-bddi map2)
+            lo-no (:no (get map3 lo-bddi))
+            hi-no (:no (get map3 hi-bddi))
+            no    (:no (get map3 bddi))]
+          (conj! map3 [bddi (Node. no (.var ^BDD bddi) lo-no hi-no)])))))
 
 (defn- build-bdd-recur [bddi bdd-map]
   (cond
-    (.isZero bddi) bdd-map
-    (.isOne  bddi) bdd-map
-    :else (let [map1 (process bddi bdd-map)
-                map2 (build-bdd-recur (.low bddi) map1)]
-            (build-bdd-recur (.high bddi) map2))))
+    (.isZero ^BDD bddi) bdd-map
+    (.isOne  ^BDD bddi) bdd-map
+    :else (->> bdd-map
+               (process bddi)
+               (build-bdd-recur (.low  ^BDD bddi))
+               (build-bdd-recur (.high ^BDD bddi)))))
 
 (defn build-bdd
   "Generates a Clojure representation of the given `bddi`.
@@ -180,11 +163,9 @@
    noted as there index."
   [bddi]
   (cond
-    (.isZero bddi) [(Node. 0 'false 0 0)]
-    (.isOne  bddi) [(Node. 1 'true  1 1)]
+    (.isZero ^BDD bddi) [(Node. 0 'false 0 0)]
+    (.isOne  ^BDD bddi) [(Node. 1 'true  1 1)]
     :else (into [] (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))
-
-(build-bdd bddi1)
 
 (defn- reasonable-bddf
   "gives a JFactory based on the number of the variables in the
@@ -197,6 +178,9 @@
       :else    (init-bddf :large))))
 
 (defn- syms-for-atoms
+  "A vector of nodes for the formula `phi` and the corresponding vector of nodes
+   with the internal numbering of atoms where these are replaced by the symbols for
+   the atoms."
   [phi bdd-vec]
   (let [atom-vec (into [] (atoms-of-phi phi))
         tx (map (fn [node]
@@ -205,7 +189,6 @@
                     node
                     (Node. (:no node) (nth atom-vec (:atom node)) (:lo-no node) (:hi-no node)))))]
     (into [] tx bdd-vec)))
-
 
 ; the preferred interface to lwb/prob/bdd:
 (defn bdd
@@ -218,15 +201,20 @@
              (let [bddi (build-bddi bddf phi)]
                (syms-for-atoms phi (build-bdd bddi)))))
 
-(bdd 'true)
-(bdd 'false)
-(bdd phi1)
-(bdd phi2)
-(bdd 'p)
-(bdd '(not p))
-(bdd '(and p q))
-(bdd '(or p q))
-(bdd '(or (and a b) (and a c) (and b c))) ; Knuth Fig. 21
+(comment
+  (bdd 'true)
+  (bdd 'false)
+  (bdd 'p)
+  (bdd '(not p))
+  (bdd '(and p q))
+  (bdd '(or p q))
+  (bdd '(impl p q))
+  (bdd '(equiv p q))
+  (bdd '(ite p q r))
+  (= (bdd '(impl p q)) (bdd '(or (not p) q)))
+  (bdd '(or (and a b) (and a c) (and b c))) ; Knuth Fig. 21
+)
+
 
 ; TODO
 (defn sat
@@ -260,18 +248,30 @@
   [phi]
   (not (sat? (list 'not phi))))
 
-; helper
+; helper functions for visualisation
+
+(defn- process-atom
+  "Generates texcode for atoms;
+   Since '{' and '}' are a reserved character in Clojure,
+   one can use '<' and '>'
+   as characters for grouping subscripts e.g."
+  [node]
+  (-> (name (:atom node))
+      (str/replace \< \{)
+      (str/replace \> \})))
+
 (defn- dot-line
+  "Gieves code for a `node` on the dot loanguage."
   [node]
   (cond
-    (= (:no node) 0) "0 [shape=box label=\"\\bot\", style=filled, height=0.3, width=0.3]];\n"
-    (= (:no node) 1) "1 [shape=box label=\"\\top\", style=filled];\n"
+    (= (:no node) 0) "0 [shape=box label=\"\\bot\"];\n"
+    (= (:no node) 1) "1 [shape=box label=\"\\top\"];\n"
     :else
-    (str (:no node) " [label=\"" (name (:atom node)) "\"];\n"
+    (str (:no node) " [label=\"" (process-atom node) "\", style=\"shape=rectangle,minimum size=6mm,rounded corners=3mm\"];\n"
          (:no node) " -> " (:lo-no node) " [style=dotted];\n"
          (:no node) " -> " (:hi-no node) " [style=filled];\n")))
 
-(defn vis
+(defn vis-dot
   "Visualisation of the bdd for the formula `phi`.
    Generates code for graphviz (dot)."
   [phi]
@@ -281,9 +281,6 @@
         dot-lines (apply str (map dot-line bdd))]
     (str dot-head dot-lines dot-tail)))
 
-
-(vis '(or (and a b) (and a c) (and b c))) ; Knuth Fig. 21
-
 (def ^:private tikz-header
   "\\documentclass{standalone}
    \\standaloneconfig{border=8pt}
@@ -291,36 +288,44 @@
    \\usepackage[english]{babel}
    \\usepackage{tikz}
    \\usetikzlibrary{arrows,shapes}
-   \\begin{tikzpicture}[>=stealth']
-   \\begin{document}")
-
-;\\tikzset{every node/.style={shape=rectangle,minimum size=6mm,rounded corners=3mm,draw}}
+   \\begin{document}
+   \\begin{tikzpicture}[>=stealth']\n")
 
 (def ^:private tikz-footer
   "\\end{tikzpicture}
    \\end{document}")
 
-(defn- vis-tikz
-  [phi filename]
-  (let [dot-code (vis phi)]
-    (spit (str filename ".dot") dot-code)
-    (:out (shell/sh "dot2tex" "-ftikz" "-tmath" "--codeonly" (str filename ".dot")))))
-
-(vis-tikz '(or (and a b) (and a c) (and b c)) "temp") ; Knuth Fig. 21
+(defn vis-tikz
+  "Uses `dot2tex` to get the code of a picture environment in `tikz`.
+   Result sometimes has to be reworked."
+  [phi]
+  (let [dot-code (vis-dot phi)]
+    (:out (shell/sh "dot2tex" "-ftikz" "-tmath" "-s" "--codeonly" :in dot-code))))
 
 (defn vis-pdf
   "Makes a pdf file with the visualisation of the bdd for `phi`.
-  <filename> is the name of the file to be generated, must have no extension.
-  The function uses the shell command 'dot' that generates the pdf from dot code,
-  and 'open' to show the generated file."
-  [phi filename]
-  (let [tikz-body (vis-tikz phi filename)
-        tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)]
-    (spit (str filename ".tex") tex-code)
-    (shell/sh "texi2pdf" (str filename ".tex"))
+  `filename` is the name of the file to be generated, must have no extension.
+  `mode` can be `:tikz` (default) oder `:dot`.
+  In case `:dot` the function uses the command `dot`from graphviz.
+  In case `:tikz` it uses furthermore `dot2tex` and `texi2pdf`.
+  In both cases the genrated file is open by the command `open`."
+  ([phi filename]
+   (vis-pdf phi filename :tikz))
+  ([phi filename mode]
+   (if (= mode :dot)
+     (let [dot-code (vis-dot phi)]
+       (shell/sh "dot" "-Tpdf" "-o" (str filename ".pdf") :in dot-code))
+     (let [tikz-body (vis-tikz phi)
+           tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
+           tex-file (str filename ".tex")]
+        (spit tex-file tex-code)
+        (shell/sh "texi2pdf" tex-file)))
     (shell/sh "open" (str filename ".pdf"))))
 
-(vis-pdf '(or (and x_1 x_2) (and x_1 x_3) (and x_2 x_3)) "majority") ; Knuth Fig. 21
-
+(comment
+  (vis-pdf '(or (and x_1 x_2) (and x_1 x_3) (and x_2 x_3)) "majority1")
+  (vis-pdf '(or (and x_1 x_2) (and x_1 x_3) (and x_2 x_3)) "majority2" :dot)
+  (vis-pdf '(or (and x_<01> x_<02>) (and x_<01> x_<03>) (and x_<02> x_<03>)) "majority3")
+)
 
 
