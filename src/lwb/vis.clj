@@ -92,8 +92,7 @@
   (let [node-str   (str node)
         node-str'  (str/replace node-str \< \{)
         node-str'' (str/replace node-str' \> \})]
-    (str " $" node-str'' "$"))
-  )
+    (str " $" node-str'' "$")))
 
 (defn- mapfn
   "Mapping function that generates the tikz code from the traversing of the tree."
