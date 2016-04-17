@@ -10,17 +10,20 @@
 ; Binary decision diagrams from formula of the propositional logic are build
 ; using the JavaBDD library, see http://javabdd.sourceforge.net. JavaBDD is an
 ; implementation in Java of the C/C++ library BuDDy (see http://buddy.sourceforge.net/manual/main.html).
-; Our library is just a rather thin wrapper for JavaBDD in Clöojure.
+; Our library is just a rather thin wrapper for JavaBDD in Clojure.
 
 (ns lwb.prop.bdd
   (:require [lwb.prop :refer :all]
             [clojure.string :as str]
+            [clojure.math.combinatorics :refer (selections)]
             [clojure.java.shell :as shell])
   (:import  (net.sf.javabdd JFactory BDD)))
 
 ; All functions with binary decision diagrams have to be executed in the
 ; context of an initialized BDDFactory, see the documentation of JavaBDD and BuDDy.
-; Due to the construction of BuDDy and JavaBDD the factory is a singleton.
+; Since we use JFactory, we can have multiple factories, but if one wants to
+; use the BuDDyFactory one have to bear i mind that the BuDDyFactory is a
+; singleton
 (defmacro with-bddf
   "`binding` is a vector that assigns a BDDFactory to a symbol.
    The body is evaluated in a try block, finally the BDDFactory
@@ -167,7 +170,7 @@
     (.isOne  ^BDD bddi) [(Node. 1 'true  1 1)]
     :else (into [] (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))
 
-(defn- reasonable-bddf
+(defn reasonable-bddf
   "gives a JFactory based on the number of the variables in the
    formula `phi`."
   [phi]
@@ -195,7 +198,7 @@
   "bdd initializes the JFactory with a reasonable
    size depending on the number of atoms in `phi`,
    generates the internal bdd and transforms it to
-   the represantation of the bdd in Cloujre."
+   the representation of the bdd in Clojure."
   [phi]
   (with-bddf [bddf (reasonable-bddf phi)]
              (let [bddi (build-bddi bddf phi)]
@@ -216,7 +219,41 @@
 )
 
 
-; TODO
+(defn- tf1-vec
+  "transforms byte vector result from AllSatIterator to get one assignment vector"
+  [phi bvec]
+  (let [atom-vec (into [] (atoms-of-phi phi))
+        tx (map-indexed (fn [idx a]
+        (if (= a 0)
+          [(nth atom-vec idx) 'false]
+          [(nth atom-vec idx) 'true])))]
+    (into[] (comp tx (mapcat identity)) bvec)))
+
+(defn- idx-in-vec
+  "returns seq of indexes of number -1 in vec"
+  [bvec]
+  (let [tx (comp
+             (map-indexed vector) (filter #(= -1 (second %))) (map first))]
+    (sequence tx bvec)))
+
+(defn- tf2-vec
+  "Replaces in `bvec` -1 by the truth value given in `sel`."
+  [bvec sel]
+  (let [assign-map (zipmap (idx-in-vec bvec) sel)
+        tfn (fn [[idx value]]
+              (if (= value -1)
+                (get assign-map idx)
+                value))]
+    (vec (map tfn (map-indexed vector bvec)))))
+
+(defn- tfa-vec
+  "Gives all possible assignment of truth values from a given
+   vector."
+  [bvec]
+  (let [c  (count (filter #(= -1 %) bvec))
+        sels (selections [0 1] c)]
+    (map #(tf2-vec bvec %) sels)))
+
 (defn sat
   "Gives an assignment vector for `phi` if the formula is satisfiable, nil if not.
    If `phi` is trivially valid, the result is true.
@@ -224,19 +261,32 @@
   ([phi]
    (sat phi :one))
   ([phi mode]
-   (cond
-     ; border cases
-     (= phi 'true) true
-     (= phi 'false) nil
-     :else
-     (case mode
-       :all
-       phi
-       ; TODO
-       ; default
-       phi
-       ; TODO
-       ))))
+   (with-bddf [bddf (reasonable-bddf phi)]
+       (let [bddi (build-bddi bddf phi)
+             iseq (iterator-seq (.allsat bddi))]
+         (cond
+           ; border cases
+           (.isOne bddi) 'true
+           (.isZero bddi) 'nil
+           :else
+           (case mode
+             :all (map #(tf1-vec phi %) (mapcat tfa-vec (into[] (map vec iseq))))
+             (tf1-vec phi (first (map vec iseq)))))))))
+
+(comment
+  (sat 'p)
+  (sat 'true)
+  (sat '(and p q))
+  (sat '(and p q) :all)
+  (sat '(or p q))
+  (sat '(or p q) :all)
+  (sat '(or p q r) :all)
+  (sat '(impl p q))
+  (sat '(impl p q) :all)
+  (sat '(and p (not p)))
+  (sat '(or p (not p)))
+)
+
 
 (defn sat?
   "Is `phi` satisfiable?"
