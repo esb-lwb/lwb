@@ -1,5 +1,5 @@
 ; lwb Logic WorkBench -- Propositional Logic 
-; Examples: Truht tables
+; Examples: Truth tables
 
 ; Copyright (c) 2016 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
