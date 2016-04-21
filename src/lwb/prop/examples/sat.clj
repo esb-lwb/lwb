@@ -1,5 +1,5 @@
 ; lwb Logic WorkBench -- Propositional Logic 
-; Examples: Binary decision diagrams
+; Examples: Satisfiability
 
 ; Copyright (c) 2016 Burkhardt Renz, THM. ; All rights reserved.
 ; The use and distribution terms for this software are covered by the
@@ -11,13 +11,14 @@
   (:require [lwb.prop :refer :all])
   (:require [lwb.prop.sat :refer :all]))
 
-; R.L.Rivest's associative block design, see Knuth TAOCP Vol.4 Fac. 6 p. 4
+; R.L.Rivest's associative block design, see Knuth TAOCP Vol.4 Fasc. 6 p. 4
 
 (def R8 '(and (or x_1 x_2 (not x_3)) (or x_2 x_3 (not x_4)) (or x_3 x_4 x_1) (or x_4 (not x_1) x_2)
               (or (not x_1) (not x_2) x_3) (or (not x_2) (not x_3) x_4) (or (not x_3) (not x_4) (not x_1))
               (or (not x_4) x_1 (not x_2))))
 
 (sat? R8)
+; => false
 
 (def R7 '(and (or x_1 x_2 (not x_3)) (or x_2 x_3 (not x_4)) (or x_3 x_4 x_1) (or x_4 (not x_1) x_2)
               (or (not x_1) (not x_2) x_3) (or (not x_2) (not x_3) x_4) (or (not x_3) (not x_4) (not x_1))))

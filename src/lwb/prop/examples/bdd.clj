@@ -25,3 +25,9 @@
 
 (valid? phi1)
 
+
+(def phi '(impl (or (impl S (or R L)) (and (not Q) R)) (impl (not (impl P S)) R)))
+
+phi
+
+(vis-pdf phi "example")
