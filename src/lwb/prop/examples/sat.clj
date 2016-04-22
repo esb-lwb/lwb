@@ -9,22 +9,36 @@
 
 (ns lwb.prop.examples.sat
   (:require [lwb.prop :refer :all])
-  (:require [lwb.prop.sat :refer :all]))
+  (:require [lwb.prop.sat :refer :all])
+  (:require [clojure.math.combinatorics :refer (combinations)]))
 
-; R.L.Rivest's associative block design, see Knuth TAOCP Vol.4 Fasc. 6 p. 4
+; ----------------------------------------------------------------------------------------------------
+; R.L.Rivest's associative block design, see Knuth TAOCP Vol. 4 Fasc. 6 p. 4
 
-(def R8 '(and (or x_1 x_2 (not x_3)) (or x_2 x_3 (not x_4)) (or x_3 x_4 x_1) (or x_4 (not x_1) x_2)
-              (or (not x_1) (not x_2) x_3) (or (not x_2) (not x_3) x_4) (or (not x_3) (not x_4) (not x_1))
-              (or (not x_4) x_1 (not x_2))))
+(def R-clauses '[(or x_1 x_2 (not x_3))
+                 (or x_2 x_3 (not x_4))
+                 (or x_3 x_4 x_1)
+                 (or x_4 (not x_1) x_2)
+                 (or (not x_1) (not x_2) x_3)
+                 (or (not x_2) (not x_3) x_4)
+                 (or (not x_3) (not x_4) (not x_1))
+                 (or (not x_4) x_1 (not x_2))])
 
-(sat? R8)
+; The conjunction of the 8 clauses is not satisfiable
+(sat? (list* 'and R-clauses))
 ; => false
 
-(def R7 '(and (or x_1 x_2 (not x_3)) (or x_2 x_3 (not x_4)) (or x_3 x_4 x_1) (or x_4 (not x_1) x_2)
-              (or (not x_1) (not x_2) x_3) (or (not x_2) (not x_3) x_4) (or (not x_3) (not x_4) (not x_1))))
+; The conjunction of each of the subsets with 7 elements of the clauses is satisfiable
+; and has 2 models
+(def R'-conjs (map #(list* 'and %) (combinations R-clauses 7)))
 
-(sat? R7)
+(map sat? R'-conjs)
+; => (true true true true true true true true)
 
-(sat R7 :all)
+(sat (first R'-conjs) :all)
 ; => ([x_1 false x_2 true x_3 false x_4 true]
 ;     [x_1 false x_2 true x_3 true x_4 true])
+
+(map #(count (sat % :all)) R'-conjs)
+; => (2 2 2 2 2 2 2 2)
+; ----------------------------------------------------------------------------------------------------
