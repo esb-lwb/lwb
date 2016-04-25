@@ -42,3 +42,32 @@
 (map #(count (sat % :all)) R'-conjs)
 ; => (2 2 2 2 2 2 2 2)
 ; ----------------------------------------------------------------------------------------------------
+
+; Examples from the lecture "Logik und formale Methoden"
+;
+(def phi '(and (or P (not Q) R)
+               (or (not P) Q)
+               (or (not P) R)
+               (or (not R) S)
+               (or R (not S))
+               (or (not P) (not S))
+               (or (not P) (not Q) S)))
+
+(sat phi :all)
+
+; => ([P false Q false R true S true]
+;     [P false Q true R true S true]
+;     [P false Q false R false S false])
+
+
+(def phi '(and (or Y_1)
+               (or Y_2)
+               (or (not Y_1) X Z)
+               (or (not Y_2) (not X) Z)
+               (or Y_3 (not Z))
+               (or (not Y_3) (not Z))))
+
+(sat phi)
+
+; => nil
+; ----------------------------------------------------------------------------------------------------
