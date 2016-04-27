@@ -28,17 +28,17 @@
    Only items without rule, in the same scope and the same subproof will be markes as deletable"
   ([proof] (find-duplicates proof proof))
   ([proof sub]
-    (let [scope (get-scope proof (last sub))
-          duplicates (disj (set (map first (filter #(> (val %) 1) (frequencies (map :body (remove vector? scope)))))) :todo)
-          duplicate-items (filter #(contains? duplicates (:body %)) scope)
-          equals (into [] (map val (group-by :body duplicate-items)))
-          fn-smap (fn [equals]
-                    (let [remain (map :id (filter :rule equals))
-                          delete (map :id (filter (set sub) (remove :rule equals)))]; just items from the actual sub can be deleted
-                      (reduce #(assoc %1 %2 (last remain)) {} delete)))
-          ids (apply merge (map fn-smap equals))]
-      (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) ids sub))))
-    
+   (let [scope (get-scope proof (last sub))
+         duplicates (disj (set (map first (filter #(> (val %) 1) (frequencies (map :body (remove vector? scope)))))) :todo)
+         duplicate-items (filter #(contains? duplicates (:body %)) scope)
+         equals (into [] (map val (group-by :body duplicate-items)))
+         fn-smap (fn [equals]
+                   (let [remain (map :id (filter :rule equals))
+                         delete (map :id (filter (set sub) (remove :rule equals)))]; just items from the actual sub can be deleted
+                     (reduce #(assoc %1 %2 (last remain)) {} delete)))
+         ids (apply merge (map fn-smap equals))]
+     (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) ids sub))))
+
 (defn adjust-ids
   "Replaces all occurences of a certain ID inside proof with another.
    Provide ids as a map with keys = IDs to replace | vals = replacement"
@@ -87,7 +87,7 @@
                      (let [item (get-item p (id-to-line p id1))]
                        (replace-item p item {:id id1
                                              :body (:body item)
-                                             :rule (str "\"already proved\" (" id2 ")")})))
+                                             :rule (str "\"already proved\" (" id2 ") []")})))
         new-proof1 (reduce fn-replace proof proved-results)
         deletions (reduce dissoc duplicates (map key proved-results))
         delete-items (map #(get-item proof (id-to-line proof %)) (map key deletions))
@@ -140,15 +140,15 @@
    \"superproof?\" decides if its a proof or subproof"
   ([formula] (infer [] formula))
   ([premises formula & [superproof?]]
-    (let [desc (if superproof? :premise :assumption)
-          prem (if (vector? premises) 
-                 (into [] (map #(hash-map :id (new-id)
-                                          :body %
-                                          :rule desc) premises))
-                 [{:id (new-id) :body premises :rule desc}])
-          todo {:id (new-id) :body :todo :rule nil}
-          form {:id (new-id) :body formula :rule nil}]
-      (check-duplicates (conj prem todo form)))))
+   (let [desc (if superproof? :premise :assumption)
+         prem (if (vector? premises)
+                (into [] (map #(hash-map :id (new-id)
+                                         :body %
+                                         :rule desc) premises))
+                [{:id (new-id) :body premises :rule desc}])
+         todo {:id (new-id) :body :todo :rule nil}
+         form {:id (new-id) :body formula :rule nil}]
+     (check-duplicates (conj prem todo form)))))
 
 (defn re-infer
   "Returns a (sub)proof from the internal strucure back to a depiction like \"(infer [premises] formula)\""
@@ -163,9 +163,9 @@
    This is the entry point for new deductions"
   ([formula] (proof [] formula))
   ([premises formula]
-    (reset! id 0)
-    (reset! var-id 0)
-    (apply infer [premises formula true])))
+   (reset! id 0)
+   (reset! var-id 0)
+   (apply infer [premises formula true])))
 ;; ------------------------------------------------------
 
 ;; helping and utility functions
@@ -207,8 +207,8 @@
   (let [vars (set (filter #(.startsWith (str %) "_") (flatten bodies)))
         smap (reduce #(assoc %1 %2 (new-var)) {} vars)
         new-bodies (map #(if (symbol? %)
-                           (if (contains? vars %) (get smap %) %)
-                           (clojure.walk/prewalk-replace smap %)) bodies)]
+                          (if (contains? vars %) (get smap %) %)
+                          (clojure.walk/prewalk-replace smap %)) bodies)]
     new-bodies))
 
 ;; NEW LOGIC (if you created new functions for special forms, you have correctly eval them here)
@@ -222,7 +222,7 @@
                                (into [] (map #(eval-body %) (second body)))
                                (eval-body (second body)))
                         conc (eval-body (second (rest body)))]
-                    (eval (conj (map #(list `quote %) (list prem conc)) `infer)))      
+                    (eval (conj (map #(list `quote %) (list prem conc)) `infer)))
       'substitution (eval (conj (map #(list `quote (eval-body %)) (rest body)) `substitution)))
     body))
 
@@ -233,25 +233,24 @@
    If you only want to create one item use --> (first (create-items bodies))"
   ([body] (create-item body nil))
   ([body rule]
-	  (let [newbody (eval-body body)]
+   (let [newbody (eval-body body)]
      (if (vector? newbody)
        newbody
        {:id   (new-id)
         :body newbody
-	      :rule rule}))))
+        :rule rule}))))
 
 (defn create-items
   "Consumes a collection of bodies and a [optional] rule and creates items for the internal proof structure"
   ([bodies] (create-items bodies nil))
   ([bodies rule]
-    (let [newb (init-vars bodies)
-          ;; to ensure that all bodies of all items are either symbols or lists,
-          ;; convert all lazy-seq (they come from rule evaluation) to lists
-          non-lazy (clojure.walk/postwalk (fn [node]
-                                            (if (instance? clojure.lang.LazySeq node)
-                                              (apply list node)
-                                              node)) newb)]
-      (map #(create-item % rule) non-lazy))))
+   (let [newb (init-vars bodies)
+         ;; to ensure that all bodies of all items are either symbols or lists, convert all lazy-seq (they come from rule evaluation) to lists
+         non-lazy (clojure.walk/postwalk (fn [node]
+                                           (if (instance? clojure.lang.LazySeq node)
+                                             (apply list node)
+                                             node)) newb)]
+     (map #(create-item % rule) non-lazy))))
 ;; --------------------------------------------------------
 
 ;; functions for advancing the proofs state (steps, choose-options, unify)
@@ -262,82 +261,82 @@
   ;; seperate lines and user-inputs and check the right number of user-inputs
   (let [lines       (filter number? args)
         user-inputs (remove number? args)
-        num-inputs  (count (filter #(.startsWith (str %) "_:") 
-                                   (if forward? 
+        num-inputs  (count (filter #(.startsWith (str %) "_:")
+                                   (if forward?
                                      (:given (rules/get-rule rule))
                                      (:conclusion (rules/get-rule rule)))))]
-    (cond  
+    (cond
       (not= (count user-inputs) num-inputs)
       (throw (Exception. (str "Wrong number of User-Inputs (rule: " num-inputs ", you: " (count user-inputs) ")")))
       
       ;; tests not regarding user-inputs
 
-	    (not (rules/rule-exist? rule))
-	    (throw (Exception. (str "A rule named \"" rule "\" does not exists.")))
-	    
-	    (and forward? (not (rules/rule-forwards? rule)))
-	    (throw (Exception. (str "The rule \"" rule "\" is not marked for forward use.")))
-	    
-	    (and (not forward?) (not (rules/rule-backwards? rule)))
-	    (throw (Exception. (str "The rule \"" rule "\" is not marked for backward use.")))
-	    
-	    ;; for forward rules with no premises (e.g. equality introduction)    
-	     (and (empty? args)
-	         forward? 
-	         (zero? (rules/rule-givens rule)))
-	    {:todo (first (filter #(= (:body %) :todo) (flatten proof)))
-	     :obligatories []
-	     :optional []}
-	    
-	    (not (apply distinct? lines))
-	    (throw (Exception. "There are duplicate lines in the arguments"))
-	    
-	    (some #(< % 1) (flatten lines))
-	    (throw (Exception. "There are no line numbers less than 1"))
-	                       
-	    (some #(> % (count (flatten proof))) (flatten lines))
-	    (throw (Exception. (str "There are no line numbers greater than " (count (flatten proof)))))
-	    
-	    :else
-	    (let [lastline    (last (sort-by #(if (vector? %) (first %) %) lines))
-	          items       (map #(get-item proof %) lines)
-	          obligatories (concat (if forward? (get-proofed-items items) (get-unproofed-items items)) 
-                                user-inputs) ;; add the user-inputs to the obligatory line-items
-	          optional     (if forward? (get-unproofed-items items) (get-proofed-items items))
-	          numObligatories (if forward? (rules/rule-givens rule) (rules/rule-conclusions rule)) 
-	          numOptionals    (dec (if forward? (rules/rule-conclusions rule) (rules/rule-givens rule)))
-	          scope (get-scope proof (get-item proof lastline))
-	          todos (filter #(= (:body %) :todo) scope)]
-	      (cond
-	        (not-every? #(contains? (set scope) %) items)
-	        (throw (Exception. "Not all lines are in the same scope"))
-	
-	        (> (count todos) 1)
-	        (throw (Exception. "There can't be more than one \"...\" line inside your scope"))
-	        
-	        ;; only backward steps need an empty line to work towards to
-	        (and (not forward?)
-	             (< (count todos) 1))
-	        (throw (Exception. "There is no \"...\" line inside your scope to work towards to"))
-	        
-	        (some #(contains? (set items) %) todos)
-	        (throw (Exception. (str "Can't use a \"...\" line for " (if forward? "forward" "backward") " resulting")))
-	        
-	        (not= (count obligatories) numObligatories)
-	        (throw (Exception. (str (if (> (count obligatories) numObligatories)
-	                                   "Too many "
-	                                   "Not enough ") (if forward? 
-	                                                    "proofed lines (rule != nil)"
-	                                                    "unproofed lines (rule = nil)") " for this rule. You need exactly " numObligatories)))
-	        
-	        (> (count optional) numOptionals)
-	        (throw (Exception. (str "Too many [optional] " (if forward? 
-	                                                         "unproofed lines (rule = nil)"
-	                                                         "proofed lines (rule != nil)") " for this rule. You can have at a max " numOptionals)))
-	        
-	        :else {:todo (first todos)
-	               :obligatories obligatories 
-	               :optional optional})))))
+      (not (rules/rule-exist? rule))
+      (throw (Exception. (str "A rule named \"" rule "\" does not exists.")))
+
+      (and forward? (not (rules/rule-forwards? rule)))
+      (throw (Exception. (str "The rule \"" rule "\" is not marked for forward use.")))
+
+      (and (not forward?) (not (rules/rule-backwards? rule)))
+      (throw (Exception. (str "The rule \"" rule "\" is not marked for backward use.")))
+
+      ;; for forward rules with no premises (e.g. equality introduction)
+      (and (empty? args)
+           forward?
+           (zero? (rules/rule-givens rule)))
+      {:todo (first (filter #(= (:body %) :todo) (flatten proof)))
+       :obligatories []
+       :optional []}
+
+      (not (apply distinct? lines))
+      (throw (Exception. "There are duplicate lines in the arguments"))
+
+      (some #(< % 1) (flatten lines))
+      (throw (Exception. "There are no line numbers less than 1"))
+
+      (some #(> % (count (flatten proof))) (flatten lines))
+      (throw (Exception. (str "There are no line numbers greater than " (count (flatten proof)))))
+
+      :else
+      (let [lastline    (last (sort-by #(if (vector? %) (first %) %) lines))
+            items       (map #(get-item proof %) lines)
+            obligatories (concat (if forward? (get-proofed-items items) (get-unproofed-items items))
+                                 user-inputs) ;; add the user-inputs to the obligatory line-items
+            optional     (if forward? (get-unproofed-items items) (get-proofed-items items))
+            numObligatories (if forward? (rules/rule-givens rule) (rules/rule-conclusions rule))
+            numOptionals    (dec (if forward? (rules/rule-conclusions rule) (rules/rule-givens rule)))
+            scope (get-scope proof (get-item proof lastline))
+            todos (filter #(= (:body %) :todo) scope)]
+        (cond
+          (not-every? #(contains? (set scope) %) items)
+          (throw (Exception. "Not all lines are in the same scope"))
+
+          (> (count todos) 1)
+          (throw (Exception. "There can't be more than one \"...\" line inside your scope"))
+
+          ;; only backward steps need an empty line to work towards to
+          (and (not forward?)
+               (< (count todos) 1))
+          (throw (Exception. "There is no \"...\" line inside your scope to work towards to"))
+
+          (some #(contains? (set items) %) todos)
+          (throw (Exception. (str "Can't use a \"...\" line for " (if forward? "forward" "backward") " resulting")))
+
+          (not= (count obligatories) numObligatories)
+          (throw (Exception. (str (if (> (count obligatories) numObligatories)
+                                    "Too many "
+                                    "Not enough ") (if forward?
+                                                     "proofed lines (rule != nil)"
+                                                     "unproofed lines (rule = nil)") " for this rule. You need exactly " numObligatories)))
+
+          (> (count optional) numOptionals)
+          (throw (Exception. (str "Too many [optional] " (if forward?
+                                                           "unproofed lines (rule = nil)"
+                                                           "proofed lines (rule != nil)") " for this rule. You can have at a max " numOptionals)))
+
+          :else {:todo (first todos)
+                 :obligatories obligatories
+                 :optional optional})))))
 
 (defn unify
   "Unifies all instances of `old` inside the `proof` with `new`."
@@ -446,7 +445,7 @@
     (if (= body new-body)
       (do (println "\"trivial\" hasn't changed anything.") proof)
       (if (:rule item)
-        (check-duplicates (add-after-item proof item (assoc new-item :rule (str "\"trivial\" (" (:id item) ")")))) 
+        (check-duplicates (add-after-item proof item (assoc new-item :rule (str "\"trivial\" (" (:id item) ")"))))
         (if (or (true? new-body)
                 ;; for temporal logic "(at x true)"
                 (and (list? new-body) 
@@ -466,7 +465,7 @@
   "Performs a forward step on proof by applying rule on the lines"
   [proof rule & lines]
   (let [info       (check-args proof rule lines true)
-        todo-item        (:todo info)        
+        todo-item        (:todo info)
         obligatory-items (:obligatories info)
         optional-items   (:optional info)
         ;; separate ids (from lines) and inputs (from user-input))
@@ -491,10 +490,10 @@
                             :body (apply merge (map-indexed #(hash-map (inc %1) %2) rule-result))
                             :rule (pr-str rule obligatory-ids obligatory-user-input)})
           ;; only one possible result (which can contain several items to insert)
-          (let [result (if (vector? (first rule-result)) (first rule-result) rule-result)               
+          (let [result (if (vector? (first rule-result)) (first rule-result) rule-result)
                 new-items (create-items result (pr-str rule obligatory-ids obligatory-user-input))]
             ;; if there is no empty line, insert everthing behind the last obligatory item
-            (check-duplicates 
+            (check-duplicates
               (if todo-item
                 (reduce #(add-before-item %1 todo-item %2) p1 new-items)
                 (reduce #(add-after-item %1 (last obligatory-items) %2) p1 new-items)))))))))
@@ -512,35 +511,35 @@
         obligatory-args (into [] (map item-to-rule-arg obligatory-items))
         optional-args   (into [] (map item-to-rule-arg optional-items))
         rule-result (apply rules/apply-rule (conj [rule false] obligatory-args optional-args ))]
-     (cond
-       (empty? rule-result)
-       (throw (Exception. "Incorrect parameters for the given rule"))
-      
-       (> (count rule-result) 1)
-       ;; more than one possible result, the user has to decide which one fits his needs
-       (let [id (new-id)
-             p1 (reduce #(replace-item %1 %2 {:id   (:id %2)
-                                              :body (:body %2)
-                                              :rule (pr-str rule (conj optional-ids id) obligatory-user-input)}) proof obligatory-items)]
-         (add-after-item p1 
-                         todo-item
-                         {:id   id
-                          :body (apply merge (map-indexed #(hash-map (inc %1) %2) rule-result))
-                          :rule nil}))
-       :else
-       ;; only one possible result (which can contain several items to insert)
-       (let [result (if (vector? (first rule-result)) (first rule-result) rule-result)   
-             new-items (create-items result)
-             new-ids   (map get-item-id new-items)
-             p1 (reduce #(replace-item %1 %2 {:id   (:id %2)
-                                              :body (:body %2)
-                                              :rule (pr-str rule (concat new-ids optional-ids) obligatory-user-input)}) proof obligatory-items)
-             ;; add proved items (e.g. subproofs) before the "..."-item and unproved items after it
-             proved-items   (filter #(or (vector? %)
-                                         (not (nil? (:rule %)))) new-items)
-             unproved-items (remove #(or (vector? %)
-                                      (not (nil? (:rule %)))) new-items)
-             p2 (reduce #(add-after-item %1 todo-item %2) p1 unproved-items)]
-         (check-duplicates (reduce #(add-before-item %1 todo-item %2) p2 proved-items))))))
+    (cond
+      (empty? rule-result)
+      (throw (Exception. "Incorrect parameters for the given rule"))
+
+      (> (count rule-result) 1)
+      ;; more than one possible result, the user has to decide which one fits his needs
+      (let [id (new-id)
+            p1 (reduce #(replace-item %1 %2 {:id   (:id %2)
+                                             :body (:body %2)
+                                             :rule (pr-str rule (conj optional-ids id) obligatory-user-input)}) proof obligatory-items)]
+        (add-after-item p1
+                        todo-item
+                        {:id   id
+                         :body (apply merge (map-indexed #(hash-map (inc %1) %2) rule-result))
+                         :rule nil}))
+      :else
+      ;; only one possible result (which can contain several items to insert)
+      (let [result (if (vector? (first rule-result)) (first rule-result) rule-result)
+            new-items (create-items result)
+            new-ids   (map get-item-id new-items)
+            p1 (reduce #(replace-item %1 %2 {:id   (:id %2)
+                                             :body (:body %2)
+                                             :rule (pr-str rule (concat new-ids optional-ids) obligatory-user-input)}) proof obligatory-items)
+            ;; add proved items (e.g. subproofs) before the "..."-item and unproved items after it
+            proved-items   (filter #(or (vector? %)
+                                        (not (nil? (:rule %)))) new-items)
+            unproved-items (remove #(or (vector? %)
+                                        (not (nil? (:rule %)))) new-items)
+            p2 (reduce #(add-after-item %1 todo-item %2) p1 unproved-items)]
+        (check-duplicates (reduce #(add-before-item %1 todo-item %2) p2 proved-items))))))
 
 
