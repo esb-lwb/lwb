@@ -111,8 +111,9 @@
   [f x]
    (lazy-seq (when x (cons x (iterate-while f (f x))))))
 
+; may also be achieved by function from clojure.data.zip
 (defn- children-locs
-  "Sequence of Children locs at branch"
+  "Sequence of children locs at branch"
   [branch]
   (iterate-while z/right (z/down branch)))
 
@@ -155,7 +156,6 @@
         negate (fn [[atom value]] (if value (list 'not atom) atom))]
     (apply list 'or (map negate pairs))))
     
-  
 (defn sat
   "Gives an assignment vector for `phi` if the formula is satisfiable, nil if not.   
    If `phi` is trivially valid, the result is true.   
