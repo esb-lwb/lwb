@@ -9,7 +9,7 @@
 (ns lwb.pred.examples.halbach
   (:require [lwb.pred :refer (make-pred sig-from-model wff? eval-phi)]))
 
-;; Examles from Volker Halbach: The Logic Manual Chap 5
+;; Examples from Volker Halbach: The Logic Manual Chap 5
 
 ;; European cities
 (def cities

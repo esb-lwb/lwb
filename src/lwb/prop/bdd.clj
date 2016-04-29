@@ -98,7 +98,7 @@
 ; From the internal data structure of a binary decision diagram, we
 ; build a Clojure data structure representing the bdd.
 
-; The bdd is a vector of node, each node has a unique identifiying `no`,
+; The bdd is a vector of nodes, each node has a unique identifiying `no`,
 ; the symbol for the `atom` of the node, as well as the number of the
 ; child in the false branch `lo-no`and the number of the child in the
 ; true branch `hi-no`.
@@ -162,8 +162,8 @@
 (defn build-bdd
   "Generates a Clojure representation of the given `bddi`.
    Must be called within the context of a BDD Factory.
-   Atoms of the formula from which the ddbi was build are
-   noted as there index."
+   Atoms of the formula from which the bddi was build are
+   noted as there name."
   [bddi]
   (cond
     (.isZero ^BDD bddi) [(Node. 0 'false 0 0)]
