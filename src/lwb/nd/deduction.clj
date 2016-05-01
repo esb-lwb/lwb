@@ -535,10 +535,16 @@
                                              :body (:body %2)
                                              :rule (pr-str rule (concat new-ids optional-ids) obligatory-user-input)}) proof obligatory-items)
             ;; add proved items (e.g. subproofs) before the "..."-item and unproved items after it
-            proved-items (filter #(or (vector? %)
-                                      (not (nil? (:rule %)))) new-items)
-            unproved-items (remove #(or (vector? %)
-                                        (not (nil? (:rule %)))) new-items)
+            ;; That's wrong in the case of 'or-e'!!
+            ; a hack !! TODO: rethink this, it would be better to allow 'or-e' to be forward!!
+            ; all unproved
+            all-unproved (let [unproved-items' (remove #(or (vector? %) (not (nil? (:rule %)))) new-items)]
+                           (= (first new-items) (first unproved-items')))
+            proved-items (if all-unproved () (filter #(or (vector? %)
+                                      (not (nil? (:rule %)))) new-items))
+            unproved-items (if all-unproved (reverse new-items) (remove #(or (vector? %)
+                                        (not (nil? (:rule %)))) new-items))
+
             p2 (reduce #(add-after-item %1 todo-item %2) p1 unproved-items)]
         (check-duplicates (reduce #(add-before-item %1 todo-item %2) p2 proved-items))))))
 
