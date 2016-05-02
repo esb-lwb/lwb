@@ -44,7 +44,7 @@
 (vis-pdf phi1 "phi1")
 
 ; ----------------------------------------------------------------------------------------------------
-; a formulae thhats true for any value of Q
+; a formulae thats true for any value of Q
 (def phi2 '(impl (or (impl S (or R L)) (and (not Q) R)) (impl (not (impl P S)) R)))
 
 (vis-pdf phi2 "phi2")
@@ -80,3 +80,13 @@
 ;  [L true P true Q true R true S false]
 ;  [L true P true Q true R true S true])
 
+; ----------------------------------------------------------------------------------------------------
+; Examples from Mordechai Ben-Ari: Mathematical Logic for Computer Science Chap 4.2
+
+(def mba1 '(or P (and Q R)))
+
+(vis-pdf mba1 "mba1")
+
+(def mba2 '(xor P (xor Q R)))
+
+(vis-pdf mba2 "mba2")
