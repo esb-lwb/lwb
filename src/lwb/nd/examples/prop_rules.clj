@@ -7,7 +7,7 @@
 ; the terms of this license.
 
 (ns lwb.nd.examples.prop-rules
- (:require [lwb.nd.repl :refer :all]))
+  (:require [lwb.nd.repl :refer :all]))
 
 
 ; interactive checking in the repl for nd
@@ -105,7 +105,7 @@
 ; backward
 (proof '(or (and P R) (and Q R)) 'R)
 (step-b "or-e" 3 1)
-(choose-option 3 2) ;; order is not right!!
+(choose-option 3 2)                                         ;; order is not right!!
 (step-f "and-e2" 2)
 (step-f "and-e2" 4)
 ;
