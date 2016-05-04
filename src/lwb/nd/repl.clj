@@ -95,10 +95,21 @@
       (show))))
 
 (defn show-rules []
-  (for [rule @io/rules]
+  (for [rule (sort @io/rules)]
+    (let [name (subs (str (key rule)) 1)
+          given (:given (val rule))
+          conclusion (:conclusion (val rule))
+          forward? (:forwards (val rule))
+          backward? (:backwards (val rule))
+          usage (case [forward? backward?]
+                  [true true] "step-f and step-b"
+                  [true nil ] "step-f only"
+                  [nil  true] "step-b only")]
+      (println (str name ": \t" given " -> " conclusion " - " usage)))))
+
+(defn show-theorems []
+  (for [rule (sort @io/theorems)]
     (let [name (subs (str (key rule)) 1)
           given (:given (val rule))
           conclusion (:conclusion (val rule))]
-          ;forward? (:forwards (val rule))
-          ;backward? (:backwards (val rule))]
       (println (str name ": \t" given " -> " conclusion)))))
