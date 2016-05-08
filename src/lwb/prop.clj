@@ -369,4 +369,24 @@
   [phi]
   (let [clause? (fn [psi] (and (list? psi) (= 'or (first psi)) (every? literal? (rest psi))))]
     (and (list? phi) (= 'and (first phi)) (every? clause? (rest phi)))))
-       
+
+; helper to transform (cnf (not phi)) to (dnf phi)
+(defn- mapdnfi
+  "maps clause to monom in transformation to dnf."
+  [inner]
+  (cond
+    (= inner 'or) 'and
+    (list? inner) (second inner)
+    :else (list 'not inner)))
+
+(defn- mapdnf
+  [outer]
+  (if (= outer 'and) 'or
+                     (map mapdnfi outer)))
+
+(defn dnf
+  "Transforms `phi` to disjunctive normal form dnf."
+  [phi]
+  (let [cnf (cnf (list 'not phi))]
+    (map mapdnf cnf)))
+
