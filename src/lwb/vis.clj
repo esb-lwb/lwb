@@ -56,18 +56,18 @@
 (defn- process-head
   "Generates texcode for the head of a list"
   [node]
-  (let [symbols {:and   "\\land"
-                 :or    "\\lor"
-                 :not   "\\lnot"
-                 :impl  "\\to"
-                 :equiv "\\leftrightarrow"
-                 :true  "\\top"
-                 :false "\\bot"
-                 :xor "\\oplus"
-                 :ite "\\mathsf{ite}"
-                 :always "\\medsquare"
+  (let [symbols {:and     "\\land"
+                 :or      "\\lor"
+                 :not     "\\lnot"
+                 :impl    "\\to"
+                 :equiv   "\\leftrightarrow"
+                 :true    "\\top"
+                 :false   "\\bot"
+                 :xor     "\\oplus"
+                 :ite     "\\mathsf{ite}"
+                 :always  "\\medsquare"
                  :finally "\\lozenge"
-                 :atnext    "\\medcircle"
+                 :atnext  "\\medcircle"
                  :until   "\\mathcal{U}"}
         key      (keyword (name node))]
       (if (contains? symbols key)
