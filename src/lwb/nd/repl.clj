@@ -13,9 +13,11 @@
             [lwb.nd.printer :refer [pprint]]))
 
 (io/import-rules "resources/nd/rules-prop-pred.clj")
-;(io/import-rules "resources/nd/rules-temporal.clj")
+;(io/import-rules "resources/nd/rules-ltl.clj")
 (io/import-trivials "resources/nd/trivial-theorems.clj")
-(io/import-theorems "resources/nd/theorems.clj")
+(io/import-theorems "resources/nd/theorems-prop.clj")
+;(io/import-theorems "resources/nd/theorems-pred.clj")
+;(io/import-theorems "resources/nd/theorems-ltl.clj")
 
 ;; holds the actual state of the proof 
 (def p (atom []))
