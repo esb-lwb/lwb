@@ -73,14 +73,14 @@
  :forwards   true
  :backwards  true}
 
-;; ASAP
-{:name "asap-i"
+;; ATNEXT
+{:name "atnext-i"
  :given      [(at j a) (next i j)]
- :conclusion [(at i (asap a))]
+ :conclusion [(at i (atnext a))]
  :forwards   true
  :backwards  true}
-{:name "asap-e"
- :given      [(at i (asap a))]
+{:name "atnext-e"
+ :given      [(at i (atnext a))]
  :conclusion [(at j a)]
  :forwards   true}
 
@@ -118,7 +118,7 @@
  :backwards  true}
 {:name "until-e"
  :given      [(at i (always (impl b c)))
-              (at i (always (impl (and a (asap c)) c)))]
+              (at i (always (impl (and a (atnext c)) c)))]
  :conclusion [(at i (impl (until a b) c))]
  :backwards  true}
 {:name "not-until"
@@ -133,7 +133,7 @@
  :given      []
  :conclusion [(<= i j)]
  :forwards   true}
-{:name "asap-seriality"
+{:name "atnext-seriality"
  :given      []
  :conclusion [(next i j)]
  :forwards   true}
@@ -141,7 +141,7 @@
  :given      [(< i j)]
  :conclusion [(<= i j)]
  :forwards   true}
-{:name "asap/<="
+{:name "atnext/<="
  :given      [(next i j)]
  :conclusion [(<= i j)]
  :forwards   true

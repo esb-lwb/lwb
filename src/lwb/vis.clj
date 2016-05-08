@@ -67,7 +67,7 @@
                  :ite "\\mathsf{ite}"
                  :always "\\medsquare"
                  :finally "\\lozenge"
-                 :asap    "\\medcircle"
+                 :atnext    "\\medcircle"
                  :until   "\\mathcal{U}"}
         key      (keyword (name node))]
       (if (contains? symbols key)
@@ -154,10 +154,10 @@
 
   (def ltl-phi
     '(and
-       (always p)
+       (always  p)
        (finally q)
-       (asap r)
-       (until s t)))
+       (atnext  r)
+       (until   s t)))
 
   (vis-pdf ltl-phi "ltl")
 )

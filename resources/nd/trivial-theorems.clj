@@ -69,8 +69,8 @@
 
 ;; for temporal logic
 
-;; ASAP
+;; ATNEXT
 {:name "trivial-13"
- :given      [(asap false)]
+ :given      [(atnext false)]
  :conclusion [false]
  :forwards   true}
