@@ -68,6 +68,25 @@
                (or (not Y_3) (not Z))))
 
 (sat phi)
-
 ; => nil
+
+
+;: Example Changing code after review
+
+; original code
+(def orig '(or (and (not a) (not b) h) (and (not (and (not a) (not b))) (or (and (not a) g) (and a f)))))
+
+; version 1 after review
+(def v1 '(or (and a h) (and (not a) (or (and b g) (and (not b) f)))))
+
+; version 2 after review
+(def v2 '(or (and a f) (and (not a) (or (and b g) (and (not b) h)))))
+
+(def x1 (list 'equiv orig v1))
+(def x2 (list 'equiv orig v2))
+
+(valid? x1)
+; => false
+(valid? x2)
+; => true
 ; ----------------------------------------------------------------------------------------------------
