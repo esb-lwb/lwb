@@ -311,7 +311,7 @@
       (str/replace \> \})))
 
 (defn- dot-line
-  "Gieves code for a `node` on the dot loanguage."
+  "Gives code for a `node` on the dot language."
   [node]
   (cond
     (= (:no node) 0) "0 [shape=box label=\"\\bot\"];\n"
