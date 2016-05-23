@@ -176,7 +176,7 @@
   `mode` can be `:tikz` (default) oder `:dot`.
   In case `:dot` the function uses the command `dot`from graphviz.
   In case `:tikz` it uses furthermore `dot2tex` and `texi2pdf`.
-  In both cases the genrated file is open by the command `open`."
+  In both cases the generated file is opened by the command `open`."
   ([ks filename]
    (vis-pdf ks filename :tikz))
   ([ks filename mode]
