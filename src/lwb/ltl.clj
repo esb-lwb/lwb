@@ -121,9 +121,9 @@
    one can use '<' and '>'
    as characters for grouping subscripts e.g."
   [name]
-  (-> name
-      (str/replace \< \{)
-      (str/replace \> \})))
+  (str/replace name #"<|>" {"<" "{", ">" "}"})
+
+(process-name 'P_<12>)
 
 (defn- dot-node
   "Gives code for a node `[key atoms]` on the dot language."
@@ -131,7 +131,7 @@
   (let [proc-atoms (str/join "," (map #(process-name %) atoms))
         str-atoms (str "\\{" proc-atoms "\\}")]
     (str (name key) " [label=\"" (name key) "\", style=\"shape=rectangle,align=left,minimum size=6mm,rounded corners=3mm\",
-      texlbl=\"$" (process-name (name key)) "$\\\\" str-atoms "\"] ;\n")))
+      texlbl=\"$" (process-name (name key)) "$\\\\$" str-atoms "$\"] ;\n")))
 
 (defn- dot-edge
   "Gives code for an edge `[left right]` on the dot language."
@@ -192,6 +192,7 @@
 
 
 (comment
+  (vis-tikz ks1)
   (vis-pdf ks1 "ks1")
   (vis-pdf ks2 "ks2")
   )
