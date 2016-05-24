@@ -121,9 +121,7 @@
    one can use '<' and '>'
    as characters for grouping subscripts e.g."
   [name]
-  (str/replace name #"<|>" {"<" "{", ">" "}"})
-
-(process-name 'P_<12>)
+  (str/replace name #"<|>" {"<" "{", ">" "}"}))
 
 (defn- dot-node
   "Gives code for a node `[key atoms]` on the dot language."
@@ -169,6 +167,8 @@
   [ks]
   (let [dot-code (vis-dot ks)]
     (:out (shell/sh "dot2tex" "-ftikz" "--codeonly" :in dot-code))))
+;; It's also possible to use the automata library from tikz, see
+;; the documentation of dot2tex
 
 (defn vis-pdf
   "Makes a pdf file with the visualisation of the a Kripke structure `ks`.
@@ -192,7 +192,6 @@
 
 
 (comment
-  (vis-tikz ks1)
   (vis-pdf ks1 "ks1")
   (vis-pdf ks2 "ks2")
   )
