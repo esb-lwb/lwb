@@ -17,7 +17,7 @@
   (symbol (str country "_" color)))
 
 (defn unique-colors
-  "Makes a sequence of clauses - expressiong that each country has a
+  "Makes a sequence of clauses - expressing that each country has a
    unique color - from a collection of countries and colors."
   [countries colors]
   (mapcat oneof (partition (count colors)
