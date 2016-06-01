@@ -218,7 +218,6 @@
   (bdd '(or (and a b) (and a c) (and b c))) ; Knuth Fig. 21
 )
 
-
 (defn- tf1-vec
   "transforms byte vector result from AllSatIterator to get one assignment vector"
   [phi bvec]
@@ -287,7 +286,6 @@
   (sat '(or p (not p)))
 )
 
-
 (defn sat?
   "Is `phi` satisfiable?"
   [phi]
@@ -355,26 +353,18 @@
 (defn vis-pdf
   "Makes a pdf file with the visualisation of the bdd for `phi`.
   `filename` is the name of the file to be generated, must have no extension.
-  `mode` can be `:tikz` (default) oder `:dot`.
-  In case `:dot` the function uses the command `dot`from graphviz.
-  In case `:tikz` it uses furthermore `dot2tex` and `texi2pdf`.
-  In both cases the generated file is opened by the command `open`."
-  ([phi filename]
-   (vis-pdf phi filename :tikz))
-  ([phi filename mode]
-   (if (= mode :dot)
-     (let [dot-code (vis-dot phi)]
-       (shell/sh "dot" "-Tpdf" "-o" (str filename ".pdf") :in dot-code))
-     (let [tikz-body (vis-tikz phi)
-           tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
-           tex-file (str filename ".tex")]
+  Uses `dot2tex` and `texi2pdf`, finally the
+  generated file is opened by the command `open`."
+  [phi filename]
+  (let [tikz-body (vis-tikz phi)
+        tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
+        tex-file (str filename ".tex")]
         (spit tex-file tex-code)
-        (shell/sh "texi2pdf" tex-file)))
-    (shell/sh "open" (str filename ".pdf"))))
+        (shell/sh "texi2pdf" tex-file))
+        (shell/sh "open" (str filename ".pdf")))
 
 (comment
   (vis-pdf '(or (and x_1 x_2) (and x_1 x_3) (and x_2 x_3)) "majority1")
-  (vis-pdf '(or (and x_1 x_2) (and x_1 x_3) (and x_2 x_3)) "majority2" :dot)
   (vis-pdf '(or (and x_<01> x_<02>) (and x_<01> x_<03>) (and x_<02> x_<03>)) "majority3")
 )
 
