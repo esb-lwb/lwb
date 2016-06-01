@@ -84,8 +84,8 @@
 ; The nodes of a Kripke structure are represented by a pair of a keyword and a set of the
 ; atoms of the structure that are true at that node.
 ; The edges of a Kripke structure are vectors of the keywords of the nodes that are
-; connected by that edge. There is a reserved keyword for the starting node of a
-; Kripke structure, namely :sp
+; connected by that edge.
+; the keyword :initial indicates the starting state of the Kripke model.
 ;
 ; Composed together a Kripke structure is a map of a map of :nodes and a set of :edges
 ;
@@ -95,8 +95,8 @@
   (def ks1 {:nodes {:s_0 '#{P Q}
                     :s_1 '#{P Q}
                     :s_2 '#{P}}
-            :edges #{[:sp  :s_0]
-                     [:s_0 :s_1]
+            :initial :s_0
+            :edges #{[:s_0 :s_1]
                      [:s_1 :s_0]
                      [:s_1 :s_2]
                      [:s_2 :s_2]}})
@@ -104,14 +104,21 @@
   (def ks2 {:nodes {:s_0 '#{}
                     :s_1 '#{P}
                     :s_2 '#{}}
-            :edges #{[:sp :s_0]
-                     [:s_0 :s_1]
+            :initial :s_0
+            :edges #{[:s_0 :s_1]
                      [:s_0 :s_2]
                      [:s_1 :s_1]
                      [:s_2 :s_2]}})
   )
 
 ; ## Visualisation of a Kripke structure
+
+; ### We use dot2tex which in many cases gives good results,
+;     but sometimes we should rework the result.
+;     dot2tex produces tikz code using the automata library.
+;     For improving the results:
+;     1. try option :neato instead of default option :dot
+;     2. Rework the generated tikz code
 
 ; helper functions for the visualisation
 
@@ -125,27 +132,27 @@
 
 (defn- dot-node
   "Gives code for a node `[key atoms]` on the dot language."
-  [[key atoms]]
-  (let [proc-atoms (str/join "," (map #(process-name %) atoms))
+  [[[key atoms] initial?]]
+  (let [ proc-atoms (str/join "," (map #(process-name %) atoms))
         str-atoms (str "\\{" proc-atoms "\\}")]
-    (str (name key) " [label=\"" (name key) "\", style=\"shape=rectangle,align=left,minimum size=6mm,rounded corners=3mm\",
-      texlbl=\"$" (process-name (name key)) "$\\\\$" str-atoms "$\"] ;\n")))
+    (str (name key) " [style=\"state, " (if initial? "initial, initial text=" "") "\",
+      texlbl=\"$" (process-name (name key)) "$\\\\$" str-atoms "$\"];\n")))
 
 (defn- dot-edge
   "Gives code for an edge `[left right]` on the dot language."
   [[left right]]
-  (str (name left)  " -> " (name right) ";\n"))
+  (str (name left)  " -> " (name right) (if (= left right) " [topath=\"loop above\"]" "") ";\n"))
 
 (defn vis-dot
   "Visualisation of the Kripke structure `ks`.
+   mode :dot or :neato
    Generates code for graphviz (dot)."
-  [ks]
-  (let [dot-head "digraph G {\n rankdir=LR;\n"
+  [ks mode]
+  (let [dot-head (str "digraph G {\n "(if (= mode :dot) "rankdir=LR;\n" ""))
         dot-tail "}"
-        dot-sp "sp [style=invisible];\n"
-        dot-nodes (apply str (map dot-node (:nodes ks)))
+        dot-nodes (apply str (map dot-node (zipmap (:nodes ks) (map #(= (:initial ks) (first %)) (:nodes ks)))))
         dot-edges (apply str (map dot-edge (:edges ks)))]
-    (str dot-head dot-sp dot-nodes dot-edges dot-tail)))
+    (str dot-head dot-nodes dot-edges dot-tail)))
 
 (def ^:private tikz-header
   "\\documentclass{standalone}
@@ -153,9 +160,11 @@
    \\usepackage{MnSymbol}
    \\usepackage[english]{babel}
    \\usepackage{tikz}
-   \\usetikzlibrary{arrows,shapes}
+   \\usetikzlibrary{arrows,shapes,automata}
    \\begin{document}
-   \\begin{tikzpicture}[>=stealth']\n")
+   \\begin{tikzpicture}[>=stealth']\n
+   \\tikzstyle{every state}=[align=center]\n
+   ")
 
 (def ^:private tikz-footer
   "\\end{tikzpicture}
@@ -163,36 +172,36 @@
 
 (defn vis-tikz
   "Uses `dot2tex` to get the code of a picture environment in `tikz`.
+   Option :neato or :dot (default)
    Result sometimes has to be reworked."
-  [ks]
-  (let [dot-code (vis-dot ks)]
-    (:out (shell/sh "dot2tex" "-ftikz" "--codeonly" :in dot-code))))
-;; It's also possible to use the automata library from tikz, see
-;; the documentation of dot2tex
+  ([ks]
+   (vis-tikz ks :dot))
+  ([ks mode]
+    (let [dot-code (vis-dot ks mode)
+          prog     (name mode)]
+    (:out (shell/sh "dot2tex" (str "--prog=" prog) "-ftikz" "--styleonly" "--codeonly" :in dot-code)))))
 
 (defn vis-pdf
   "Makes a pdf file with the visualisation of the a Kripke structure `ks`.
   `filename` is the name of the file to be generated, must have no extension.
-  `mode` can be `:tikz` (default) oder `:dot`.
-  In case `:dot` the function uses the command `dot`from graphviz.
-  In case `:tikz` it uses furthermore `dot2tex` and `texi2pdf`.
-  In both cases the generated file is opened by the command `open`."
+  `mode` can be `:dot` (default) oder `:neato`, determing which renderer of
+  graphviz is used. Further processing is done by `dot2tex` and `texi2pdf`.
+  Finally the generated file is opened by the command `open`."
   ([ks filename]
-   (vis-pdf ks filename :tikz))
+   (vis-pdf ks filename :dot))
   ([ks filename mode]
-   (if (= mode :dot)
-     (let [dot-code (vis-dot ks)]
-       (shell/sh "dot" "-Tpdf" "-o" (str filename ".pdf") :in dot-code))
-     (let [tikz-body (vis-tikz ks)
+     (let [tikz-body (vis-tikz ks mode)
            tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
            tex-file (str filename ".tex")]
        (spit tex-file tex-code)
-       (shell/sh "texi2pdf" tex-file)))
-   (shell/sh "open" (str filename ".pdf"))))
+       (shell/sh "texi2pdf" tex-file))
+       (shell/sh "open" (str filename ".pdf"))))
 
 
 (comment
-  (vis-pdf ks1 "ks1")
+  (vis-dot ks1 :dot)
+  (vis-tikz ks1)
+  (vis-pdf ks1 "ks1" :neato)
   (vis-pdf ks2 "ks2")
   )
 
