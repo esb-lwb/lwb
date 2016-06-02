@@ -25,12 +25,12 @@
 
 ;; We import the operators and so forth from propositional logic
 (pot/import-vars
-  [lwb.prop impl equiv xor ite atom? torf?])
+  [lwb.prop impl equiv xor ite atom? boolean?])
 
 (defn op?
   "Is `symb` an operator of ltl?"
   [symb]
-  (let [operators #{'always 'atnext 'finally 'until}]
+  (let [operators '#{always atnext finally until}]
     (or (prop/op? symb) (contains? operators symb))))
 
 (defn arity
@@ -40,8 +40,8 @@
   [op]
   (if
     (prop/op? op) (prop/arity op)
-                    (if (= 'until op) 2
-                                      1)))
+                  (if (= 'until op) 2
+                                    1)))
 
 ;; ## Is a formula well-formed?
 (declare wff?)
@@ -58,7 +58,7 @@
 
 (defn simple-expr?
   [phi]
-  (or (torf? phi) (atom? phi)))
+  (or (boolean? phi) (atom? phi)))
 
 (defn compound-expr?
   [phi]

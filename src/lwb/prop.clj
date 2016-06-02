@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Propositional Logic
 
-; Copyright (c) 2014 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2016 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -25,14 +25,13 @@
 
 ;; ## The operators of propositional logic
 
-;; * not -- unary, provided by Clojure
-;; * and -- n-ary, provided by Clojure
-;; * or  -- n-ary, provided by Clojure
-;; * impl -- implication, binary
+;; * not   -- unary, provided by Clojure
+;; * and   -- n-ary, provided by Clojure
+;; * or    -- n-ary, provided by Clojure
+;; * impl  -- implication, binary
 ;; * equiv -- equivalence, binary
-;; * xor -- exclusive or, binary
-;; * ite -- if-then-else, ternary
-
+;; * xor   -- exclusive or, binary
+;; * ite   -- if-then-else, ternary
 
 (defmacro impl
   "Logical implication."
@@ -64,18 +63,17 @@
 (defn op?
   "Is `symb` an operator of propositional logic?"
   [symb]
-  (let [operators #{'not 'and 'or 'impl 'equiv 'xor 'ite}]
-    (contains? operators symb)))
+  (contains? #{'not 'and 'or 'impl 'equiv 'xor 'ite} symb))
 
-(defn torf?
+(defn boolean?
   "Is `symb` a constant of logic, i.e. `true` or `false`?"
   [symb]
-  (or (= 'true symb) (= 'false symb)))
+    (instance? Boolean symb))
 
 (defn atom?
   "Is `symb` an atomar proposition?"
   [symb]
-  (and (symbol? symb) (not (op? symb)) (not (torf? symb))))
+  (and (symbol? symb) (not (op? symb))))
 
 (defn arity
   "Arity of operator `op`.   
@@ -83,10 +81,10 @@
    requires: `op` an operator."
   [op]
   (cond
-    (= op 'not) 1
-    (contains? #{'impl 'equiv 'xor} op) 2
-    (= op 'ite) 3
-    (contains? #{'and 'or} op) -1))
+    ('#{not} op)            1
+    ('#{impl equiv xor} op) 2
+    ('#{ite} op)            3
+    ('#{and or} op)        -1))
 
 (defn unary?
   "Is `op` an unary operator?"
@@ -124,7 +122,7 @@
 
 (defn simple-expr?
   [phi]
-  (or (torf? phi) (atom? phi)))
+  (or (boolean? phi) (atom? phi)))
 
 (defn compound-expr?
   [phi]
@@ -163,8 +161,8 @@
   [phi]
   (if (coll? phi)
     (apply sorted-set 
-           (filter #(not (or (op? %) (torf? %))) (flatten phi)))
-    (if (torf? phi)
+           (filter #(not (or (op? %) (boolean? %))) (flatten phi)))
+    (if (boolean? phi)
       #{}
       #{phi})))
 
@@ -256,9 +254,9 @@
 (defn literal?
   "Checks whether `phi` is a literal, i.e. a propositional atom or its negation."
   [phi]
-  (or (atom? phi) (torf? phi)
+  (or (atom? phi) (boolean? phi)
       (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) 
-           (or (atom? (second phi)) (torf? (second phi))))))
+           (or (atom? (second phi)) (boolean? (second phi))))))
 
 (defn impl-free 
   "Normalize formula `phi` such that just the operators `not`, `and`, `or` are used."

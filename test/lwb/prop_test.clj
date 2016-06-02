@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Propositional Logic, tests
 
-; Copyright (c) 2014 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2016 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -68,11 +68,11 @@
   (is (= false) (op? '(x)))
   (is (= false) (op? '#{x})))
 
-(deftest torf?-test
-  (is (= true (torf? 'true)))
-  (is (= true (torf? 'false)))
-  (is (= false (torf? 'and)))
-  (is (= false (torf? '(and)))))
+(deftest boolean?-test
+  (is (= true (boolean? 'true)))
+  (is (= true (boolean? 'false)))
+  (is (= false (boolean? 'and)))
+  (is (= false (boolean? '(and)))))
 
 (deftest atom?-test
   (is (= true (atom? 'x)))

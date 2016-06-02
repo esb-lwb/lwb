@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2015 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2015 - 2016 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -84,7 +84,7 @@
 ;; We import the operators and so forth from propositional logic
 (pot/import-vars
   [lwb.prop impl equiv xor ite
-            op? torf?])
+            op? boolean?])
 
 ;; ## Quantors in predicate logic
 (defn quantor?
@@ -104,7 +104,7 @@
   [symb sig]
   (if (not (symbol? symb))
     false
-    (not (or (op? symb) (torf? symb) (quantor? symb) (eq? symb)
+    (not (or (op? symb) (boolean? symb) (quantor? symb) (eq? symb)
              (func? symb sig) (pred? symb sig) (prop? symb sig)))))
 
 ;; ## Well-formed first-order formulae
@@ -184,7 +184,7 @@
 
 (defn simple-expr?
   [phi sig]
-  (or (torf? phi) (prop? phi sig) (predicate? phi sig) (equality? phi sig)))
+  (or (boolean? phi) (prop? phi sig) (predicate? phi sig) (equality? phi sig)))
 
 (defn op-expr?
   [phi sig]
