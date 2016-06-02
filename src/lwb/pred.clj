@@ -196,7 +196,7 @@
         (throw (IllegalStateException. (str "expected operator with arity " a ", got " phi)))
         (every? #(wff? % sig) (rest phi))))))
   
-(defn compound-expr
+(defn compound-expr?
   [phi sig]
   (cond
     (not (list? phi)) (throw (IllegalStateException. (str "expected list, got " phi)))
@@ -213,7 +213,7 @@
    (wff? phi sig :bool))
   ([phi sig mode]
    (try
-     (or (simple-expr? phi sig) (compound-expr phi sig))
+     (or (simple-expr? phi sig) (compound-expr? phi sig))
      (catch Exception e (if (= mode :msg) (.getMessage e) false)))))
 
 
