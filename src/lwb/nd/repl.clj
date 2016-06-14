@@ -16,7 +16,7 @@
 ;(io/import-rules "resources/nd/rules-ltl.clj")
 (io/import-trivials "resources/nd/trivial-theorems.clj")
 (io/import-theorems "resources/nd/theorems-prop.clj")
-;(io/import-theorems "resources/nd/theorems-pred.clj")
+(io/import-theorems "resources/nd/theorems-pred.clj")
 ;(io/import-theorems "resources/nd/theorems-ltl.clj")
 
 ;; holds the actual state of the proof 
