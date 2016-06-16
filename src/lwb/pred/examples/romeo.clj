@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2015 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2015 - 2016 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -41,7 +41,7 @@
 (eval-phi phi3 s-world)
 ; => true -- both parts are true
 
-(def phi4 '(forall [x] (= (F x) (not (G x)))))
+(def phi4 '(forall [x] (equiv (F x) (not (G x)))))
  
 (eval-phi phi4 s-world)
 ; => true
