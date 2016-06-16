@@ -21,7 +21,7 @@
 ;; * always -- unary
 ;; * atnext -- unary
 ;; * finally -- unary
-;; * until -- unary
+;; * until -- binary
 
 ;; We import the operators and so forth from propositional logic
 (pot/import-vars
