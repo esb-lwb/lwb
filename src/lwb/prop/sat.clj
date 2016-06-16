@@ -133,7 +133,7 @@
   [phi]
   (cond
     ; border cases
-    (torf? phi) phi
+    (boolean? phi) phi
     (atom? phi) (list 'and (list 'or phi))
     ; actual transformation
     :else
