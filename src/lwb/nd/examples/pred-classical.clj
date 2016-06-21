@@ -31,13 +31,11 @@
 ; exists-not->not-forall
 
 (proof '(exists [x] (not (P x))) '(not (forall [x] (P x))))
-(step-b "raa" 3)
-(step-f "notnot-e" 2)
-(step-b "exists-e" 1 5)
+(step-b "not-i" 3)
+(step-b "exists-e" 4 1)
 (unify 'V1 :i)
-(step-b "not-e" 7 5)
-(choose-option 7 2)
-(step-f "forall-e" 3 4)
+(step-f "forall-e" 2 3)
+(step-f "not-e" 4 5)
 
 ; not-exists->forall-not
 
@@ -59,4 +57,4 @@
 (step-f "forall-e" 1 4)
 (step-f "not-e" 5 6)
 
-(export-theorem "resources/nd/theorems-pred.clj" "forall-not->not-exists")
+(export-theorem "resources/nd/theorems-pred.clj" "exists-not->not-forall")
