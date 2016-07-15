@@ -8,7 +8,8 @@
 
 (ns lwb.prop-test
   (:require [clojure.test :refer :all]
-            [lwb.prop :refer :all]))
+            [lwb.prop :refer :all]
+            [clojure.spec :as s]))
 
 ; Operators -----------------------------------------------------------
 
@@ -66,47 +67,24 @@
   (is (= false) (op? 1))
   (is (= false) (op? [1]))
   (is (= false) (op? '(x)))
-  (is (= false) (op? '#{x})))
-
-(deftest boolean?-test
-  (is (= true (boolean? 'true)))
-  (is (= true (boolean? 'false)))
-  (is (= false (boolean? 'and)))
-  (is (= false (boolean? '(and)))))
+  (is (= false) (op? '#{x}))
+)
 
 (deftest atom?-test
   (is (= true (atom? 'x)))
   (is (= true (atom? 'hello)))
   (is (= false (atom? 'and)))
   (is (= false (atom? 1)))
-  (is (= false (atom? '(and)))))
+  (is (= false (atom? '(and))))
+)
 
 (deftest arity-test
   (is (= 1 (arity 'not)))
   (is (= nil (arity 'x)))
   (is (= 2 (arity 'impl)))
   (is (= -1 (arity 'and)))
-  (is (= 3 (arity 'ite))))
-
-(deftest unary?-test
-  (is (= true (unary? 'not)))
-  (is (= false (unary? 'and)))
-  (is (= false (unary? '(and)))))
-
-(deftest binary?-test
-  (is (= false (binary? 'not)))
-  (is (= false (binary? 'and)))
-  (is (= true (binary? 'equiv))))
-
-(deftest ternary?-test
-  (is (= false (ternary? 'not)))
-  (is (= false (ternary? 'and)))
-  (is (= true (ternary? 'ite))))
-
-(deftest nary?-test
-  (is (= false (nary? 'not)))
-  (is (= false (nary? 'xor)))
-  (is (= true (nary? 'or))))
+  (is (= 3 (arity 'ite)))
+)
 
 ; wff?  -----------------------------------------------------------------
 
@@ -117,7 +95,8 @@
   (is (= true (wff? '(impl x y))))
   (is (= true (wff? '(ite x y z))))
   (is (= true (wff? '(ite (and x1 x2 x3 x4 x5) y z))))
-  (is (= true (wff? '(or (and x1 x2 x3 x4 x5) y z)))))
+  (is (= true (wff? '(or (and x1 x2 x3 x4 x5) y z))))
+)
 
 (deftest wff?-test'
   (is (= false (wff? 1)))
@@ -126,7 +105,29 @@
   (is (= false (wff? '(impl x y z))))
   (is (= false (wff? '(ite x y))))
   (is (= false (wff? '(ite (and x1 x2 x3 x4 and) y z))))
-  (is (= false (wff? '(or (and x1 x2 x3 x4 not) y z)))))
+  (is (= false (wff? '(or (and x1 x2 x3 x4 not) y z))))
+)
+
+; model ---------------------------------------------------------------
+
+(deftest model-test
+  (is (= true (s/valid? :lwb.prop/model '[P true Q false])))
+  (is (= true (s/valid? :lwb.prop/model ['P true 'Q (= 1 2)])))
+  (is (= false (s/valid? :lwb.prop/model '[:P true Q false])))
+  (is (= false (s/valid? :lwb.prop/model '[P true Q false R])))
+  (is (= false (s/valid? :lwb.prop/model '[P true Q false R T])))
+)
+
+; eval-phi    ---------------------------------------------------------
+
+(deftest eval-phi-test
+  (is (= true (eval-phi '(and P Q) '[P true Q true])))
+  (is (= true (eval-phi '(and P Q R) '[P true Q true R true])))
+  (is (= true (eval-phi '(ite P Q R) '[P true Q true R false])))
+  (is (= true (eval-phi '(impl P Q) '[P false Q true])))
+  (is (= false (eval-phi '(impl P Q) '[P true Q false])))
+  (is (= false (eval-phi '(and P Q) '[P true Q false])))
+)
 
 ; cnf -----------------------------------------------------------------
 

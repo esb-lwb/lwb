@@ -7,21 +7,34 @@
 ; the terms of this license.
 
 (ns lwb.prop
-  (:require [clojure.walk :refer (postwalk)]
-            [clojure.set  :refer (union intersection)]
+  (:require [clojure.spec :as s]
+            [clojure.walk :refer (postwalk)]
+            [clojure.set :refer (union intersection subset?)]
+            [clojure.math.numeric-tower :refer (expt)]
             [clojure.math.combinatorics :refer (selections)]))
 
-;; # Representation of propositional formulae
+;; # Propositional logic
+
+;; The namespace `lwb.prop` provides
+
+;; * operators of propositional logic
+;; * functions for checking whether a formula is well-formed
+;; * evaluation of formulae in a given model
+;; * the truth table for a formula
+;; * normal forms: conjunctive normal form (cnf) and disjunctive normal form (dnf)
+
+
+;; ## Representation of propositional formulae
 
 ;; The propositional atoms are represented by Clojure symbols, 
-;; e.g. `p` or `q`.
+;; e.g. `P` or `Q`.
 
-;; The propositional constants for truth and falsity are represented
+;; The propositional constants for truth (_verum_) and falsity (_falsum_) are represented
 ;; by `true` and `false`, respectively.
 
 ;; A propositional formula is an atom or a constant, or an expression composed
 ;; of boolean operators, propositional atoms and constants in the usual
-;; lispy syntax, e.g. `(impl (and p (not p)) q)`.
+;; lispy syntax, e.g. `(impl (and P (not P)) Q)`.
 
 ;; ## The operators of propositional logic
 
@@ -58,17 +71,19 @@
   (list 'or (list 'and i t)
         (list 'and (list 'not i) e)))
 
-;; ## Utility functions in the context of operators
+;; Remark: The definitions of the operators may not be changed to functions.
+;; In the transformation of a formula to cnf it is useful and necessary that the operators
+;; are defined as macros
+
+;; ## Well-formed formulae
+
+;; We can see a formula from the syntactic perspective as a finite sequence of
+;; atoms, operators and parentheses that conforms to the grammar of propositional logic.
 
 (defn op?
   "Is `symb` an operator of propositional logic?"
   [symb]
   (contains? #{'not 'and 'or 'impl 'equiv 'xor 'ite} symb))
-
-(defn boolean?
-  "Is `symb` a constant of logic, i.e. `true` or `false`?"
-  [symb]
-    (instance? Boolean symb))
 
 (defn atom?
   "Is `symb` an atomar proposition?"
@@ -77,7 +92,7 @@
 
 (defn arity
   "Arity of operator `op`.   
-   -1 means n-ary, but better use `n-ary?`.
+   -1 means n-ary.      
    requires: `op` an operator."
   [op]
   (cond
@@ -86,66 +101,86 @@
     ('#{ite} op)            3
     ('#{and or} op)        -1))
 
-(defn unary?
-  "Is `op` an unary operator?"
-  [op]
-  (= 1 (arity op)))
-
-(defn binary?
-  "Is `op` a binary operator?"
-  [op]
-  (= 2 (arity op)))
-
-(defn ternary?
-  "Is `op` a ternary operator?"
-  [op]
-  (= 3 (arity op)))
-
 (defn nary?
-  "Is `op` an n-ary operator?"
+  "Is `op` nary?"
   [op]
   (= -1 (arity op)))
 
-;; ## Is a formula well-formed?
+;; ### Definition of the grammar of propositional logic
 
-(declare wff?)
+;; A simple expression is an atom or a boolean constant.
+(s/def ::simple-expr (s/or :bool boolean?
+                           :atom atom?))
 
-(defn op-expr?
-  [phi]
-  (if (not (op? (first phi)))
-    false
-    (let [a (arity (first phi))
-          c (dec (count phi))]
-      (if (and (not= a -1) (not= a c))
-        (throw (IllegalStateException. (str "expected operator with arity " a ", got " phi)))
-        (every? wff? (rest phi))))))
+;; A compound expression is a list of an operator together with
+;; several formulae as arguments whose number matches the arity of the operator.
 
-(defn simple-expr?
-  [phi]
-  (or (boolean? phi) (atom? phi)))
+(defn- arity-ok? [{:keys [op params]}]
+  (let [arity (arity op)]
+    (if (= arity -1) true
+                     (= arity (count params)))))
 
-(defn compound-expr?
-  [phi]
-  (cond
-    (not (list? phi)) (throw (IllegalStateException. (str "expected list, got " phi)))
-    (empty? phi) (throw (IllegalStateException. "expected not empty list, got '()'."))
-    (not (op? (first phi))) (throw (IllegalStateException. (str "expected operator, got " phi)))
-    :else (op-expr? phi))) 
+(s/def ::compl-expr (s/and list? (s/& (s/cat :op op? :params (s/* ::fml)) arity-ok?)))
+
+(s/def ::fml (s/or :simple-expr ::simple-expr
+                   :compl-expr  ::compl-expr))
 
 (defn wff?
-  "Is the proposition `phi` well-formed ?
-   `(wff? phi)` returns true or false   
-   `(wff? phi :msg)` returns true or a message on the error in `phi`."
+  "Is the propositional formula `phi` well-formed?       
+   `(wff? phi)` returns true or false.       
+   `(wff? phi :msg)` returns true or a message describing the error in `phi`."
   ([phi]
    (wff? phi :bool))
   ([phi mode]
-   (try
-     (or (simple-expr? phi) (compound-expr? phi))
-     (catch Exception e (if (= mode :msg) (.getMessage e) false)))))
+   (let [result (s/valid? ::fml phi)]
+     (if result result
+                (if (= mode :msg) (with-out-str (s/explain ::fml phi))
+                                  result)))))
 
-;; # Thruth table
+;; ## Evaluation of propositional formulae
 
-;; ## Representation of the truth table of a formula
+;; A model for a formula is a function from the atoms of the formula into the set of the
+;; boolean values {true, false}.
+
+;; We represent a model as a vector of alternating atoms and boolean constants. The
+;; atoms must be unique in the model.
+
+(s/def ::model (s/and vector? (s/& (s/* (s/cat :atom atom? :value boolean?))
+                                   #(apply distinct? (map :atom %)))))
+
+(defn eval-phi
+  "Evaluates the formula `phi` with the given assignment vector.        
+  `model` must be a valuation `['atom1 true, 'atom2 false, ...]` for the
+  propositional atoms of `phi`."
+  [phi model]
+  (binding [*ns* (find-ns 'lwb.prop)]
+    (eval `(let ~model ~phi))))
+
+;; Specification of the function `eval-phi`:
+;; the first argument must be a well-formed formula, the second a model.
+;; Furthermore the atoms in the formula must be a subset of the atoms in the model.
+
+(defn atoms-of-phi
+  "Sorted set of the propositional atoms of formula `phi`."
+  [phi]
+  (if (coll? phi)
+    (apply sorted-set
+           (filter #(not (or (op? %) (boolean? %))) (flatten phi)))
+    (if (boolean? phi)
+      #{}
+      #{phi})))
+
+(defn- atoms-in-model
+  "Set of atoms in destructured model"
+  [model]
+  (set (map :atom model)))
+
+(s/fdef eval-phi
+        :args (s/and (s/cat :phi wff? :model (s/spec ::model))
+                     #(subset? (atoms-of-phi (:phi %)) (atoms-in-model (:model %))))
+        :ret boolean?)
+
+;; ## Thruth table
 
 ;; The truth table of a proposition `phi` is represented as a map
 ;; with the keys:
@@ -154,25 +189,37 @@
 ;; `:header` a vector of the atoms and the last entry
 ;;  named `:result`.          
 ;; `:table` a vector of vectors of boolean assignments to the 
-;; corresponding atom in the header as well as the reult of the evaluation.
+;; corresponding atom in the header as well as the result of the evaluation.
 
-(defn atoms-of-phi
-  "Sorted set of the propositional atoms of formula `phi`."
-  [phi]
-  (if (coll? phi)
-    (apply sorted-set 
-           (filter #(not (or (op? %) (boolean? %))) (flatten phi)))
-    (if (boolean? phi)
-      #{}
-      #{phi})))
+(s/def ::phi wff?)
 
-(defn eval-phi 
-  "Evaluates the formula `phi` with the given assignment vector.        
-  `assign-vec` must be `['atom1 true, 'atom2 false, ...]` for the
-  propositional atoms of `phi`."
-  [phi assign-vec]
-  (binding [*ns* (find-ns 'lwb.prop)]
-    (eval `(let ~assign-vec ~phi))))
+(defn- header-wff? [header]
+  (and (every? atom? (butlast header)) (= :result (last header))))
+
+(s/def ::header (s/and vector? header-wff?))
+
+(defn- vector-of-boolean? [vec]
+  (every? boolean? vec))
+
+(s/def ::table (s/coll-of vector-of-boolean? :kind vector?))
+
+;; Remark: There are more constraints on the truth table:
+
+;; 1. The atoms in ::header are just the unique atoms in ::phi
+;; 2. ::table has 2^n elements for n the number of atoms (<= in mode :true-only or :false-only)
+;; 3. The length of the vectors in ::table equals the length of ::header
+
+(defn- truth-table-ok?
+  [{:keys [phi header table] :as tt}]
+  (let [atoms (atoms-of-phi phi)
+        atoms' (set (butlast header))
+        row-cnt (expt 2 (count atoms))
+        col-cnt (count header)]
+    (and (= atoms atoms')
+         (= (count table) row-cnt)
+         (every? #(= col-cnt (count %)) table))))
+
+(s/def ::truth-table (s/and truth-table-ok? (s/keys :req-un [::phi ::header ::table])))
 
 ;## Calculation of the truth table
 
@@ -203,6 +250,10 @@
       :true-only (assoc tt :table (vec (filter #(true? (last %)) (:table tt))))
       :false-only (assoc tt :table (vec (filter #(false? (last %)) (:table tt))))
       tt))))
+
+(s/fdef truth-table
+        :args wff?
+        :ret ::truth-table)
 
 (defn print-table
   "Pretty prints vector `header` and vector of vectors `table`.   
@@ -240,9 +291,9 @@
   (print-truth-table tt)
   )
 
-;;# Transformation to conjunctive normal form
+;;## Transformation to conjunctive normal form
 
-;;## (Standardized) conjunctive normal form
+;;### (Standardized) conjunctive normal form
 ;; Conjunctive normal form in lwb is defined as a formula of the form
 ;; `(and (or ...) (or ...) (or ...) ...)` where the clauses contain
 ;; only literals, no constants --
@@ -251,12 +302,20 @@
 ;; I.e. in lwb when transforming formula to cnf, we reduce it to this
 ;; standard form.
 
+; Specification of a literal
+(s/def ::literal (s/or :simple-expr ::simple-expr
+                       :neg (s/and list? (s/cat :not #{'not} :simple-expr ::simple-expr))))
+
+; Specification of clause
+(s/def ::clause (s/and list? (s/cat :or #{'or} :literals (s/* ::literal))))
+
+; Specification of conjunctive normal form cnf
+(s/def ::cnf (s/and list? (s/cat :and #{'and} :clauses (s/* ::clause))))
+
 (defn literal?
   "Checks whether `phi` is a literal, i.e. a propositional atom or its negation."
   [phi]
-  (or (atom? phi) (boolean? phi)
-      (and (list? phi) (= 2 (count phi)) (= 'not (first phi)) 
-           (or (atom? (second phi)) (boolean? (second phi))))))
+  (s/valid? ::literal phi))
 
 (defn impl-free 
   "Normalize formula `phi` such that just the operators `not`, `and`, `or` are used."
@@ -362,11 +421,24 @@
   [phi]
   (-> phi impl-free nnf nnf2cnf flatten-ops red-cnf))
 
+(s/fdef cnf
+        :arg wff?
+        :result ::cnf)
+
 (defn cnf?
   "Is `phi` in (standardized) conjunctive normal form?"
   [phi]
-  (let [clause? (fn [psi] (and (list? psi) (= 'or (first psi)) (every? literal? (rest psi))))]
-    (and (list? phi) (= 'and (first phi)) (every? clause? (rest phi)))))
+  (s/valid? ::cnf phi))
+
+;;## Transformation to disjunctive normal form
+
+;; Specification of disjunctive normal form dnf
+
+;; Specification of monom
+(s/def ::monom (s/and list? (s/cat :and #{'and} :literals (s/* ::literal))))
+
+;; Specification of dnf
+(s/def ::dnf (s/and list? (s/cat :or #{'or} :monoms (s/* ::monom))))
 
 ; helper to transform (cnf (not phi)) to (dnf phi)
 (defn- mapdnfi
@@ -387,4 +459,13 @@
   [phi]
   (let [cnf (cnf (list 'not phi))]
     (map mapdnf cnf)))
+
+(s/fdef dnf
+        :arg wff?
+        :ret ::dnf)
+
+(defn dnf?
+  "Is `phi` in (standardized) disjunctive normal form?"
+  [phi]
+  (s/valid? ::dnf phi))
 
