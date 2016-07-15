@@ -14,7 +14,7 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha10"]
                  [org.clojure/core.logic "0.8.10"]
                  [net.mikera/core.matrix "0.52.2"]
-                 [org.clojure/tools.macro "0.1.2"]
+                 [org.clojure/tools.macro "0.1.5"]
                  [org.clojure/math.combinatorics "0.1.3"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [potemkin "0.4.3"]
