@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Boolean Cardinality Constraints
 
-; Copyright (c) 2014 - 2015 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2016 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -8,44 +8,58 @@
 
 
 (ns lwb.prop.cardinality
-  (:require [clojure.math.combinatorics :refer (combinations)]))  
+  (:require [lwb.prop :refer :all]
+            [clojure.math.combinatorics :refer (combinations)]
+            [clojure.spec :as s]))
 
-(defn min-kof 
-  "(min-kof k coll) -> a seq of clauses expressing that 
-   at least k of the symbols in coll are true."
-  [k coll]
-  {:pre [(<= 1 k (count coll))]}
-  (map #(apply list 'or %)(combinations coll (inc (- (count coll) k)))))
+(s/def ::scoll (s/coll-of atom?))
 
-(comment
-  (min-kof 1 '[p q])
-  (class (min-kof 1 '[p q]))
-  )
-        
-(defn max-kof 
-  "(max-kof k coll) -> a seq of clauses expressing that 
-   at most k of the symbols in coll are true."
-  [k coll]
-  {:pre [(<= 0 k (dec (count coll)))]}
+(defn min-kof
+  "(min-kof k scoll) -> a seq of clauses expressing that 
+   at least k of the symbols in scoll are true."
+  [k scoll]
+  {:pre [(<= 1 k (count scoll))]}
+  (map #(apply list 'or %) (combinations scoll (inc (- (count scoll) k)))))
+
+(s/fdef min-kof
+        :args (s/cat :k int? :scoll ::scoll)
+        :ret (s/* :lwb.prop/clause))
+
+(defn max-kof
+  "(max-kof k scoll) -> a seq of clauses expressing that 
+   at most k of the symbols in scoll are true."
+  [k scoll]
+  {:pre [(<= 0 k (dec (count scoll)))]}
   (if (= k 0)
-    (map #(list 'not %) coll))
-          (for [s (combinations coll (inc k))]
-            (apply list 'or (map #(list 'not %) s))))
+    (map #(list 'not %) scoll))
+  (for [s (combinations scoll (inc k))]
+    (apply list 'or (map #(list 'not %) s))))
+
+(s/fdef max-kof
+        :args (s/cat :k int? :scoll ::scoll)
+        :ret (s/* :lwb.prop/clause))
 
 (defn kof
-  "(kof k coll) -> a seq of clauses expressing that
-   exactly k of the symbols in coll are true."
-  [k coll]
+  "(kof k scoll) -> a seq of clauses expressing that
+   exactly k of the symbols in scoll are true."
+  [k scoll]
   (condp = k
-    0            (max-kof 0 coll)
-    (count coll) (min-kof k coll)
-    (concat (min-kof k coll) (max-kof k coll))))
+    0 (max-kof 0 scoll)
+    (count scoll) (min-kof k scoll)
+    (concat (min-kof k scoll) (max-kof k scoll))))
 
+(s/fdef kof
+        :args (s/cat :k int? :scoll ::scoll)
+        :ret (s/* :lwb.prop/clause))
+        
 (defn oneof
-  "(oneof coll) -> a seq of clauses expressing that
-   exactly 1 symbol in coll ist true."
-  [coll]
-  (if (empty? coll)
+  "(oneof scoll) -> a seq of clauses expressing that
+   exactly 1 symbol in scoll is true."
+  [scoll]
+  (if (empty? scoll)
     false
-    (kof 1 coll)))
+    (kof 1 scoll)))
 
+(s/fdef oneof
+        :args (s/cat :scoll ::scoll)
+        :ret (s/* :lwb.prop/clause))
