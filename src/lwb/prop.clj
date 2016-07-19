@@ -149,7 +149,7 @@
                                    #(apply distinct? (map :atom %)))))
 
 (defn eval-phi
-  "Evaluates the formula `phi` with the given assignment vector.        
+  "Evaluates the formula `phi` with the given model.        
   `model` must be a valuation `['atom1 true, 'atom2 false, ...]` for the
   propositional atoms of `phi`."
   [phi model]

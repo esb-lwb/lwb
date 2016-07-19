@@ -2936,7 +2936,10 @@ atoms, operators and parentheses that conforms to the grammar of propositional l
     ('#{not} op)            1
     ('#{impl equiv xor} op) 2
     ('#{ite} op)            3
-    ('#{and or} op)        -1))</pre></td></tr><tr><td class="docs"><h3>Definition of the grammar of propositional logic</h3>
+    ('#{and or} op)        -1))</pre></td></tr><tr><td class="docs"><p>Is <code>op</code> nary?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn nary?
+  [op]
+  (= -1 (arity op)))</pre></td></tr><tr><td class="docs"><h3>Definition of the grammar of propositional logic</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A simple expression is an atom or a boolean constant.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::simple-expr (s/or :bool boolean?
                            :atom atom?))</pre></td></tr><tr><td class="docs"><p>A compound expression is a list of an operator together with
@@ -2965,7 +2968,7 @@ boolean values {true, false}.</p>
 atoms must be unique in the model.</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::model (s/and vector? (s/&amp; (s/* (s/cat :atom atom? :value boolean?))
-                                   #(apply distinct? (map :atom %)))))</pre></td></tr><tr><td class="docs"><p>Evaluates the formula <code>phi</code> with the given assignment vector. <br />
+                                   #(apply distinct? (map :atom %)))))</pre></td></tr><tr><td class="docs"><p>Evaluates the formula <code>phi</code> with the given model. <br />
   <code>model</code> must be a valuation <code>['atom1 true, 'atom2 false, ...]</code> for the
   propositional atoms of <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn eval-phi
@@ -2989,7 +2992,7 @@ Furthermore the atoms in the formula must be a subset of the atoms in the model.
 </td><td class="codes"><pre class="brush: clojure">(s/fdef eval-phi
         :args (s/and (s/cat :phi wff? :model (s/spec ::model))
                      #(subset? (atoms-of-phi (:phi %)) (atoms-in-model (:model %))))
-        :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Thruth table</h2>
+        :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Truth table</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The truth table of a proposition <code>phi</code> is represented as a map
 with the keys:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p><code>:prop</code> with the proposition itself
@@ -3012,7 +3015,7 @@ corresponding atom in the header as well as the result of the evaluation.</p>
 </ol>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- truth-table-ok?
-  [{:keys [phi header table] :as tt}]
+  [{:keys [phi header table]}]
   (let [atoms (atoms-of-phi phi)
         atoms' (set (butlast header))
         row-cnt (expt 2 (count atoms))
@@ -3076,10 +3079,7 @@ corresponding atom in the header as well as the result of the evaluation.</p>
   (do
     (println &quot;Truth table&quot;)
     (println prop)
-	  (print-table header table)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(comment
-  (def tt (truth-table '(or p q)))
-  (print-truth-table tt))</pre></td></tr><tr><td class="docs"><h2>Transformation to conjunctive normal form</h2>
+	  (print-table header table)))</pre></td></tr><tr><td class="docs"><h2>Transformation to conjunctive normal form</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><h3>(Standardized) conjunctive normal form</h3>
 
 <p>Conjunctive normal form in lwb is defined as a formula of the form
@@ -3180,16 +3180,20 @@ standard form.</p>
       :else (conj (list* (distinct result)) 'and))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to (standardized) conjunctive normal form cnf.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn cnf
   [phi]
-  (-&gt; phi impl-free nnf nnf2cnf flatten-ops red-cnf))</pre></td></tr><tr><td class="docs">
+  (-&gt; phi impl-free nnf nnf2cnf flatten-ops red-cnf))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
+<code>:ret</code> is in cnf and equivalent to the argument <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef cnf
-        :arg wff?
-        :result ::cnf)</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) conjunctive normal form?</p>
+        :args (s/cat :phi wff?)
+        :ret ::cnf
+        )</pre></td></tr><tr><td class="docs"><p>the spec of the function has a cyclic dependency as a consequence!
+:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) conjunctive normal form?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn cnf?
   [phi]
   (s/valid? ::cnf phi))</pre></td></tr><tr><td class="docs"><h2>Transformation to disjunctive normal form</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Specification of disjunctive normal from dnf</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Specification of disjunctive normal form dnf</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Specification of monom</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::monom (s/and list? (s/cat :and #{'and} :literals (s/* ::literal))))</pre></td></tr><tr><td class="docs"><p>: Specification of dnf</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::monom (s/and list? (s/cat :and #{'and} :literals (s/* ::literal))))</pre></td></tr><tr><td class="docs"><p>Specification of dnf</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::dnf (s/and list? (s/cat :or #{'or} :monoms (s/* ::monom))))</pre></td></tr><tr><td class="docs"><p>maps clause to monom in transformation to dnf.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- mapdnfi
   [inner]
@@ -3204,10 +3208,17 @@ standard form.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn dnf
   [phi]
   (let [cnf (cnf (list 'not phi))]
-    (map mapdnf cnf)))</pre></td></tr><tr><td class="docs">
+    ; border case
+    (if (boolean? cnf)
+      (not cnf)
+      (map mapdnf cnf))))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
+<code>:ret</code> is in dnf and equivalent to the argument <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef dnf
-        :arg wff?
-        :ret ::dnf)</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) disjunctive normal form?</p>
+        :args (s/cat :phi wff?)
+        :ret ::dnf
+        )</pre></td></tr><tr><td class="docs"><p>the spec of the function has a cyclic dependency as a consequence!
+:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) disjunctive normal form?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn dnf?
   [phi]
   (s/valid? ::dnf phi))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
