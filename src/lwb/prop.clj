@@ -9,6 +9,7 @@
 (ns lwb.prop
   (:require [clojure.spec :as s]
             [clojure.walk :refer (postwalk)]
+            [clojure.string :refer (starts-with?)]
             [clojure.set :refer (union intersection subset?)]
             [clojure.math.numeric-tower :refer (expt)]
             [clojure.math.combinatorics :refer (selections)]))
@@ -85,10 +86,12 @@
   [symb]
   (contains? #{'not 'and 'or 'impl 'equiv 'xor 'ite} symb))
 
+;; atoms beginning with `ts_` are not allowed, since such atoms are generated
+;; during the Tseitin transformation of a formula
 (defn atom?
   "Is `symb` an atomar proposition?"
   [symb]
-  (and (symbol? symb) (not (op? symb))))
+  (and (symbol? symb) (not (op? symb)) (not (starts-with? (name symb) "ts_"))))
 
 (defn arity
   "Arity of operator `op`.   
