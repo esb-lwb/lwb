@@ -14,11 +14,11 @@
 
 ; skoll ---------------------------------------------------------------
 
-(deftest scoll-test
-  (is (= true (s/valid? :lwb.prop.cardinality/scoll '(P Q R))))
-  (is (= true (s/valid? :lwb.prop.cardinality/scoll '[P Q R])))
-  (is (= false (s/valid? :lwb.prop.cardinality/scoll '(P Q :R))))
-  (is (= false (s/valid? :lwb.prop.cardinality/scoll '(P Q (and P Q)))))
+(deftest acoll-test
+  (is (= true (s/valid? :lwb.prop.cardinality/acoll '(P Q R))))
+  (is (= true (s/valid? :lwb.prop.cardinality/acoll '[P Q R])))
+  (is (= false (s/valid? :lwb.prop.cardinality/acoll '(P Q :R))))
+  (is (= false (s/valid? :lwb.prop.cardinality/acoll '(P Q (and P Q)))))
   )
 
 
@@ -45,3 +45,5 @@
   (is (= (kof 1 '(P Q R)) '((or P Q R) (or (not P) (not Q)) (or (not P) (not R)) (or (not Q) (not R)))))
   (is (= (kof 2 '(P Q R)) '((or P Q) (or P R) (or Q R) (or (not P) (not Q) (not R)))))
   )
+
+(run-tests)

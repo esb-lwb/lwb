@@ -80,3 +80,5 @@
   (is (= true (valid? '(or P (not P)))))
   (is (= false (valid? '(or P Q))))
   )
+
+(run-tests)

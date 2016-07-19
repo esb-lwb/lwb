@@ -12,54 +12,54 @@
             [clojure.math.combinatorics :refer (combinations)]
             [clojure.spec :as s]))
 
-(s/def ::scoll (s/coll-of atom?))
+(s/def ::acoll (s/coll-of atom?))
 
 (defn min-kof
-  "(min-kof k scoll) -> a seq of clauses expressing that 
-   at least k of the symbols in scoll are true."
-  [k scoll]
-  {:pre [(<= 1 k (count scoll))]}
-  (map #(apply list 'or %) (combinations scoll (inc (- (count scoll) k)))))
+  "(min-kof k acoll) -> a seq of clauses expressing that 
+   at least k of the symbols in acoll are true."
+  [k acoll]
+  {:pre [(<= 1 k (count acoll))]}
+  (map #(apply list 'or %) (combinations acoll (inc (- (count acoll) k)))))
 
 (s/fdef min-kof
-        :args (s/cat :k int? :scoll ::scoll)
+        :args (s/cat :k int? :acoll ::acoll)
         :ret (s/* :lwb.prop/clause))
 
 (defn max-kof
-  "(max-kof k scoll) -> a seq of clauses expressing that 
-   at most k of the symbols in scoll are true."
-  [k scoll]
-  {:pre [(<= 0 k (dec (count scoll)))]}
+  "(max-kof k acoll) -> a seq of clauses expressing that 
+   at most k of the symbols in acoll are true."
+  [k acoll]
+  {:pre [(<= 0 k (dec (count acoll)))]}
   (if (= k 0)
-    (map #(list 'not %) scoll))
-  (for [s (combinations scoll (inc k))]
+    (map #(list 'not %) acoll))
+  (for [s (combinations acoll (inc k))]
     (apply list 'or (map #(list 'not %) s))))
 
 (s/fdef max-kof
-        :args (s/cat :k int? :scoll ::scoll)
+        :args (s/cat :k int? :acoll ::acoll)
         :ret (s/* :lwb.prop/clause))
 
 (defn kof
-  "(kof k scoll) -> a seq of clauses expressing that
-   exactly k of the symbols in scoll are true."
-  [k scoll]
+  "(kof k acoll) -> a seq of clauses expressing that
+   exactly k of the symbols in acoll are true."
+  [k acoll]
   (condp = k
-    0 (max-kof 0 scoll)
-    (count scoll) (min-kof k scoll)
-    (concat (min-kof k scoll) (max-kof k scoll))))
+    0 (max-kof 0 acoll)
+    (count acoll) (min-kof k acoll)
+    (concat (min-kof k acoll) (max-kof k acoll))))
 
 (s/fdef kof
-        :args (s/cat :k int? :scoll ::scoll)
+        :args (s/cat :k int? :acoll ::acoll)
         :ret (s/* :lwb.prop/clause))
         
 (defn oneof
-  "(oneof scoll) -> a seq of clauses expressing that
-   exactly 1 symbol in scoll is true."
-  [scoll]
-  (if (empty? scoll)
+  "(oneof acoll) -> a seq of clauses expressing that
+   exactly 1 symbol in acoll is true."
+  [acoll]
+  (if (empty? acoll)
     false
-    (kof 1 scoll)))
+    (kof 1 acoll)))
 
 (s/fdef oneof
-        :args (s/cat :scoll ::scoll)
+        :args (s/cat :acoll ::acoll)
         :ret (s/* :lwb.prop/clause))
