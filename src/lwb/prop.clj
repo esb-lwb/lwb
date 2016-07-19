@@ -180,7 +180,7 @@
                      #(subset? (atoms-of-phi (:phi %)) (atoms-in-model (:model %))))
         :ret boolean?)
 
-;; ## Thruth table
+;; ## Truth table
 
 ;; The truth table of a proposition `phi` is represented as a map
 ;; with the keys:
@@ -210,7 +210,7 @@
 ;; 3. The length of the vectors in ::table equals the length of ::header
 
 (defn- truth-table-ok?
-  [{:keys [phi header table] :as tt}]
+  [{:keys [phi header table]}]
   (let [atoms (atoms-of-phi phi)
         atoms' (set (butlast header))
         row-cnt (expt 2 (count atoms))
@@ -285,11 +285,6 @@
     (println "Truth table")
     (println prop)
 	  (print-table header table)))
-
-(comment
-  (def tt (truth-table '(or p q)))
-  (print-truth-table tt)
-  )
 
 ;;## Transformation to conjunctive normal form
 
@@ -421,9 +416,14 @@
   [phi]
   (-> phi impl-free nnf nnf2cnf flatten-ops red-cnf))
 
+;; Specification of function `cnf`
+;; `:ret` is in cnf and equivalent to the argument `phi`.
 (s/fdef cnf
-        :arg wff?
-        :result ::cnf)
+        :args (s/cat :phi wff?)
+        :ret ::cnf
+        )
+        ;the spec of the function has a cyclic dependency as a consequence!
+        ;:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))
 
 (defn cnf?
   "Is `phi` in (standardized) conjunctive normal form?"
@@ -458,11 +458,19 @@
   "Transforms `phi` to disjunctive normal form dnf."
   [phi]
   (let [cnf (cnf (list 'not phi))]
-    (map mapdnf cnf)))
+    ; border case
+    (if (boolean? cnf)
+      (not cnf)
+      (map mapdnf cnf))))
 
+;; Specification of function `cnf`
+;; `:ret` is in dnf and equivalent to the argument `phi`.
 (s/fdef dnf
-        :arg wff?
-        :ret ::dnf)
+        :args (s/cat :phi wff?)
+        :ret ::dnf
+        )
+        ;the spec of the function has a cyclic dependency as a consequence!
+        ;:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))
 
 (defn dnf?
   "Is `phi` in (standardized) disjunctive normal form?"
