@@ -129,6 +129,23 @@
   (is (= false (eval-phi '(and P Q) '[P true Q false])))
 )
 
+; truth-table ---------------------------------------------------------
+
+(deftest truth-table-test
+  (is (= (truth-table '(and p q))
+         {:prop '(and p q),
+          :header ['p 'q :result],
+          :table [[true true true] [true false false] [false true false] [false false false]]}))
+  (is (= (truth-table '(or p q))
+         {:prop '(or p q),
+          :header ['p 'q :result],
+          :table [[true true true] [true false true] [false true true] [false false false]]}))
+  (is (= (truth-table '(ite p q false))
+         {:prop '(ite p q false),
+          :header ['p 'q :result],
+          :table [[true true true] [true false false] [false true false] [false false false]]}))
+  )
+
 ; cnf -----------------------------------------------------------------
 
 (deftest literal?-test
@@ -172,6 +189,14 @@
   (is (= '(and (not a) (not b) (not c)) (nnf '(not (or a b c)))))
   )
 
+(deftest cnf?-test
+  (is (= true (s/valid? :lwb.prop/cnf '(and))))
+  (is (= false (s/valid? :lwb.prop/cnf '(or))))
+  (is (= true (s/valid? :lwb.prop/cnf '(and (or)))))
+  (is (= false (s/valid? :lwb.prop/cnf '(and (and)))))
+  (is (= true (s/valid? :lwb.prop/cnf '(and (or P Q R) (or (not P) T X Y Z)))))
+  )
+
 (deftest cnf-test
   ; more precise: permutations of the clauses and the literals in the clauses are possible
   ; and allowed
@@ -198,6 +223,52 @@
   (is (= '(and (or p)) (cnf '(ite true p false))))
   (is (= '(and (or p)) (cnf '(ite false true p))))
   (is (= '(and (or p) (or q (not p)) (or q)) (cnf '(ite p q false))))
-)      
+)
+
+; dnf -----------------------------------------------------------------
+(deftest dnf?-test
+  (is (= true (s/valid? :lwb.prop/dnf '(or))))
+  (is (= false (s/valid? :lwb.prop/dnf '(and))))
+  (is (= true (s/valid? :lwb.prop/dnf '(or (and)))))
+  (is (= false (s/valid? :lwb.prop/dnf '(or (or)))))
+  (is (= true (s/valid? :lwb.prop/dnf '(or (and P Q R) (and (not P) T X Y Z)))))
+  )
+
+(deftest dnf-test
+  ; more precise: permutations of the clauses and the literals in the clauses are possible
+  ; and allowed
+  (is (= true (dnf '(and))))
+  (is (= true (dnf '(and true))))
+  (is (= true (dnf '(and true true))))
+  (is (= false (dnf '(and false))))
+  (is (= false (dnf '(and false true))))
+  (is (= false (dnf '(or))))
+  (is (= true (dnf '(or true))))
+  (is (= false (dnf '(or false))))
+  (is (= true (dnf '(or false true))))
+  (is (= false (dnf '(or false false))))
+
+  (is (= '(or (and p) (dnf '(or p)))))
+  (is (= '(or (and p) (dnf '(and p)))))
+  (is (= '(or (and a)) (dnf 'a)))
+  (is (= '(or (and a c b)) (dnf '(and a b c))))
+  (is (= '(or (and a) (and b) (and c)) (dnf '(or a (or b c)))))
+
+  (is (= '(or (and (not q) p) (and (not p) q) (dnf '(not (equiv p q))))))
+  (is (= '(or (and (not p) (not q) (and q)) (dnf '(impl (impl (impl p q) q) q)))))
+
+  (is (= '(or (and p)) (dnf '(ite true p false))))
+  (is (= '(or (and p)) (dnf '(ite false true p))))
+  (is (= '(or (and p q)) (dnf '(ite p q false))))
+  )
 
 (run-tests)
+
+(comment
+  (print-truth-table (truth-table '(and P Q)))
+  (print-truth-table (truth-table '(or P Q)))
+  (print-truth-table (truth-table '(impl P Q)))
+  (print-truth-table (truth-table '(equiv P Q)))
+  (print-truth-table (truth-table '(xor P Q)))
+  (print-truth-table (truth-table '(ite P Q R)))
+  )
