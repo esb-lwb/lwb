@@ -4,4 +4,4 @@
 # Bash script
 #
 # ----------------------------------------------------------------------------
-lein marg -m src/lwb/prop.clj
+lein marg -m src/lwb/prop.clj src/lwb/prop/sat.clj

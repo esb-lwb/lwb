@@ -201,7 +201,7 @@
 (comment
   (vis-dot ks1 :dot)
   (vis-tikz ks1)
-  (vis-pdf ks1 "ks1" :neato)
+  (vis-pdf ks1 "ks1" :dot)
   (vis-pdf ks2 "ks2")
   )
 
