@@ -108,6 +108,12 @@
   (is (= false (wff? '(or (and x1 x2 x3 x4 not) y z))))
 )
 
+; manual test
+(comment
+  (wff? '(and P Q) :msg)
+  (wff? '(and P :Q) :msg)
+  )
+
 ; model ---------------------------------------------------------------
 
 (deftest model-test

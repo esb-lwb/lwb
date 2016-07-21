@@ -137,7 +137,7 @@
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
      (if result result
-                (if (= mode :msg) (with-out-str (s/explain ::fml phi))
+                (if (= mode :msg) (s/explain-str ::fml phi)
                                   result)))))
 
 ;; ## Evaluation of propositional formulae
