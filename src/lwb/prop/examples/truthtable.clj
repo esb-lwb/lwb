@@ -143,5 +143,6 @@
 ; (iv) never ever are both red
 (def iv '(or (not ar) (not br)))
 
+(ptt' (list 'equiv (list 'and ai bi ii iii) (list 'and ai bi ii iv)))
 (valid? (list 'equiv (list 'and ai bi ii iii) (list 'and ai bi ii iv)))
 ; => true
