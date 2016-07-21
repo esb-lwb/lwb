@@ -120,3 +120,28 @@
 (and (sat? phi264) (not (valid? phi264)))
 ; neither a tautology nor a contradiction
 
+; Example of a specification of two trafic lights
+
+; (i) the trafic lights have three lights: red, green, yellow. Exactly one of them
+; is on at a time.
+
+(def ai '(and (or ar ay ag) (or (not ar) (not ay)) (or (not ar) (not ag)) (or (not ay) (not ag))))
+(def bi '(and (or br by bg) (or (not br) (not by)) (or (not br) (not bg)) (or (not by) (not bg))))
+
+; (ii) never ever are both lights green
+(def ii '(or (not ag) (not bg)))
+
+; (iii) is a light red is the other one green or yellow
+(def iii '(and (impl ar (or bg by)) (impl br (or ag ay))))
+
+(defn ptt'
+  [phi]
+  (print-truth-table (truth-table phi :true-only)))
+
+(ptt' (list 'and ai bi ii iii))
+
+; (iv) never ever are both red
+(def iv '(or (not ar) (not br)))
+
+(valid? (list 'equiv (list 'and ai bi ii iii) (list 'and ai bi ii iv)))
+; => true
