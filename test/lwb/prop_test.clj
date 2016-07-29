@@ -9,7 +9,9 @@
 (ns lwb.prop-test
   (:require [clojure.test :refer :all]
             [lwb.prop :refer :all]
-            [clojure.spec :as s]))
+            [clojure.spec :as s]
+            [clojure.spec.gen :as sgen]
+            [clojure.spec.test :as stest]))
 
 ; Operators -----------------------------------------------------------
 
@@ -277,4 +279,16 @@
   (print-truth-table (truth-table '(equiv P Q)))
   (print-truth-table (truth-table '(xor P Q)))
   (print-truth-table (truth-table '(ite P Q R)))
+  )
+
+(comment
+  ; generative testing doesn't work with spec :lwb.prop/fml
+  ; let's say at the first attempt
+  (def atom-set (set (map #(-> % char str symbol) (range (int \A) (inc (int \Z))))))
+  (sgen/sample (s/gen atom-set))
+  
+  (sgen/sample (s/gen :lwb.prop/simple-expr {[:atom] #(s/gen atom-set)}))
+  
+  (sgen/sample (s/gen :lwb.prop/fml {[:simple-expr :atom] #(s/gen atom-set)}))
+  ; => ExceptionInfo Couldn't satisfy such-that predicate after 100 tries.  clojure.core/ex-info (core.clj:4724)
   )
