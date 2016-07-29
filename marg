@@ -5,4 +5,4 @@
 #
 # ----------------------------------------------------------------------------
 lein marg -m src/lwb/prop.clj src/lwb/prop/sat.clj\
-  src/lwb/prop/cardinality.clj
+  src/lwb/prop/cardinality.clj src/lwb/prop/bdd.clj

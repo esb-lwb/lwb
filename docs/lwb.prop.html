@@ -2964,7 +2964,7 @@ several formulae as arguments whose number matches the arity of the operator.</p
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
      (if result result
-                (if (= mode :msg) (with-out-str (s/explain ::fml phi))
+                (if (= mode :msg) (s/explain-str ::fml phi)
                                   result)))))</pre></td></tr><tr><td class="docs"><h2>Evaluation of propositional formulae</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A model for a formula is a function from the atoms of the formula into the set of the
 boolean values {true, false}.</p>

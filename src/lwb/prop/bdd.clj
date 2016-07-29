@@ -7,25 +7,30 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-; Binary decision diagrams from formula of the propositional logic are build
-; using the JavaBDD library, see http://javabdd.sourceforge.net. JavaBDD is an
-; implementation in Java of the C/C++ library BuDDy (see http://buddy.sourceforge.net/manual/main.html).
-; Our library is just a rather thin wrapper for JavaBDD in Clojure.
+;; # Binary Decision Diagrams
+
+;; Binary decision diagrams from formulae of the propositional logic are build
+;; using the [JavaBDD library](http://javabdd.sourceforge.net). JavaBDD is an
+;; implementation in Java of the C/C++ library [BuDDy](http://buddy.sourceforge.net/manual/main.html).
+;;
+;; Our library is just a rather thin wrapper for JavaBDD in Clojure.
 
 (ns lwb.prop.bdd
   (:require [lwb.prop :refer :all]
             [clojure.string :as str]
             [clojure.math.combinatorics :refer (selections)]
-            [clojure.java.shell :as shell])
+            [clojure.java.shell :as shell]
+            [clojure.spec :as s])
   (:import  (net.sf.javabdd JFactory BDD)))
 
-; All functions with binary decision diagrams have to be executed in the
-; context of an initialized BDDFactory, see the documentation of JavaBDD and BuDDy.
-; Since we use JFactory, we can have multiple factories, but if one wants to
-; use the BuDDyFactory one have to bear i mind that the BuDDyFactory is a
-; singleton
+;; All functions with binary decision diagrams have to be executed in the
+;; context of an initialized BDDFactory, see the documentation of JavaBDD and BuDDy.     
+;; Since we use JFactory, we can have multiple factories, but if one wants to
+;; use the BuDDyFactory one have to bear in mind that the BuDDyFactory is a
+;; singleton.
+
 (defmacro with-bddf
-  "`binding` is a vector that assigns a BDDFactory to a symbol.
+  "`binding` is a vector that assigns a BDDFactory to a symbol.      
    The body is evaluated in a try block, finally the BDDFactory
    is reset."
   [binding & body]
@@ -36,11 +41,12 @@
 
 ; Initializing the JFactory
 (defn init-bddf
-  "(init-bddf :small)   inits the JFactory for small formulae,
-   (init-bddf :medsize) inits the JFactory for medium size formulae,
-   (init-bddf :large)   inits the JFactory for large formulae,
-   (init-bddf nodesize cachesize) inits the JFactory
-   'Typical values according to the documentation of bdd_init of BuDDy."
+  "Initializing the JFactory      
+   (init-bddf :small)   inits the JFactory for small formulae,    
+   (init-bddf :medsize) inits the JFactory for medium size formulae,    
+   (init-bddf :large)   inits the JFactory for large formulae,    
+   (init-bddf nodesize cachesize) inits the JFactory    
+   Typical values according to the documentation of bdd_init of BuDDy."
   ([type]
    (case type
      :small   (init-bddf 10000 1000))
@@ -74,7 +80,7 @@
 (defn- build-bddi-recur
   "Inner part of the function that builds a BDD object using the BDD Factory."
   [bddf atom-map phi]
-  (if (simple-expr? phi)
+  (if (s/valid? :lwb.prop/simple-expr phi)
     (cond (= phi 'true)  (.one  ^JFactory bddf)
           (= phi 'false) (.zero ^JFactory bddf)
           :else (get atom-map phi))
@@ -95,49 +101,49 @@
   (let [atom-map (atoms-as-bddis bddf phi)]
     (build-bddi-recur bddf atom-map phi)))
 
-; From the internal data structure of a binary decision diagram, we
-; build a Clojure data structure representing the bdd.
+;; From the internal data structure of a binary decision diagram, we
+;; build a Clojure data structure representing the bdd.
 
-; The bdd is a vector of nodes, each node has a unique identifiying `no`,
-; the symbol for the `atom` of the node, as well as the number of the
-; child in the false branch `lo-no`and the number of the child in the
-; true branch `hi-no`.
+;; The bdd is a vector of nodes, each node has a unique identifiying `no`,
+;; the symbol for the `atom` of the node, as well as the number of the
+;; child in the false branch `lo-no`and the number of the child in the
+;; true branch `hi-no`.
 
-; We have two special nodes for the sinks.
+;; We have two special nodes for the sinks.
 
 ;; Definition of a Node in the representation of the bdd
 (defrecord Node [no atom lo-no hi-no])
 
+;; Nodes for verum and falsum
 (def ^:private false-node (Node. 0 'false 0 0))
 (def ^:private true-node  (Node. 1 'true 1 1))
 
-; While building the vector of nodes for a bddi we use a
-; map
+;; While building the vector of nodes for a bddi we use a map 
 
 ;; The map with the two sinks
 (def ^:private base-map {'false false-node 'true true-node})
 
-; is the entry with key already visited?
 (defn- visited? [bddi bdd-map]
+  "Has the entry with key already been visited?"
   (not (nil? (:lo-no (get bdd-map bddi)))))
 
-; inserts new entry for bddi in transient bdd-map
-; returns bdd-map
 (defn- init-node [bddi bdd-map]
+  "Inserts new entry for bddi in transient bdd-map    
+   returns bdd-map"
   (if (nil? (get bdd-map bddi))
     (conj! bdd-map [bddi (Node. (count bdd-map) (.var ^BDD bddi) nil nil)])
     bdd-map))
 
-; gives key of bddi in graph
 (defn- key-bddi [bddi]
+  "returns key of bddi in graph"
   (cond
     (.isZero ^BDD bddi) 'false
     (.isOne  ^BDD bddi) 'true
     :else bddi))
 
-; processes a bbdi and manipulates transient bdd-map
-; returns bdd-map
 (defn- process [bddi bdd-map]
+  "Processes a bbdi and manipulates transient bdd-map     
+   returns bdd-map"
   (let [map1 (init-node bddi bdd-map)]
     (if (visited? bddi map1)
       map1                    ; already visited -> nothing to do
@@ -193,9 +199,10 @@
                     (Node. (:no node) (nth atom-vec (:atom node)) (:lo-no node) (:hi-no node)))))]
     (into [] tx bdd-vec)))
 
-; the preferred interface to lwb/prob/bdd:
+;; The preferred interface to lwb.prob.bdd:
+
 (defn bdd
-  "bdd initializes the JFactory with a reasonable
+  "`bdd` initializes the JFactory with a reasonable
    size depending on the number of atoms in `phi`,
    generates the internal bdd and transforms it to
    the representation of the bdd in Clojure."
@@ -204,22 +211,16 @@
              (let [bddi (build-bddi bddf phi)]
                (syms-for-atoms phi (build-bdd bddi)))))
 
-(comment
-  (bdd 'true)
-  (bdd 'false)
-  (bdd 'p)
-  (bdd '(not p))
-  (bdd '(and p q))
-  (bdd '(or p q))
-  (bdd '(impl p q))
-  (bdd '(equiv p q))
-  (bdd '(ite p q r))
-  (= (bdd '(impl p q)) (bdd '(or (not p) q)))
-  (bdd '(or (and a b) (and a c) (and b c))) ; Knuth Fig. 21
-)
+
+;; Representation of a binary decision diagram in Clojure: a vector of Nodes
+(s/def ::bdd (s/coll-of #(instance? Node %)))
+
+(s/fdef bdd
+        :args wff?
+        :ret ::bdd)
 
 (defn- tf1-vec
-  "transforms byte vector result from AllSatIterator to get one assignment vector"
+  "Transforms byte vector result from AllSatIterator to get an assignment vector"
   [phi bvec]
   (let [atom-vec (into [] (atoms-of-phi phi))
         tx (map-indexed (fn [idx a]
@@ -229,7 +230,7 @@
     (into[] (comp tx (mapcat identity)) bvec)))
 
 (defn- idx-in-vec
-  "returns seq of indexes of number -1 in vec"
+  "Returns seq of indexes of number -1 in vec"
   [bvec]
   (let [tx (comp
              (map-indexed vector) (filter #(= -1 (second %))) (map first))]
@@ -254,9 +255,9 @@
     (map #(tf2-vec bvec %) sels)))
 
 (defn sat
-  "Gives an assignment vector for `phi` if the formula is satisfiable, nil if not.
+  "Gives a model for `phi` if the formula is satisfiable, nil if not.
    If `phi` is trivially valid, the result is true.
-   Mode `:all` returns a sequence of all the satisfying assignments."
+   Mode `:all` returns a sequence of all the models."
   ([phi]
    (sat phi :one))
   ([phi mode]
@@ -272,29 +273,27 @@
              :all (map #(tf1-vec phi %) (mapcat tfa-vec (into[] (map vec iseq))))
              (tf1-vec phi (first (map vec iseq)))))))))
 
-(comment
-  (sat 'p)
-  (sat 'true)
-  (sat '(and p q))
-  (sat '(and p q) :all)
-  (sat '(or p q))
-  (sat '(or p q) :all)
-  (sat '(or p q r) :all)
-  (sat '(impl p q))
-  (sat '(impl p q) :all)
-  (sat '(and p (not p)))
-  (sat '(or p (not p)))
-)
+(s/fdef sat
+        :args wff?
+        :ret (s/nilable (s/or :verum true? :model :lwb.prop/model)))
 
 (defn sat?
   "Is `phi` satisfiable?"
   [phi]
   (if (nil? (sat phi)) false true))
 
+(s/fdef sat?
+        :args wff?
+        :ret boolean?)
+
 (defn valid?
   "Is `phi` valid?"
   [phi]
   (not (sat? (list 'not phi))))
+
+(s/fdef valid?
+        :args wff?
+        :ret boolean?)
 
 ; helper functions for visualisation
 
