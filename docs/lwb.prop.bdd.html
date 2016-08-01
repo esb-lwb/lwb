@@ -3019,8 +3019,8 @@ true branch <code>hi-no</code>.</p>
                     (&lt; (:no node) 2)
                     node
                     (Node. (:no node) (nth atom-vec (:atom node)) (:lo-no node) (:hi-no node)))))]
-    (into [] tx bdd-vec)))</pre></td></tr><tr><td class="docs"><p>the preferred interface to lwb.prob.bdd:</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>bdd initializes the JFactory with a reasonable
+    (into [] tx bdd-vec)))</pre></td></tr><tr><td class="docs"><h3>The preferred interface to lwb.prob.bdd:</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p><code>bdd</code> initializes the JFactory with a reasonable
    size depending on the number of atoms in <code>phi</code>,
    generates the internal bdd and transforms it to
    the representation of the bdd in Clojure.</p>
@@ -3032,7 +3032,7 @@ true branch <code>hi-no</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::bdd (s/coll-of #(instance? Node %)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef bdd
         :args wff?
-        :ret ::bdd)</pre></td></tr><tr><td class="docs"><p>transforms byte vector result from AllSatIterator to get an assignment vector</p>
+        :ret ::bdd)</pre></td></tr><tr><td class="docs"><p>Transforms byte vector result from AllSatIterator to get an assignment vector</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- tf1-vec
   [phi bvec]
   (let [atom-vec (into [] (atoms-of-phi phi))
@@ -3040,7 +3040,7 @@ true branch <code>hi-no</code>.</p>
         (if (= a 0)
           [(nth atom-vec idx) 'false]
           [(nth atom-vec idx) 'true])))]
-    (into[] (comp tx (mapcat identity)) bvec)))</pre></td></tr><tr><td class="docs"><p>returns seq of indexes of number -1 in vec</p>
+    (into[] (comp tx (mapcat identity)) bvec)))</pre></td></tr><tr><td class="docs"><p>Returns seq of indexes of number -1 in vec</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- idx-in-vec
   [bvec]
   (let [tx (comp
@@ -3059,9 +3059,9 @@ true branch <code>hi-no</code>.</p>
   [bvec]
   (let [c  (count (filter #(= -1 %) bvec))
         sels (selections [0 1] c)]
-    (map #(tf2-vec bvec %) sels)))</pre></td></tr><tr><td class="docs"><p>Gives an assignment vector for <code>phi</code> if the formula is satisfiable, nil if not.
+    (map #(tf2-vec bvec %) sels)))</pre></td></tr><tr><td class="docs"><p>Gives a model for <code>phi</code> if the formula is satisfiable, nil if not.
    If <code>phi</code> is trivially valid, the result is true.
-   Mode <code>:all</code> returns a sequence of all the satisfying assignments.</p>
+   Mode <code>:all</code> returns a sequence of all the models.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat
   ([phi]
    (sat phi :one))
@@ -3076,13 +3076,22 @@ true branch <code>hi-no</code>.</p>
            :else
            (case mode
              :all (map #(tf1-vec phi %) (mapcat tfa-vec (into[] (map vec iseq))))
-             (tf1-vec phi (first (map vec iseq)))))))))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
+             (tf1-vec phi (first (map vec iseq)))))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef sat
+        :args wff?
+        :ret (s/nilable (s/or :verum true? :model :lwb.prop/model)))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat?
   [phi]
-  (if (nil? (sat phi)) false true))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> valid?</p>
+  (if (nil? (sat phi)) false true))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef sat?
+        :args wff?
+        :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> valid?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn valid?
   [phi]
-  (not (sat? (list 'not phi))))</pre></td></tr><tr><td class="docs"><p>Generates texcode for atoms;
+  (not (sat? (list 'not phi))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef valid?
+        :args wff?
+        :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Generates texcode for atoms;
    Since '{' and '}' are a reserved character in Clojure,
    one can use '&lt;' and '>'
    as characters for grouping subscripts e.g.</p>
@@ -3099,7 +3108,8 @@ true branch <code>hi-no</code>.</p>
     :else
     (str (:no node) &quot; [label=\&quot;&quot; (process-atom node) &quot;\&quot;, style=\&quot;shape=rectangle,minimum size=6mm,rounded corners=3mm\&quot;];\n&quot;
          (:no node) &quot; -&gt; &quot; (:lo-no node) &quot; [style=dotted];\n&quot;
-         (:no node) &quot; -&gt; &quot; (:hi-no node) &quot; [style=filled];\n&quot;)))</pre></td></tr><tr><td class="docs"><p>Visualisation of the bdd for the formula <code>phi</code>.
+         (:no node) &quot; -&gt; &quot; (:hi-no node) &quot; [style=filled];\n&quot;)))</pre></td></tr><tr><td class="docs"><h3>Visualisation with graphviz</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Visualisation of the bdd for the formula <code>phi</code>.
    Generates code for graphviz (dot).</p>
 </td><td class="codes"><pre class="brush: clojure">(defn vis-dot
   [phi]
@@ -3107,7 +3117,8 @@ true branch <code>hi-no</code>.</p>
         dot-head &quot;digraph G {\n&quot;
         dot-tail &quot;}&quot;
         dot-lines (apply str (map dot-line bdd))]
-    (str dot-head dot-lines dot-tail)))</pre></td></tr><tr><td class="docs">
+    (str dot-head dot-lines dot-tail)))</pre></td></tr><tr><td class="docs"><h3>Visualisation with tikz</h3>
+</td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def ^:private tikz-header
   &quot;\\documentclass{standalone}
    \\standaloneconfig{border=8pt}
@@ -3135,11 +3146,7 @@ true branch <code>hi-no</code>.</p>
         tex-file (str filename &quot;.tex&quot;)]
         (spit tex-file tex-code)
         (shell/sh &quot;texi2pdf&quot; tex-file))
-        (shell/sh &quot;open&quot; (str filename &quot;.pdf&quot;)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(comment
-  (vis-pdf '(or (and x_1 x_2) (and x_1 x_3) (and x_2 x_3)) &quot;majority1&quot;)
-  (vis-pdf '(or (and x_&lt;01&gt; x_&lt;02&gt;) (and x_&lt;01&gt; x_&lt;03&gt;) (and x_&lt;02&gt; x_&lt;03&gt;)) &quot;majority3&quot;)
-)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+        (shell/sh &quot;open&quot; (str filename &quot;.pdf&quot;)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack
