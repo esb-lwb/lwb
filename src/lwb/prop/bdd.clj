@@ -318,6 +318,8 @@
          (:no node) " -> " (:lo-no node) " [style=dotted];\n"
          (:no node) " -> " (:hi-no node) " [style=filled];\n")))
 
+;; ### Visualisation with graphviz
+
 (defn vis-dot
   "Visualisation of the bdd for the formula `phi`.
    Generates code for graphviz (dot)."
@@ -327,6 +329,9 @@
         dot-tail "}"
         dot-lines (apply str (map dot-line bdd))]
     (str dot-head dot-lines dot-tail)))
+
+
+;; ### Visualisation with tikz
 
 (def ^:private tikz-header
   "\\documentclass{standalone}
@@ -361,10 +366,5 @@
         (spit tex-file tex-code)
         (shell/sh "texi2pdf" tex-file))
         (shell/sh "open" (str filename ".pdf")))
-
-(comment
-  (vis-pdf '(or (and x_1 x_2) (and x_1 x_3) (and x_2 x_3)) "majority1")
-  (vis-pdf '(or (and x_<01> x_<02>) (and x_<01> x_<03>) (and x_<02> x_<03>)) "majority3")
-)
 
 
