@@ -199,7 +199,7 @@
                     (Node. (:no node) (nth atom-vec (:atom node)) (:lo-no node) (:hi-no node)))))]
     (into [] tx bdd-vec)))
 
-;; The preferred interface to lwb.prob.bdd:
+;; ### The preferred interface to lwb.prob.bdd:
 
 (defn bdd
   "`bdd` initializes the JFactory with a reasonable
