@@ -283,12 +283,83 @@
 
 (comment
   ; generative testing doesn't work with spec :lwb.prop/fml
-  ; let's say at the first attempt
   (def atom-set (set (map #(-> % char str symbol) (range (int \A) (inc (int \Z))))))
   (sgen/sample (s/gen atom-set))
   
   (sgen/sample (s/gen :lwb.prop/simple-expr {[:atom] #(s/gen atom-set)}))
   
   (sgen/sample (s/gen :lwb.prop/fml {[:simple-expr :atom] #(s/gen atom-set)}))
-  ; => ExceptionInfo Couldn't satisfy such-that predicate after 100 tries.  clojure.core/ex-info (core.clj:4724)
+  ; => ExceptionInfo: Couldn't satisfy such-that predicate after 100 tries. 
+  
+  ; if we make the grammer more explicit on the arity, it's possible to generate samples:
+  (s/def ::atom (s/with-gen atom? #(s/gen atom-set)))
+  (sgen/sample (s/gen ::atom))
+
+  (s/def ::simple-expr (s/or :atom ::atom :bool boolean?))
+  (sgen/sample (s/gen ::simple-expr))
+  
+  (s/def ::un-expr (s/cat :op '#{not} :param ::fml))
+  (s/def ::bin-expr (s/cat :op '#{impl equiv xor} :param1 ::fml :param2 ::fml))
+  (s/def ::tern-expr (s/cat :op '#{ite} :param1 ::fml :param2 ::fml :param3 ::fml))
+  (s/def ::nary-expr (s/cat :op '#{and or} :params (s/* ::fml)))
+
+  (s/def ::compl-expr (s/or :un-expr ::un-expr :bin-expr ::bin-expr :tern-expr ::tern-expr :nary-expr ::nary-expr))
+
+  (s/def ::fml (s/or :simple-expr ::simple-expr :compl-expr ::compl-expr))
+  (sgen/generate (s/gen ::fml)) 
+  
+  ; but:
+  (s/valid? ::fml '[and P Q])
+  ; => true
+  ; any sequential data structure is accepted now, not just a list
+  
+  ; and as soon as we change the spec, let's try e.g.
+  (s/def ::un-expr' (s/and list? (s/cat :op '#{not} :param ::simple-expr)))
+  
+  (s/valid? ::un-expr' '(not P))
+  ; => true
+  (s/valid? ::un-expr' '[not P])
+  ; => false
+  
+  (sgen/generate (s/gen ::un-expr'))
+  ; => ExceptionInfo: Couldn't satisfy such-that predicate after 100 tries.
+  
+  ; i.e. we need a custom generator that generates a list
+  (s/def ::un-expr'' (s/with-gen (s/and list? (s/cat :op '#{not} :param ::simple-expr))
+                               #(sgen/fmap (fn [x] (apply list x)) (sgen/tuple (sgen/return 'not) (s/gen ::simple-expr)))))
+
+  (list? (sgen/generate (s/gen ::un-expr'')))
+  ; => true
+  
+  ; Result so far:
+  ; Either we abandon the check that formulas are nested lists and get generators for free
+  ; or we check that property and therefore must provide (quite painful) custom generators
+  
+  ; On the other side - without generated samples it's not possible to generate tests for functions
+  
+  ; If we do not check that subformulas are lists, we can do somtething like that:
+  (s/def ::literal (s/or :simple-expr ::simple-expr
+                         :neg (s/cat :not #{'not} :simple-expr ::simple-expr)))
+  (sgen/sample (s/gen ::literal))
+
+  (s/def ::clause (s/cat :or #{'or} :literals (s/* ::literal)))
+  (sgen/sample (s/gen ::clause))
+
+  (s/def ::cnf (s/cat :and #{'and} :clauses (s/* (s/spec ::clause))))
+  (sgen/sample (s/gen ::cnf))
+
+  (s/fdef lwb.prop/cnf
+          :args (s/cat :phi ::fml)
+          :ret (s/or :cnf ::cnf :bool boolean?))
+
+  (stest/check `lwb.prop/cnf {:clojure.spec.test.check/opts {:num-tests 5}})
+  
+  ; Decision:
+  ; In predicate logic the arity check for predicates and functions depends on the signature of the language. 
+  ; That implies that it is not possible to put the arity check explicitly in the grammar since we use one
+  ; grammar for all languages. Thus in predicate logic we can not generate useful smaples. 
+  ; So we use the same approach in propositional and predicate logic, i.e. the more generic grammar -
+  ; at the price that we cannot generate tests.
+  
   )
+
