@@ -3096,7 +3096,19 @@ standard form.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::literal (s/or :simple-expr ::simple-expr
                        :neg (s/and list? (s/cat :not #{'not} :simple-expr ::simple-expr))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::clause (s/and list? (s/cat :or #{'or} :literals (s/* ::literal))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::cnf (s/and list? (s/cat :and #{'and} :clauses (s/* ::clause))))</pre></td></tr><tr><td class="docs"><p>Checks whether <code>phi</code> is a literal, i.e. a propositional atom or its negation.</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::cnf (s/and list? (s/cat :and #{'and} :clauses (s/* ::clause))))</pre></td></tr><tr><td class="docs"><p>Caveat reader!
+at the first sight (apply list ...) and (list* ...) seems to give the
+same result -- BUT
+the types are different:
+(list? (apply list [:a :b])) => true
+(list? (list* [:a :b]))      => false
+since we check list? in the specs we have to be precise with the types
+our functions are returning!</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>One may argue that in the spirit of Clojure it's better to work with
+sequences whatever their implementation would be.
+But: we want to use the data structure of a formula as code
+and as such it has to be a list!</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Checks whether <code>phi</code> is a literal, i.e. a propositional atom or its negation.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn literal?
   [phi]
   (s/valid? ::literal phi))</pre></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that just the operators <code>not</code>, <code>and</code>, <code>or</code> are used.</p>
@@ -3115,19 +3127,19 @@ standard form.</p>
     phi
     (let [[op &amp; more] phi]
       (if (contains? #{'and 'or} op)
-        (list* op (map nnf more))
+        (apply list op (map nnf more))
         (let [[second-op &amp; second-more] (second phi)]
           (if (contains? #{'and 'or} second-op)
-            (nnf (list* (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
+            (nnf (apply list (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
             (nnf (first second-more))))))))</pre></td></tr><tr><td class="docs"><p>Application of the distributive laws to the given formulae</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- distr
   ([phi] phi)
   ([phi-1 phi-2]
     (cond
       (and (not (literal? phi-1)) (= 'and (first phi-1)))
-        (list* 'and (map #(distr % phi-2) (rest phi-1)))
+        (apply list 'and (map #(distr % phi-2) (rest phi-1)))
       (and (not (literal? phi-2)) (= 'and (first phi-2)))
-        (list* 'and (map #(distr phi-1 %) (rest phi-2)))
+        (apply list 'and (map #(distr phi-1 %) (rest phi-2)))
       :else
         (list 'or phi-1 phi-2)))
   ([phi-1 phi-2 &amp; more]
@@ -3137,7 +3149,7 @@ standard form.</p>
   (cond
     (literal? phi) (list 'and (list 'or phi))
     (= '(or) phi) '(and (or))
-    (= 'and (first phi)) (list* 'and (map nnf2cnf (rest phi)))
+    (= 'and (first phi)) (apply list 'and (map nnf2cnf (rest phi)))
     (= 'or (first phi)) (apply distr (map nnf2cnf (rest phi)))))</pre></td></tr><tr><td class="docs"><p>Flattens the formula <code>phi</code>. <br />
    Nested binary applications of n-ary operators will be transformed to the n-ary form,
    e.g. <code>(and (and a b) c) =&gt; (and a b c)</code>.</p>
@@ -3174,22 +3186,22 @@ standard form.</p>
     (contains? neg 'false) true
     :else
       (let [pos' (filter #(not= 'false %) pos), neg' (filter #(not= 'true %) neg)]
-        (conj (concat (list* pos') (map #(list 'not %) neg')) 'or))))</pre></td></tr><tr><td class="docs"><p>Reduces a formula <code>ucnf</code> of the form <code>(and (or ...) (or ...) ...)</code>.</p>
+        (conj (apply list (concat (apply list pos') (map #(list 'not %) neg'))) 'or))))</pre></td></tr><tr><td class="docs"><p>Reduces a formula <code>ucnf</code> of the form <code>(and (or ...) (or ...) ...)</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn red-cnf
   [ucnf]
   (let [result (filter #(not= 'true %) (map #(red-clmap (clause2sets %)) (rest ucnf)))]
     (cond
       (some #{'(or)} result) false
       (empty? result) true
-      :else (conj (list* (distinct result)) 'and))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to (standardized) conjunctive normal form cnf.</p>
+      :else (conj (apply list (distinct result)) 'and))))</pre></td></tr><tr><td class="docs"><p>:else (conj (list* (distinct result)) 'and))))</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to (standardized) conjunctive normal form cnf.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn cnf
   [phi]
   (-&gt; phi impl-free nnf nnf2cnf flatten-ops red-cnf))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
 <code>:ret</code> is in cnf and equivalent to the argument <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef cnf
         :args (s/cat :phi wff?)
-        :ret ::cnf
-        )</pre></td></tr><tr><td class="docs"><p>the spec of the function has a cyclic dependency as a consequence!
+        :ret (s/or :cnf ::cnf :bool boolean?))</pre></td></tr><tr><td class="docs"><p>the spec of the function has a cyclic dependency as a consequence!
 :fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) conjunctive normal form?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn cnf?
@@ -3208,19 +3220,18 @@ standard form.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- mapdnf
   [outer]
   (if (= outer 'and) 'or
-                     (map mapdnfi outer)))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to disjunctive normal form dnf.</p>
+                     (apply list (map mapdnfi outer))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to disjunctive normal form dnf.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn dnf
   [phi]
   (let [cnf (cnf (list 'not phi))]
     ; border case
     (if (boolean? cnf)
       (not cnf)
-      (map mapdnf cnf))))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
+      (apply list (map mapdnf cnf)))))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
 <code>:ret</code> is in dnf and equivalent to the argument <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef dnf
         :args (s/cat :phi wff?)
-        :ret ::dnf
-        )</pre></td></tr><tr><td class="docs"><p>the spec of the function has a cyclic dependency as a consequence!
+        :ret (s/or :dnf ::dnf :bool boolean?))</pre></td></tr><tr><td class="docs"><p>the spec of the function has a cyclic dependency as a consequence!
 :fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) disjunctive normal form?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn dnf?

@@ -25,12 +25,14 @@
                  (or (not x_4) x_1 (not x_2))])
 
 ; The conjunction of the 8 clauses is not satisfiable
-(sat? (list* 'and R-clauses))
+(cnf? (conj (apply list R-clauses) 'and))
+; => true
+(sat? (conj (apply list R-clauses) 'and))
 ; => false
 
 ; The conjunction of each of the subsets with 7 elements of the clauses is satisfiable
 ; and has 2 models
-(def R'-conjs (map #(list* 'and %) (combinations R-clauses 7)))
+(def R'-conjs (map #(conj (apply list %) 'and) (combinations R-clauses 7)))
 
 (map sat? R'-conjs)
 ; => (true true true true true true true true)
@@ -59,7 +61,6 @@
 ;     [P false Q true R true S true]
 ;     [P false Q false R false S false])
 
-
 (def phi '(and (or Y_1)
                (or Y_2)
                (or (not Y_1) X Z)
@@ -69,7 +70,6 @@
 
 (sat phi)
 ; => nil
-
 
 ;: Example Changing code after review
 
