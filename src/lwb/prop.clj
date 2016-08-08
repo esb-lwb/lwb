@@ -319,6 +319,11 @@
 ;; since we check list? in the specs we have to be precise with the types
 ;; our functions are returning!
 
+;; One may argue that in the spirit of Clojure it's better to work with
+;; sequences whatever their implementation would be.
+;; But: we want to use the data structure of a formula as code
+;; and as such it has to be a list!
+
 (defn literal?
   "Checks whether `phi` is a literal, i.e. a propositional atom or its negation."
   [phi]
