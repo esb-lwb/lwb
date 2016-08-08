@@ -9,6 +9,7 @@
 (ns lwb.pred-test
   (:refer-clojure :exclude [var?])
   (:require [clojure.test :refer :all]
+            [clojure.spec :as s]
             [lwb.pred :refer :all]))
 
 ; signature ------------------------------------------------------------------
@@ -23,7 +24,11 @@
           :P1 [:pred 1]
           :P2 [:pred 2]})
 
+; tests -----------------------------------------------------------------------
+
 (deftest sig-test
+  (is (= true (s/valid? :lwb.pred/signature sig)))
+  (is (= false (s/valid? :lwb.pred/signature (conj sig [:x [:hi 1]])))))
   (is (= true  (const? :c)))
   (is (= true  (const? :d)))
   (is (= true  (const? :e)))
@@ -38,7 +43,7 @@
 
 (deftest symb-test
   (is (= true  (op? 'and)))
-  (is (= true  (torf? 'true)))
+  (is (= true  (boolean? 'true)))
   (is (= true  (quantor? 'forall)))
   (is (= false (quantor? 'all)))
   (is (= true  (eq?  '=)))
@@ -63,31 +68,16 @@
   (is (= false (eq? '[xor])))
   (is (= true (eq? '=))))
 
-(deftest term-test
+(deftest term?-test
   (is (= true (term? 'x sig)))
   (is (= true (term? 'f0 sig)))
   (is (= true (term? '(f1 y) sig)))
   (is (= true (term? '(f1 :c) sig)))
   (is (= true (term? '(f3 x y z) sig)))
   (is (= true (term? '(f3 (f1 x) (f2 y1 y2) z) sig)))
-  (is (thrown? IllegalStateException (term? 'r sig))))
+  (is (= false (term? 'r sig))))
 
-(deftest predicate-test
-  (is (= true (predicate? '(P2 x y) sig)))
-  (is (= true (predicate? '(P2 x (f1 y)) sig)))
-  (is (= true (predicate? '(P1 (f1 :c)) sig)))
-  (is (= false (predicate? '((f3 x y z) x) sig)))
-  (is (thrown? IllegalStateException (predicate? '(P2 x x x) sig))))
-
-(deftest equality-test
-  (is (= true (equality? '(= x y) sig)))
-  (is (= true (equality? '(= x f0) sig)))
-  (is (= true (equality? '(= x (f1 y)) sig)))
-  (is (= true (equality? '(= (f1 :c) :d) sig)))
-  (is (= true (equality? '(= (f3 x y z) x) sig)))
-  (is (thrown? IllegalStateException (equality? '(= r x) sig))))
-
-(deftest wff-test
+(deftest wff?-test
   (is (= true (wff? '(forall [x y] (P2 x y)) sig)))
   (is (= true (wff? '(exists [x y] (and (P1 x) (P1 y))) sig)))
   (is (= true (wff? '(exists [x y] (and (P1 x) (= x y))) sig)))

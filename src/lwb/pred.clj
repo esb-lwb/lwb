@@ -10,6 +10,7 @@
   (:require [lwb.prop :as prop]
             [clojure.zip :as zip]
             [clojure.walk :as walk]
+            [clojure.spec :as s]
             [potemkin :as pot]))
 
 
@@ -34,10 +35,12 @@
 ;; the values are vectors with type and arity of the element
 
 ;; Example:
-;; {:c [:const 0]
-;;  :f [:func  2]
-;;  :a [:prop  0]
-;;  :p [:pred  1]}
+
+;;        {:c [:const 0]
+;;         :f [:func  2]
+;;         :a [:prop  0]
+;;         :p [:pred  1]}
+
 ;; defines a signature comprising the constant `:c`, the binary function `f`,
 ;; the proposition `a`, and the unary predicate `p`.
 
@@ -45,6 +48,9 @@
 ;; to declare them in the signature. The declaration in the signature is just
 ;; the documentation, but even an undeclared keyword is recognized and accepted
 ;; in a formula.
+
+;; Specification of a signature
+(s/def ::signature (s/map-of keyword? (s/tuple #{:const :func :prop :pred} nat-int?)))
 
 ;; ## Utility functions for signatures
 
@@ -58,47 +64,53 @@
   (keyword? kw))
 
 (defn func?
-  "Is `symb` a function in the signatur `sig`"
+  "Is `symb` a function in the signature `sig`?"
   [symb sig]
   (sig-what :func symb sig))
 
 (defn pred?
-  "Is `symb` a predicate in the signatur `sig`"
+  "Is `symb` a predicate in the signature `sig`?"
   [symb sig]
   (sig-what :pred symb sig))
 
 (defn prop?
-  "Is `symb` an atomic proposition in the signatur `sig`"
+  "Is `symb` an atomic proposition in the signature `sig`?"
   [symb sig]
   (sig-what :prop symb sig))
 
 (defn arity
   "Arity of operator `op` or of `symb` in signature `sig`"
-  ([op]
-   (prop/arity op))
-  ([symb sig]
-    (second ((keyword symb) sig))))
+  [symb sig]
+  (if (op? symb) (lwb.prop/arity symb)
+                 (second ((keyword symb) sig))))
+
+(defn func-0?
+  "Is `symb` a function of arity `0` with respect to `sig`?"
+  [symb sig]
+  (and (func? symb sig) (= (arity symb sig) 0)))
 
 ;; ## The logical symbols in the language(s) of predicate logic
 
 ;; We import the operators and so forth from propositional logic
 (pot/import-vars
-  [lwb.prop impl equiv xor ite
-            op? boolean?])
+  [lwb.prop impl equiv xor ite op?])
 
 ;; ## Quantors in predicate logic
+
 (defn quantor?
   "Is `symb` a quantor?"
   [symb]
   (or (= 'forall symb) (= 'exists symb)))
 
 ;; ## Equality in predicate logic
+
 (defn eq?
   "Is `symb` equality in predicate logic??"
   [symb]
   (= '= symb))
 
 ;; ## Variables
+
 (defn logvar?
   "Is `symb` a logical variable with respect to signature `sig`?"
   [symb sig]
@@ -111,111 +123,83 @@
 ;; The check whether a formula is well-formed reflects the grammer of
 ;; the language
 
-(declare term?)
+;; Predicates used as specs in clojure.spec can have just one argument.
+;; Thus we define a dynamic Var for the signature since alle checks of
+;; a formula of the predicate logic have to be done with respect to a
+;; given signature.
 
-(defn compound-term?
-  "Is `texpr` a compound term expression with respect to signatur `sig`?"
-  [texpr sig]
-  (cond
-    (not (list? texpr)) (throw (IllegalStateException. (str "expected list, got " texpr)))
-    (empty? texpr) (throw (IllegalStateException. "expected not empty list, got '()'."))
-    (not (func? (first texpr) sig)) 
-      (throw (IllegalStateException. (str "expected function, got " texpr)))
-    :else (let [a (arity (first texpr) sig)] 
-            (if (not= (count texpr) (inc a))
-              (throw (IllegalStateException. (str "expected arity " a ", got " texpr)))
-              (every? #(term? % sig) (rest texpr))))))
+(def ^{:doc "Var for binding a signature for checking formulae of predicate logic"}
+^:dynamic *signature*)
 
-(defn nullary-func?
-  "Is `symb` a function of arity `0` with respect to `sig`?"
-  [symb sig]
-  (and (func? symb sig) (= (arity symb sig) 0)))
+;; Simple terms are constants, variables or nullary functions
+(s/def ::simple-term (s/or :const keyword?
+                           :logvar #(logvar? % *signature*)
+                           :func-0 #(func-0? % *signature*)))
 
-(defn simple-term?
-  "Is `symb` a single term with respect to `sig`?"
-  [symb sig]
-  (if (not (symbol? symb))
-    (const? symb)
-    (or (logvar? symb sig) (nullary-func? symb sig))))
+(defn- arity-ok? 
+  "Checks arity of functions and predicates"
+  [{:keys [op params]}]
+  (let [arity (arity op *signature*)]
+    (if (= arity -1) true
+                     (= arity (count params)))))
+
+;; Complex terms are function calls
+(s/def ::compl-term (s/and list? (s/& (s/cat :op #(func? % *signature*) :params (s/* ::term)) arity-ok?)))
+
+;; A term is simple or complex
+(s/def ::term (s/or :simple-term ::simple-term
+                    :compl-term  ::compl-term))
+
 
 (defn term?
-  "Is `texpr` a term?"
+  "Is `texpr` a single term with respect to `sig`?"
   [texpr sig]
-  (or (simple-term? texpr sig) (compound-term? texpr sig)))
+  (binding [*signature* sig]
+    (s/valid? ::term texpr)))
 
-(defn predicate?
-  "Is `phi` a predicate with respect to the signature `sig`"
-  [phi sig]
-  (if (or (not (list? phi)) (not (pred? (first phi) sig)))
-    false
-    (let [a (arity (first phi) sig)]
-      (if (not= (count phi) (inc a))
-        (throw (IllegalStateException. (str "expected arity " a ", got " phi)))
-        (every? #(term? % sig) (rest phi))))))
+;; Predicate
+(s/def ::predicate (s/and list? (s/& (s/cat :op #(pred? % *signature*) :params (s/* ::term)) arity-ok?)))
 
-(defn equality?
-  "Is `phi` the equality predicate with respect to the signature `sig`"
-  [phi sig]
-  (if (or (not (list? phi)) (not (eq? (first phi))))
-    false
-    (if (not= (count phi) 3)
-        (throw (IllegalStateException. (str "expected arity 2, got " phi)))
-        (every? #(term? % sig) (rest phi)))))
+;; Equality
+(s/def ::equality (s/and list? (s/cat :op #(= '= %) :param1 ::term :param2 ::term)))
 
-(defn decl?
-  "Is the given vector a vector of variables with respect to signature `sig`?"
-  [decl sig]
-  (if (and (vector? decl) (every? #(logvar? % sig) decl)) 
-    true
-    (throw (IllegalStateException. (str "expected vector of variables, got " decl)))))
+;; Simple expression
+(s/def ::simple-expr (s/or :bool boolean?
+                           :prop #(prop? % *signature*)
+                           :pred ::predicate
+                           :eq   ::equality))
 
-(declare wff?)
+;; Declaration of variables
+(s/def ::decl (s/and (s/coll-of #(logvar? % *signature*) :into [])  #(> (count %) 0)))
 
-(defn quantified?
-  "Is `qexpr` a quantified first order formula with respect to `sig`?"
-  [qexpr sig]
-  (if (or (not (list? qexpr)) (not (quantor? (first qexpr))))
-    false
-    (let [decl (second qexpr)
-          phi  (nth qexpr 2)]
-      (if (not (and (decl? decl sig) (wff? phi sig)))
-        (throw (IllegalStateException. (str "expected quantified formula, got " qexpr)))
-        true))))
+;; Quantified expression
+(s/def ::quantified (s/and list? (s/cat :quantor quantor? :decl ::decl :fml ::fml)))
 
-(defn simple-expr?
-  [phi sig]
-  (or (boolean? phi) (prop? phi sig) (predicate? phi sig) (equality? phi sig)))
+;; Expression with operator
+(s/def ::op-expr (s/and list? (s/& (s/cat :op op? :params (s/* ::fml)) arity-ok?)))
 
-(defn op-expr?
-  [phi sig]
-  (if (not (op? (first phi)))
-    false
-    (let [a (arity (first phi))
-          c (dec (count phi))]
-      (if (and (not= a -1) (not= a c))
-        (throw (IllegalStateException. (str "expected operator with arity " a ", got " phi)))
-        (every? #(wff? % sig) (rest phi))))))
-  
-(defn compound-expr?
-  [phi sig]
-  (cond
-    (not (list? phi)) (throw (IllegalStateException. (str "expected list, got " phi)))
-    (empty? phi) (throw (IllegalStateException. "expected not empty list, got '()'."))
-    (not (or (op? (first phi)) (quantor? (first phi)))) (throw 
-                                                 (IllegalStateException. (str "expected operator or quantor, got " phi)))
-    :else (or (op-expr? phi sig) (quantified? phi sig))))
+;; Complex expression
+(s/def ::compl-expr (s/or :op-expr ::op-expr
+                           :quant   ::quantified))
+
+;; Formula of predicate logic
+(s/def ::fml (s/or :simple-expr ::simple-expr
+                   :compl-expr  ::compl-expr))
 
 (defn wff?
   "Is the first order formula `phi` well-formed, with respect to signature `sig` ?
-   `(wff? phi sig)` returns true or false   
+   `(wff? phi sig)` returns true or false
    `(wff? phi sig :msg)` returns true or a message on the error in `phi`."
   ([phi sig]
    (wff? phi sig :bool))
   ([phi sig mode]
-   (try
-     (or (simple-expr? phi sig) (compound-expr? phi sig))
-     (catch Exception e (if (= mode :msg) (.getMessage e) false)))))
+   (binding [*signature* sig]
+     (let [result (s/valid? ::fml phi)]
+       (if result result
+                  (if (= mode :msg) (s/explain-str ::fml phi)
+                                    result))))))
 
+; TODO: hier geht's weiter --------------------------------------------------------------------
 
 ;; ## Models
 
