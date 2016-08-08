@@ -187,9 +187,9 @@
                    :compl-expr  ::compl-expr))
 
 (defn wff?
-  "Is the first order formula `phi` well-formed, with respect to signature `sig` ?
-   `(wff? phi sig)` returns true or false
-   `(wff? phi sig :msg)` returns true or a message on the error in `phi`."
+  "Is the first order formula `phi` well-formed, with respect to signature `sig`?     
+   `(wff? phi sig)` returns true or false      
+   `(wff? phi sig :msg)` returns true or a message on the error in `phi`."      
   ([phi sig]
    (wff? phi sig :bool))
   ([phi sig mode]

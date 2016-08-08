@@ -2918,17 +2918,15 @@ in a formula.</p>
   [symb sig]
   (sig-what :prop symb sig))</pre></td></tr><tr><td class="docs"><p>Arity of operator <code>op</code> or of <code>symb</code> in signature <code>sig</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn arity
-  ([op]
-   (prop/arity op))
-  ([symb sig]
-    (second ((keyword symb) sig))))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> a function of arity <code>0</code> with respect to <code>sig</code>?</p>
+  [symb sig]
+  (if (op? symb) (lwb.prop/arity symb)
+                 (second ((keyword symb) sig))))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> a function of arity <code>0</code> with respect to <code>sig</code>?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn func-0?
   [symb sig]
   (and (func? symb sig) (= (arity symb sig) 0)))</pre></td></tr><tr><td class="docs"><h2>The logical symbols in the language(s) of predicate logic</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We import the operators and so forth from propositional logic</p>
 </td><td class="codes"><pre class="brush: clojure">(pot/import-vars
-  [lwb.prop impl equiv xor ite
-            op? boolean?])</pre></td></tr><tr><td class="docs"><h2>Quantors in predicate logic</h2>
+  [lwb.prop impl equiv xor ite op?])</pre></td></tr><tr><td class="docs"><h2>Quantors in predicate logic</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>symb</code> a quantor?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn quantor?
   [symb]
@@ -2953,7 +2951,7 @@ a formula of the predicate logic have to be done with respect to a
 given signature.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Var for binding a signature for checking formulae of predicate logic</p>
 </td><td class="codes"><pre class="brush: clojure">(def 
-^:dynamic *signature*)</pre></td></tr><tr><td class="docs"><p>simple-terms are constants, variables or nullary functions</p>
+^:dynamic *signature*)</pre></td></tr><tr><td class="docs"><p>Simple terms are constants, variables or nullary functions</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::simple-term (s/or :const keyword?
                            :logvar #(logvar? % *signature*)
                            :func-0 #(func-0? % *signature*)))</pre></td></tr><tr><td class="docs"><p>Checks arity of functions and predicates</p>
@@ -2961,96 +2959,38 @@ given signature.</p>
   [{:keys [op params]}]
   (let [arity (arity op *signature*)]
     (if (= arity -1) true
-                     (= arity (count params)))))</pre></td></tr><tr><td class="docs"><p>compl-terms are function calls</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::compl-term (s/and list? (s/&amp; (s/cat :op #(func? % *signature*) :params (s/* ::term)) arity-ok?)))</pre></td></tr><tr><td class="docs"><p>a term is simple or complex</p>
+                     (= arity (count params)))))</pre></td></tr><tr><td class="docs"><p>Complex terms are function calls</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::compl-term (s/and list? (s/&amp; (s/cat :op #(func? % *signature*) :params (s/* ::term)) arity-ok?)))</pre></td></tr><tr><td class="docs"><p>A term is simple or complex</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::term (s/or :simple-term ::simple-term
                     :compl-term  ::compl-term))</pre></td></tr><tr><td class="docs"><p>Is <code>texpr</code> a single term with respect to <code>sig</code>?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn term?
   [texpr sig]
   (binding [*signature* sig]
-    (s/valid? ::term texpr)))</pre></td></tr><tr><td class="docs"><p>predicate</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::predicate (s/and list? (s/&amp; (s/cat :op #(pred? % *signature*) :params (s/* ::term)) arity-ok?)))</pre></td></tr><tr><td class="docs"><p>Is <code>texpr</code> a compound term expression with respect to signatur <code>sig</code>?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn compound-term?
-  [texpr sig]
-  (cond
-    (not (list? texpr)) (throw (IllegalStateException. (str &quot;expected list, got &quot; texpr)))
-    (empty? texpr) (throw (IllegalStateException. &quot;expected not empty list, got '()'.&quot;))
-    (not (func? (first texpr) sig)) 
-      (throw (IllegalStateException. (str &quot;expected function, got &quot; texpr)))
-    :else (let [a (arity (first texpr) sig)] 
-            (if (not= (count texpr) (inc a))
-              (throw (IllegalStateException. (str &quot;expected arity &quot; a &quot;, got &quot; texpr)))
-              (every? #(term? % sig) (rest texpr))))))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> a function of arity <code>0</code> with respect to <code>sig</code>?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn nullary-func?
-  [symb sig]
-  (and (func? symb sig) (= (arity symb sig) 0)))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> a single term with respect to <code>sig</code>?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn simple-term?
-  [symb sig]
-  (if (not (symbol? symb))
-    (const? symb)
-    (or (logvar? symb sig) (nullary-func? symb sig))))</pre></td></tr><tr><td class="docs"><p>Is <code>texpr</code> a term?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn term?
-  [texpr sig]
-  (or (simple-term? texpr sig) (compound-term? texpr sig)))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> a predicate with respect to the signature <code>sig</code></p>
-</td><td class="codes"><pre class="brush: clojure">(defn predicate?
-  [phi sig]
-  (if (or (not (list? phi)) (not (pred? (first phi) sig)))
-    false
-    (let [a (arity (first phi) sig)]
-      (if (not= (count phi) (inc a))
-        (throw (IllegalStateException. (str &quot;expected arity &quot; a &quot;, got &quot; phi)))
-        (every? #(term? % sig) (rest phi))))))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> the equality predicate with respect to the signature <code>sig</code></p>
-</td><td class="codes"><pre class="brush: clojure">(defn equality?
-  [phi sig]
-  (if (or (not (list? phi)) (not (eq? (first phi))))
-    false
-    (if (not= (count phi) 3)
-        (throw (IllegalStateException. (str &quot;expected arity 2, got &quot; phi)))
-        (every? #(term? % sig) (rest phi)))))</pre></td></tr><tr><td class="docs"><p>Is the given vector a vector of variables with respect to signature <code>sig</code>?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn decl?
-  [decl sig]
-  (if (and (vector? decl) (every? #(logvar? % sig) decl)) 
-    true
-    (throw (IllegalStateException. (str &quot;expected vector of variables, got &quot; decl)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(declare wff?)</pre></td></tr><tr><td class="docs"><p>Is <code>qexpr</code> a quantified first order formula with respect to <code>sig</code>?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn quantified?
-  [qexpr sig]
-  (if (or (not (list? qexpr)) (not (quantor? (first qexpr))))
-    false
-    (let [decl (second qexpr)
-          phi  (nth qexpr 2)]
-      (if (not (and (decl? decl sig) (wff? phi sig)))
-        (throw (IllegalStateException. (str &quot;expected quantified formula, got &quot; qexpr)))
-        true))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn simple-expr?
-  [phi sig]
-  (or (boolean? phi) (prop? phi sig) (predicate? phi sig) (equality? phi sig)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn op-expr?
-  [phi sig]
-  (if (not (op? (first phi)))
-    false
-    (let [a (arity (first phi))
-          c (dec (count phi))]
-      (if (and (not= a -1) (not= a c))
-        (throw (IllegalStateException. (str &quot;expected operator with arity &quot; a &quot;, got &quot; phi)))
-        (every? #(wff? % sig) (rest phi))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn compound-expr?
-  [phi sig]
-  (cond
-    (not (list? phi)) (throw (IllegalStateException. (str &quot;expected list, got &quot; phi)))
-    (empty? phi) (throw (IllegalStateException. &quot;expected not empty list, got '()'.&quot;))
-    (not (or (op? (first phi)) (quantor? (first phi)))) (throw 
-                                                 (IllegalStateException. (str &quot;expected operator or quantor, got &quot; phi)))
-    :else (or (op-expr? phi sig) (quantified? phi sig))))</pre></td></tr><tr><td class="docs"><p>Is the first order formula <code>phi</code> well-formed, with respect to signature <code>sig</code> ?
+    (s/valid? ::term texpr)))</pre></td></tr><tr><td class="docs"><p>Predicate</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::predicate (s/and list? (s/&amp; (s/cat :op #(pred? % *signature*) :params (s/* ::term)) arity-ok?)))</pre></td></tr><tr><td class="docs"><p>Equality</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::equality (s/and list? (s/cat :op #(= '= %) :param1 ::term :param2 ::term)))</pre></td></tr><tr><td class="docs"><p>Simple expression</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::simple-expr (s/or :bool boolean?
+                           :prop #(prop? % *signature*)
+                           :pred ::predicate
+                           :eq   ::equality))</pre></td></tr><tr><td class="docs"><p>Declaration of variables</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::decl (s/and (s/coll-of #(logvar? % *signature*) :into [])  #(&gt; (count %) 0)))</pre></td></tr><tr><td class="docs"><p>Quantified expression</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::quantified (s/and list? (s/cat :quantor quantor? :decl ::decl :fml ::fml)))</pre></td></tr><tr><td class="docs"><p>Expression with operator</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::op-expr (s/and list? (s/&amp; (s/cat :op op? :params (s/* ::fml)) arity-ok?)))</pre></td></tr><tr><td class="docs"><p>Complex expression</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::compl-expr (s/or :op-expr ::op-expr
+                           :quant   ::quantified))</pre></td></tr><tr><td class="docs"><p>Formula of predicate logic</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::fml (s/or :simple-expr ::simple-expr
+                   :compl-expr  ::compl-expr))</pre></td></tr><tr><td class="docs"><p>Is the first order formula <code>phi</code> well-formed, with respect to signature <code>sig</code>? <br />
    <code>(wff? phi sig)</code> returns true or false <br />
    <code>(wff? phi sig :msg)</code> returns true or a message on the error in <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn wff?
   ([phi sig]
    (wff? phi sig :bool))
   ([phi sig mode]
-   (try
-     (or (simple-expr? phi sig) (compound-expr? phi sig))
-     (catch Exception e (if (= mode :msg) (.getMessage e) false)))))</pre></td></tr><tr><td class="docs"><h2>Models</h2>
+   (binding [*signature* sig]
+     (let [result (s/valid? ::fml phi)]
+       (if result result
+                  (if (= mode :msg) (s/explain-str ::fml phi)
+                                    result))))))</pre></td></tr><tr><td class="docs"><h2>Models</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A model is a "world" consisting of a universe, as well as functions and relations 
 on the universe. A model assigns concrete functions and relations to the
 function symbols and relation symbols defined in a signature.</p>
