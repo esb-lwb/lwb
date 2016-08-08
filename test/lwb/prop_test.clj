@@ -231,6 +231,12 @@
   (is (= '(and (or p)) (cnf '(ite true p false))))
   (is (= '(and (or p)) (cnf '(ite false true p))))
   (is (= '(and (or p) (or q (not p)) (or q)) (cnf '(ite p q false))))
+  
+  (is (= true (s/valid? (s/spec (s/or :cnf :lwb.prop/cnf :bool boolean?)) (cnf '(and)))))
+  (is (= true (s/valid? (s/spec (s/or :cnf :lwb.prop/cnf :bool boolean?)) (cnf '(or P Q R)))))
+  (is (= true (s/valid? (s/spec (s/or :cnf :lwb.prop/cnf :bool boolean?)) (cnf '(and (or P Q R) S)))))
+  (is (= true (s/valid? (s/spec (s/or :cnf :lwb.prop/cnf :bool boolean?)) (cnf '(and P Q R S)))))
+  
 )
 
 ; dnf -----------------------------------------------------------------
@@ -268,6 +274,12 @@
   (is (= '(or (and p)) (dnf '(ite true p false))))
   (is (= '(or (and p)) (dnf '(ite false true p))))
   (is (= '(or (and p q)) (dnf '(ite p q false))))
+
+  (is (= true (s/valid? (s/spec (s/or :dnf :lwb.prop/dnf :bool boolean?)) (dnf '(and)))))
+  (is (= true (s/valid? (s/spec (s/or :dnf :lwb.prop/dnf :bool boolean?)) (dnf '(and P Q R)))))
+  (is (= true (s/valid? (s/spec (s/or :dnf :lwb.prop/dnf :bool boolean?)) (dnf '(or (and P Q R) S)))))
+  (is (= true (s/valid? (s/spec (s/or :dnf :lwb.prop/dnf :bool boolean?)) (dnf '(and P Q R S)))))
+  (is (= true (s/valid? (s/spec (s/or :dnf :lwb.prop/dnf :bool boolean?)) (dnf '(or P Q R S)))))
   )
 
 (run-tests)

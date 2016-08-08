@@ -310,6 +310,15 @@
 ; Specification of conjunctive normal form cnf
 (s/def ::cnf (s/and list? (s/cat :and #{'and} :clauses (s/* ::clause))))
 
+;; Caveat reader!
+;; at the first sight (apply list ...) and (list* ...) seems to give the
+;; same result -- BUT
+;; the types are different:
+;; (list? (apply list [:a :b])) => true
+;; (list? (list* [:a :b]))      => false
+;; since we check list? in the specs we have to be precise with the types
+;; our functions are returning!
+
 (defn literal?
   "Checks whether `phi` is a literal, i.e. a propositional atom or its negation."
   [phi]
@@ -333,10 +342,10 @@
     phi
     (let [[op & more] phi]
       (if (contains? #{'and 'or} op)
-        (list* op (map nnf more))
+        (apply list op (map nnf more))
         (let [[second-op & second-more] (second phi)]
           (if (contains? #{'and 'or} second-op)
-            (nnf (list* (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
+            (nnf (apply list (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
             (nnf (first second-more))))))))
 
 (defn- distr
@@ -345,9 +354,9 @@
   ([phi-1 phi-2]
     (cond
       (and (not (literal? phi-1)) (= 'and (first phi-1)))
-        (list* 'and (map #(distr % phi-2) (rest phi-1)))
+        (apply list 'and (map #(distr % phi-2) (rest phi-1)))
       (and (not (literal? phi-2)) (= 'and (first phi-2)))
-        (list* 'and (map #(distr phi-1 %) (rest phi-2)))
+        (apply list 'and (map #(distr phi-1 %) (rest phi-2)))
       :else
         (list 'or phi-1 phi-2)))
   ([phi-1 phi-2 & more]
@@ -359,7 +368,7 @@
   (cond
     (literal? phi) (list 'and (list 'or phi))
     (= '(or) phi) '(and (or))
-    (= 'and (first phi)) (list* 'and (map nnf2cnf (rest phi)))
+    (= 'and (first phi)) (apply list 'and (map nnf2cnf (rest phi)))
     (= 'or (first phi)) (apply distr (map nnf2cnf (rest phi)))))
 
 (defn flatten-ops
@@ -403,7 +412,7 @@
     (contains? neg 'false) true
     :else
       (let [pos' (filter #(not= 'false %) pos), neg' (filter #(not= 'true %) neg)]
-        (conj (concat (list* pos') (map #(list 'not %) neg')) 'or))))
+        (conj (apply list (concat (apply list pos') (map #(list 'not %) neg'))) 'or))))
 
 (defn red-cnf
   "Reduces a formula `ucnf` of the form `(and (or ...) (or ...) ...)`."
@@ -412,7 +421,8 @@
     (cond
       (some #{'(or)} result) false
       (empty? result) true
-      :else (conj (list* (distinct result)) 'and))))
+      :else (conj (apply list (distinct result)) 'and))))
+      ;:else (conj (list* (distinct result)) 'and))))
 
 (defn cnf
   "Transforms `phi` to (standardized) conjunctive normal form cnf."
@@ -423,8 +433,7 @@
 ;; `:ret` is in cnf and equivalent to the argument `phi`.
 (s/fdef cnf
         :args (s/cat :phi wff?)
-        :ret ::cnf
-        )
+        :ret (s/or :cnf ::cnf :bool boolean?))
         ;the spec of the function has a cyclic dependency as a consequence!
         ;:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))
 
@@ -455,7 +464,7 @@
 (defn- mapdnf
   [outer]
   (if (= outer 'and) 'or
-                     (map mapdnfi outer)))
+                     (apply list (map mapdnfi outer))))
 
 (defn dnf
   "Transforms `phi` to disjunctive normal form dnf."
@@ -464,14 +473,13 @@
     ; border case
     (if (boolean? cnf)
       (not cnf)
-      (map mapdnf cnf))))
+      (apply list (map mapdnf cnf)))))
 
 ;; Specification of function `cnf`
 ;; `:ret` is in dnf and equivalent to the argument `phi`.
 (s/fdef dnf
         :args (s/cat :phi wff?)
-        :ret ::dnf
-        )
+        :ret (s/or :dnf ::dnf :bool boolean?))
         ;the spec of the function has a cyclic dependency as a consequence!
         ;:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))
 
