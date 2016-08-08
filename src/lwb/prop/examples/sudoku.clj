@@ -92,9 +92,9 @@
 
 ;; some helpers for transforming the result of sat
 (defn solution
-  "Solution from assigment vector"
-  [assign-vec]
-  (let [vec (sort (true-only assign-vec))]
+  "Solution from model"
+  [model]
+  (let [vec (sort (true-only model))]
     (mapv #(nth (name %) 3) vec)))
 
 (defn solve
@@ -129,6 +129,8 @@ rules-cl
 (def puzzle (vec ".24...38.6.72.91.481.7.3.96.48...97...........69...51.75.9.8.414.16.57.9.96...83."))
 
 puzzle
+
+(lwb.prop/cnf? (sudoku-prop puzzle))
 
 (pretty-print puzzle)
 
