@@ -174,7 +174,7 @@
   (cond
     (.isZero ^BDD bddi) [(Node. 0 'false 0 0)]
     (.isOne  ^BDD bddi) [(Node. 1 'true  1 1)]
-    :else (into [] (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))
+    :else (vec (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))
 
 (defn reasonable-bddf
   "gives a JFactory based on the number of the variables in the
@@ -191,7 +191,7 @@
    with the internal numbering of atoms where these are replaced by the symbols for
    the atoms."
   [phi bdd-vec]
-  (let [atom-vec (into [] (atoms-of-phi phi))
+  (let [atom-vec (vec (atoms-of-phi phi))
         tx (map (fn [node]
                   (if
                     (< (:no node) 2)
@@ -222,9 +222,9 @@
 (defn- tf1-vec
   "Transforms byte vector result from AllSatIterator to get an assignment vector"
   [phi bvec]
-  (let [atom-vec (into [] (atoms-of-phi phi))
+  (let [atom-vec (vec (atoms-of-phi phi))
         tx (map-indexed (fn [idx a]
-        (if (= a 0)
+        (if (zero? a)
           [(nth atom-vec idx) 'false]
           [(nth atom-vec idx) 'true])))]
     (into[] (comp tx (mapcat identity)) bvec)))
@@ -270,7 +270,7 @@
            (.isZero bddi) 'nil
            :else
            (case mode
-             :all (map #(tf1-vec phi %) (mapcat tfa-vec (into[] (map vec iseq))))
+             :all (map #(tf1-vec phi %) (mapcat tfa-vec (vec (map vec iseq))))
              (tf1-vec phi (first (map vec iseq)))))))))
 
 (s/fdef sat
@@ -311,8 +311,8 @@
   "Gives code for a `node` on the dot language."
   [node]
   (cond
-    (= (:no node) 0) "0 [shape=box label=\"\\bot\"];\n"
-    (= (:no node) 1) "1 [shape=box label=\"\\top\"];\n"
+    (zero? (:no node)) "0 [shape=box label=\"\\bot\"];\n"
+    (= (:no node) 1)   "1 [shape=box label=\"\\top\"];\n"
     :else
     (str (:no node) " [label=\"" (process-atom node) "\", style=\"shape=rectangle,minimum size=6mm,rounded corners=3mm\"];\n"
          (:no node) " -> " (:lo-no node) " [style=dotted];\n"
@@ -327,7 +327,7 @@
   (let [bdd (bdd phi)
         dot-head "digraph G {\n"
         dot-tail "}"
-        dot-lines (apply str (map dot-line bdd))]
+        dot-lines (str/join (map dot-line bdd))]
     (str dot-head dot-lines dot-tail)))
 
 
