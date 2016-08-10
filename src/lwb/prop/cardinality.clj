@@ -30,7 +30,7 @@
    at most k of the symbols in acoll are true."
   [k acoll]
   {:pre [(<= 0 k (dec (count acoll)))]}
-  (if (= k 0)
+  (if (zero? k)
     (map #(list 'not %) acoll))
   (for [s (combinations acoll (inc k))]
     (apply list 'or (map #(list 'not %) s))))
