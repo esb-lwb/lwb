@@ -203,8 +203,8 @@
 		       (let [tcnf   (if (cnf? phi) phi (tseitin phi))
 		             dimacs (cnf2dimacs tcnf)
 		             res    (sat4j-solve dimacs)]
-		         (if res
-		           (remove-tseitin-symbols res) nil))))))
+		         (when res
+		           (remove-tseitin-symbols res)))))))
 
 (s/fdef sat
         :args (s/cat :phi wff?)
