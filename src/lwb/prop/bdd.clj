@@ -37,7 +37,7 @@
   `(let ~binding
      (try ~@body
      (catch Exception e# (str "caught: " (.getMessage e#)))
-     (finally (.done ^JFactory ~(binding 0))))))
+     (finally (.done ^JFactory (~binding 0))))))
 
 ; Initializing the JFactory
 (defn init-bddf
@@ -49,9 +49,9 @@
    Typical values according to the documentation of bdd_init of BuDDy."
   ([type]
    (case type
-     :small   (init-bddf 10000 1000))
+     :small   (init-bddf 10000 1000)
      :medsize (init-bddf 100000 10000)
-     (init-bddf 1000000 100000))
+     (init-bddf 1000000 100000)))
   ([nodesize cachesize]
    (JFactory/init nodesize cachesize)))
 
@@ -123,27 +123,31 @@
 ;; The map with the two sinks
 (def ^:private base-map {'false false-node 'true true-node})
 
-(defn- visited? [bddi bdd-map]
+(defn- visited?
   "Has the entry with key already been visited?"
+  [bddi bdd-map]
   (not (nil? (:lo-no (get bdd-map bddi)))))
 
-(defn- init-node [bddi bdd-map]
+(defn- init-node
   "Inserts new entry for bddi in transient bdd-map    
    returns bdd-map"
+  [bddi bdd-map]
   (if (nil? (get bdd-map bddi))
     (conj! bdd-map [bddi (Node. (count bdd-map) (.var ^BDD bddi) nil nil)])
     bdd-map))
 
-(defn- key-bddi [bddi]
+(defn- key-bddi
   "returns key of bddi in graph"
+  [bddi]
   (cond
     (.isZero ^BDD bddi) 'false
     (.isOne  ^BDD bddi) 'true
     :else bddi))
 
-(defn- process [bddi bdd-map]
+(defn- process
   "Processes a bbdi and manipulates transient bdd-map     
    returns bdd-map"
+  [bddi bdd-map]
   (let [map1 (init-node bddi bdd-map)]
     (if (visited? bddi map1)
       map1                    ; already visited -> nothing to do
