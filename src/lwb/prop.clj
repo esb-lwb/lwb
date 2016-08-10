@@ -136,9 +136,7 @@
    (wff? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
-     (if result result
-                (if (= mode :msg) (s/explain-str ::fml phi)
-                                  result)))))
+     (or result (if (= mode :msg) (s/explain-str ::fml phi) result)))))
 
 ;; ## Evaluation of propositional formulae
 
@@ -386,7 +384,7 @@
 						          (let [op (first sub-phi)
                             args (rest sub-phi)
 						                flat-filter (fn [op arg] (if (coll? arg) (= op (first arg)) false))
-						                flat (map #(rest %) (filter (partial flat-filter op) args))
+						                flat (map rest (filter (partial flat-filter op) args))
 						                not-flat (filter (partial (complement flat-filter) op) args)]
 						            (apply concat `((~op) ~@flat ~not-flat)))
 					             sub-phi))]
@@ -412,7 +410,7 @@
 
   [{:keys [pos neg]}]
   (cond
-    (> (count (intersection pos neg)) 0) true
+    (pos? (count (intersection pos neg))) true
     (contains? pos 'true) true
     (contains? neg 'false) true
     :else
