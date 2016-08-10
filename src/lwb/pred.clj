@@ -78,6 +78,8 @@
   [symb sig]
   (sig-what :prop symb sig))
 
+(declare op?)
+
 (defn arity
   "Arity of operator `op` or of `symb` in signature `sig`"
   [symb sig]
@@ -87,7 +89,7 @@
 (defn func-0?
   "Is `symb` a function of arity `0` with respect to `sig`?"
   [symb sig]
-  (and (func? symb sig) (= (arity symb sig) 0)))
+  (and (func? symb sig) (zero? (arity symb sig))))
 
 ;; ## The logical symbols in the language(s) of predicate logic
 
@@ -114,7 +116,7 @@
 (defn logvar?
   "Is `symb` a logical variable with respect to signature `sig`?"
   [symb sig]
-  (if (not (symbol? symb))
+  (if-not (symbol? symb)
     false
     (not (or (op? symb) (boolean? symb) (quantor? symb) (eq? symb)
              (func? symb sig) (pred? symb sig) (prop? symb sig)))))
@@ -170,7 +172,7 @@
                            :eq   ::equality))
 
 ;; Declaration of variables
-(s/def ::decl (s/and (s/coll-of #(logvar? % *signature*) :into [])  #(> (count %) 0)))
+(s/def ::decl (s/and (s/coll-of #(logvar? % *signature*) :into [])  #(pos? (count %))))
 
 ;; Quantified expression
 (s/def ::quantified (s/and list? (s/cat :quantor quantor? :decl ::decl :fml ::fml)))
@@ -195,9 +197,7 @@
   ([phi sig mode]
    (binding [*signature* sig]
      (let [result (s/valid? ::fml phi)]
-       (if result result
-                  (if (= mode :msg) (s/explain-str ::fml phi)
-                                    result))))))
+       (or result (if (= mode :msg) (s/explain-str ::fml phi) result))))))
 
 ; TODO: hier geht's weiter --------------------------------------------------------------------
 
