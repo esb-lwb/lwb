@@ -6,7 +6,7 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(ns lwb.bdd-test
+(ns lwb.prop.bdd-test
   (:require [clojure.test :refer :all]
             [lwb.prop :refer :all]
             [lwb.prop.bdd :refer :all]

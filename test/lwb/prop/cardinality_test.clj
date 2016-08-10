@@ -6,7 +6,7 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(ns lwb.cardinality-test
+(ns lwb.prop.cardinality-test
   (:require [clojure.test :refer :all]
             [lwb.prop :refer :all]
             [lwb.prop.cardinality :refer :all]

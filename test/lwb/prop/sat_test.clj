@@ -6,7 +6,7 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(ns lwb.sat-test
+(ns lwb.prop.sat-test
   (:require [clojure.test :refer :all]
             [lwb.prop :refer :all]
             [lwb.prop.sat :refer :all]
