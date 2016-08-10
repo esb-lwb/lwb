@@ -282,7 +282,6 @@
 (defn print-truth-table
   "Pretty prints truth-table."
   [{:keys [prop header table]}]
-    [prop header table]
   (do
     (println "Truth table")
     (println prop)
