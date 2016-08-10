@@ -28,8 +28,8 @@
 ; -----------------------------------------------------------------------------------------
 ; equal-elimination, substitution
 
-(proof '[(= :x :y) (P :x)] '(P :y))
-(step-f "equal-e" 1 2 :y)
+;(proof '[(= :x :y) (P :x)] '(P :y))
+;(step-f "equal-e" 1 2 :y)
 
 ; TODO fix that
 ; => Prerequisite | Invalid term (:x): A term can only contain symbols and lists.,

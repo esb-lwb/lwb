@@ -63,15 +63,15 @@
   (is (= (sat 'true) true))
   (is (= (sat '(and p q)) '[p true q true]))
   (is (= (sat '(and p q) :all) '([p true q true])))
-  (is (sat? '(or p q)) true)
-  (is (sat '(or p q) :all) '([p false q true] [p true q false] [p true q true]))
-  (is (sat '(or p q r) :all) '([p false q false r true]
+  (is (= (sat? '(or p q)) true))
+  (is (= (sat '(or p q) :all) '([p false q true] [p true q false] [p true q true])))
+  (is (= (sat '(or p q r) :all) '([p false q false r true]
                                [p false q true r false]
                                [p false q true r true]
                                [p true q false r false]
                                [p true q false r true]
                                [p true q true r false]
-                               [p true q true r true]))
+                               [p true q true r true])))
   (is (= (sat '(impl p q)) '[p false q true]))
   (is (= (sat '(impl p q) :all) '([p false q false] [p false q true] [p true q true])))
   (is (= (sat '(and p (not p))) nil))

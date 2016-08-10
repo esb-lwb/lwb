@@ -28,7 +28,7 @@
 
 (deftest sig-test
   (is (= true (s/valid? :lwb.pred/signature sig)))
-  (is (= false (s/valid? :lwb.pred/signature (conj sig [:x [:hi 1]])))))
+  (is (= false (s/valid? :lwb.pred/signature (conj sig [:x [:hi 1]]))))
   (is (= true  (const? :c)))
   (is (= true  (const? :d)))
   (is (= true  (const? :e)))

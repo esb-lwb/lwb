@@ -25,7 +25,7 @@
 
 ;; We import the operators and so forth from propositional logic
 (pot/import-vars
-  [lwb.prop impl equiv xor ite atom? boolean?])
+  [lwb.prop impl equiv xor ite atom?])
 
 (defn op?
   "Is `symb` an operator of ltl?"

@@ -53,23 +53,23 @@
   (is (= false (ite false false false))))
 
 (deftest ite-test'
-  (is (= '(or (and i t) (and (not i) e) (macroexpand-1 '(ite i t e))))))
+  (is (= '(or (and i t) (and (not i) e)) (macroexpand-1 '(ite i t e)))))
 
 ; Utility functions with operators ------------------------------------
 
 (deftest op?-test
-  (is (= true) (op? 'and))
-  (is (= true) (op? 'or))
-  (is (= true) (op? 'not))
-  (is (= true) (op? 'impl))
-  (is (= true) (op? 'equiv))
-  (is (= true) (op? 'xor))
-  (is (= true) (op? 'ite))
-  (is (= false) (op? 'true))
-  (is (= false) (op? 1))
-  (is (= false) (op? [1]))
-  (is (= false) (op? '(x)))
-  (is (= false) (op? '#{x}))
+  (is (= true (op? 'and)))
+  (is (= true (op? 'or)))
+  (is (= true (op? 'not)))
+  (is (= true (op? 'impl)))
+  (is (= true (op? 'equiv)))
+  (is (= true (op? 'xor)))
+  (is (= true (op? 'ite)))
+  (is (= false (op? 'true)))
+  (is (= false (op? 1)))
+  (is (= false (op? [1])))
+  (is (= false (op? '(x))))
+  (is (= false (op? '#{x})))
 )
 
 (deftest atom?-test
@@ -219,14 +219,14 @@
   (is (= true (cnf '(or false true))))
   (is (= false (cnf '(or false false))))
 
-  (is (= '(and (or p) (cnf '(or p)))))
-  (is (= '(and (or p) (cnf '(and p)))))
+  (is (= '(and (or p)) (cnf '(or p))))
+  (is (= '(and (or p)) (cnf '(and p))))
   (is (= '(and (or a)) (cnf 'a)))
   (is (= '(and (or a) (or b) (or c)) (cnf '(and a b c))))
   (is (= '(and (or a c b)) (cnf '(or a (or b c)))))
   
-  (is (= '(and (or p q) (or (not p) (not q)) (cnf '(not (equiv p q))))))
-  (is (= '(and (or q (not p)) (cnf '(impl (impl (impl p q) q) q)))))
+  (is (= '(and (or p q) (or (not p) (not q))) (cnf '(not (equiv p q)))))
+  (is (= '(and (or q (not p))) (cnf '(impl (impl (impl p q) q) q))))
   
   (is (= '(and (or p)) (cnf '(ite true p false))))
   (is (= '(and (or p)) (cnf '(ite false true p))))
@@ -262,14 +262,14 @@
   (is (= true (dnf '(or false true))))
   (is (= false (dnf '(or false false))))
 
-  (is (= '(or (and p) (dnf '(or p)))))
-  (is (= '(or (and p) (dnf '(and p)))))
+  (is (= '(or (and p)) (dnf '(or p))))
+  (is (= '(or (and p)) (dnf '(and p))))
   (is (= '(or (and a)) (dnf 'a)))
   (is (= '(or (and a c b)) (dnf '(and a b c))))
   (is (= '(or (and a) (and b) (and c)) (dnf '(or a (or b c)))))
 
-  (is (= '(or (and (not q) p) (and (not p) q) (dnf '(not (equiv p q))))))
-  (is (= '(or (and (not p) (not q) (and q)) (dnf '(impl (impl (impl p q) q) q)))))
+  (is (= '(or (and (not q) p) (and (not p) q)) (dnf '(not (equiv p q)))))
+  (is (= '(or (and (not p) (not q) (and q))) (dnf '(impl (impl (impl p q) q) q))))
 
   (is (= '(or (and p)) (dnf '(ite true p false))))
   (is (= '(or (and p)) (dnf '(ite false true p))))

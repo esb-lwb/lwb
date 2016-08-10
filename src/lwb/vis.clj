@@ -41,9 +41,10 @@
   [loc]
   (= :end (-> loc zip/node)))
 
-(defn- mark-end-of-branch [phi]
+(defn- mark-end-of-branch 
   "To facilitate the generation of code in tikz, we mark the ends of
    lists with :end"
+  [phi]
   (loop [loc (zip/seq-zip (seq phi))]
     (if (zip/end? loc)
       (zip/root loc)
@@ -69,9 +70,9 @@
                  :finally "\\lozenge"
                  :atnext  "\\medcircle"
                  :until   "\\mathcal{U}"}
-        key      (keyword (name node))]
-      (if (contains? symbols key)
-        (str " [.\\node{$" (key symbols) "$};")
+        nkey     (keyword (name node))]
+      (if (contains? symbols nkey)
+        (str " [.\\node{$" (nkey symbols) "$};")
         (str " [.\\node{$" node "$};")))) 
 
 (defn- process-quantor
@@ -79,8 +80,8 @@
   [node vars]
   (let [quantors {:forall "\\forall"
                   :exists "\\exists"}
-        key      (keyword (name node))]
-    (str " [.\\node{$" (key quantors) " " 
+        nkey     (keyword (name node))]
+    (str " [.\\node{$" (nkey quantors) " " 
          (str/join "\\, " vars) "$};")))
 
 (defn- process-atom

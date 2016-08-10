@@ -87,8 +87,9 @@
     filename
     name))
 
-(defn undo []
+(defn undo
   "Undo the last change (you can't go further than the last state)"
+  []
   (if (empty? @last_steps)
     (println "You reached the starting point, there is nothing more to undo")
     (do

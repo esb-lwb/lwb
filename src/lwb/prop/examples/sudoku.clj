@@ -118,81 +118,83 @@
       )
     (print ruler)))
 
-stop -- the following is the interactive part
+;stop -- the following is the interactive part
 
-;; Sequence of clauses for the rules of Sudoku
+(comment
+  ;; Sequence of clauses for the rules of Sudoku
 
-rules-cl
-(count rules-cl)
+  rules-cl
+  (count rules-cl)
 
-;; ## Example of a puzzle
-(def puzzle (vec ".24...38.6.72.91.481.7.3.96.48...97...........69...51.75.9.8.414.16.57.9.96...83."))
+  ;; ## Example of a puzzle
+  (def puzzle (vec ".24...38.6.72.91.481.7.3.96.48...97...........69...51.75.9.8.414.16.57.9.96...83."))
 
-puzzle
+  puzzle
 
-(lwb.prop/cnf? (sudoku-prop puzzle))
+  (lwb.prop/cnf? (sudoku-prop puzzle))
 
-(pretty-print puzzle)
+  (pretty-print puzzle)
 
-(pretty-print (solve puzzle))
+  (pretty-print (solve puzzle))
 
-;; ## Parser for files containing puzzles
-;; The parsers looks for lines with 81 characters, the digits 1-9 and the character .    
-;; Other lines in the file are ignored
+  ;; ## Parser for files containing puzzles
+  ;; The parsers looks for lines with 81 characters, the digits 1-9 and the character .    
+  ;; Other lines in the file are ignored
 
-(defn parse
-  "Parses file with filename and returns a list of puzzles."
-  [filename]
-  (with-open [rdr (reader filename)]
-    (into () (map vec (filter #(re-matches #"^([1-9]|\.){81}$" %) (line-seq rdr))))))
+  (defn parse
+    "Parses file with filename and returns a list of puzzles."
+    [filename]
+    (with-open [rdr (reader filename)]
+      (into () (map vec (filter #(re-matches #"^([1-9]|\.){81}$" %) (line-seq rdr))))))
 
-;; ## Benchmarks
-(defn bench
- [puzzles]
- (time
-  (do
-    (dorun (map solve puzzles))
-    :done)))
+  ;; ## Benchmarks
+  (defn bench
+    [puzzles]
+    (time
+      (do
+        (dorun (map solve puzzles))
+        :done)))
 
-;; easy50.txt
-(def easy50 (parse "resources/sudoku/easy50.txt"))
+  ;; easy50.txt
+  (def easy50 (parse "resources/sudoku/easy50.txt"))
 
-easy50
+  easy50
 
-(dotimes [_ 10]
-  (bench easy50))
-;=> 137 msecs per puzzle
+  (dotimes [_ 10]
+    (bench easy50))
+  ;=> 137 msecs per puzzle
 
-;; top95.txt
-(def top95 (parse "resources/sudoku/top95.txt"))
+  ;; top95.txt
+  (def top95 (parse "resources/sudoku/top95.txt"))
 
-top95
+  top95
 
-(dotimes [_ 10]
-  (bench top95))
-;=> 141 msecs per puzzle
+  (dotimes [_ 10]
+    (bench top95))
+  ;=> 141 msecs per puzzle
 
-;; hardest.txt
-(def hardest (parse "resources/sudoku/hardest.txt"))
+  ;; hardest.txt
+  (def hardest (parse "resources/sudoku/hardest.txt"))
 
-(dotimes [_ 10]
-  (bench hardest))
-;=> 137 msecs per puzzle
+  (dotimes [_ 10]
+    (bench hardest))
+  ;=> 137 msecs per puzzle
 
-; average 139 msecs per puzzle
+  ; average 139 msecs per puzzle
 
-(def p88 (nth top95 88))
-(def p92 (nth top95 92))
+  (def p88 (nth top95 88))
+  (def p92 (nth top95 92))
 
-(- 81 (count (filter zero? p88)))
-; => 17
-(time (solve p88))
-; 445 msecs
+  (- 81 (count (filter zero? p88)))
+  ; => 17
+  (time (solve p88))
+  ; 445 msecs
 
-(pretty-print p88)
-(pretty-print (solve p88))
+  (pretty-print p88)
+  (pretty-print (solve p88))
 
-(- 81 (count (filter zero? p92)))
-; => 17
-(time (solve p92))
-; 186 msecs
+  (- 81 (count (filter zero? p92)))
+  ; => 17
+  (time (solve p92))
+  ; 186 msecs
+  ) ; end comment

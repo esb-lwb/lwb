@@ -25,12 +25,14 @@
         k (quot c' 2)]
     (list* 'and (min-kof k symbs))))
 
-(vis-pdf (majority '(x_1 x_2)) "maj2")
-(vis-pdf (majority '(x_1 x_2 x_3)) "maj3")
-(vis-pdf (majority '(x_1 x_2 x_3 x_4)) "maj4")
-(vis-pdf (majority '(x_1 x_2 x_3 x_4 x_5)) "maj5")
-(vis-pdf (majority '(x_1 x_2 x_3 x_4 x_5 x_6 x_7 x_8 x_9 x_<10> x_<11> x_<12> x_<13> x_<14> x_<15>)) "maj15")
-(vis-pdf (majority '(x_1 x_2 x_3 x_4 x_5 x_6 x_7 x_8 x_9 x_<10> x_<11> x_<12> x_<13> x_<14> x_<15> x_<16>)) "maj16")
+(comment ; interactive part 
+  (vis-pdf (majority '(x_1 x_2)) "maj2")
+  (vis-pdf (majority '(x_1 x_2 x_3)) "maj3")
+  (vis-pdf (majority '(x_1 x_2 x_3 x_4)) "maj4")
+  (vis-pdf (majority '(x_1 x_2 x_3 x_4 x_5)) "maj5")
+  (vis-pdf (majority '(x_1 x_2 x_3 x_4 x_5 x_6 x_7 x_8 x_9 x_<10> x_<11> x_<12> x_<13> x_<14> x_<15>)) "maj15")
+  (vis-pdf (majority '(x_1 x_2 x_3 x_4 x_5 x_6 x_7 x_8 x_9 x_<10> x_<11> x_<12> x_<13> x_<14> x_<15> x_<16>)) "maj16")
+  )
 
 ; ----------------------------------------------------------------------------------------------------
 ; a tautology
@@ -41,13 +43,17 @@
 (sat phi1)
 (valid? phi1)
 
-(vis-pdf phi1 "phi1")
+(comment
+  (vis-pdf phi1 "phi1")
+  )
 
 ; ----------------------------------------------------------------------------------------------------
 ; a formulae thats true for any value of Q
 (def phi2 '(impl (or (impl S (or R L)) (and (not Q) R)) (impl (not (impl P S)) R)))
 
-(vis-pdf phi2 "phi2")
+(comment
+  (vis-pdf phi2 "phi2")
+  )
 
 (sat phi2 :all)
 ; =>
@@ -85,8 +91,12 @@
 
 (def mba1 '(or P (and Q R)))
 
-(vis-pdf mba1 "mba1")
+(comment
+  (vis-pdf mba1 "mba1")
+  )
 
 (def mba2 '(xor P (xor Q R)))
 
-(vis-pdf mba2 "mba2")
+(comment
+  (vis-pdf mba2 "mba2")
+  )
