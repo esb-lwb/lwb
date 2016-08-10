@@ -99,7 +99,7 @@
               (recur (subvec p 1) (conj res v))))
           :else (recur (subvec p 1) (conj res (first p))))))))
 
-(defn add-after-line
+#_(defn add-after-line
   [proof after newitem]
   (let [item (get-item proof after)]
      edit-proof proof item newitem :add-after)) 

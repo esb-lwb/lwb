@@ -8,8 +8,8 @@
 
 (ns lwb.nd.rules
   (:refer-clojure :exclude [==])
-  (:use [clojure.core.logic])
-  (:require [lwb.nd.io :refer [rules theorems trivials]]
+  (:require [clojure.core.logic :refer :all]
+            [lwb.nd.io :refer [rules theorems trivials]]
             [clojure.math.combinatorics :refer [permutations]]))
 
 ;; NEW LOGIC (add additional keywords that should not be handled like symbols)

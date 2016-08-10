@@ -254,8 +254,9 @@
   [rel]
   `(fn [& ~'more] (contains? ~rel (vec ~'more))))
 
-(defn sig-from-model [model]
+(defn sig-from-model 
   "Returns the signature from a given model"
+  [model]
   (let [f #(not= (key %) :univ)
         m (fn [[key [v1 v2]]] [key [v1 v2]])]
     (into {} (map m (filter f model)))))
@@ -279,19 +280,22 @@
 ;; Unfold the variables in quantor expression, e.g.
 ;; `(forall [x y] (...))` -> `(forall [x] (forall [y] (...)))`
 
-(defn- quant-expr? [loc]
+(defn- quant-expr?
   "Is loc a quantor expression?"
+  [loc]
   (and (zip/branch? loc)
        (or (= (-> loc zip/down zip/node) 'forall) 
            (= (-> loc zip/down zip/node) 'exists))))
 
-(defn- quant-expr+? [loc]
+(defn- quant-expr+? 
   "Is loc a quantor expression with multiple variables?"
+  [loc]
   (and (quant-expr? loc)
        (> (count (-> loc zip/down zip/right zip/node)) 1)))
 
-(defn- unfold-quant [loc]
+(defn- unfold-quant
   "New quantor expression with first variable pulled out"
+  [loc]
   (let [quantor (-> loc zip/down zip/node)
         var-vec (-> loc zip/down zip/right zip/node)
         var1-vec [(first var-vec)]
@@ -300,8 +304,9 @@
         edited-loc (zip/edit loc (fn [loc] `(~quantor ~var1-vec (~quantor ~varr-vec ~right))))]
     (-> edited-loc zip/down zip/right)))
 
-(defn unfold-vars [phi]
+(defn unfold-vars
   "phi with unfolded vars in all quantor expressions"
+  [phi]
   (loop [loc (zip/seq-zip (seq phi))]
     (if (zip/end? loc)
       (zip/root loc)
@@ -324,8 +329,9 @@
   (unfold-vars grp-comm)
   )
 
-(defn- no-more-quant? [phi]
+(defn- no-more-quant?
   "does phi have no more quantors?"
+  [phi]
   (not (first 
          (filter #(or (= 'forall %) (= 'exists %)) 
                  (flatten phi)))))
@@ -335,11 +341,12 @@
   (no-more-quant? (rest grp-ass))
   )
 
-(defn- expand-quant [univ loc]
+(defn- expand-quant 
   "expands a quantor into an proposition 
    (and ...) for the forall quantor,
    (or ...)  for the exists quantor,
    by replacing the variables by the items in the universe"
+  [univ loc]
   (let [quantor (-> loc zip/down zip/node)
         var-vec (-> loc zip/down zip/right zip/node)
         var     (first var-vec)
@@ -351,8 +358,9 @@
                         (list* 'or body-seq))))]
         (zip/edit loc edit-func)))
   
-(defn- elim-quant [univ phi]
+(defn- elim-quant
   "eliminates all quantors in phi by expaning them"
+  [univ phi]
   (loop [loc (zip/seq-zip (seq phi))]
     (if (zip/end? loc)
       (zip/root loc)
@@ -361,9 +369,10 @@
                (expand-quant univ loc)
                loc))))))
 
-(defn pred2prop [univ phi]
+(defn pred2prop
   "Given a universe, phi is transformed into a proposition.
    phi has to have unfolded vars, i.e. each quantor has exactly 1 var!"
+  [univ phi]
   (let [phi' (loop [cur phi]
               (if (no-more-quant? cur)
                 cur

@@ -132,8 +132,9 @@
   [[[_ _] value]]
   (not= value u))
 
-(defn- neg-sym [sym]
+(defn- neg-sym 
   "Clause that negates sym."
+  [sym]
   (list (list 'or (list 'not sym))))
 
 (defn- arrow-cl-complete
