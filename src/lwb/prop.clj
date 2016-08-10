@@ -8,6 +8,7 @@
 
 (ns lwb.prop
   (:require [clojure.spec :as s]
+            [clojure.string :as str]
             [clojure.walk :refer (postwalk)]
             [clojure.set :refer (union intersection subset?)]
             [clojure.math.numeric-tower :refer (expt)]
@@ -264,13 +265,13 @@
   [header table]
   (let [table'  (vec (map #(replace {true "T" false "F"} %) table)) 
         widths  (map #(count (str %)) header)
-        spacers (map #(apply str (repeat % "-")) widths)
+        spacers (map #(str/join (repeat % "-")) widths)
         fmts    (map #(str "%" % "s") widths)
         fmt-row (fn [leader divider trailer row]
                   (str leader
-                     (apply str (interpose divider
+                     (str/join divider
                         (for [[col fmt] (map vector row fmts)]
-                              (format fmt (str col)))))
+                              (format fmt (str col))))
                        trailer))]
     (println)
     (println (fmt-row "| " " | " " |" header))

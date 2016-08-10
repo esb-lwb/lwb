@@ -291,6 +291,7 @@
   (print-truth-table (truth-table '(equiv P Q)))
   (print-truth-table (truth-table '(xor P Q)))
   (print-truth-table (truth-table '(ite P Q R)))
+  (print-truth-table (truth-table '(or P Q R S T U V)))
   )
 
 (comment
