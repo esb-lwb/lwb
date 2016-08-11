@@ -3024,8 +3024,8 @@ a formula which is equivalent with respect to satisfiability.</p>
 		       (let [tcnf   (if (cnf? phi) phi (tseitin phi))
 		             dimacs (cnf2dimacs tcnf)
 		             res    (sat4j-solve dimacs)]
-		         (if res
-		           (remove-tseitin-symbols res) nil))))))</pre></td></tr><tr><td class="docs">
+		         (when res
+		           (remove-tseitin-symbols res)))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat
         :args (s/cat :phi wff?)
         :ret (s/or :lwb.prop/model boolean?))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>

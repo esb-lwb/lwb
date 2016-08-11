@@ -2883,7 +2883,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn max-kof
   [k acoll]
   {:pre [(&lt;= 0 k (dec (count acoll)))]}
-  (if (= k 0)
+  (if (zero? k)
     (map #(list 'not %) acoll))
   (for [s (combinations acoll (inc k))]
     (apply list 'or (map #(list 'not %) s))))</pre></td></tr><tr><td class="docs">

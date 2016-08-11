@@ -2891,7 +2891,7 @@ singleton.</p>
   `(let ~binding
      (try ~@body
      (catch Exception e# (str &quot;caught: &quot; (.getMessage e#)))
-     (finally (.done ^JFactory ~(binding 0))))))</pre></td></tr><tr><td class="docs"><p>Initializing the JFactory <br />
+     (finally (.done ^JFactory (~binding 0))))))</pre></td></tr><tr><td class="docs"><p>Initializing the JFactory <br />
    (init-bddf :small)   inits the JFactory for small formulae, <br />
    (init-bddf :medsize) inits the JFactory for medium size formulae, <br />
    (init-bddf :large)   inits the JFactory for large formulae, <br />
@@ -2900,9 +2900,9 @@ singleton.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn init-bddf
   ([type]
    (case type
-     :small   (init-bddf 10000 1000))
+     :small   (init-bddf 10000 1000)
      :medsize (init-bddf 100000 10000)
-     (init-bddf 1000000 100000))
+     (init-bddf 1000000 100000)))
   ([nodesize cachesize]
    (JFactory/init nodesize cachesize)))</pre></td></tr><tr><td class="docs"><p>The JavaBDD Factory <code>bddf</code> returns a map of BDD objects for each atom of formula <code>phi</code>.
    Since atoms-of-phi gives the atoms in alphabetic order, the index of the atom in the
@@ -2954,25 +2954,25 @@ true branch <code>hi-no</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(def ^:private false-node (Node. 0 'false 0 0))
 (def ^:private true-node  (Node. 1 'true 1 1))</pre></td></tr><tr><td class="docs"><p>While building the vector of nodes for a bddi we use a map </p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The map with the two sinks</p>
-</td><td class="codes"><pre class="brush: clojure">(def ^:private base-map {'false false-node 'true true-node})</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- visited? [bddi bdd-map]
-  &quot;Has the entry with key already been visited?&quot;
-  (not (nil? (:lo-no (get bdd-map bddi)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- init-node [bddi bdd-map]
-  &quot;Inserts new entry for bddi in transient bdd-map    
-   returns bdd-map&quot;
+</td><td class="codes"><pre class="brush: clojure">(def ^:private base-map {'false false-node 'true true-node})</pre></td></tr><tr><td class="docs"><p>Has the entry with key already been visited?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- visited?
+  [bddi bdd-map]
+  (not (nil? (:lo-no (get bdd-map bddi)))))</pre></td></tr><tr><td class="docs"><p>Inserts new entry for bddi in transient bdd-map <br />
+   returns bdd-map</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- init-node
+  [bddi bdd-map]
   (if (nil? (get bdd-map bddi))
     (conj! bdd-map [bddi (Node. (count bdd-map) (.var ^BDD bddi) nil nil)])
-    bdd-map))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- key-bddi [bddi]
-  &quot;returns key of bddi in graph&quot;
+    bdd-map))</pre></td></tr><tr><td class="docs"><p>returns key of bddi in graph</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- key-bddi
+  [bddi]
   (cond
     (.isZero ^BDD bddi) 'false
     (.isOne  ^BDD bddi) 'true
-    :else bddi))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- process [bddi bdd-map]
-  &quot;Processes a bbdi and manipulates transient bdd-map     
-   returns bdd-map&quot;
+    :else bddi))</pre></td></tr><tr><td class="docs"><p>Processes a bbdi and manipulates transient bdd-map <br />
+   returns bdd-map</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- process
+  [bddi bdd-map]
   (let [map1 (init-node bddi bdd-map)]
     (if (visited? bddi map1)
       map1                    ; already visited -&gt; nothing to do
@@ -3000,7 +3000,7 @@ true branch <code>hi-no</code>.</p>
   (cond
     (.isZero ^BDD bddi) [(Node. 0 'false 0 0)]
     (.isOne  ^BDD bddi) [(Node. 1 'true  1 1)]
-    :else (into [] (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))</pre></td></tr><tr><td class="docs"><p>gives a JFactory based on the number of the variables in the
+    :else (vec (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))</pre></td></tr><tr><td class="docs"><p>gives a JFactory based on the number of the variables in the
    formula <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn reasonable-bddf
   [phi]
@@ -3013,7 +3013,7 @@ true branch <code>hi-no</code>.</p>
    the atoms.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- syms-for-atoms
   [phi bdd-vec]
-  (let [atom-vec (into [] (atoms-of-phi phi))
+  (let [atom-vec (vec (atoms-of-phi phi))
         tx (map (fn [node]
                   (if
                     (&lt; (:no node) 2)
@@ -3035,9 +3035,9 @@ true branch <code>hi-no</code>.</p>
         :ret ::bdd)</pre></td></tr><tr><td class="docs"><p>Transforms byte vector result from AllSatIterator to get an assignment vector</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- tf1-vec
   [phi bvec]
-  (let [atom-vec (into [] (atoms-of-phi phi))
+  (let [atom-vec (vec (atoms-of-phi phi))
         tx (map-indexed (fn [idx a]
-        (if (= a 0)
+        (if (zero? a)
           [(nth atom-vec idx) 'false]
           [(nth atom-vec idx) 'true])))]
     (into[] (comp tx (mapcat identity)) bvec)))</pre></td></tr><tr><td class="docs"><p>Returns seq of indexes of number -1 in vec</p>
@@ -3075,7 +3075,7 @@ true branch <code>hi-no</code>.</p>
            (.isZero bddi) 'nil
            :else
            (case mode
-             :all (map #(tf1-vec phi %) (mapcat tfa-vec (into[] (map vec iseq))))
+             :all (map #(tf1-vec phi %) (mapcat tfa-vec (vec (map vec iseq))))
              (tf1-vec phi (first (map vec iseq)))))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat
         :args wff?
@@ -3103,8 +3103,8 @@ true branch <code>hi-no</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- dot-line
   [node]
   (cond
-    (= (:no node) 0) &quot;0 [shape=box label=\&quot;\\bot\&quot;];\n&quot;
-    (= (:no node) 1) &quot;1 [shape=box label=\&quot;\\top\&quot;];\n&quot;
+    (zero? (:no node)) &quot;0 [shape=box label=\&quot;\\bot\&quot;];\n&quot;
+    (= (:no node) 1)   &quot;1 [shape=box label=\&quot;\\top\&quot;];\n&quot;
     :else
     (str (:no node) &quot; [label=\&quot;&quot; (process-atom node) &quot;\&quot;, style=\&quot;shape=rectangle,minimum size=6mm,rounded corners=3mm\&quot;];\n&quot;
          (:no node) &quot; -&gt; &quot; (:lo-no node) &quot; [style=dotted];\n&quot;
@@ -3116,7 +3116,7 @@ true branch <code>hi-no</code>.</p>
   (let [bdd (bdd phi)
         dot-head &quot;digraph G {\n&quot;
         dot-tail &quot;}&quot;
-        dot-lines (apply str (map dot-line bdd))]
+        dot-lines (str/join (map dot-line bdd))]
     (str dot-head dot-lines dot-tail)))</pre></td></tr><tr><td class="docs"><h3>Visualisation with tikz</h3>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def ^:private tikz-header

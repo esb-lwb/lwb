@@ -2868,6 +2868,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.prop" name="lwb.prop"><h1 class="project-name">lwb.prop</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.prop
   (:require [clojure.spec :as s]
+            [clojure.string :as str]
             [clojure.walk :refer (postwalk)]
             [clojure.set :refer (union intersection subset?)]
             [clojure.math.numeric-tower :refer (expt)]
@@ -2963,9 +2964,7 @@ several formulae as arguments whose number matches the arity of the operator.</p
    (wff? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
-     (if result result
-                (if (= mode :msg) (s/explain-str ::fml phi)
-                                  result)))))</pre></td></tr><tr><td class="docs"><h2>Evaluation of propositional formulae</h2>
+     (or result (if (= mode :msg) (s/explain-str ::fml phi) result)))))</pre></td></tr><tr><td class="docs"><h2>Evaluation of propositional formulae</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A model for a formula is a function from the atoms of the formula into the set of the
 boolean values {true, false}.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We represent a model as a vector of alternating atoms and boolean constants. The
@@ -3064,13 +3063,13 @@ corresponding atom in the header as well as the result of the evaluation.</p>
   [header table]
   (let [table'  (vec (map #(replace {true &quot;T&quot; false &quot;F&quot;} %) table)) 
         widths  (map #(count (str %)) header)
-        spacers (map #(apply str (repeat % &quot;-&quot;)) widths)
+        spacers (map #(str/join (repeat % &quot;-&quot;)) widths)
         fmts    (map #(str &quot;%&quot; % &quot;s&quot;) widths)
         fmt-row (fn [leader divider trailer row]
                   (str leader
-                     (apply str (interpose divider
+                     (str/join divider
                         (for [[col fmt] (map vector row fmts)]
-                              (format fmt (str col)))))
+                              (format fmt (str col))))
                        trailer))]
     (println)
     (println (fmt-row &quot;| &quot; &quot; | &quot; &quot; |&quot; header))
@@ -3079,7 +3078,6 @@ corresponding atom in the header as well as the result of the evaluation.</p>
       (println (fmt-row &quot;| &quot; &quot; | &quot; &quot; |&quot; row)))))</pre></td></tr><tr><td class="docs"><p>Pretty prints truth-table.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn print-truth-table
   [{:keys [prop header table]}]
-    [prop header table]
   (do
     (println &quot;Truth table&quot;)
     (println prop)
@@ -3160,7 +3158,7 @@ and as such it has to be a list!</p>
 						          (let [op (first sub-phi)
                             args (rest sub-phi)
 						                flat-filter (fn [op arg] (if (coll? arg) (= op (first arg)) false))
-						                flat (map #(rest %) (filter (partial flat-filter op) args))
+						                flat (map rest (filter (partial flat-filter op) args))
 						                not-flat (filter (partial (complement flat-filter) op) args)]
 						            (apply concat `((~op) ~@flat ~not-flat)))
 					             sub-phi))]
@@ -3181,7 +3179,7 @@ and as such it has to be a list!</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- red-clmap 
   [{:keys [pos neg]}]
   (cond
-    (&gt; (count (intersection pos neg)) 0) true
+    (pos? (count (intersection pos neg))) true
     (contains? pos 'true) true
     (contains? neg 'false) true
     :else
