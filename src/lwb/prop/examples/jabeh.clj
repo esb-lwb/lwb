@@ -118,8 +118,8 @@
 (defn- next-cells
   "All cells at [r c] in the given direction."
   [puzzle direction [r c]]
-  (into () (drop 1 (take-while some?
-                               (iterate (partial next-cell puzzle direction) [r c])))))
+  (vec (drop 1 (take-while some?
+                  (iterate (partial next-cell puzzle direction) [r c])))))
 
 (defn- arrow-cl
   "Seq of clause for the fact that there is at least one hole
@@ -221,14 +221,13 @@
   "Pretty-printing jabeh."
   [puzzle]
   (let [[row-count col-count] (size puzzle)]
-    (do
-      (print "Puzzle\n")
-      (print (str "  | " (str/join " " (:col-holes puzzle)) "\n"))
-      (print (str "--+" (apply str (repeat col-count "--")) "\n"))
-      (doseq [row (range row-count) col (range col-count)]
-        (if (= col 0) (print (str (nth (:row-holes puzzle) row) " | ")))
-        (print (str (print-cell (get-in (:field puzzle) [row col])) " "))
-        (if (= (dec col-count) col) (print "\n"))))))
+    (print "Puzzle\n")
+    (print (str "  | " (str/join " " (:col-holes puzzle)) "\n"))
+    (print (str "--+" (str/join (repeat col-count "--")) "\n"))
+    (doseq [row (range row-count) col (range col-count)]
+      (if (zero? col) (print (str (nth (:row-holes puzzle) row) " | ")))
+      (print (str (print-cell (get-in (:field puzzle) [row col])) " "))
+      (if (= (dec col-count) col) (print "\n")))))
 
 
 (defn print-puzzle-and-solution
