@@ -34,12 +34,12 @@
 (defn- first?
   "Is loc the most left location of siblings?"
   [loc]
-  (nil? (-> loc zip/left)))
+  (nil? (zip/left loc)))
 
 (defn- end?
   "Is loc a node marked with :end?"
   [loc]
-  (= :end (-> loc zip/node)))
+  (= :end (zip/node loc)))
 
 (defn- mark-end-of-branch 
   "To facilitate the generation of code in tikz, we mark the ends of
@@ -51,7 +51,7 @@
       (recur (zip/next
                (if (zip/branch? loc)
                  (let [inserted-loc (zip/insert-right (-> loc zip/down zip/rightmost) :end)]
-                   (-> inserted-loc zip/leftmost))
+                   (zip/leftmost inserted-loc))
                  loc))))))
 
 (defn- process-head
@@ -115,8 +115,8 @@
   (let [phi-n (if (symbol? phi) (list phi) phi) ; special case
         phi'  (mark-end-of-branch phi-n)
         loc (zip/seq-zip (seq phi'))]
-    (apply str
-           (map mapfn (filter (complement zip/branch?) 
+    (str/join
+           (map mapfn (remove zip/branch? 
                               (take-while (complement zip/end?)
                                   (iterate zip/next loc)))))))
 

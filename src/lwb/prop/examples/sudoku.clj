@@ -77,11 +77,10 @@
 (defn puzzle-cl
   "Clauses for the givens of the puzzle."
   [puzzle]
-  (let [make-vec (fn [idx ch] (if (= ch \.) 
-                                  nil 
+  (let [make-vec (fn [idx ch] (when-not (= ch \.) 
                                   [(inc (quot idx n2)) (inc (rem idx n2)) (- (int ch) (int \0))]))
         make-cl  (fn [vec] (list 'or (make-sym vec))) ]
-    (map make-cl (filter #(not (nil? %)) (map-indexed make-vec puzzle)))))
+    (map make-cl (remove nil? (map-indexed make-vec puzzle)))))
 
 ;; ## Combining a puzzle and the rules to a proposition
 (defn sudoku-prop
@@ -145,7 +144,7 @@
     "Parses file with filename and returns a list of puzzles."
     [filename]
     (with-open [rdr (reader filename)]
-      (into () (map vec (filter #(re-matches #"^([1-9]|\.){81}$" %) (line-seq rdr))))))
+      (vec (map vec (filter #(re-matches #"^([1-9]|\.){81}$" %) (line-seq rdr))))))
 
   ;; ## Benchmarks
   (defn bench
