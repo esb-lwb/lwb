@@ -48,7 +48,7 @@
 
 (defn op-expr?
   [phi]
-  (if (not (op? (first phi)))
+  (if-not (op? (first phi))
     false
     (let [a (arity (first phi))
           c (dec (count phi))]
@@ -133,7 +133,7 @@
 (defn- dot-node
   "Gives code for a node `[key atoms]` on the dot language."
   [[[key atoms] initial?]]
-  (let [ proc-atoms (str/join "," (map #(process-name %) atoms))
+  (let [ proc-atoms (str/join "," (map process-name atoms))
         str-atoms (str "\\{" proc-atoms "\\}")]
     (str (name key) " [style=\"state, " (if initial? "initial, initial text=" "") "\",
       texlbl=\"$" (process-name (name key)) "$\\\\$" str-atoms "$\"];\n")))
@@ -150,8 +150,8 @@
   [ks mode]
   (let [dot-head (str "digraph G {\n "(if (= mode :dot) "rankdir=LR;\n" ""))
         dot-tail "}"
-        dot-nodes (apply str (map dot-node (zipmap (:nodes ks) (map #(= (:initial ks) (first %)) (:nodes ks)))))
-        dot-edges (apply str (map dot-edge (:edges ks)))]
+        dot-nodes (str/join (map dot-node (zipmap (:nodes ks) (map #(= (:initial ks) (first %)) (:nodes ks)))))
+        dot-edges (str/join (map dot-edge (:edges ks)))]
     (str dot-head dot-nodes dot-edges dot-tail)))
 
 (def ^:private tikz-header
