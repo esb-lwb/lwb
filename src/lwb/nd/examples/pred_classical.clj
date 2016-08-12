@@ -56,4 +56,16 @@
 (step-f "forall-e" 1 3)
 (step-f "not-e" 4 5)
 
-(export-theorem "resources/nd/theorems-pred.clj" "forall-not->not-exists")
+; -----------------------------------------------------------------------------------------
+; Modus Barbara
+
+(proof '[(forall [x] (impl (P x) (Q x))) (forall [x] (impl (Q x) (R x)))] '(forall [x] (impl (P x) (R x))))
+(step-b "forall-i" 4)
+(unify 'V1 :i)
+(step-f "forall-e" 1 3)
+(step-f "forall-e" 2 3)
+(step-b "impl-i" 7)
+(step-f "impl-e" 4 6)
+(step-f "impl-e" 5 7)
+
+;(export-theorem "resources/nd/theorems-pred.clj" "modus-barbara")
