@@ -59,6 +59,10 @@
 ; -----------------------------------------------------------------------------------------
 ; Modus Barbara
 
+; The medieval name of "every P is a Q" was "A". 
+; The syllogism "every P is a Q" and "every Q is an R", therefore "every P is an R"
+; was "AAA" and thus called "Barbara".
+
 (proof '[(forall [x] (impl (P x) (Q x))) (forall [x] (impl (Q x) (R x)))] '(forall [x] (impl (P x) (R x))))
 (step-b "forall-i" 4)
 (unify 'V1 :i)
