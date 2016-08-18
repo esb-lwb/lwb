@@ -9,7 +9,7 @@ lwb is a playground, it's work in progress.
 
 ### License
 
-Copyright (C) 2014 - 2015 by Burkhardt Renz, Technische Hochschule Mittelhessen (THM).
+Copyright (C) 2014 - 2016 by Burkhardt Renz, Technische Hochschule Mittelhessen (THM).
 Contributors see [documentation](https://github.com/esb-dev/lwb/wiki).
 
 Distributed under the Eclipse Public License, the same as Clojure.
