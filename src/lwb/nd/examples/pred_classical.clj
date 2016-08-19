@@ -57,6 +57,8 @@
 (step-f "not-e" 4 5)
 
 ; -----------------------------------------------------------------------------------------
+; The basic aristotelian syllogisms
+
 ; Modus Barbara
 
 ; The medieval name of "every P is a Q" was "A". 
@@ -72,4 +74,31 @@
 (step-f "impl-e" 4 6)
 (step-f "impl-e" 5 7)
 
-;(export-theorem "resources/nd/theorems-pred.clj" "modus-barbara")
+; Modus Celarent 
+; "EAE
+
+(proof '[(forall[x] (impl (P x) (not (Q x)))) (forall [x] (impl (R x) (P x)))] '(forall [x] (impl (R x) (not (Q x)))))
+(step-b "forall-i" 4)
+(unify 'V1 :i)
+(step-f "forall-e" 1 3)
+(step-f "forall-e" 2 3)
+(step-b "impl-i" 7)
+(step-f "impl-e" 5 6)
+(step-f "impl-e" 4 7)
+
+; Modus Darii
+; "AII"
+
+(proof '[(forall [x] (impl (P x) (Q x))) (exists [x] (and (R x) (P x)))] '(exists [x] (and (R x) (Q x))))
+
+; TODO
+; rule "exists-e" is wrong
+
+; Modus Ferio
+; "EIO"
+
+(proof '[(forall [x] (impl (P x) (not (Q x)))) (exists [x] (and (R x) (P x)))] '(exists [x] (R x) (not (Q x))))
+
+; rule "exists-e" is wrong
+
+;(export-theorem "resources/nd/theorems-pred.clj" "modus-celarent")
