@@ -10,13 +10,47 @@
   (:refer-clojure :exclude [==])
   (:require [clojure.core.logic :refer :all]
             [lwb.nd.io :refer [rules theorems trivials]]
-            [clojure.math.combinatorics :refer [permutations]]))
+            [clojure.math.combinatorics :refer [permutations]]
+            [clojure.spec :as s]))
+
+;; #Transformation of rules and theorems to core.logic relations
+
+;; ##Specification of rules and theorems
+
+;; The following specs describe the internal representation of rules and so on
+
+;; Expressions in rules
+(s/def ::expr (s/or :list list? :symbol symbol?))
+
+;; Key of rule or theorem
+(s/def ::key keyword?)
+
+;; Prerequisite for the application of the rule
+(s/def ::prereq (s/nilable (s/coll-of ::expr :kind vector?)))
+
+;; Given premises
+(s/def ::given (s/coll-of ::expr :kind vector))
+
+;; Conclusion
+(s/def ::conclusion (s/coll-of ::expr :kind vector))
+
+;; Applicability of the rule
+(s/def ::forward (s/nilable boolean?))
+(s/def ::backward (s/nilable boolean?))
+
+;; Entity map for the body of a rule
+(s/def ::rule-body (s/keys :un-req [::given ::conclusion ::prereq ::forwards ::backwards]))
+
+;; Rule
+(s/def ::rule (s/cat :key ::key :body ::rule-body))
+
 
 ;; NEW LOGIC (add additional keywords that should not be handled like symbols)
 ;; those "keywords" will not be handled as symbols but constants
 (def keywords #{'truth 'contradiction 'true 'false})
 
-;; functions for generating the core.logic function to represents a certain rule
+;; ##Functions for generating the core.logic relations to represents a certain rule
+
 (defn gen-arg 
   [arg n]
   (cond 
@@ -30,7 +64,6 @@
   [given]
   (let [numbers (take (count given) (iterate inc 1))]
     (into [] (map #(gen-arg %1 %2) given numbers))))
-
 
 (defn get-term-arg
   "Converts a given arg into a term argument
@@ -183,7 +216,7 @@
   "Returns true if the rule/theorem can be used forwards"
   [name]
   (if-let [rule (or ((keyword name) @rules) ((keyword name) @theorems))]
-    (if (:forwards rule)
+    (if (:forward rule)
       true
       false)
     (throw (Exception. (str "A rule/theorem \"" name "\" doesn't exist")))))
@@ -192,7 +225,7 @@
   "Returns true if the rule/theorem can be used backwards"
   [name]
   (if-let [rule (or ((keyword name) @rules) ((keyword name) @theorems))]
-    (if (:backwards rule)
+    (if (:backward rule)
       true
       false)
     (throw (Exception. (str "A rule/theorem \"" name "\" doesn't exist")))))
@@ -240,3 +273,5 @@
         res (first (drop-while empty? results))]
     res))
  
+
+
