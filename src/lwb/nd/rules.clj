@@ -51,20 +51,23 @@
 
 ;; ##Functions for generating the core.logic relations to represents a certain rule
 
-(defn gen-arg 
-  [arg n]
+(defn- gen-arg 
+  "If the expr is a symbol, it's the argument.    
+   If the expr is a list, we generate an alias from the operator together with a number."
+  [expr n]
   (cond 
-    (symbol? arg) arg
-    (list? arg) (symbol (str (first arg) n))
-    :else (throw (Exception. (str "Can't generate argument for the logic function from \"" arg "\"")))))
+    (symbol? expr) expr
+    (list? expr)   (symbol (str (first expr) n))
+    :else (throw (Exception. (str "Can't generate argument for the logic relation from \"" expr "\"")))))
     
 (defn gen-args
-  "Generates the top level arguments for the logic function
-   a (and a b) (not b) => [a and2 not3]"
+  "Generates the top level arguments for the logic relation from the given premises.     
+   e.g. `[a (and a b) (not b)] => [a and2 not3]`"
   [given]
   (let [numbers (take (count given) (iterate inc 1))]
-    (into [] (map #(gen-arg %1 %2) given numbers))))
+    (vec (map gen-arg given numbers))))
 
+; TODO  kommt mir sehr um die Ecke vor?? Geht das einfacher??
 (defn get-term-arg
   "Converts a given arg into a term argument
    a => (list a)
