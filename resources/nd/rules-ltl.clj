@@ -75,7 +75,7 @@
 
 ;; ATNEXT
 {:name "atnext-i"
- :given      [(at j a) (next i j)]
+ :given      [(at j a) (atnext i j)]
  :conclusion [(at i (atnext a))]
  :forwards   true
  :backwards  true}
