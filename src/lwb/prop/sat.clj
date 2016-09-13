@@ -207,7 +207,8 @@
 		           (remove-tseitin-symbols res)))))))
 
 (s/fdef sat
-        :args (s/cat :phi wff?)
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :mode #{:one :all}))
         :ret (s/or :lwb.prop/model boolean?))
 
 (defn sat?

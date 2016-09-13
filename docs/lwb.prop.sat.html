@@ -3027,7 +3027,8 @@ a formula which is equivalent with respect to satisfiability.</p>
 		         (when res
 		           (remove-tseitin-symbols res)))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat
-        :args (s/cat :phi wff?)
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :mode #{:one :all}))
         :ret (s/or :lwb.prop/model boolean?))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat?
   [phi]

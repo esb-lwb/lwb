@@ -220,7 +220,7 @@
 (s/def ::bdd (s/coll-of #(instance? Node %)))
 
 (s/fdef bdd
-        :args wff?
+        :args (s/cat :phi wff?)
         :ret ::bdd)
 
 (defn- tf1-vec
@@ -278,7 +278,8 @@
              (tf1-vec phi (first (map vec iseq)))))))))
 
 (s/fdef sat
-        :args wff?
+        :args (s/alt :1-args (s/cat :phi wff?) 
+                     :2-args (s/cat :phi wff? :mode #{:one :all}))
         :ret (s/nilable (s/or :verum true? :model :lwb.prop/model)))
 
 (defn sat?
@@ -287,7 +288,7 @@
   (if (nil? (sat phi)) false true))
 
 (s/fdef sat?
-        :args wff?
+        :args (s/cat :phi wff?)
         :ret boolean?)
 
 (defn valid?
@@ -296,7 +297,7 @@
   (not (sat? (list 'not phi))))
 
 (s/fdef valid?
-        :args wff?
+        :args (s/cat :phi wff?)
         :ret boolean?)
 
 ; helper functions for visualisation
