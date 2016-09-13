@@ -6,151 +6,151 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-;; all data regarding forwards/backwards of the rules are without engagement
+;; all data regarding forward/backward of the rules are without engagement
 
 ;; AND
 {:name "and-i"
  :given      [(at i a) (at i b)]
  :conclusion [(at i (and a b))]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 {:name "and-e1"
  :given      [(at i (and a b))]
  :conclusion [(at i a)]
- :forwards   true}
+ :forward   true}
 {:name "and-e2"
  :given      [(at i (and a b))]
  :conclusion [(at i b)]
- :forwards   true}
+ :forward   true}
 
 ;; OR
 {:name "or-i1"
  :given      [(at i a)]
  :conclusion [(at i (or a b))]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 {:name "or-i2"
  :given      [(at i b)]
  :conclusion [(at i (or a b))]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 {:name "or-e1"
  :given      [(at i (or a b)) (at i (not a))]
  :conclusion [(at i b)]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 ;; because of the nested structure of "(at i (or a b))" we need a rule for each side (a, b)
 {:name "or-e2"
  :given      [(at i (or a b)) (at i (not b))]
  :conclusion [(at i a)]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 {:name "not-or"
  :given      [(at i (not (or a b)))]
  :conclusion [(at i (and (not a) (not b)))]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 
 ;; NOT
 {:name "not-i"
  :given      [(infer (at j c) (at i (and b (not b))))]
  :conclusion [(at j (not c))]
- :backwards  true}
+ :backward  true}
 {:name "not-e"
  :given      [(at i (not (not a)))]
  :conclusion [(at i a)]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 
 ;; IMPL
 {:name "impl-i"
  :given      [(infer (at i c) (at i b))]
  :conclusion [(at i (impl c b))]
- :backwards  true}
+ :backward  true}
 {:name "impl-e"
  :given      [(at i (impl a b)) (at i a)]
  :conclusion [(at i b)]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 
 ;; ATNEXT
 {:name "atnext-i"
  :given      [(at j a) (atnext i j)]
  :conclusion [(at i (atnext a))]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 {:name "atnext-e"
  :given      [(at i (atnext a))]
  :conclusion [(at j a)]
- :forwards   true}
+ :forward   true}
 
 ;; ALWAYS
 {:name "always-i"
  :given      [(infer (<= i j) (at j a))]
  :conclusion [(at i (always a))]
- :backwards  true}
+ :backward  true}
 {:name "always-e" 
  :given      [(<= i j) (at i (always a))]
  :conclusion [(at j a)]
- :forwards   true}
+ :forward   true}
 
 ;; SOMETIMES
 {:name "sometime-i"
  :given      [(at j a) (<= i j)]
  :conclusion [(at i (sometime a))]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 {:name "sometime-e"
  :given      [(at i (sometime a))]
  :conclusion [(<= i j) (at j a)]
- :forwards   true}
+ :forward   true}
 {:name "not-sometime"
  :given      [(at i (not (sometime a)))]
  :conclusion [(at i (always (not a)))]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 
 ;; UNTIL
 {:name "until-i"
  :given      [(at i b)]
  :conclusion [(at i (until a b))]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 {:name "until-e"
  :given      [(at i (always (impl b c)))
               (at i (always (impl (and a (atnext c)) c)))]
  :conclusion [(at i (impl (until a b) c))]
- :backwards  true}
+ :backward  true}
 {:name "not-until"
  :given      [(at i (not (until a b)))]
  :conclusion [(at i (or (always (not b))
                          (until (not b) 
                                 (and (not a) (not b)))))]
- :forwards   true}
+ :forward   true}
 
 ;; RELATIONAL JUDGEMENTS
 {:name "reflexivity"
  :given      []
  :conclusion [(<= i j)]
- :forwards   true}
+ :forward   true}
 {:name "atnext-seriality"
  :given      []
  :conclusion [(next i j)]
- :forwards   true}
+ :forward   true}
 {:name "</<="
  :given      [(< i j)]
  :conclusion [(<= i j)]
- :forwards   true}
+ :forward   true}
 {:name "atnext/<="
  :given      [(next i j)]
  :conclusion [(<= i j)]
- :forwards   true
- :backwards  true}
+ :forward   true
+ :backward  true}
 {:name "transitivity"
  :given      [(<= i j) (<= j k)]
  :conclusion [(<= i k)]
- :forwards   true}
+ :forward   true}
 {:name "linearity"
  :given      [(<= i j) (<= i k)]
  :conclusion [(or (or (<= j k) (~= j k)) (<= k j))]
- :forwards   true}
+ :forward   true}

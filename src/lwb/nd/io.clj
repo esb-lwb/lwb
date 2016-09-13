@@ -39,8 +39,8 @@
                (assoc result (keyword (:name item)) {:given      (:given item)
                                                      :conclusion (:conclusion item)
                                                      :prereq     (:prereq item)
-                                                     :forwards   (:forwards item)
-                                                     :backwards  (:backwards item)}))
+                                                     :forward    (:forward item)
+                                                     :backward   (:backward item)}))
         (swap! rules merge result)))))
 
 (defn import-trivials
@@ -54,7 +54,7 @@
         (recur (read (PushbackReader. reader) false nil)
                (assoc result (keyword (:name item)) {:given      (:given item)
                                                      :conclusion (:conclusion item)
-                                                     :forwards   true}))
+                                                     :forward    true}))
         (swap! trivials merge result)))))
 
 (defn import-theorems
@@ -67,7 +67,7 @@
         (recur (read (PushbackReader. reader) false nil)
                (assoc result (keyword (:name item)) {:given      (:given item)
                                                      :conclusion (:conclusion item)
-                                                     :forwards   (:forwards item)
+                                                     :forward    (:forward  item)
                                                      :proof      (:proof item)}))
         (swap! theorems merge result)))))
 
@@ -81,7 +81,7 @@
             theorem {:name name
                      :given given
                      :conclusion conclusion
-                     :forwards true
+                     :forward true
                      :proof proof}]
         (with-open [writer (io/writer filename :append true)]
           (.write writer (str theorem))

@@ -2,7 +2,7 @@
 {:name "mt",
  :given [(impl a b) (not b)],
  :conclusion [(not a)],
- :forwards true,
+ :forward true,
  :proof [{:rule :premise, :id 1, :body (impl a b)}
          {:rule :premise, :id 2, :body (not b)}
          [{:id 5, :body a, :rule :assumption}
@@ -13,7 +13,7 @@
 {:name "tnd",
  :given [],
  :conclusion [(or P (not P))],
- :forwards true,
+ :forward true,
  :proof [[{:id 3, :body (not (or P (not P))), :rule :assumption}
           [{:id 9, :body P, :rule :assumption}
            {:id 12, :body (or P (not P)), :rule "\"or-i1\" (9) []"}
@@ -26,7 +26,7 @@
 {:name "notnot-i",
  :given [P],
  :conclusion [(not (not P))],
- :forwards true,
+ :forward true,
  :proof [{:id 1, :body P, :rule :premise}
          [{:id 4, :body (not P), :rule :assumption}
           {:id 6, :body contradiction, :rule "\"not-e\" (1 4) []"}]
@@ -35,7 +35,7 @@
 {:name "notnot-e",
  :given [(not (not P))],
  :conclusion [P],
- :forwards true,
+ :forward true,
  :proof [{:id 1, :body (not (not P)), :rule :premise}
          [{:id 4, :body (not P), :rule :assumption}
           {:id 6, :body contradiction, :rule "\"not-e\" (1 4) []"}]
@@ -45,7 +45,7 @@
 {:name "contrapos",
  :given [(impl P Q)],
  :conclusion [(impl (not Q) (not P))],
- :forwards true,
+ :forward true,
  :proof [{:id 1, :body (impl P Q), :rule :premise}
          [{:id 4, :body (not Q), :rule :assumption}
           [{:id 7, :body P, :rule :assumption}
@@ -58,7 +58,7 @@
 {:name "dm-not-and",
  :given [(not (and P Q))],
  :conclusion [(or (not P) (not Q))],
- :forwards true,
+ :forward true,
  :proof [{:id 1, :body (not (and P Q)), :rule :premise}
          [{:id 4, :body (not (or (not P) (not Q))), :rule :assumption}
           [{:id 11, :body (not Q), :rule :assumption}
@@ -76,7 +76,7 @@
 {:name "dm-or-not",
  :given [(or (not P) (not Q))],
  :conclusion [(not (and P Q))],
- :forwards true,
+ :forward true,
  :proof [{:id 1, :body (or (not P) (not Q)), :rule :premise}
          [{:id 8, :body (not P), :rule :assumption}
           [{:id 11, :body (and P Q), :rule :assumption}
@@ -93,7 +93,7 @@
 {:name "dm-not-or",
  :given [(not (or P Q))],
  :conclusion [(and (not P) (not Q))],
- :forwards true,
+ :forward true,
  :proof [{:id 1, :body (not (or P Q)), :rule :premise}
          [{:id 6, :body P, :rule :assumption}
           {:id 9, :body (or P Q), :rule "\"or-i1\" (6) []"}
@@ -108,7 +108,7 @@
 {:name "dm-and-not",
  :given [(and (not P) (not Q))],
  :conclusion [(not (or P Q))],
- :forwards true,
+ :forward true,
  :proof [{:id 1, :body (and (not P) (not Q)), :rule :premise}
          {:id 8, :body (not Q), :rule "\"and-e2\" (1) []"}
          {:id 7, :body (not P), :rule "\"and-e1\" (1) []"}
