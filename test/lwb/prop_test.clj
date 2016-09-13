@@ -269,7 +269,7 @@
   (is (= '(or (and a) (and b) (and c)) (dnf '(or a (or b c)))))
 
   (is (= '(or (and (not q) p) (and (not p) q)) (dnf '(not (equiv p q)))))
-  (is (= '(or (and (not p) (not q) (and q))) (dnf '(impl (impl (impl p q) q) q))))
+  (is (= '(or (and (not p) (not q)) (and q)) (dnf '(impl (impl (impl p q) q) q))))
 
   (is (= '(or (and p)) (dnf '(ite true p false))))
   (is (= '(or (and p)) (dnf '(ite false true p))))
