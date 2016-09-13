@@ -139,6 +139,11 @@
    (let [result (s/valid? ::fml phi)]
      (or result (if (= mode :msg) (s/explain-str ::fml phi) result)))))
 
+(s/fdef wff?
+  :args (s/alt :1-args (s/cat :phi any?)
+               :2-args (s/cat :phi any? :mode #{:bool :msg}))
+  :ret (s/alt :bool boolean? :msg string?))
+
 ;; ## Evaluation of propositional formulae
 
 ;; A model for a formula is a function from the atoms of the formula into the set of the
@@ -187,7 +192,7 @@
 ;; The truth table of a proposition `phi` is represented as a map
 ;; with the keys:
 
-;; `:prop` with the proposition itself
+;; `:phi` with the proposition itself
 ;; `:header` a vector of the atoms and the last entry
 ;;  named `:result`.          
 ;; `:table` a vector of vectors of boolean assignments to the 
@@ -207,9 +212,9 @@
 
 ;; Remark: There are more constraints on the truth table:
 
-;; 1. The atoms in ::header are just the unique atoms in ::phi
-;; 2. ::table has 2^n elements for n the number of atoms (<= in mode :true-only or :false-only)
-;; 3. The length of the vectors in ::table equals the length of ::header
+;; 1. The atoms in `:header` are just the unique atoms in `:phi`
+;; 2.`:table` has 2^n elements for n the number of atoms (<= in mode :true-only or :false-only)
+;; 3. The length of the vectors in `:table` equals the length of `:header`
 
 (defn- truth-table-ok?
   [{:keys [phi header table]}]
@@ -254,7 +259,8 @@
       tt))))
 
 (s/fdef truth-table
-        :args wff?
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :mode #{:true-only :false-only}))
         :ret ::truth-table)
 
 (defn print-table
@@ -309,16 +315,16 @@
 (s/def ::cnf (s/and list? (s/cat :and #{'and} :clauses (s/* ::clause))))
 
 ;; Caveat reader!
-;; at the first sight (apply list ...) and (list* ...) seems to give the
+;; at the first sight `(apply list ...)` and `(list* ...)` seems to give the
 ;; same result -- BUT
-;; the types are different:
-;; (list? (apply list [:a :b])) => true
-;; (list? (list* [:a :b]))      => false
-;; since we check list? in the specs we have to be precise with the types
+;; the types are different:        
+;; `(list? (apply list [:a :b])) => true`       
+;; `(list? (list* [:a :b]))      => false`      
+;; since we check `list?` in the specs we have to be precise with the types
 ;; our functions are returning!
 
 ;; One may argue that in the spirit of Clojure it's better to work with
-;; sequences whatever their implementation would be.
+;; sequences whatever their implementation would be.       
 ;; But: we want to use the data structure of a formula as code
 ;; and as such it has to be a list!
 
@@ -425,7 +431,6 @@
       (some #{'(or)} result) false
       (empty? result) true
       :else (conj (apply list (distinct result)) 'and))))
-      ;:else (conj (list* (distinct result)) 'and))))
 
 (defn cnf
   "Transforms `phi` to (standardized) conjunctive normal form cnf."
@@ -433,17 +438,23 @@
   (-> phi impl-free nnf nnf2cnf flatten-ops red-cnf))
 
 ;; Specification of function `cnf`
-;; `:ret` is in cnf and equivalent to the argument `phi`.
+;; `:ret` is in cnf and equivalent to the argument `:phi`.
 (s/fdef cnf
         :args (s/cat :phi wff?)
-        :ret (s/or :cnf ::cnf :bool boolean?))
-        ;the spec of the function has a cyclic dependency as a consequence!
-        ;:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))
+        :ret (s/alt :cnf ::cnf :bool boolean?))
+(comment
+  ;the spec of the function has a cyclic dependency as a consequence!
+  ;:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))
+  )
 
 (defn cnf?
   "Is `phi` in (standardized) conjunctive normal form?"
   [phi]
   (s/valid? ::cnf phi))
+
+(s/fdef cnf?
+        :args (s/cat :phi wff?)
+        :ret boolean?)
 
 ;;## Transformation to disjunctive normal form
 
@@ -478,16 +489,17 @@
       (not cnf)
       (apply list (map mapdnf cnf)))))
 
-;; Specification of function `cnf`
-;; `:ret` is in dnf and equivalent to the argument `phi`.
+;; Specification of function `dnf`
+;; `:ret` is in dnf and equivalent to the argument `:phi`.
 (s/fdef dnf
         :args (s/cat :phi wff?)
         :ret (s/or :dnf ::dnf :bool boolean?))
-        ;the spec of the function has a cyclic dependency as a consequence!
-        ;:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))
 
 (defn dnf?
   "Is `phi` in (standardized) disjunctive normal form?"
   [phi]
   (s/valid? ::dnf phi))
 
+(s/fdef dnf?
+        :args (s/cat :phi wff?)
+        :ret boolean?)

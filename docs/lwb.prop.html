@@ -2964,7 +2964,11 @@ several formulae as arguments whose number matches the arity of the operator.</p
    (wff? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
-     (or result (if (= mode :msg) (s/explain-str ::fml phi) result)))))</pre></td></tr><tr><td class="docs"><h2>Evaluation of propositional formulae</h2>
+     (or result (if (= mode :msg) (s/explain-str ::fml phi) result)))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef wff?
+  :args (s/alt :1-args (s/cat :phi any?)
+               :2-args (s/cat :phi any? :mode #{:bool :msg}))
+  :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><h2>Evaluation of propositional formulae</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A model for a formula is a function from the atoms of the formula into the set of the
 boolean values {true, false}.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We represent a model as a vector of alternating atoms and boolean constants. The
@@ -2998,7 +3002,7 @@ Furthermore the atoms in the formula must be a subset of the atoms in the model.
         :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Truth table</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The truth table of a proposition <code>phi</code> is represented as a map
 with the keys:</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p><code>:prop</code> with the proposition itself
+</td><td class="codes"></td></tr><tr><td class="docs"><p><code>:phi</code> with the proposition itself
 <code>:header</code> a vector of the atoms and the last entry
  named <code>:result</code>. <br />
 <code>:table</code> a vector of vectors of boolean assignments to the 
@@ -3012,9 +3016,9 @@ corresponding atom in the header as well as the result of the evaluation.</p>
   (every? boolean? vec))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::table (s/coll-of vector-of-boolean? :kind vector?))</pre></td></tr><tr><td class="docs"><p>Remark: There are more constraints on the truth table:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ol>
-<li>The atoms in ::header are just the unique atoms in ::phi</li>
-<li>::table has 2^n elements for n the number of atoms (&lt;= in mode :true-only or :false-only)</li>
-<li>The length of the vectors in ::table equals the length of ::header</li>
+<li>The atoms in <code>:header</code> are just the unique atoms in <code>:phi</code>
+2.<code>:table</code> has 2^n elements for n the number of atoms (&lt;= in mode :true-only or :false-only)</li>
+<li>The length of the vectors in <code>:table</code> equals the length of <code>:header</code></li>
 </ol>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- truth-table-ok?
@@ -3054,7 +3058,8 @@ corresponding atom in the header as well as the result of the evaluation.</p>
       :false-only (assoc tt :table (vec (filter #(false? (last %)) (:table tt))))
       tt))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef truth-table
-        :args wff?
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :mode #{:true-only :false-only}))
         :ret ::truth-table)</pre></td></tr><tr><td class="docs"><p>Pretty prints vector <code>header</code> and vector of vectors <code>table</code>. <br />
    Pre: header and row in the table have the same no of item,
         the size of items in header is >= size of items in the rows.</p>
@@ -3095,15 +3100,15 @@ standard form.</p>
                        :neg (s/and list? (s/cat :not #{'not} :simple-expr ::simple-expr))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::clause (s/and list? (s/cat :or #{'or} :literals (s/* ::literal))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::cnf (s/and list? (s/cat :and #{'and} :clauses (s/* ::clause))))</pre></td></tr><tr><td class="docs"><p>Caveat reader!
-at the first sight (apply list ...) and (list* ...) seems to give the
+at the first sight <code>(apply list ...)</code> and <code>(list* ...)</code> seems to give the
 same result -- BUT
-the types are different:
-(list? (apply list [:a :b])) => true
-(list? (list* [:a :b]))      => false
-since we check list? in the specs we have to be precise with the types
+the types are different: <br />
+<code>(list? (apply list [:a :b])) =&gt; true</code> <br />
+<code>(list? (list* [:a :b]))      =&gt; false</code> <br />
+since we check <code>list?</code> in the specs we have to be precise with the types
 our functions are returning!</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>One may argue that in the spirit of Clojure it's better to work with
-sequences whatever their implementation would be.
+sequences whatever their implementation would be. <br />
 But: we want to use the data structure of a formula as code
 and as such it has to be a list!</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Checks whether <code>phi</code> is a literal, i.e. a propositional atom or its negation.</p>
@@ -3191,20 +3196,24 @@ and as such it has to be a list!</p>
     (cond
       (some #{'(or)} result) false
       (empty? result) true
-      :else (conj (apply list (distinct result)) 'and))))</pre></td></tr><tr><td class="docs"><p>:else (conj (list* (distinct result)) 'and))))</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to (standardized) conjunctive normal form cnf.</p>
+      :else (conj (apply list (distinct result)) 'and))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to (standardized) conjunctive normal form cnf.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn cnf
   [phi]
   (-&gt; phi impl-free nnf nnf2cnf flatten-ops red-cnf))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
-<code>:ret</code> is in cnf and equivalent to the argument <code>phi</code>.</p>
+<code>:ret</code> is in cnf and equivalent to the argument <code>:phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef cnf
         :args (s/cat :phi wff?)
-        :ret (s/or :cnf ::cnf :bool boolean?))</pre></td></tr><tr><td class="docs"><p>the spec of the function has a cyclic dependency as a consequence!
-:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) conjunctive normal form?</p>
+        :ret (s/alt :cnf ::cnf :bool boolean?))
+(comment
+  ;the spec of the function has a cyclic dependency as a consequence!
+  ;:fn #(lwb.prop.sat/valid? (list 'equiv (-&gt; % :args :phi) (-&gt; % :ret))))
+  )</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) conjunctive normal form?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn cnf?
   [phi]
-  (s/valid? ::cnf phi))</pre></td></tr><tr><td class="docs"><h2>Transformation to disjunctive normal form</h2>
+  (s/valid? ::cnf phi))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef cnf?
+        :args (s/cat :phi wff?)
+        :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Transformation to disjunctive normal form</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Specification of disjunctive normal form dnf</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Specification of monom</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::monom (s/and list? (s/cat :and #{'and} :literals (s/* ::literal))))</pre></td></tr><tr><td class="docs"><p>Specification of dnf</p>
@@ -3225,16 +3234,17 @@ and as such it has to be a list!</p>
     ; border case
     (if (boolean? cnf)
       (not cnf)
-      (apply list (map mapdnf cnf)))))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
-<code>:ret</code> is in dnf and equivalent to the argument <code>phi</code>.</p>
+      (apply list (map mapdnf cnf)))))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>dnf</code>
+<code>:ret</code> is in dnf and equivalent to the argument <code>:phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef dnf
         :args (s/cat :phi wff?)
-        :ret (s/or :dnf ::dnf :bool boolean?))</pre></td></tr><tr><td class="docs"><p>the spec of the function has a cyclic dependency as a consequence!
-:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) disjunctive normal form?</p>
+        :ret (s/or :dnf ::dnf :bool boolean?))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) disjunctive normal form?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn dnf?
   [phi]
-  (s/valid? ::dnf phi))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (s/valid? ::dnf phi))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef dnf?
+        :args (s/cat :phi wff?)
+        :ret boolean?)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack
