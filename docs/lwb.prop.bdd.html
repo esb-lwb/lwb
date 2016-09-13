@@ -3031,7 +3031,7 @@ true branch <code>hi-no</code>.</p>
                (syms-for-atoms phi (build-bdd bddi)))))</pre></td></tr><tr><td class="docs"><p>Representation of a binary decision diagram in Clojure: a vector of Nodes</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::bdd (s/coll-of #(instance? Node %)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef bdd
-        :args wff?
+        :args (s/cat :phi wff?)
         :ret ::bdd)</pre></td></tr><tr><td class="docs"><p>Transforms byte vector result from AllSatIterator to get an assignment vector</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- tf1-vec
   [phi bvec]
@@ -3078,19 +3078,20 @@ true branch <code>hi-no</code>.</p>
              :all (map #(tf1-vec phi %) (mapcat tfa-vec (vec (map vec iseq))))
              (tf1-vec phi (first (map vec iseq)))))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat
-        :args wff?
+        :args (s/alt :1-args (s/cat :phi wff?) 
+                     :2-args (s/cat :phi wff? :mode #{:one :all}))
         :ret (s/nilable (s/or :verum true? :model :lwb.prop/model)))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat?
   [phi]
   (if (nil? (sat phi)) false true))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat?
-        :args wff?
+        :args (s/cat :phi wff?)
         :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> valid?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn valid?
   [phi]
   (not (sat? (list 'not phi))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef valid?
-        :args wff?
+        :args (s/cat :phi wff?)
         :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Generates texcode for atoms;
    Since '{' and '}' are a reserved character in Clojure,
    one can use '&lt;' and '>'

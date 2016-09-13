@@ -199,7 +199,8 @@
        (or result (if (= mode :msg) (s/explain-str ::fml phi) result))))))
 
 (s/fdef wff?
-        :args (s/cat :fml ::fml :sig ::signature)
+        :args (s/alt :2-args (s/cat :fml ::fml :sig ::signature)
+                     :3-args (s/cat :fml ::fml :sig ::signature :mode #{:bool :msg}))
         :ret boolean?)
 
 ;; ## Models
