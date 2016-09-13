@@ -2991,7 +2991,8 @@ given signature.</p>
      (let [result (s/valid? ::fml phi)]
        (or result (if (= mode :msg) (s/explain-str ::fml phi) result))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef wff?
-        :args (s/cat :fml ::fml :sig ::signature)
+        :args (s/alt :2-args (s/cat :fml ::fml :sig ::signature)
+                     :3-args (s/cat :fml ::fml :sig ::signature :mode #{:bool :msg}))
         :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Models</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A model is a "world" consisting of a universe, as well as functions and relations 
 on the universe. A model assigns concrete functions and relations to the

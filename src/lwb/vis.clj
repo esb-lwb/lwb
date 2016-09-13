@@ -12,6 +12,16 @@
             [clojure.string :as str]
             [clojure.java.shell :as shell]))
 
+;; #Visualisation of formulae
+;;
+;; The syntax tree of a formula of propositional logic, predicate logic or
+;; linear temporal logic is transformed into code for tikz and the package
+;; `tikz-tree`.
+
+;; With the help of `texi2pdf` a pdf file is generated.
+
+;; A running TeX is a prerequisite.
+
 (def ^:private tikz-header
   "\\documentclass{standalone}
    \\standaloneconfig{border=8pt}
@@ -37,13 +47,13 @@
   (nil? (zip/left loc)))
 
 (defn- end?
-  "Is loc a node marked with :end?"
+  "Is loc a node marked with `:end`?"
   [loc]
   (= :end (zip/node loc)))
 
 (defn- mark-end-of-branch 
   "To facilitate the generation of code in tikz, we mark the ends of
-   lists with :end"
+   lists with `:end`"
   [phi]
   (loop [loc (zip/seq-zip (seq phi))]
     (if (zip/end? loc)
@@ -85,9 +95,9 @@
          (str/join "\\, " vars) "$};")))
 
 (defn- process-atom
-  "Generates texcode for atoms;
-   Since '{' and '}' are a reserved character in Clojure, 
-   one can use '<' and '>'
+  "Generates texcode for atoms        
+   Since `{` and `}` are a reserved character in Clojure, 
+   one can use `<` and `>`
    as characters for grouping subscripts e.g."
   [node]
   (let [node-str   (str node)
@@ -128,10 +138,10 @@
     (str tikz-header "\n" tikz-body "\n" tikz-footer)))
 
 (defn vis-pdf
-  "Makes a pdf file with the visualisation of the syntax tree of `phi`.
-  <filename> is the name of the file to be generated, must have no extension.
-  The function uses the shell command 'texi2pdf' that compiles tex code,
-  and 'open' to show the generated file."
+  "Makes a pdf file with the visualisation of the syntax tree of `phi`.     
+  `filename` is the name of the file to be generated, must have no extension.      
+  The function uses the shell command `texi2pdf` that compiles tex code,
+  and `open` to show the generated file."
   [phi filename]
   (let [tex-code (vis phi)]
     (spit (str filename ".tex") tex-code)
