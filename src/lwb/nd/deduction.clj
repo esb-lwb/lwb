@@ -274,10 +274,10 @@
       (not (rules/rule-exist? rule))
       (throw (Exception. (str "A rule named \"" rule "\" does not exists.")))
 
-      (and forward? (not (rules/rule-forwards? rule)))
+      (and forward? (not (rules/rule-forward? rule)))
       (throw (Exception. (str "The rule \"" rule "\" is not marked for forward use.")))
 
-      (and (not forward?) (not (rules/rule-backwards? rule)))
+      (and (not forward?) (not (rules/rule-backward? rule)))
       (throw (Exception. (str "The rule \"" rule "\" is not marked for backward use.")))
 
       ;; for forward rules with no premises (e.g. equality introduction)
