@@ -49,7 +49,7 @@
 ;; those "keywords" will not be handled as symbols but constants
 (def keywords #{'truth 'contradiction 'true 'false})
 
-;; ## Functions for generating the core.logic relations to represents a certain rule
+;; ## Functions for generating the core.logic relations that represent rules
 
 (defn- gen-arg 
   "If the expr is a symbol, it's the argument.         
@@ -65,35 +65,20 @@
    e.g. `[a (and a b) (not b)] => [a and2 not3]`"
   [given]
   (let [numbers (take (count given) (iterate inc 1))]
-    (vec (map gen-arg given numbers))))
-
-;; The following is quite tricky
-
-(defn- get-term-arg
-  "Converts a given arg into a term argument       
-   `a => (list a)`       
-   `truth => (list (quote truth))` - \"truth\" is a keyword       
-   `(and a b) => (list (concat (list (quote and)) (list a) (list b)))`       
-   `[x (not y)] => (list (apply vector (concat (list x) (list (concat (list (quote not)) (list y))))))`       
-   (all functions are written with their related namespace)"       
-  [arg]
-  (cond
-    (contains? keywords arg) (list `list (list `quote arg))
-    (symbol? arg) (list `list arg)
-    (list? arg) (list `list (concat (list `concat) 
-                                    (list (list `list (list `quote (first arg)))) 
-                                    (map get-term-arg (rest arg))))
-    (vector? arg) (list `list (list `apply `vector (concat (list `concat) (map get-term-arg arg))))
-    :else (throw (Exception. (str "Can't generate term-argument from " arg)))))
+    (mapv gen-arg given numbers)))
 
 (defn- gen-term
   "Converts a given list into a quoted sequence      
-   `(and a b) => ``(~'and ~a ~b)`"
-  [given]
-  (let [args (map get-term-arg (rest given))
-        operator (list `list (list `quote (first given)))
-        result (conj args operator)]
-    (conj (list (conj result `concat)) `seq)))
+   '(and a b) => (list (quote and) a b)"
+  [arg]
+  (cond
+    (contains? keywords arg) (list `quote arg)
+    (symbol? arg) arg
+    (vector? arg) arg ; vectors can only appear in variable declarations
+    (list? arg) (let [op (list `quote (first arg))
+                      params (mapv gen-term (rest arg))]
+                  (list* `list op params))
+    ))
 
 (defn- gen-body-row
   "Converts an argument and an given input into a unify-logic-row:     
@@ -118,9 +103,6 @@
     (symbol? arg) [arg]
     (list? arg) (vec (flatten (map gen-fresh-arg (rest arg))))
     (vector? arg) (vec (flatten (map gen-fresh-arg arg)))))
-
-    ;(list? arg) (reduce #(concat %1 (gen-fresh-arg %2)) [] (rest arg))
-    ;(vector? arg) (reduce #(concat %1 (gen-fresh-arg %2)) [] arg))) ;TODO Vektoren auslesen??
 
 (defn- gen-fresh-args
   "Generates the arguments for the core.logic/fresh function"
@@ -250,9 +232,9 @@
         optional-args   (map #(conj (list %) `quote) optional)
         logic-args-num (- (+ (count (:given frule)) (count (:conclusion frule)))
                           (+ (count obligatory-args) (count optional-args)))
-        logic-args (vec (map #(symbol (str %1 %2))
+        logic-args (mapv #(symbol (str %1 %2))
                                  (take logic-args-num (cycle ['q]))
-                                 (take logic-args-num (iterate inc 1))))
+                                 (take logic-args-num (iterate inc 1)))
         fn (eval (make-rule frule))
         results (if (empty? optional)
                 (for [x (permutations obligatory-args)]
