@@ -22,8 +22,8 @@
 ;; Expressions in rules
 (s/def ::expr (s/or :list list? :symbol symbol?))
 
-;; Key of rule or theorem
-(s/def ::key keyword?)
+;; Id of rule or theorem
+(s/def ::id keyword?)
 
 ;; Prerequisite for the application of the rule
 (s/def ::prereq (s/nilable (s/coll-of ::expr :kind vector?)))
@@ -42,7 +42,7 @@
 (s/def ::rule-body (s/keys :un-req [::given ::conclusion ::prereq ::forward ::backward]))
 
 ;; Rule
-(s/def ::rule (s/cat :key ::key :body ::rule-body))
+(s/def ::rule (s/cat :id ::id :body ::rule-body))
 
 
 ;; NEW LOGIC (add additional keywords that should not be handled like symbols)
