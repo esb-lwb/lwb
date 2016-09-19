@@ -18,43 +18,51 @@
 ; not-forall->exists-not
 
 (proof '(not (forall [x] (P x))) '(exists [x] (not (P x))))
-(step-b "raa" 3)
-(step-b "not-e" 4 1)
+(step-b :raa 3)
+(step-b :not-e 4 1)
 (choose-option 4 2)
-(step-b "forall-i" 4)
+(step-b :forall-i 4)
 (unify 'V1 :i)
-(step-b "raa" 5)
-(step-b "not-e" 6 2)
+(step-b :raa 5)
+(step-b :not-e 6 2)
 (choose-option 6 2)
-(step-b "exists-i" 6 3)
+(step-b :exists-i 6 3)
+
+;(export-theorem "resources/nd/theorems-pred.clj" :not-forall->exists-not)
 
 ; exists-not->not-forall
 
 (proof '(exists [x] (not (P x))) '(not (forall [x] (P x))))
-(step-b "not-i" 3)
-(step-b "exists-e" 4 1)
+(step-b :not-i 3)
+(step-b :exists-e 4 1)
 (unify 'V1 :i)
-(step-f "forall-e" 2 3)
-(step-f "not-e" 4 5)
+(step-f :forall-e 2 3)
+(step-f :not-e 4 5)
+
+;(export-theorem "resources/nd/theorems-pred.clj" :exists-not->not-forall)
 
 ; not-exists->forall-not
 
 (proof '(not (exists [x] (P x))) '(forall [x] (not (P x))))
-(step-b "forall-i" 3)
+(step-b :forall-i 3)
 (unify 'V1 :i)
-(step-b "not-i" 4)
-(step-b "not-e" 5 1)
+(step-b :not-i 4)
+(step-b :not-e 5 1)
 (choose-option 5 2)
-(step-b "exists-i" 5 2)
+(step-b :exists-i 5 2)
+
+;(export-theorem "resources/nd/theorems-pred.clj" :not-exists->forall-not)
 
 ; forall-not->not-exists
 
 (proof '(forall [x] (not (P x))) '(not (exists [x] (P x))))
-(step-b "not-i" 3)
-(step-b "exists-e" 4 2)
+(step-b :not-i 3)
+(step-b :exists-e 4 2)
 (unify 'V1 :i)
-(step-f "forall-e" 1 3)
-(step-f "not-e" 4 5)
+(step-f :forall-e 1 3)
+(step-f :not-e 4 5)
+
+;(export-theorem "resources/nd/theorems-pred.clj" :forall-not->not-exists)
 
 ; -----------------------------------------------------------------------------------------
 ; The basic aristotelian syllogisms
@@ -66,30 +74,34 @@
 ; was "AAA" and thus called "Barbara".
 
 (proof '[(forall [x] (impl (P x) (Q x))) (forall [x] (impl (Q x) (R x)))] '(forall [x] (impl (P x) (R x))))
-(step-b "forall-i" 4)
+(step-b :forall-i 4)
 (unify 'V1 :i)
-(step-f "forall-e" 1 3)
-(step-f "forall-e" 2 3)
-(step-b "impl-i" 7)
-(step-f "impl-e" 4 6)
-(step-f "impl-e" 5 7)
+(step-f :forall-e 1 3)
+(step-f :forall-e 2 3)
+(step-b :impl-i 7)
+(step-f :impl-e 4 6)
+(step-f :impl-e 5 7)
+
+;(export-theorem "resources/nd/theorems-pred.clj" :modus-barbara)
 
 ; Modus Celarent 
 ; "EAE
 
 (proof '[(forall[x] (impl (P x) (not (Q x)))) (forall [x] (impl (R x) (P x)))] '(forall [x] (impl (R x) (not (Q x)))))
-(step-b "forall-i" 4)
+(step-b :forall-i 4)
 (unify 'V1 :i)
-(step-f "forall-e" 1 3)
-(step-f "forall-e" 2 3)
-(step-b "impl-i" 7)
-(step-f "impl-e" 5 6)
-(step-f "impl-e" 4 7)
+(step-f :forall-e 1 3)
+(step-f :forall-e 2 3)
+(step-b :impl-i 7)
+(step-f :impl-e 5 6)
+(step-f :impl-e 4 7)
+
+;(export-theorem "resources/nd/theorems-pred.clj" :modus-celarent)
 
 ; Modus Darii
 ; "AII"
 
-(proof '[(forall [x] (impl (P x) (Q x))) (exists [x] (and (R x) (P x)))] '(exists [x] (and (R x) (Q x))))
+;(proof '[(forall [x] (impl (P x) (Q x))) (exists [x] (and (R x) (P x)))] '(exists [x] (and (R x) (Q x))))
 
 ; TODO
 ; rule "exists-e" is wrong
@@ -97,8 +109,7 @@
 ; Modus Ferio
 ; "EIO"
 
-(proof '[(forall [x] (impl (P x) (not (Q x)))) (exists [x] (and (R x) (P x)))] '(exists [x] (R x) (not (Q x))))
+;(proof '[(forall [x] (impl (P x) (not (Q x)))) (exists [x] (and (R x) (P x)))] '(exists [x] (R x) (not (Q x))))
 
 ; rule "exists-e" is wrong
 
-;(export-theorem "resources/nd/theorems-pred.clj" "modus-celarent")

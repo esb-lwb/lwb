@@ -17,7 +17,7 @@
 
 ; forward
 (proof '[P1 P2] '(and P1 P2))
-(step-f "and-i" 1 2)
+(step-f :and-i 1 2)
 (choose-option 3 1)
 ;
 ; --------------------------------------------------
@@ -27,7 +27,7 @@
 ; --------------------------------------------------
 
 (proof '[P1 P2] '(and P1 P2))
-(step-b "and-i" 4)
+(step-b :and-i 4)
 ;
 ; --------------------------------------------------
 ; 1: P1                                      premise
@@ -40,7 +40,7 @@
 
 ; forward preserving the left side
 (proof '(and P1 P2) 'P1)
-(step-f "and-e1" 1)
+(step-f :and-e1 1)
 ;
 ; --------------------------------------------------
 ; 1: (and P1 P2)                             premise
@@ -49,7 +49,7 @@
 
 ; forward preserving the right side
 (proof '(and P1 P2) 'P2)
-(step-f "and-e2" 1)
+(step-f :and-e2 1)
 ;
 ; --------------------------------------------------
 ; 1: (and P1 P2)                             premise
@@ -61,7 +61,7 @@
 
 ; forward inventing the right side
 (proof 'P1 '(or P1 P2))
-(step-f "or-i1" 1)
+(step-f :or-i1 1)
 (unify 'V1 'P2)
 ;
 ; --------------------------------------------------
@@ -71,7 +71,7 @@
 
 ; backward preserving the left side
 (proof 'P1 '(or P1 P2))
-(step-b "or-i1" 3)
+(step-b :or-i1 3)
 ;
 ; --------------------------------------------------
 ; 1: P1                                      premise
@@ -80,7 +80,7 @@
 
 ; forward inventing the left side
 (proof 'P2 '(or P1 P2))
-(step-f "or-i2" 1)
+(step-f :or-i2 1)
 (unify 'V1 'P1)
 ;
 ; --------------------------------------------------
@@ -90,7 +90,7 @@
 
 ; backward preserving the right side
 (proof 'P2 '(or P1 P2))
-(step-b "or-i2" 3)
+(step-b :or-i2 3)
 ;
 ; --------------------------------------------------
 ; 1: P2                                      premise
@@ -104,10 +104,10 @@
 
 ; backward
 (proof '(or (and P R) (and Q R)) 'R)
-(step-b "or-e" 3 1)
+(step-b :or-e 3 1)
 (choose-option 3 2)                                         ;; order is not right!!
-(step-f "and-e2" 2)
-(step-f "and-e2" 4)
+(step-f :and-e2 2)
+(step-f :and-e2 4)
 ;
 ;    --------------------------------------------------
 ; 1: (or (and P R) (and Q R))                premise
@@ -127,11 +127,11 @@
 
 ; backwards
 (proof '(impl (and P (not P)) Q))
-(step-b "impl-i" 2)
-(step-f "and-e1" 1)
-(step-f "and-e2" 1)
-(step-f "not-e" 2 3)
-(step-b "efq" 6)
+(step-b :impl-i 2)
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-f :not-e 2 3)
+(step-b :efq 6)
 
 ;
 ;    --------------------------------------------------
@@ -150,7 +150,7 @@
 
 ; forward
 (proof '[P (impl P Q)] 'Q)
-(step-f "impl-e" 1 2)
+(step-f :impl-e 1 2)
 
 ;
 ; --------------------------------------------------
@@ -161,7 +161,7 @@
 
 ; backward
 (proof '[P (impl P Q)] 'Q)
-(step-b "impl-e" 4 1)
+(step-b :impl-e 4 1)
 
 ;
 ; --------------------------------------------------
@@ -172,7 +172,7 @@
 
 
 (proof '[P (impl P Q)] 'Q)
-(step-b "impl-e" 4 2)
+(step-b :impl-e 4 2)
 (choose-option 4 2)
 
 ;
@@ -187,10 +187,10 @@
 
 ; backwards
 (proof '(or P (not P)))
-(step-b "raa" 2)
-(step-f "tnd")
+(step-b :raa 2)
+(step-f :tnd)
 (unify 'V1 'P)
-(step-f "not-e" 1 2)
+(step-f :not-e 1 2)
 
 ;
 ;    --------------------------------------------------
@@ -207,10 +207,10 @@
 
 ; forward
 (proof '(and P (not P)) 'Q)
-(step-f "and-e1" 1)
-(step-f "and-e2" 1)
-(step-f "not-e" 2 3)
-(step-f "efq" 4)
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-f :not-e 2 3)
+(step-f :efq 4)
 (unify 'V1 'Q)
 
 ;
@@ -224,10 +224,10 @@
 
 ; backward
 (proof '(and P (not P)) 'Q)
-(step-b "efq" 3)
-(step-f "and-e1" 1)
-(step-f "and-e2" 1)
-(step-f "not-e" 2 3)
+(step-b :efq 3)
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-f :not-e 2 3)
 
 ;
 ; --------------------------------------------------

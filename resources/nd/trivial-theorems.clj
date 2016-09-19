@@ -7,62 +7,62 @@
 ; the terms of this license.
 
 ;; AND
-{:name "trivial-1"
+{:id trivial-1
  :given      [(and a false)]
  :conclusion [false]
  :forward   true}
-{:name "trivial-2"
+{:id trivial-2
  :given      [(and false b)]
  :conclusion [false]
  :forward   true}
-{:name "trivial-3"
+{:id trivial-3
  :given      [(and a true)]
  :conclusion [a]
  :forward   true}
-{:name "trivial-4"
+{:id trivial-4
  :given      [(and true b)]
  :conclusion [b]
  :forward   true}
 ;; OR
-{:name "trivial-5"
+{:id trivial-5
  :given      [(or a true)]
  :conclusion [true]
  :forward   true}
-{:name "trivial-6"
+{:id trivial-6
  :given      [(or true b)]
  :conclusion [true]
  :forward   true}
-{:name "trivial-7"
+{:id trivial-7
  :given      [(or a false)]
  :conclusion [a]
  :forward   true}
-{:name "trivial-8"
+{:id trivial-8
  :given      [(or false b)]
  :conclusion [b]
  :forward   true}
 ;; IMPL
-{:name "trivial-9"
+{:id trivial-9
  :given      [(impl false a)]
  :conclusion [true]
  :forward   true}
-{:name "trivial-9-1"
+{:id trivial-9-1
  :given      [(impl true true)]
  :conclusion [true]
  :forward   true}
-{:name "trivial-9-2"
+{:id trivial-9-2
  :given      [(impl a a)]
  :conclusion [true]
  :forward   true}
 ;; NOT
-{:name "trivial-10"
+{:id trivial-10
  :given      [(not (not a))]
  :conclusion [a]
  :forward   true}
-{:name "trivial-11"
+{:id trivial-11
  :given      [(not true)]
  :conclusion [false]
  :forward   true}
-{:name "trivial-12"
+{:id trivial-12
  :given      [(not false)]
  :conclusion [true]
  :forward   true}
@@ -70,7 +70,7 @@
 ;; for temporal logic
 
 ;; ATNEXT
-{:name "trivial-13"
+{:id trivial-13
  :given      [(atnext false)]
  :conclusion [false]
  :forward   true}

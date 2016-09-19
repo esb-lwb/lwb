@@ -36,11 +36,11 @@
            result {}]
       (if item
         (recur (read (PushbackReader. reader) false nil)
-               (assoc result (keyword (:name item)) {:given      (:given item)
-                                                     :conclusion (:conclusion item)
-                                                     :prereq     (:prereq item)
-                                                     :forward    (:forward item)
-                                                     :backward   (:backward item)}))
+               (assoc result (:id item) {:given      (:given item)
+                                         :conclusion (:conclusion item)
+                                         :prereq     (:prereq item)
+                                         :forward    (:forward item)
+                                         :backward   (:backward item)}))
         (swap! rules merge result)))))
 
 (defn import-trivials
@@ -52,9 +52,9 @@
            result {}]
       (if item
         (recur (read (PushbackReader. reader) false nil)
-               (assoc result (keyword (:name item)) {:given      (:given item)
-                                                     :conclusion (:conclusion item)
-                                                     :forward    true}))
+               (assoc result (:id item) {:given      (:given item)
+                                         :conclusion (:conclusion item)
+                                         :forward    true}))
         (swap! trivials merge result)))))
 
 (defn import-theorems
@@ -65,20 +65,20 @@
            result {}]
       (if item
         (recur (read (PushbackReader. reader) false nil)
-               (assoc result (keyword (:name item)) {:given      (:given item)
-                                                     :conclusion (:conclusion item)
-                                                     :forward    (:forward  item)
-                                                     :proof      (:proof item)}))
+               (assoc result (:id item) {:given      (:given item)
+                                         :conclusion (:conclusion item)
+                                         :forward    (:forward  item)
+                                         :proof      (:proof item)}))
         (swap! theorems merge result)))))
 
 (defn export-theorem
-  "Exports proof as a theorem with the name to filename"
-  [proof filename name]
+  "Exports proof as a theorem with the id to filename"
+  [proof filename id]
   (if (proved? proof)
     (if (.exists (io/as-file filename))
       (let [given (into [] (map :body (filter #(= (:rule %) :premise) (flatten proof))))
             conclusion (vector (:body (last proof)))
-            theorem {:name name
+            theorem {:id id
                      :given given
                      :conclusion conclusion
                      :forward true
@@ -86,6 +86,6 @@
         (with-open [writer (io/writer filename :append true)]
           (.write writer (str theorem))
           (.newLine writer))
-        (swap! theorems merge (hash-map (keyword name) (dissoc theorem :name))))
+        (swap! theorems merge (hash-map id (dissoc theorem :id))))
       (throw (Exception. (str "The System can't find the file \"" filename "\""))))
     (throw (Exception. "The given proof is not solved yet. You can only export solved proofs as theorems."))))

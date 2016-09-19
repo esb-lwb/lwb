@@ -174,61 +174,61 @@
 ;; ## Utility functions for rules
 
 (defn- make-rule
-  "Takes either a map or the name of an existing rule or theorem to create
+  "Takes either a map or the id of an existing rule or theorem to create
    the appropriate core.logic-function for this rule"
   [rule]
   (cond
     (map? rule)
     (gen-logic-function (:prereq rule) (:given rule) (:conclusion rule))
   
-    (string? rule)
-    (let [r (or ((keyword rule) @rules) ((keyword rule) @theorems))]
+    (keyword? rule)
+    (let [r (or (rule @rules) (rule @theorems))]
       (gen-logic-function (:prereq r) (:given r) (:conclusion r)))
-    :else (throw (Exception. (str "The argument you provided is neither a legal rule-map nor the name of a valid rule or theorem (" rule ")")))))
+    :else (throw (Exception. (str "The argument you provided is neither a legal rule-map nor the id of a valid rule or theorem (" rule ")")))))
 
 (defn get-rule
   "Returns the rule/theorem if it exists"
-  [name]
-  (let [rule ((keyword name) @rules)
-        theorem ((keyword name) @theorems)]
+  [id]
+  (let [rule (id @rules)
+        theorem (id @theorems)]
     (or rule 
-        (or theorem (throw (Exception. (str "A rule/theorem \"" name "\" doesn't exist")))))))
+        (or theorem (throw (Exception. (str "A rule/theorem \"" id "\" doesn't exist")))))))
 
 (defn rule-exist?
   "Does a certain rule/theorem exist?"
-  [name]
-  (if (or ((keyword name) @rules)
-          ((keyword name) @theorems)) true false))
+  [id]
+  (if (or (id @rules)
+          (id @theorems)) true false))
  
 (defn rule-givens
   "Returns the number of givens for the certain rule/theorem"
-  [name]
-  (let [rule (or ((keyword name) @rules) ((keyword name) @theorems))]
+  [id]
+  (let [rule (or (id @rules) (id @theorems))]
     (count (:given rule))))
  
 (defn rule-conclusions
   "Returns the number of conclusions for the certain rule/theorem"
-  [name]
-  (let [rule (or ((keyword name) @rules) ((keyword name) @theorems))]
+  [id]
+  (let [rule (or (id @rules) (id @theorems))]
     (count (:conclusion rule))))
 
 (defn rule-forward?
   "Returns true if the rule/theorem can be used forwards"
-  [name]
-  (if-let [rule (or ((keyword name) @rules) ((keyword name) @theorems))]
+  [id]
+  (if-let [rule (or (id @rules) (id @theorems))]
     (if (:forward rule)
       true
       false)
-    (throw (Exception. (str "A rule/theorem \"" name "\" doesn't exist")))))
+    (throw (Exception. (str "A rule/theorem \"" id "\" doesn't exist")))))
 
 (defn rule-backward?
   "Returns true if the rule/theorem can be used backwards"
-  [name]
-  (if-let [rule (or ((keyword name) @rules) ((keyword name) @theorems))]
+  [id]
+  (if-let [rule (or (id @rules) (id @theorems))]
     (if (:backward rule)
       true
       false)
-    (throw (Exception. (str "A rule/theorem \"" name "\" doesn't exist")))))
+    (throw (Exception. (str "A rule/theorem \"" id "\" doesn't exist")))))
          
 ;; NOTE - right now "apply-rule" can't separate arguments from lines and user-inputs, which may cause absurd behavior 
 
@@ -243,8 +243,8 @@
   [rule forward? args & [optional]]
   (let [rule-map (cond
                    (map? rule) rule
-                   (string? rule) (or ((keyword rule) @rules) ((keyword rule) @theorems))
-                   :else (throw (Exception. "RULES | Wrong type of argument: \"rule\" has to be a string or a map.")))
+                   (keyword? rule) (or (rule @rules) (rule @theorems))
+                   :else (throw (Exception. "RULES | Wrong type of argument: \"rule\" has to be a keyword or a map.")))
         frule (if forward? rule-map (assoc rule-map :given (:conclusion rule-map) :conclusion (:given rule-map)))
         obligatory-args (map #(conj (list %) `quote) args)
         optional-args   (map #(conj (list %) `quote) optional)
@@ -266,10 +266,10 @@
   "Applies all trivial theorems to the given form and returns the first successful result.     
    To extend the predefined trivial theorems use the \"import-trivials\" function (ns: io)"
   [form]
-  (let [names (map #(subs % 1) (map str (map key @trivials)))
-        f (fn [name arg]
-            (run* [q] ((eval (make-rule ((keyword name) @trivials))) arg q)))
-        results (map #(f % form) names)
+  (let [ids (map key @trivials)
+        f (fn [id arg]
+            (run* [q] ((eval (make-rule (id @trivials))) arg q)))
+        results (map #(f % form) ids)
         res (first (drop-while empty? results))]
     res))
 

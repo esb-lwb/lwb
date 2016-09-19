@@ -81,11 +81,11 @@
 
 (defn export-theorem
   "Export the solved proof to a file as a theorem"
-  [filename name]
+  [filename id]
   (io/export-theorem 
     @p
     filename
-    name))
+    id))
 
 (defn undo
   "Undo the last change (you can't go further than the last state)"
@@ -99,7 +99,7 @@
 
 (defn show-rules []
   (for [rule (sort @io/rules)]
-    (let [name (subs (str (key rule)) 1)
+    (let [id (key rule)
           given (:given (val rule))
           conclusion (:conclusion (val rule))
           forward? (:forwards (val rule))
@@ -108,11 +108,11 @@
                   [true true] "step-f and step-b"
                   [true nil ] "step-f only"
                   [nil  true] "step-b only")]
-      (println (str name ": \t" given " -> " conclusion " - " usage)))))
+      (println (str id ": \t" given " -> " conclusion " - " usage)))))
 
 (defn show-theorems []
   (for [rule (sort @io/theorems)]
-    (let [name (subs (str (key rule)) 1)
+    (let [id (key rule)
           given (:given (val rule))
           conclusion (:conclusion (val rule))]
-      (println (str name ": \t" given " -> " conclusion)))))
+      (println (str id ": \t" given " -> " conclusion)))))

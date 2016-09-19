@@ -17,12 +17,12 @@
 ; equal-introduction
 
 (proof '(= :x :x))
-(step-f "equal-i")
+(step-f :equal-i)
 (unify 'V1 :x)
 
 ;
 ;   --------------------------------------------------
-; 1: (= :x :x)                               "equal-i"
+; 1: (= :x :x)                               :equal-i
 ;   --------------------------------------------------
 
 ; -----------------------------------------------------------------------------------------
@@ -39,8 +39,8 @@
 ; forall-introduction
 
 (proof '(forall [x] (or (P x) (not (P x)))))
-(step-b "forall-i" 2)
-(step-f "tnd")
+(step-b :forall-i 2)
+(step-f :tnd)
 (unify 'V2 '(P V1))
 
 ;
@@ -56,7 +56,7 @@
 ; forall-elimination
 
 (proof '[(forall [x] (P x)) (actual :t)] '(P :t))
-(step-f "forall-e" 1 2)
+(step-f :forall-e 1 2)
 
 ;
 ;    --------------------------------------------------
@@ -69,7 +69,7 @@
 ; exists-introduction
 
 (proof '[(actual :t) (P :t)] '(exists [x] (P x)))
-(step-b "exists-i" 4 1)
+(step-b :exists-i 4 1)
 
 ;
 ;    --------------------------------------------------
@@ -82,10 +82,12 @@
 ; exists-elimination
 
 (proof '(exists [x] (P x)) '(or (P :t) (not (P :t))))
-(step-b "exists-e" 3 1)
+(step-b :exists-e 3 1)
 (unify 'V1 :t)
-(step-f "or-i1" 3)
+(step-f :or-i1 3)
 (unify 'V2 '(not (P :t)))
+
+; TODO wrong!!
 
 ;
 ;    --------------------------------------------------

@@ -389,7 +389,7 @@
     (if (and (= (first given) 'at)
              (= (first conclusion) 'at))
       (if (= (second given) (second conclusion))
-        {:name       (:name rule)
+        {:id         (:id rule)
          :given      [(first (drop 2 given))]
          :conclusion [(first (drop 2 conclusion))]}
         (throw (Exception.
