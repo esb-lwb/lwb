@@ -13,16 +13,22 @@
             [lwb.pred :refer :all]))
 
 ; signature ------------------------------------------------------------------
+(defn setup []
+  (def sig {:c  [:const 0]
+            :d  [:const 0]
+            :f0 [:func 0]
+            :f1 [:func 1]
+            :f2 [:func 2]
+            :f3 [:func 3]
+            :r  [:prop 0]
+            :P1 [:pred 1]
+            :P2 [:pred 2]}))
 
-(def sig {:c  [:const 0]
-          :d  [:const 0]
-          :f0 [:func 0]
-          :f1 [:func 1]
-          :f2 [:func 2]
-          :f3 [:func 3]
-          :r  [:prop 0]
-          :P1 [:pred 1]
-          :P2 [:pred 2]})
+(defn fixture [f]
+  (setup)
+  (f))
+
+(use-fixtures :once fixture)
 
 ; tests -----------------------------------------------------------------------
 

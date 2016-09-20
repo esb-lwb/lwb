@@ -32,12 +32,14 @@
 
 ; exists-not->not-forall
 
+;; TODO :exists-e
 (proof '(exists [x] (not (P x))) '(not (forall [x] (P x))))
 (step-b :not-i 3)
-(step-b :exists-e 4 1)
+(step-f :exists-e 1 4)
+(choose-option 4 1)
 (unify 'V1 :i)
 (step-f :forall-e 2 3)
-(step-f :not-e 4 5)
+(step-b :not-e 6 7)
 
 ;(export-theorem "resources/nd/theorems-pred.clj" :exists-not->not-forall)
 
@@ -55,9 +57,10 @@
 
 ; forall-not->not-exists
 
+;; TODO :exists-e
 (proof '(forall [x] (not (P x))) '(not (exists [x] (P x))))
 (step-b :not-i 3)
-(step-b :exists-e 4 2)
+(step-f :exists-e 4 2)
 (unify 'V1 :i)
 (step-f :forall-e 1 3)
 (step-f :not-e 4 5)

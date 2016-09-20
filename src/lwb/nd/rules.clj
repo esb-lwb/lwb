@@ -74,7 +74,7 @@
   (cond
     (contains? keywords arg) (list `quote arg)
     (symbol? arg) arg
-    (vector? arg) arg ; vectors can only appear in variable declarations
+    (vector? arg) (mapv gen-term arg)
     (list? arg) (let [op (list `quote (first arg))
                       params (mapv gen-term (rest arg))]
                   (list* `list op params))

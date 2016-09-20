@@ -37,6 +37,7 @@
               (infer a X)
               (infer b X)]
  :conclusion [X]
+ :forward  true
  :backward  true}
 
 ; IMPL
@@ -47,8 +48,7 @@
 {:id :impl-e
  :given      [a (impl a b)]
  :conclusion [b]
- :forward   true
- :backward  true}
+ :forward   true}
 
 ; NOT
 {:id :not-i
@@ -61,7 +61,7 @@
  :forward   true
  :backward  true}
 
-; RAA/CONTRA
+; RAA/EFQ
 {:id :raa
  :given      [(infer (not a) contradiction)]
  :conclusion [a]
@@ -72,24 +72,6 @@
  :forward   true
  :backward  true}
           
-; EQUAL
-{:id :equal-i
- :given      []
- :conclusion [(= t t)]
- :forward   true} 
-{:id :equal-e
- :prereq [(substitutable? phi _:x a)
-          (seq? phi)]
- :given  [(= a b) phi _:x]
- :conclusion [(substitution phi _:x b)]
- :forward true}
-;; sometimes you need this
-{:id :equal-reflexivity
- :given      [(= a b)]
- :conclusion [(= b a)]
- :forward   true
- :backward  true}
-
 ; FORALL 
 {:id :forall-i
  :given      [(infer (actual x0)
@@ -114,7 +96,22 @@
                       (substitution phi x x0)]
                      X)]
  :conclusion [X]
+ :forward  true}
+
+; EQUAL
+{:id :equal-i
+ :given      []
+ :conclusion [(= t t)]
+ :forward   true}
+{:id :equal-e
+ :prereq [(substitutable? phi _:x a)
+          (seq? phi)]
+ :given  [(= a b) phi _:x]
+ :conclusion [(substitution phi _:x b)]
+ :forward true}
+;; sometimes you need this
+{:id :equal-reflexivity
+ :given      [(= a b)]
+ :conclusion [(= b a)]
+ :forward   true
  :backward  true}
-
-
-
