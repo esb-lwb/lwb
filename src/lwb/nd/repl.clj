@@ -102,8 +102,8 @@
     (let [id (key rule)
           given (:given (val rule))
           conclusion (:conclusion (val rule))
-          forward? (:forwards (val rule))
-          backward? (:backwards (val rule))
+          forward? (:forward (val rule))
+          backward? (:backward (val rule))
           usage (case [forward? backward?]
                   [true true] "step-f and step-b"
                   [true nil ] "step-f only"
