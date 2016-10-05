@@ -25,7 +25,7 @@
 (defn find-duplicates
   "Finds duplicates entries inside the proof that can be deleted.
    Returns a map with the deletable ids as key and the replacement items as value.
-   Only items without rule, in the same scope and the same subproof will be markes as deletable"
+   Only items without rule, in the same scope and the same subproof will be marked as deletable"
   ([proof] (find-duplicates proof proof))
   ([proof sub]
    (let [scope (get-scope proof (last sub))
@@ -63,8 +63,8 @@
   [proof]
   (let [duplicates (find-duplicates proof)
         ;; if an item is the unproved result of a subproof and its proved duplicate is outside
-        ;; deleting the result due to its duplicate would lead to a strange structute inside the proof, 
-        ;; therefore the item isn't deleted, but instead change to refer to the outside duplicate
+        ;; deleting the result due to its duplicate would lead to a strange structure inside the proof, 
+        ;; therefore the item isn't deleted, but instead changed to refer to the outside duplicate
         ;; e.g. "Generalisation" (temporal-logic)
         ;; initial situation        ==>    without fix              ==>    with fix
         ;; 1 (at x a) :premise             1 (at x a) :premise             1 (at x a) :premise
@@ -151,7 +151,7 @@
      (check-duplicates (conj prem todo form)))))
 
 (defn re-infer
-  "Returns a (sub)proof from the internal strucure back to a depiction like \"(infer [premises] formula)\""
+  "Returns a (sub)proof from the internal structure back to a depiction like \"(infer [premises] formula)\""
   [proof]
   (let [premises (into [] (map #(:body %) (filter #(or (= (:rule %) :assumption)
                                                        (= (:rule %) :premise)) proof)))
@@ -258,7 +258,7 @@
   "Checks the arguments for errors and irregularities. 
    If nothing is found returns a map with additional information for further proceeding."
   [proof rule args forward?]
-  ;; seperate lines and user-inputs and check the right number of user-inputs
+  ;; separate lines and user-inputs and check the right number of user-inputs
   (let [lines (filter number? args)
         user-inputs (remove number? args)
         num-inputs (count (filter #(.startsWith (str %) "_:")

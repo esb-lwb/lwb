@@ -9,15 +9,33 @@
 (ns lwb.nd.repl
   (:require [lwb.nd.deduction :as deduc]
             [lwb.nd.prereqs :refer :all]
+            [lwb.nd.storage :refer [rules reset-rules]]
             [lwb.nd.io :as io]
             [lwb.nd.printer :refer [pprint]]))
 
-(io/import-rules "resources/nd/rules-prop-pred.clj")
-;(io/import-rules "resources/nd/rules-ltl.clj")
-(io/import-trivials "resources/nd/trivial-theorems.clj")
-(io/import-theorems "resources/nd/theorems-prop.clj")
-(io/import-theorems "resources/nd/theorems-pred.clj")
-;(io/import-theorems "resources/nd/theorems-ltl.clj")
+(defn load-logic
+  "Load rules and theorems of the logic to use
+   Logic can be :prop, :pred. :ltl"
+  [logic]
+  (reset-rules)
+  (case logic
+    :prop (do 
+            (io/import-rules "resources/nd/rules-prop.edn")
+            (io/import-theorems "resources/nd/theorems-prop.edn"))
+    :pred (do
+            (io/import-rules "resources/nd/rules-prop.edn")
+            (io/import-rules "resources/nd/rules-pred.edn")
+            (io/import-theorems "resources/nd/theorems-prop.edn")
+            (io/import-theorems "resources/nd/theorems-pred.edn"))
+    :ltl (do
+           (io/import-rules "resources/nd/rules-ltl.edn")
+           (io/import-theorems "resources/nd/theorems-ltl.edn"))
+    ))
+
+; Choose the logic for the session
+(load-logic :prop)
+;(load-logic :pred)
+;(load-logic :ltl)
 
 ;; holds the actual state of the proof 
 (def p (atom []))
@@ -98,7 +116,7 @@
       (show))))
 
 (defn show-rules []
-  (for [rule (sort @io/rules)]
+  (for [rule (sort (filter #(= :rule (:type (val %))) @rules))]
     (let [id (key rule)
           given (:given (val rule))
           conclusion (:conclusion (val rule))

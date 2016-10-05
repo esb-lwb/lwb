@@ -9,7 +9,7 @@
 (ns lwb.nd.rules
   (:refer-clojure :exclude [==])
   (:require [clojure.core.logic :refer :all]
-            [lwb.nd.io :refer [rules theorems trivials]]
+            [lwb.nd.storage :refer [rules theorems]]
             [clojure.math.combinatorics :refer [permutations]]
             [clojure.spec :as s]))
 
@@ -136,7 +136,7 @@
   (list (conj (map gen-prereq-row prereqs) 
               (vec (concat fresh-args qs)) `project)))
 
-(defn- gen-logic-function
+(defn gen-logic-function
   "Takes given and conclusions from a rule and builds a core.logic relation that will represent that rule     
    e.g. \"and-i\" `[a b] => [(and a b)]`     
    `(fn [a b q1]`     
@@ -155,7 +155,7 @@
 
 ;; ## Utility functions for rules
 
-(defn- make-rule
+(defn make-rule
   "Takes either a map or the id of an existing rule or theorem to create
    the appropriate core.logic-function for this rule"
   [rule]
@@ -214,7 +214,7 @@
          
 ;; NOTE - right now "apply-rule" can't separate arguments from lines and user-inputs, which may cause absurd behavior 
 
-(defn apply-rule 
+#_(defn apply-rule 
   "Applies the rule/theorem (rule [string or map]) either forward or backward (forward?) 
    on the given parameters (args & optional).     
    The obligatory arguments (args) will always be the first arguments passed to 
@@ -244,7 +244,63 @@
                   (eval (list `run* logic-args (conj (concat x y) fn)))))]
     (map first (remove empty? results))))
 
-(defn apply-trivials
+; apply-rule without permutations
+
+; without permutations on must in certain situations use unify
+; but on the other side one needs not to make choices
+; but: if we have more  than 2 givens and make a step backward
+;      from the concept of the rules does the order of givens not play a role!!
+
+(defn apply-rule
+  [rule forward? args & [optional]]
+  (let [rule-map (cond
+                   (map? rule) rule
+                   (keyword? rule) (or (rule @rules) (rule @theorems))
+                   :else (throw (Exception. "Wrong type of argument: \"rule\" has to be a keyword or a map.")))
+        frule (if forward? rule-map (assoc rule-map :given (:conclusion rule-map) :conclusion (:given rule-map)))
+        obligatory-args (mapv #(list `quote %) args)
+        optional-args   (mapv #(list `quote %) optional)
+        logic-args-num (- (+ (count (:given frule)) (count (:conclusion frule)))
+                          (+ (count obligatory-args) (count optional-args)))
+        logic-args (mapv #(symbol (str %1 %2))
+                         (take logic-args-num (cycle ['q]))
+                         (take logic-args-num (iterate inc 1)))
+        logic-rel (eval (make-rule frule))]
+        (eval (list `run* logic-args (list* logic-rel (concat obligatory-args optional-args logic-args))))))
+
+(comment
+
+  (apply-rule :and-i false '[(and A B)])
+  (apply-rule' :and-i false '[(and A B)])
+  (apply-rule' :and-i true '[A B])
+  (apply-rule :or-e false '[X])
+  (apply-rule' :or-e false '[X])
+  (apply-rule :or-e false '[X] '[(or A B)])
+  (apply-rule' :or-e false '[X] '[(or A B)])
+
+  (def args '[A B])
+  (map #(conj (list %) `quote) args)
+  (def args' (map #(list `quote %) args))
+  args'
+
+  (def fnx (eval (make-rule :and-i)))
+  (make-rule :and-i)
+
+  (def logic-args-num 1)
+  (def logic-args (mapv #(symbol (str %1 %2))
+                        (take logic-args-num (cycle ['q]))
+                        (take logic-args-num (iterate inc 1))))
+  logic-args
+
+  (list 'run* logic-args (conj (concat args' logic-args) fnx))
+  (eval (list 'run* logic-args (conj (concat args' logic-args) fnx)))
+
+  (concat args' logic-args)
+  (list `run* logic-args (list* fnx (concat args' logic-args)))
+  (eval (list `run* logic-args (list* fnx (concat args' logic-args))))
+  )
+
+#_(defn apply-trivials
   "Applies all trivial theorems to the given form and returns the first successful result.     
    To extend the predefined trivial theorems use the \"import-trivials\" function (ns: io)"
   [form]
@@ -255,3 +311,44 @@
         res (first (drop-while empty? results))]
     res))
 
+
+(comment
+  ; man kann die Regel voraärts und rückwärts auswerten, ohne sie zu ändern
+  ; es längt alles an der Bestückung der Parameter
+  (def and-i (eval (make-rule (:and-i @rules))))
+  (run 1 [q1] (and-i 'A 'B q1))
+  (run 1 [q1 q2] (and-i q1 q2 '(and A B)))
+  (run 1 [q1 q2] (and-i q1 q2 '(and (or A B) B)))
+
+  (keyword? :?)
+
+  ; ergibt die Argumente für die Relation
+  (defn- gen-relargs [args]
+    (let [counter (atom -1)
+          tr (fn [arg] (if (= :? arg)
+                         (symbol (str \q (swap! counter inc)))
+                         (list `quote arg)))]
+      (mapv tr args)))
+
+  #_(defn apply-rule'
+    [logic-rel args]
+    (let [rel-args (gen-relargs args)
+          run-args (vec (filter symbol? rel-args))]
+      (eval (list `run* run-args (list* logic-rel rel-args)))))
+  
+  ; Diese Variante von apply-rule setzt voraus, dass der Speicher für die Regeln bereits die
+  ; logische Relation enthält.
+  (defn apply-rule'
+    [rule args]
+    (let [rel-args (gen-relargs args)
+          run-args (vec (filter symbol? rel-args))]
+      (eval (list `run* run-args (list* (:logic-rel (rule @rules)) rel-args)))))
+_
+  ; so geht :and-i vorwärts und rückwärts
+  (apply-rule' :and-i '(A B :?))
+  (apply-rule' :and-i '(A :? :?))
+  (apply-rule' :and-i '(:? :? :?))
+  (apply-rule' :and-i '(:? :? (and A B)))
+  
+  (apply-rule' (:logic-rel (:and-i @rules)) '(A B :?))
+  )

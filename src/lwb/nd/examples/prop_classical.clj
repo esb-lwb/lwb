@@ -38,7 +38,7 @@
 
 (proof '(not (not P)) 'P)
 (step-b :raa 3)
-(step-f :not-e 1 2)
+(step-f :not-e 2 1)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :notnot-e)
 ;
@@ -57,7 +57,7 @@
 (proof '[(impl P Q) (not Q)] '(not P))
 (step-b :not-i 4)
 (step-f :impl-e 3 1)
-(step-f :not-e 2 4)
+(step-f :not-e 4 2)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :mt)
 ;
@@ -77,13 +77,14 @@
 
 (proof '(or P (not P)))
 (step-b :raa 2)
-(step-b :not-e 3 1)
-(choose-option 3 2)
+(step-b :not-e 3)
+(unify 'V1 '(or P (not P)))
+;(choose-option 3 2)
 (step-b :or-i2 3)
 (step-b :not-i 3)
 (step-f :or-i1 2)
-(unify 'V1 '(not P))
-(step-f :not-e 1 3)
+(unify 'V2 '(not P))
+(step-f :not-e 3 1)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :tnd)
 ;
@@ -110,7 +111,7 @@
 (proof '(impl P Q) '(impl (not Q) (not P)))
 (step-b :impl-i 3)
 (step-b :not-i 4)
-(step-f :impl-e 1 3)
+(step-f :impl-e 3 1)
 (step-b :not-e 6 4)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :contrap)
@@ -135,10 +136,11 @@
 (proof '(impl (impl (impl P Q) P) P))
 (step-b :impl-i 2)
 (step-b :raa 3)
-(step-b :not-e 4 2)
-(choose-option 4 2)
+(step-b :not-e 4)
+(unify 'V1 'P)
+;(choose-option 4 2)
 (step-b :impl-e 4)
-(unify 'V1 '(impl P Q))
+(unify 'V2 '(impl P Q))
 (step-b :impl-i 4)
 (step-f :not-e 3 2)
 (step-b :efq 6)
@@ -170,16 +172,19 @@
 
 (proof '(not (and P Q)) '(or (not P) (not Q)))
 (step-b :raa 3)
-(step-b :not-e 4 1)
-(choose-option 4 2)
+(step-b :not-e 4)
+(unify 'V1 '(and P Q))
+;(choose-option 4 2)
 (step-b :and-i 4)
 (step-b :raa 5)
-(step-b :not-e 5 2)
-(choose-option 5 2)
+(step-b :not-e 5)
+(unify 'V2 '(or (not P) (not Q)))
+;(choose-option 5 2)
 (step-b :or-i2 5)
 (step-b :raa 7)
-(step-b :not-e 8 2)
-(choose-option 8 2)
+(step-b :not-e 8)
+(unify 'V3 '(or (not P) (not Q)))
+;(choose-option 8 2)
 (step-b :or-i1 8)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :not-and->or-not)
@@ -209,13 +214,13 @@
 
 (proof '(or (not P) (not Q)) '(not (and P Q)))
 (step-b :or-e 3 1)
-(choose-option 3 2)
+;(choose-option 3 2)
 (step-b :not-i 4)
 (step-f :and-e1 3)
-(step-f :not-e 2 4)
+(step-f :not-e 4 2)
 (step-b :not-i 9)
 (step-f :and-e2 8)
-(step-f :not-e 7 9)
+(step-f :not-e 9 7)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :or-not->not-and)
 ;
@@ -247,11 +252,11 @@
 (step-b :not-i 3)
 (step-f :or-i1 2)
 (unify 'V1 'Q)
-(step-f :not-e 1 3)
+(step-f :not-e 3 1)
 (step-b :not-i 7)
 (step-f :or-i2 5)
 (unify 'V2 'P)
-(step-f :not-e 1 6)
+(step-f :not-e 6 1)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :not-or->and-not)
 ;
@@ -277,9 +282,9 @@
 (step-f :and-e1 1)
 (step-f :and-e2 1)
 (step-b :or-e 6 4)
-(choose-option 6 1)
-(step-f :not-e 2 5)
-(step-f :not-e 3 7)
+;(choose-option 6 1)
+(step-f :not-e 5 3)
+(step-f :not-e 7 2)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :and-not->not-or)
 ;

@@ -152,5 +152,5 @@
  :forward   true}
 {:id :linearity
  :given      [(<= i j) (<= i k)]
- :conclusion [(or (or (<= j k) (~= j k)) (<= k j))]
+ :conclusion [(or (or (<= j k) (== j k)) (<= k j))]
  :forward   true}
