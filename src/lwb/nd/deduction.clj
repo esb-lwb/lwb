@@ -430,7 +430,7 @@
           proof)
         (check-duplicates (add-after-item proof item new-item))))))
 
-(defn trivial
+#_(defn trivial
   [proof line]
   (let [item (get-item proof line)
         body (:body item)

@@ -313,7 +313,7 @@
 
 
 (comment
-  ; man kann die Regel voraärts und rückwärts auswerten, ohne sie zu ändern
+  ; man kann die Regel vorwärts und rückwärts auswerten, ohne sie zu ändern
   ; es längt alles an der Bestückung der Parameter
   (def and-i (eval (make-rule (:and-i @rules))))
   (run 1 [q1] (and-i 'A 'B q1))
@@ -343,12 +343,13 @@
     (let [rel-args (gen-relargs args)
           run-args (vec (filter symbol? rel-args))]
       (eval (list `run* run-args (list* (:logic-rel (rule @rules)) rel-args)))))
-_
+ 
+  (lwb.nd.io/import-rules "resources/nd/rules-prop.edn")
+  
   ; so geht :and-i vorwärts und rückwärts
   (apply-rule' :and-i '(A B :?))
   (apply-rule' :and-i '(A :? :?))
   (apply-rule' :and-i '(:? :? :?))
   (apply-rule' :and-i '(:? :? (and A B)))
   
-  (apply-rule' (:logic-rel (:and-i @rules)) '(A B :?))
   )

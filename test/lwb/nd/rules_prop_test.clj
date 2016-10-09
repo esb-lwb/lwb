@@ -12,7 +12,7 @@
             [lwb.nd.io :as io]))
 
 (defn setup []
-  (io/import-rules "resources/nd/rules-prop-pred.clj"))
+  (io/import-rules "resources/nd/rules-prop.edn"))
 
 (defn fixture [f]
   (setup)
