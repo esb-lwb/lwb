@@ -110,6 +110,30 @@
       {:plid 4, :body 'A, :rule nil}]])
   )
 
+(defn proof
+  "Gives a new proof for the premises and the conclusion.
+   Uses global `plid`."
+  [premises conclusion]
+  (do
+    (reset-plid)
+    (let [premises-lines (if (vector? premises)
+                         (vec (map #(hash-map :plid (new-plid) :body % :rule :premise) premises))
+                         [{:plid (new-plid) :body premises :rule :premise}])
+        proof-lines (conj premises-lines {:plid (new-plid) :body conclusion :rule nil})]
+    
+      (add-todo-lines proof-lines))))
+
+(comment
+  (proof '[A B] 'X)
+  (proof '[A B C] 'X)
+  (proof 'A 'X)
+  (proof [] 'X)
+  )
+
+
+
+;; TODO
+
 (defn get-item
   "Returns the item from proof on line. 
    line x => returns item on line x
