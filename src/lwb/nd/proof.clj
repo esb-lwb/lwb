@@ -116,11 +116,9 @@
   [premises conclusion]
   (do
     (reset-plid)
-    (let [premises-lines (if (vector? premises)
-                         (vec (map #(hash-map :plid (new-plid) :body % :rule :premise) premises))
-                         [{:plid (new-plid) :body premises :rule :premise}])
-        proof-lines (conj premises-lines {:plid (new-plid) :body conclusion :rule nil})]
-    
+    (let [premises' (if (vector? premises) [premises])
+          premises-lines (vec (map #(hash-map :plid (new-plid) :body % :rule :premise) premises'))
+          proof-lines (conj premises-lines {:plid (new-plid) :body conclusion :rule nil})]
       (add-todo-lines proof-lines))))
 
 (comment
