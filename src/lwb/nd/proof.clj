@@ -75,7 +75,7 @@
    {:plid 1, :body '(or P (not P)), :rule :x}])
 
 (defn add-todo-lines
-  "Returns a proof with todo lines added.     
+  "Returns proof with todo lines added.     
    Whenever there is a line in a proof without a rule, we have to insert a todo line
    above the proof line."
   [proof]
@@ -108,6 +108,46 @@
      {:plid 1, :body '(or P (not P)), :rule nil}
      [{:plid 5, :body 'B, :rule :x}
       {:plid 4, :body 'A, :rule nil}]])
+  )
+; the implementation assumes that a todo line is always left of a regular line
+(defn- remove-current?
+  "Should the current todo line be removed?"
+  [loc]
+  (and (todoline? (zip/node loc)) (not (nil? (:rule (zip/node (zip/right loc)))))))
+
+(defn remove-todo-lines
+  "Returns proof where todo lines that are solved are removed."
+  [proof]
+  (loop [loc  (zip/vector-zip proof)]
+    (if (zip/end? loc)
+      (zip/node loc)
+      (if (remove-current? loc)
+        (recur (zip/next (zip/remove loc)))
+        (recur (zip/next loc))))))
+
+(comment
+
+  (remove-todo-lines
+    [{:plid 1, :body '(or P (not P)), :rule nil}])
+  (remove-todo-lines
+    [{:plid 21, :body :todo, :rule nil}
+     {:plid 1, :body '(or P (not P)), :rule :tnd}])
+  (remove-todo-lines
+    [{:plid 2, :body 'A, :rule :and-e}
+     {:plid 1, :body '(or P (not P)), :rule nil}])
+  (remove-todo-lines
+    [{:plid 2, :body 'A, :rule :and-e}
+     {:plid 21, :body :todo, :rule nil}
+     {:plid 1, :body '(or P (not P)), :rule :x}])
+  (remove-todo-lines
+    [{:plid 3, :body :todo, :rule nil}
+     {:plid 1, :body '(or P (not P)), :rule :x}
+     [{:plid 4, :body 'A, :rule nil}]])
+  (remove-todo-lines
+    [{:plid 3, :body :todo, :rule nil}
+     {:plid 1, :body '(or P (not P)), :rule nil}
+     [{:plid 5, :body :todo, :rule nil}
+      {:plid 4, :body 'A, :rule :x}]])
   )
 
 (defn proof
