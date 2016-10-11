@@ -112,6 +112,168 @@
         (recur (zip/next (zip/remove loc)))
         (recur (zip/next loc))))))
 
+(defn add-after-plid
+  "Adds a proof line or a subproof after the item with the given `plid`.    
+   requires: the added plines have new plids!"
+  [proof plid pline-or-subproof]
+  (loop [loc (zip/vector-zip proof)]
+    (if (zip/end? loc)
+      (zip/node loc)
+      (if (= (:plid (zip/node loc)) plid)
+             (recur (zip/next (zip/insert-right loc pline-or-subproof)))
+             (recur (zip/next loc))))))
+
+(add-after-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  21
+  {:plid 2, :body 'A, :rule :x}
+  )
+
+(add-after-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  1
+  {:plid 2, :body 'A, :rule :x}
+  )
+
+(add-after-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  21
+  [{:plid 2, :body 'A, :rule :x}
+   {:plid 3, :body 'A, :rule :x}]
+  )
+
+(add-after-plid
+  [{:plid 21, :body :todo, :rule nil}
+   [{:plid 22, :body :todo, :rule nil}
+    {:plid 23, :body 'A, :rule :and-e}]
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  22
+  [{:plid 2, :body 'A, :rule :x}
+   {:plid 3, :body 'A, :rule :x}]
+  )
+
+(defn add-before-plid
+  "Adds a proof line or a subproof before the item with the given `plid`.    
+   requires: the added plines have new plids!"
+  [proof plid pline-or-subproof]
+  (loop [loc (zip/vector-zip proof)]
+    (if (zip/end? loc)
+      (zip/node loc)
+      (if (= (:plid (zip/node loc)) plid)
+        (recur (zip/next (zip/insert-left loc pline-or-subproof)))
+        (recur (zip/next loc))))))
+
+(add-before-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  1
+  {:plid 2, :body 'A, :rule :x}
+  )
+
+(add-before-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  21
+  {:plid 2, :body 'A, :rule :x}
+  )
+
+(add-before-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  21
+  [{:plid 2, :body 'A, :rule :x}
+   {:plid 3, :body 'A, :rule :x}]
+  )
+
+(add-before-plid
+  [{:plid 21, :body :todo, :rule nil}
+   [{:plid 22, :body :todo, :rule nil}
+    {:plid 23, :body 'A, :rule :and-e}]
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  23
+  [{:plid 2, :body 'A, :rule :x}
+   {:plid 3, :body 'A, :rule :x}]
+  )
+
+
+(defn remove-plid
+  "Removes the proof line with the given `plid`.    
+   requires: there are no more references to that proof line."
+  [proof plid]
+  (loop [loc (zip/vector-zip proof)]
+    (if (zip/end? loc)
+      (zip/node loc)
+      (if (= (:plid (zip/node loc)) plid)
+        (recur (zip/next (zip/remove loc)))
+        (recur (zip/next loc))))))
+
+(remove-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  1
+  )
+
+(remove-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  21
+  )
+
+(remove-plid
+  [{:plid 21, :body :todo, :rule nil}
+   [{:plid 22, :body :todo, :rule nil}
+    {:plid 24, :body :todo, :rule nil}
+    {:plid 23, :body 'A, :rule :and-e}]
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  24
+  )
+
+(defn replace-plid
+  "Replaces the proof line with the given `plid` with the new proof line.    
+   requires: there are no more references to the old proof line."
+  [proof plid pline]
+  (loop [loc (zip/vector-zip proof)]
+    (if (zip/end? loc)
+      (zip/node loc)
+      (if (= (:plid (zip/node loc)) plid)
+        (recur (zip/next (zip/replace loc pline)))
+        (recur (zip/next loc))))))
+
+(replace-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  1
+  {:plid 2, :body 'A, :rule :x}
+  )
+
+(replace-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  21
+  {:plid 2, :body 'A, :rule :x}
+  )
+
+; geht auch -- nötig??
+(replace-plid
+  [{:plid 21, :body :todo, :rule nil}
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  21
+  [{:plid 2, :body 'A, :rule :x}
+   {:plid 3, :body 'A, :rule :x}]
+  )
+
+(replace-plid
+  [{:plid 21, :body :todo, :rule nil}
+   [{:plid 22, :body :todo, :rule nil}
+    {:plid 23, :body 'A, :rule :and-e}]
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  23
+  {:plid 2, :body 'A, :rule :x}
+  )
+
 (defn proof
   "Gives a new proof for the premises and the conclusion.
    Uses global `plid`."
@@ -235,6 +397,7 @@
               (recur (subvec p 1) (conj res v))))
           :else (recur (subvec p 1) (conj res (first p))))))))
 
+; not used
 #_(defn add-after-line
     [proof after newitem]
     (let [item (get-item proof after)]
@@ -244,7 +407,8 @@
   [proof after newitem]
   (edit-proof proof after newitem :add-after))
 
-(defn add-before-line
+; not used
+#_(defn add-before-line
   [proof before newitem]
   (let [item (get-item proof before)]
     (edit-proof proof item newitem :add-before)))
@@ -257,7 +421,8 @@
   [proof item]
   (edit-proof proof item nil :remove))
 
-(defn replace-line
+; not used
+#_(defn replace-line
   [proof line newitem]
   (let [item (get-item proof line)]
     (edit-proof proof item newitem :replace)))
