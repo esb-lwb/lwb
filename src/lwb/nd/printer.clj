@@ -7,7 +7,7 @@
 ; the terms of this license.
 
 (ns lwb.nd.printer
-  (:require [lwb.nd.proof :refer [id-to-line]]
+  (:require [lwb.nd.proof :refer [pline-pos]]
             [clojure.string :as str]
             [clojure.pprint :as pp]))
 
@@ -18,7 +18,7 @@
 
 (defn pprint-line
   [proof depth item]
-  (let [line (id-to-line proof (:id item))
+  (let [line (pline-pos proof (:plid item))
         body (str (if (= (:body item) :todo) "..." (:body item)))
         rule (condp = (:rule item)
                nil         ""
@@ -27,7 +27,7 @@
                (let [name (subs (:rule item) 0 (.lastIndexOf (:rule item) "("))
                      ids  (subs (:rule item) (inc (.lastIndexOf (:rule item) "(")) (.lastIndexOf (:rule item) ")"))
                      ;; convert ids to line-numbers
-                     lines   (str/replace ids #"\b[0-9]+\b" #(str (id-to-line proof (Integer. %))))
+                     lines   (str/replace ids #"\b[0-9]+\b" #(str (pline-pos proof (Integer. %))))
                      ;; [12 12] => [12]
                      lines-1 (str/replace lines #"\[([0-9]+)\s\1\]" #(str "[" (second %) "]"))
                      ;; sort the line-numbers asc

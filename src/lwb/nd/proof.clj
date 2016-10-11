@@ -59,7 +59,12 @@
   (= :todo (:body pline)))
 
 (defn- insert-left?
-  "Must a todo line be inserted leftof this loc?"
+  "Must a todo line be inserted left of this loc?    
+  (1) the current proof line is not a subproof   
+  and
+  (2) the current proof line is not solved     
+  and    
+  (3) there is not already a todo line left of the current line."
   [loc]
   (let [prev-loc (zip/left loc)
         curr-line (zip/node loc)
@@ -86,34 +91,16 @@
         (recur (zip/next (zip/insert-left loc (new-todo-line))))
         (recur (zip/next loc))))))
 
-(comment
-
-  (add-todo-lines
-    [{:plid 1, :body '(or P (not P)), :rule nil}])
-  (add-todo-lines
-    [{:plid 21, :body :todo, :rule nil}
-     {:plid 1, :body '(or P (not P)), :rule nil}])
-  (add-todo-lines
-    [{:plid 2, :body 'A, :rule :and-e}
-     {:plid 1, :body '(or P (not P)), :rule nil}])
-  (add-todo-lines
-    [{:plid 2, :body 'A, :rule :and-e}
-     {:plid 1, :body '(or P (not P)), :rule :x}])
-  (add-todo-lines
-    [{:plid 3, :body :todo, :rule nil}
-     {:plid 1, :body '(or P (not P)), :rule nil}
-     [{:plid 4, :body 'A, :rule nil}]])
-  (add-todo-lines
-    [{:plid 3, :body :todo, :rule nil}
-     {:plid 1, :body '(or P (not P)), :rule nil}
-     [{:plid 5, :body 'B, :rule :x}
-      {:plid 4, :body 'A, :rule nil}]])
-  )
 ; the implementation assumes that a todo line is always left of a regular line
 (defn- remove-current?
-  "Should the current todo line be removed?"
+  "Should the current todo line be removed?    
+  (1) the todo line is follewed by a pline which is solved     
+  or    
+  (2) the todo line is follwed by a subproof."
   [loc]
-  (and (todoline? (zip/node loc)) (not (nil? (:rule (zip/node (zip/right loc)))))))
+  (and (todoline? (zip/node loc)) 
+       (or (not (nil? (:rule (zip/node (zip/right loc)))))
+           (zip/branch? (zip/right loc)))))
 
 (defn remove-todo-lines
   "Returns proof where todo lines that are solved are removed."
@@ -125,39 +112,14 @@
         (recur (zip/next (zip/remove loc)))
         (recur (zip/next loc))))))
 
-(comment
-
-  (remove-todo-lines
-    [{:plid 1, :body '(or P (not P)), :rule nil}])
-  (remove-todo-lines
-    [{:plid 21, :body :todo, :rule nil}
-     {:plid 1, :body '(or P (not P)), :rule :tnd}])
-  (remove-todo-lines
-    [{:plid 2, :body 'A, :rule :and-e}
-     {:plid 1, :body '(or P (not P)), :rule nil}])
-  (remove-todo-lines
-    [{:plid 2, :body 'A, :rule :and-e}
-     {:plid 21, :body :todo, :rule nil}
-     {:plid 1, :body '(or P (not P)), :rule :x}])
-  (remove-todo-lines
-    [{:plid 3, :body :todo, :rule nil}
-     {:plid 1, :body '(or P (not P)), :rule :x}
-     [{:plid 4, :body 'A, :rule nil}]])
-  (remove-todo-lines
-    [{:plid 3, :body :todo, :rule nil}
-     {:plid 1, :body '(or P (not P)), :rule nil}
-     [{:plid 5, :body :todo, :rule nil}
-      {:plid 4, :body 'A, :rule :x}]])
-  )
-
 (defn proof
   "Gives a new proof for the premises and the conclusion.
    Uses global `plid`."
   [premises conclusion]
   (do
     (reset-plid)
-    (let [premises' (if (vector? premises) [premises])
-          premises-lines (vec (map #(hash-map :plid (new-plid) :body % :rule :premise) premises'))
+    (let [premises-vec (if-not (vector? premises) [premises] premises)
+          premises-lines (vec (map #(hash-map :plid (new-plid) :body % :rule :premise) premises-vec))
           proof-lines (conj premises-lines {:plid (new-plid) :body conclusion :rule nil})]
       (add-todo-lines proof-lines))))
 
@@ -166,6 +128,8 @@
   (proof '[A B C] 'X)
   (proof 'A 'X)
   (proof [] 'X)
+  (lwb.nd.printer/pprint (proof '[A B] 'X))
+  (lwb.nd.printer/pprint (proof '[A B] '(impl A B)))
   )
 
 
@@ -187,20 +151,29 @@
         (vector? (first p)) (recur (into [] (concat (first p) (subvec p 1))) (inc l))
         :else (recur (subvec p 1) (inc l))))))
 
-(defn line-to-id
+; semms to be not used
+#_(defn line-to-id
   "Returns the id for the given line"
   [proof line]
   (if (not (vector? line))
-    (:id (nth (flatten proof) (dec line)))
+    (:plid (nth (flatten proof) (dec line)))
     [(line-to-id proof (first line)) (line-to-id proof (last line))]))
 
+
+(defn pline-pos
+   "Returns the position of the proof line with the given id"
+   [proof id]
+  (let [flat-proof (flatten proof)]
+    (first (keep-indexed #(when (= id (:plid %2)) (inc %1)) flat-proof))))
+
+; ersetzen durch pline-pos??
 (defn id-to-line
   "Returns the line, which contains the item, with the given id"
   [proof id]
   (if (not (vector? id))
     (loop [p (flatten proof)
            l 1]
-      (if (= (:id (first p)) id)
+      (if (= (:plid (first p)) id)
         l
         (recur (rest p) (inc l))))
     [(id-to-line proof (first id)) (id-to-line proof (last id))]))
