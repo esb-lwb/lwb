@@ -13,9 +13,9 @@
 ;; IDs for proof line
 (def plid (atom 0))
 
-(defn new-plid 
+(defn new-plid
   "Generates new id for proof lines.     
-   Uses global `plid`."[]
+   Uses global `plid`." []
   (swap! plid inc))
 
 (defn reset-plid []
@@ -34,19 +34,17 @@
 ;; a `:body` which is a formula or a special keyword,     
 ;; then the name of the `:rule` and if the rule is specified the      
 ;; `:refs` i.e. the ;; ids of proof lines to which the application of the rule references
-(s/def ::pline 
+(s/def ::pline
   (s/keys :req-un [::plid ::body ::rule] :opt-un [::refs]))
 
 ;; A proof is a nested vector of proof lines and subproofs
 (s/def ::proof (s/and vector? (s/* (s/or :pline ::pline :subproof ::proof))))
 
-(defn new-todo-line 
+(defn new-todo-line
   "Generates a new todo line    
    Uses global `plid`!"
   []
   {:plid (new-plid), :body :todo, :rule nil})
-
-;; utility functions
 
 (defn- unproved-line?
   "Checks whether a proof line has no rule"
@@ -58,8 +56,8 @@
   [pline]
   (= :todo (:body pline)))
 
-(defn- insert-left?
-  "Must a todo line be inserted left of this loc?    
+(defn- insert-above?
+  "Must a todo line be inserted above of this loc?    
   (1) the current proof line is not a subproof   
   and
   (2) the current proof line is not solved     
@@ -70,14 +68,6 @@
         curr-line (zip/node loc)
         prev-line (if prev-loc (zip/node prev-loc) nil)]
     (and (not (zip/branch? loc)) (unproved-line? curr-line) (not (todoline? prev-line)))))
-        
-(map unproved-line?
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}])
-
-(map unproved-line?
-  [{:plid 2, :body 'A, :rule :and-e}
-   {:plid 1, :body '(or P (not P)), :rule :x}])
 
 (defn add-todo-lines
   "Returns proof with todo lines added.     
@@ -87,57 +77,58 @@
   (loop [loc (zip/next (zip/vector-zip proof))]
     (if (zip/end? loc)
       (zip/node loc)
-      (if (insert-left? loc)
+      (if (insert-above? loc)
         (recur (zip/next (zip/insert-left loc (new-todo-line))))
         (recur (zip/next loc))))))
 
-; the implementation assumes that a todo line is always left of a regular line
+; the implementation assumes that if there is a todo line,
+; it is above of a regular line
 (defn- remove-current?
   "Should the current todo line be removed?    
-  (1) the todo line is follewed by a pline which is solved     
+  (1) the todo line is followed by a pline which is solved     
   or    
-  (2) the todo line is follwed by a subproof."
+  (2) the todo line is followed by a subproof."
   [loc]
-  (and (todoline? (zip/node loc)) 
+  (and (todoline? (zip/node loc))
        (or (not (nil? (:rule (zip/node (zip/right loc)))))
            (zip/branch? (zip/right loc)))))
 
 (defn remove-todo-lines
   "Returns proof where todo lines that are solved are removed."
   [proof]
-  (loop [loc  (zip/vector-zip proof)]
+  (loop [loc (zip/vector-zip proof)]
     (if (zip/end? loc)
       (zip/node loc)
       (if (remove-current? loc)
         (recur (zip/next (zip/remove loc)))
         (recur (zip/next loc))))))
 
-(defn add-after-plid
-  "Adds a proof line or a subproof after the item with the given `plid`.    
+(defn add-below-plid
+  "Adds a proof line or a subproof below the item with the given `plid`.    
    requires: the added plines have new plids!"
   [proof plid pline-or-subproof]
   (loop [loc (zip/vector-zip proof)]
     (if (zip/end? loc)
       (zip/node loc)
       (if (= (:plid (zip/node loc)) plid)
-             (recur (zip/next (zip/insert-right loc pline-or-subproof)))
-             (recur (zip/next loc))))))
+        (recur (zip/next (zip/insert-right loc pline-or-subproof)))
+        (recur (zip/next loc))))))
 
-(add-after-plid
+(add-below-plid
   [{:plid 21, :body :todo, :rule nil}
    {:plid 1, :body '(or P (not P)), :rule nil}]
   21
   {:plid 2, :body 'A, :rule :x}
   )
 
-(add-after-plid
+(add-below-plid
   [{:plid 21, :body :todo, :rule nil}
    {:plid 1, :body '(or P (not P)), :rule nil}]
   1
   {:plid 2, :body 'A, :rule :x}
   )
 
-(add-after-plid
+(add-below-plid
   [{:plid 21, :body :todo, :rule nil}
    {:plid 1, :body '(or P (not P)), :rule nil}]
   21
@@ -145,7 +136,7 @@
    {:plid 3, :body 'A, :rule :x}]
   )
 
-(add-after-plid
+(add-below-plid
   [{:plid 21, :body :todo, :rule nil}
    [{:plid 22, :body :todo, :rule nil}
     {:plid 23, :body 'A, :rule :and-e}]
@@ -155,8 +146,8 @@
    {:plid 3, :body 'A, :rule :x}]
   )
 
-(defn add-before-plid
-  "Adds a proof line or a subproof before the item with the given `plid`.    
+(defn add-above-plid
+  "Adds a proof line or a subproof above the item with the given `plid`.    
    requires: the added plines have new plids!"
   [proof plid pline-or-subproof]
   (loop [loc (zip/vector-zip proof)]
@@ -166,21 +157,21 @@
         (recur (zip/next (zip/insert-left loc pline-or-subproof)))
         (recur (zip/next loc))))))
 
-(add-before-plid
+(add-above-plid
   [{:plid 21, :body :todo, :rule nil}
    {:plid 1, :body '(or P (not P)), :rule nil}]
   1
   {:plid 2, :body 'A, :rule :x}
   )
 
-(add-before-plid
+(add-above-plid
   [{:plid 21, :body :todo, :rule nil}
    {:plid 1, :body '(or P (not P)), :rule nil}]
   21
   {:plid 2, :body 'A, :rule :x}
   )
 
-(add-before-plid
+(add-above-plid
   [{:plid 21, :body :todo, :rule nil}
    {:plid 1, :body '(or P (not P)), :rule nil}]
   21
@@ -188,7 +179,7 @@
    {:plid 3, :body 'A, :rule :x}]
   )
 
-(add-before-plid
+(add-above-plid
   [{:plid 21, :body :todo, :rule nil}
    [{:plid 22, :body :todo, :rule nil}
     {:plid 23, :body 'A, :rule :and-e}]
@@ -197,7 +188,6 @@
   [{:plid 2, :body 'A, :rule :x}
    {:plid 3, :body 'A, :rule :x}]
   )
-
 
 (defn remove-plid
   "Removes the proof line with the given `plid`.    
@@ -313,20 +303,45 @@
         (vector? (first p)) (recur (into [] (concat (first p) (subvec p 1))) (inc l))
         :else (recur (subvec p 1) (inc l))))))
 
-; semms to be not used
+; seems to be not used
 #_(defn line-to-id
-  "Returns the id for the given line"
-  [proof line]
-  (if (not (vector? line))
-    (:plid (nth (flatten proof) (dec line)))
-    [(line-to-id proof (first line)) (line-to-id proof (last line))]))
+    "Returns the id for the given line"
+    [proof line]
+    (if (not (vector? line))
+      (:plid (nth (flatten proof) (dec line)))
+      [(line-to-id proof (first line)) (line-to-id proof (last line))]))
 
 
-(defn pline-pos
-   "Returns the position of the proof line with the given id"
-   [proof id]
+(defn plid->pos
+  "Returns the position of the proof line with the given `plid`."
+  [proof plid]
   (let [flat-proof (flatten proof)]
-    (first (keep-indexed #(when (= id (:plid %2)) (inc %1)) flat-proof))))
+    (first (keep-indexed #(when (= plid (:plid %2)) (inc %1)) flat-proof))))
+
+(defn pos->plid
+  "Returns the plid of the proof line at `pos` in the `proof`."
+  [proof pos]
+  (let [pline (nth (flatten proof) (dec pos) nil)]
+    (:plid pline)))
+
+(def proof1
+  [{:plid 21, :body :todo, :rule nil}
+   [{:plid 22, :body :todo, :rule nil}
+    {:plid 23, :body 'A, :rule :and-e}
+    [{:plid 321, :body :todo, :rule :nil}]]
+   {:plid 1, :body '(or P (not P)), :rule nil}]
+  )
+(pos->plid proof1 1)
+(pos->plid proof1 2)
+(pos->plid proof1 3)
+(pos->plid proof1 4)
+(pos->plid proof1 5)
+(pos->plid proof1 6) ;=> nil
+
+(plid->pos proof1 21)
+(plid->pos proof1 22)
+(plid->pos proof1 1)
+(plid->pos proof1 11) ;=> nil
 
 ; ersetzen durch pline-pos??
 (defn id-to-line
@@ -409,9 +424,9 @@
 
 ; not used
 #_(defn add-before-line
-  [proof before newitem]
-  (let [item (get-item proof before)]
-    (edit-proof proof item newitem :add-before)))
+    [proof before newitem]
+    (let [item (get-item proof before)]
+      (edit-proof proof item newitem :add-before)))
 
 (defn add-before-item
   [proof before newitem]
@@ -423,9 +438,9 @@
 
 ; not used
 #_(defn replace-line
-  [proof line newitem]
-  (let [item (get-item proof line)]
-    (edit-proof proof item newitem :replace)))
+    [proof line newitem]
+    (let [item (get-item proof line)]
+      (edit-proof proof item newitem :replace)))
 
 (defn replace-item
   [proof item newitem]

@@ -9,7 +9,7 @@
 (ns lwb.nd.repl
   (:require [lwb.nd.deduction :as deduc]
             [lwb.nd.prereqs :refer :all]
-            [lwb.nd.storage :refer [rules reset-rules]]
+            [lwb.nd.storage :refer [roths reset-roths]]
             [lwb.nd.io :as io]
             [lwb.nd.printer :refer [pprint]]))
 
@@ -17,7 +17,7 @@
   "Load rules and theorems of the logic to use
    Logic can be :prop, :pred. :ltl"
   [logic]
-  (reset-rules)
+  (reset-roths)
   (case logic
     :prop (do 
             (io/import-rules "resources/nd/rules-prop.edn")
@@ -116,7 +116,7 @@
       (show))))
 
 (defn show-rules []
-  (for [rule (sort (filter #(= :rule (:type (val %))) @rules))]
+  (for [rule (sort (filter #(= :rule (:type (val %))) @roths))]
     (let [id (key rule)
           given (:given (val rule))
           conclusion (:conclusion (val rule))

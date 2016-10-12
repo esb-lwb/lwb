@@ -431,34 +431,34 @@
         (check-duplicates (add-after-item proof item new-item))))))
 
 #_(defn trivial
-  [proof line]
-  (let [item (get-item proof line)
-        body (:body item)
-        new-body (clojure.walk/postwalk
-                   (fn [node]
-                     (if (list? node)
-                       (let [res (rules/apply-trivials node)]
-                         (if (empty? res) node (first res)))
-                       node))
-                   body)
-        new-item (first (create-items [new-body]))]
-    (if (= body new-body)
-      (do (println "\"trivial\" hasn't changed anything.") proof)
-      (if (:rule item)
-        (check-duplicates (add-after-item proof item (assoc new-item :rule (str "\"trivial\" (" (:id item) ")"))))
-        (if (or (true? new-body)
-                ;; for temporal logic "(at x true)"
-                (and (list? new-body)
-                     (= (first new-body) 'at)
-                     (true? (second (rest new-body)))))
-          (check-duplicates (replace-item proof item {:id   (:id item)
-                                                      :body (:body item)
-                                                      :rule (str "\"trivial\" ()")}))
-          (check-duplicates (replace-item (add-before-item proof item new-item)
-                                          item
-                                          {:id   (:id item)
-                                           :body (:body item)
-                                           :rule (str "\"trivial\" (" (:id new-item) ")")})))))))
+    [proof line]
+    (let [item (get-item proof line)
+          body (:body item)
+          new-body (clojure.walk/postwalk
+                     (fn [node]
+                       (if (list? node)
+                         (let [res (rules/apply-trivials node)]
+                           (if (empty? res) node (first res)))
+                         node))
+                     body)
+          new-item (first (create-items [new-body]))]
+      (if (= body new-body)
+        (do (println "\"trivial\" hasn't changed anything.") proof)
+        (if (:rule item)
+          (check-duplicates (add-after-item proof item (assoc new-item :rule (str "\"trivial\" (" (:id item) ")"))))
+          (if (or (true? new-body)
+                  ;; for temporal logic "(at x true)"
+                  (and (list? new-body)
+                       (= (first new-body) 'at)
+                       (true? (second (rest new-body)))))
+            (check-duplicates (replace-item proof item {:id   (:id item)
+                                                        :body (:body item)
+                                                        :rule (str "\"trivial\" ()")}))
+            (check-duplicates (replace-item (add-before-item proof item new-item)
+                                            item
+                                            {:id   (:id item)
+                                             :body (:body item)
+                                             :rule (str "\"trivial\" (" (:id new-item) ")")})))))))
 
 
 (defn step-f
@@ -541,9 +541,9 @@
             all-unproved (let [unproved-items' (remove #(or (vector? %) (not (nil? (:rule %)))) new-items)]
                            (= (first new-items) (first unproved-items')))
             proved-items (if all-unproved () (filter #(or (vector? %)
-                                      (not (nil? (:rule %)))) new-items))
+                                                          (not (nil? (:rule %)))) new-items))
             unproved-items (if all-unproved (reverse new-items) (remove #(or (vector? %)
-                                        (not (nil? (:rule %)))) new-items))
+                                                                             (not (nil? (:rule %)))) new-items))
 
             p2 (reduce #(add-after-item %1 todo-item %2) p1 unproved-items)]
         (check-duplicates (reduce #(add-before-item %1 todo-item %2) p2 proved-items))))))

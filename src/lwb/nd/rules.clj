@@ -9,7 +9,7 @@
 (ns lwb.nd.rules
   (:refer-clojure :exclude [==])
   (:require [clojure.core.logic :refer :all]
-            [lwb.nd.storage :refer [rules theorems]]
+            [lwb.nd.storage :refer [roths theorems]]
             [clojure.math.combinatorics :refer [permutations]]
             [clojure.spec :as s]))
 
@@ -164,14 +164,14 @@
     (gen-logic-function (:prereq rule) (:given rule) (:conclusion rule))
   
     (keyword? rule)
-    (let [r (or (rule @rules) (rule @theorems))]
+    (let [r (or (rule @roths) (rule @theorems))]
       (gen-logic-function (:prereq r) (:given r) (:conclusion r)))
     :else (throw (Exception. (str "The argument you provided is neither a legal rule-map nor the id of a valid rule or theorem (" rule ")")))))
 
 (defn get-rule
   "Returns the rule/theorem if it exists"
   [id]
-  (let [rule (id @rules)
+  (let [rule (id @roths)
         theorem (id @theorems)]
     (or rule 
         (or theorem (throw (Exception. (str "A rule/theorem \"" id "\" doesn't exist")))))))
@@ -179,25 +179,25 @@
 (defn rule-exist?
   "Does a certain rule/theorem exist?"
   [id]
-  (if (or (id @rules)
+  (if (or (id @roths)
           (id @theorems)) true false))
  
 (defn rule-givens
   "Returns the number of givens for the certain rule/theorem"
   [id]
-  (let [rule (or (id @rules) (id @theorems))]
+  (let [rule (or (id @roths) (id @theorems))]
     (count (:given rule))))
  
 (defn rule-conclusions
   "Returns the number of conclusions for the certain rule/theorem"
   [id]
-  (let [rule (or (id @rules) (id @theorems))]
+  (let [rule (or (id @roths) (id @theorems))]
     (count (:conclusion rule))))
 
 (defn rule-forward?
   "Returns true if the rule/theorem can be used forwards"
   [id]
-  (if-let [rule (or (id @rules) (id @theorems))]
+  (if-let [rule (or (id @roths) (id @theorems))]
     (if (:forward rule)
       true
       false)
@@ -206,7 +206,7 @@
 (defn rule-backward?
   "Returns true if the rule/theorem can be used backwards"
   [id]
-  (if-let [rule (or (id @rules) (id @theorems))]
+  (if-let [rule (or (id @roths) (id @theorems))]
     (if (:backward rule)
       true
       false)
@@ -225,7 +225,7 @@
   [rule forward? args & [optional]]
   (let [rule-map (cond
                    (map? rule) rule
-                   (keyword? rule) (or (rule @rules) (rule @theorems))
+                   (keyword? rule) (or (rule @roths) (rule @theorems))
                    :else (throw (Exception. "RULES | Wrong type of argument: \"rule\" has to be a keyword or a map.")))
         frule (if forward? rule-map (assoc rule-map :given (:conclusion rule-map) :conclusion (:given rule-map)))
         obligatory-args (map #(conj (list %) `quote) args)
@@ -255,7 +255,7 @@
   [rule forward? args & [optional]]
   (let [rule-map (cond
                    (map? rule) rule
-                   (keyword? rule) (or (rule @rules) (rule @theorems))
+                   (keyword? rule) (or (rule @roths) (rule @theorems))
                    :else (throw (Exception. "Wrong type of argument: \"rule\" has to be a keyword or a map.")))
         frule (if forward? rule-map (assoc rule-map :given (:conclusion rule-map) :conclusion (:given rule-map)))
         obligatory-args (mapv #(list `quote %) args)
@@ -315,7 +315,7 @@
 (comment
   ; man kann die Regel vorwärts und rückwärts auswerten, ohne sie zu ändern
   ; es längt alles an der Bestückung der Parameter
-  (def and-i (eval (make-rule (:and-i @rules))))
+  (def and-i (eval (make-rule (:and-i @roths))))
   (run 1 [q1] (and-i 'A 'B q1))
   (run 1 [q1 q2] (and-i q1 q2 '(and A B)))
   (run 1 [q1 q2] (and-i q1 q2 '(and (or A B) B)))
@@ -338,18 +338,56 @@
   
   ; Diese Variante von apply-rule setzt voraus, dass der Speicher für die Regeln bereits die
   ; logische Relation enthält.
-  (defn apply-rule'
-    [rule args]
+  (defn apply-roth
+    "Takes the id `roth` of a rule or a theorem and applies the according logical relation,
+    with the given `args` where `:?` stands for the unknown.     
+    Result is given as a vector which size is equal to the number of `:?`s in the args."
+    [roth args]
     (let [rel-args (gen-relargs args)
-          run-args (vec (filter symbol? rel-args))]
-      (eval (list `run* run-args (list* (:logic-rel (rule @rules)) rel-args)))))
+          run-args (vec (filter symbol? rel-args))
+          result (first (eval (list `run* run-args (list* (:logic-rel (roth @roths)) rel-args))))]
+      (if-not (vector? result) [result] result)))
  
   (lwb.nd.io/import-rules "resources/nd/rules-prop.edn")
   
-  ; so geht :and-i vorwärts und rückwärts
-  (apply-rule' :and-i '(A B :?))
-  (apply-rule' :and-i '(A :? :?))
-  (apply-rule' :and-i '(:? :? :?))
-  (apply-rule' :and-i '(:? :? (and A B)))
+  ; and-i
+  (apply-roth :and-i '(A B :?))            ; Standardanwendung (stepf :and-i n m)
+  (apply-roth :and-i '(A :? :?))           ; möglich? (stepf :and-i n)
+  (apply-roth :and-i '(:? B :?))           ; möglich? (stepf :and-i :? m)
+  (apply-roth :and-i '(:? :? (and A B)))   ; Standardanwendung (stepb :and-i k)
+  (apply-roth :and-i '(A :? (and A B)))    ; möglich? (stepb :and-i k n)
+  (apply-roth :and-i '(:? B (and A B)))    ; möglich? (stepb :and-i k :? m)
   
+  ; and-e1
+  (apply-roth :and-e1 '((and A B) :?))     ; Standardanwendung (stepf :and-e1 n)
+  (apply-roth :and-e1 '(:? A))             ; möglich? (stepb :and-e1 k)
+
+  ; and-e2
+  (apply-roth :and-e2 '((and A B) :?))     ; Standardanwendung (stepf :and-e2 n)
+  (apply-roth :and-e2 '(:? B))             ; möglich? (stepb :and-e1 k)
+
+  ; or-i1
+  (apply-roth :or-i1 '(A :?))              ; Standardanwendung (stepf :or-i1 n)
+  (apply-roth :or-i1 '(:? (or A B)))       ; Standardanwendung (stepb :or-i1 k)
+              
+  ; or-i2
+  (apply-roth :or-i2 '(B :?))              ; Standardanwendung (stepf :or-i2 m)
+  (apply-roth :or-i2 '(:? (or A B)))       ; Standardanwendung (stepb :or-i2 k)
+  
+  ; or-e
+  (apply-roth :or-e '((or A B) :? :? :?))  ; Standardanwendung (step-f :or-e n)
+  (apply-roth :or-e '((or A B) :? :? X))   ; Standardanwendung (step-f :or-e n k) -- :? für infers automatisch
+  (apply-roth :or-e '(:? :? :? X))         ; Standardanwendung (step-b :or-e k) 
+  (apply-roth :or-e '((or A B) :? :? X))   ; Standardanwendung (step-b :or-e k n) -- :? für infers automatisch
+                                           ; man sieht dass hier step-f und step-b bis auf die Reihenfolge identisch sind
+  
+  ; impl-i
+  (apply-roth :impl-i '(:? (impl A B)))    ; Standardanwendung (step-b :impl-i k)
+                                           ; step-f ist nicht erlaubt, weil all givens infers sind
+  (apply-roth :impl-e '((impl A B) A :?))  ; Standardanweisung (step-f :impl-e n m)
+  (apply-roth :impl-e '((impl A B) :? :?)) ; möglich? (step-f :impl-e n) -- ergäbe ... A ... B
+  (apply-roth :impl-e '((impl A B) :? B))  ; möglich? (step-f :impl-e n :? k) -- ergäbe ... A ... B
+  (apply-roth :impl-e '(:? :? B))          ; möglich? (step-b :impl-e k) -- ergäbe ... (impl V1 B) ... V1 B
+  (apply-roth :impl-e '(:? A B))           ; möglich? (step-b :impl-e k ? m) -- ergäbe ... (impl A B) ... A B
+  ; alles recht merkwürdig!!
   )

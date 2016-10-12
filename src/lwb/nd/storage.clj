@@ -9,13 +9,13 @@
 
 (ns lwb.nd.storage)
 
-(def rules 
+(def roths 
   "Global storage for rules and theorems"
   (atom{}))
 
-(defn reset-rules
+(defn reset-roths
   "Resets the internal storage for rules"
-  [] (reset! rules {}))
+  [] (reset! roths {}))
 
 (def theorems
   (atom {}))

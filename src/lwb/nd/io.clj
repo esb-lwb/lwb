@@ -9,7 +9,7 @@
 (ns lwb.nd.io
   (:require [clojure.java.io :as io]
             [clojure.edn :as edn]
-            [lwb.nd.storage :refer [rules theorems reset-rules]]
+            [lwb.nd.storage :refer [roths theorems reset-roths]]
             [lwb.nd.rules :refer [gen-logic-function]]
             [lwb.nd.proof :refer [proved?]])
   (:import [java.io PushbackReader]))
@@ -21,7 +21,7 @@
     (doall (take-while some? (repeatedly #(edn/read {:eof nil} r))))))
 
 (defn import-rules
-  "Imports all rules from `filename` into global atom `rules`."
+  "Imports all rules from `filename` into global atom `roths`."
   [filename]
   (let [map-fn (fn [item]
                  (hash-map (:id item)
@@ -32,10 +32,10 @@
                             :forward    (:forward item)
                             :backward   (:backward item)
                             :logic-rel  (eval (gen-logic-function (:prereq item) (:given item) (:conclusion item)))}))]
-    (apply (partial swap! rules merge) (map map-fn (read-items filename)))))
+    (apply (partial swap! roths merge) (map map-fn (read-items filename)))))
 
 (comment
-  (reset-rules)
+  (reset-roths)
   (import-rules "./resources/nd/rules-prop.edn")
   )
 
@@ -49,7 +49,7 @@
                             :conclusion (:conclusion item)
                             :forward    true
                             :logic-rel  (eval (gen-logic-function (:prereq item) (:given item) (:conclusion item)))}))]
-    (apply (partial swap! rules merge) (map map-fn (read-items filename)))))
+    (apply (partial swap! roths merge) (map map-fn (read-items filename)))))
 
 #_(import-theorems "./resources/nd/theorems-prop.edn")
 
