@@ -19,7 +19,7 @@
   [logic]
   (reset-roths)
   (case logic
-    :prop (do 
+    :prop (do
             (io/import-rules "resources/nd/rules-prop.edn")
             (io/import-theorems "resources/nd/theorems-prop.edn"))
     :pred (do
@@ -51,9 +51,9 @@
   "Start a new proof"
   ([formula] (proof [] formula))
   ([premises formula]
-    (reset! last_steps [])
-    (reset! p (deduc/proof premises formula))
-    (show)))
+   (reset! last_steps [])
+   (reset! p (deduc/proof premises formula))
+   (show)))
 
 (defn step-f
   "Execute a forward step"
@@ -90,20 +90,20 @@
   (swap! p deduc/unify old new)
   (show))
 
-(defn trivial
-  "Apply the trivial-theorems inside the chosen line"
-  [line]
-  (swap! last_steps conj @p)
-  (swap! p deduc/trivial line)
-  (show))
+#_(defn trivial
+    "Apply the trivial-theorems inside the chosen line"
+    [line]
+    (swap! last_steps conj @p)
+    (swap! p deduc/trivial line)
+    (show))
 
-(defn export-theorem
-  "Export the solved proof to a file as a theorem"
-  [filename id]
-  (io/export-theorem 
-    @p
-    filename
-    id))
+#_(defn export-theorem
+    "Export the solved proof to a file as a theorem"
+    [filename id]
+    (io/export-theorem
+      @p
+      filename
+      id))
 
 (defn undo
   "Undo the last change (you can't go further than the last state)"
@@ -115,22 +115,38 @@
       (swap! last_steps #(into [] (drop-last %)))
       (show))))
 
-(defn show-rules []
-  (for [rule (sort (filter #(= :rule (:type (val %))) @roths))]
-    (let [id (key rule)
-          given (:given (val rule))
-          conclusion (:conclusion (val rule))
-          forward? (:forward (val rule))
-          backward? (:backward (val rule))
-          usage (case [forward? backward?]
-                  [true true] "step-f and step-b"
-                  [true nil ] "step-f only"
-                  [nil  true] "step-b only")]
-      (println (str id ": \t" given " -> " conclusion " - " usage)))))
+(defn show-roths
+  "Prints rules and/or theorems of the current logic.       
+  `:all` rules and theorems    
+  `:rules` just the rules     
+  `:theorems` just the theorems"
+  ([] (show-roths :all))
+  ([mode]
+  (let [filter-fn (condp = mode
+                     :all (constantly true)
+                     :rules #(= :rule (:type (val %)))
+                     :theorems #(= :theorem (:type (val %)))
+                     )]
+    (for [roth (sort (filter filter-fn @roths))]
+      (let [id (key roth)
+            given (:given (val roth))
+            conclusion (:conclusion (val roth))]
+            (println (str id ": \t" given " -> " conclusion)))))))
 
-(defn show-theorems []
-  (for [rule (sort @io/theorems)]
-    (let [id (key rule)
-          given (:given (val rule))
-          conclusion (:conclusion (val rule))]
-      (println (str id ": \t" given " -> " conclusion)))))
+(defn show-rules
+  "Print the rules of the current logic."
+  []
+  (show-roths :rules))
+
+(defn show-theorems
+  "Print the theorems of the current logic."
+  []
+  (show-roths :theorems))
+
+(defn show-roth
+  "Prints rule or theorem of the current logic."
+  [id]
+  (if (contains? @roths id)
+    (let [roth (id @roths)]
+      (println (str id ": \t" (:given roth) " -> " (:conclusion roth))))
+    (println "No such rule or theorem found for the current logic.")))

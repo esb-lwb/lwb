@@ -30,10 +30,10 @@
 (s/def ::rule (s/nilable keyword?))
 (s/def ::refs vector?)
 
-;; A proof line has a unique `:plid`,      
+;; A proof line has a unique proof line id `:plid`,      
 ;; a `:body` which is a formula or a special keyword,     
 ;; then the name of the `:rule` and if the rule is specified the      
-;; `:refs` i.e. the ;; ids of proof lines to which the application of the rule references
+;; `:refs` i.e. the plids of proof lines to which the application of the rule references
 (s/def ::pline
   (s/keys :req-un [::plid ::body ::rule] :opt-un [::refs]))
 
@@ -42,17 +42,17 @@
 
 (defn new-todo-line
   "Generates a new todo line    
-   Uses global `plid`!"
+   Uses global atom `plid`!"
   []
   {:plid (new-plid), :body :todo, :rule nil})
 
 (defn- unproved-line?
-  "Checks whether a proof line has no rule"
+  "Checks whether a proof line has no rule."
   [pline]
   (and (not= :todo (:body pline)) (nil? (:rule pline))))
 
 (defn- todoline?
-  "Checks whether a proof line is a todo line"
+  "Checks whether a proof line is a todo line."
   [pline]
   (= :todo (:body pline)))
 
@@ -84,7 +84,7 @@
 ; the implementation assumes that if there is a todo line,
 ; it is above of a regular line
 (defn- remove-current?
-  "Should the current todo line be removed?    
+  "Is the current loc a todo line and should it line be removed?    
   (1) the todo line is followed by a pline which is solved     
   or    
   (2) the todo line is followed by a subproof."
@@ -266,7 +266,7 @@
 
 (defn proof
   "Gives a new proof for the premises and the conclusion.
-   Uses global `plid`."
+   Uses global atom `plid`."
   [premises conclusion]
   (do
     (reset-plid)
@@ -312,14 +312,14 @@
       [(line-to-id proof (first line)) (line-to-id proof (last line))]))
 
 
-(defn plid->pos
-  "Returns the position of the proof line with the given `plid`."
+(defn plid->plno
+  "Returns the line number `plno` of the proof line with the given `plid`."
   [proof plid]
   (let [flat-proof (flatten proof)]
     (first (keep-indexed #(when (= plid (:plid %2)) (inc %1)) flat-proof))))
 
-(defn pos->plid
-  "Returns the plid of the proof line at `pos` in the `proof`."
+(defn plno->plid
+  "Returns the id `plid` of the proof line at line number `plno` in the `proof`."
   [proof pos]
   (let [pline (nth (flatten proof) (dec pos) nil)]
     (:plid pline)))
@@ -331,17 +331,17 @@
     [{:plid 321, :body :todo, :rule :nil}]]
    {:plid 1, :body '(or P (not P)), :rule nil}]
   )
-(pos->plid proof1 1)
-(pos->plid proof1 2)
-(pos->plid proof1 3)
-(pos->plid proof1 4)
-(pos->plid proof1 5)
-(pos->plid proof1 6) ;=> nil
+(plno->plid proof1 1)
+(plno->plid proof1 2)
+(plno->plid proof1 3)
+(plno->plid proof1 4)
+(plno->plid proof1 5)
+(plno->plid proof1 6) ;=> nil
 
-(plid->pos proof1 21)
-(plid->pos proof1 22)
-(plid->pos proof1 1)
-(plid->pos proof1 11) ;=> nil
+(plid->plno proof1 21)
+(plid->plno proof1 22)
+(plid->plno proof1 1)
+(plid->plno proof1 11) ;=> nil
 
 ; ersetzen durch pline-pos??
 (defn id-to-line
