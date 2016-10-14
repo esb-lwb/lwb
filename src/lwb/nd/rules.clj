@@ -49,6 +49,21 @@
 ;; those "keywords" will not be handled as symbols but constants
 (def keywords #{'truth 'contradiction 'true 'false})
 
+;; ## Functions for the structure of the rule or theorem
+
+(defn roth-structure
+  "Structure of rule or theorem with the given `id`.      
+   Result is a map `:no-given`, `no-infer`.
+   requires: `id` is a valid rule id."
+  [id]
+  (let [roth (id @roths)
+        all  (count (:given roth))
+        no-infer (count (filter #(and (list? %) (= 'infer (first %))) (:given roth)))]
+    {:no-given (- all no-infer) :no-infer no-infer}))
+
+;; the structure of the roth determines how to use the rule or theorem
+;; and which steps are okay
+
 ;; ## Functions for generating the core.logic relations that represent rules
 
 (defn- gen-arg 
