@@ -146,13 +146,14 @@
   `(== ~prereq true))
 
 (defn- gen-prereqs
-  "Generates all rows for the prerequisites"
+  "Generates all rows for the prerequisites for the project in core.logic,     
+  i.e. `project [args] (== (prereq ...) true)`"
   [prereqs fresh-args qs]
   (list (conj (map gen-prereq-row prereqs) 
               (vec (concat fresh-args qs)) `project)))
 
 (defn gen-logic-function
-  "Takes given and conclusions from a rule and builds a core.logic relation that will represent that rule     
+  "Takes given and conclusions from a rule or theorem and builds a core.logic relation that will represent that roth     
    e.g. \"and-i\" `[a b] => [(and a b)]`     
    `(fn [a b q1]`     
     `(fresh []`      
@@ -469,5 +470,41 @@
   (lwb.nd.repl/show-roth :pierce)
   ; siehe tnd
   (apply-roth :pierce '(:?))              ; Standardanwendung (step-f :pierce)
+  
+  )
+
+(comment ;pred   
+
+  ; forall-i
+  (lwb.nd.repl/show-roth :forall-i)
+  (apply-roth :forall-i '(:? (forall [x] phi)))    ; (step-b :forall-i k)
+  ; nur step-b möglich
+
+  ; forall-e
+  (lwb.nd.repl/show-roth :forall-e)
+  (apply-roth :forall-e '((forall [x] phi) :? :?))          ; (step-f :forall-e m)
+  (apply-roth :forall-e '((forall [x] phi) (actual t) :?))  ; (step-f :forall-e m n)
+  ; nur step-f möglich, da conclusion eine substitution ist, d.h. wir müssen phi kennen
+  
+  ; exists-i
+  (lwb.nd.repl/show-roth :exists-i)
+  (apply-roth :exists-i '(:? :? (exists [x] phi)))           ; (step-b :exists-i k)
+  (apply-roth :exists-i '((actual t) :? (exists [x] phi)))   ; (step-b :exists-i k m)
+  ; wenn in den given eine substitution vorkommt, ist kein step-f möglich
+
+  ; exists-e
+  (lwb.nd.repl/show-roth :exists-e)
+  (apply-roth :exists-e '((exists [x] (P(x))) :? :?)) ; (step-f :exists-e m)
+  (apply-roth :exists-e '((exists [x] (P(x))) :? X))  ; (step-f :exists-e m k) oder (step-b :exists-e k m)
+  (apply-roth :exists-e '(:? :? X))                   ; (step-b ;exists-e k)
+  
+  ; equal-i
+  (lwb.nd.repl/show-roth :equal-i)
+  (apply-roth :equal-i '(:?))                          ; (step-f :equal-i) wie tnd
+  
+  ; equal-e
+  (lwb.nd.repl/show-roth :equal-e)
+  (apply-roth :equal-e '((= a b) (P a) (P z) z :?))    ; (step-f :equal-e m n u1 u2)
+  ; dies ist die einzig sinnvolle Möglichkeit, d.h. wir brauchen alle given, weil wir ein prereq haben!
   
   )

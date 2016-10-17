@@ -33,8 +33,8 @@
     ))
 
 ; Choose the logic for the session
-(load-logic :prop)
-;(load-logic :pred)
+;(load-logic :prop)
+(load-logic :pred)
 ;(load-logic :ltl)
 
 ;; holds the actual state of the proof 
@@ -128,10 +128,8 @@
                      :theorems #(= :theorem (:type (val %)))
                      )]
     (for [roth (sort (filter filter-fn @roths))]
-      (let [id (key roth)
-            given (:given (val roth))
-            conclusion (:conclusion (val roth))]
-            (println (str id ": \t" given " -> " conclusion)))))))
+      (let [id (key roth)]
+        (show-roth id))))))
 
 (defn show-rules
   "Print the rules of the current logic."

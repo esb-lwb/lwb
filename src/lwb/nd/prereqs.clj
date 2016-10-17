@@ -48,3 +48,8 @@
                  (contains? intersec old)))
       true
       false)))
+
+(defn substitution?
+  "Is `phi'` the substition of `var` in `phi`?"
+  [phi' phi var term]
+  true)

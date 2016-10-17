@@ -8,8 +8,8 @@
 
 ; FORALL 
 {:id :forall-i
- :given      [(infer (actual x0)
-                     (substitution phi x x0))]
+ :given      [(infer (actual t)
+                     (substitution phi x t))]
  :conclusion [(forall [x] phi)]
  :backward  true}
 {:id :forall-e
@@ -26,10 +26,10 @@
  :backward  true}
 {:id :exists-e
  :given      [(exists [x] phi)
-              (infer [(actual x0)
-                      (substitution phi x x0)]
-                     X)]
- :conclusion [X]
+              (infer [(actual t)
+                      (substitution phi x t)]
+                     chi)]
+ :conclusion [chi]
  :forward  true}
 
 ; EQUAL
@@ -38,14 +38,7 @@
  :conclusion [(= t t)]
  :forward   true}
 {:id :equal-e
- :prereq [(substitutable? phi _:x a)
-          (seq? phi)]
- :given  [(= a b) phi _:x]
- :conclusion [(substitution phi _:x b)]
+ :prereq [(substitution? phi-subst phi var t1)]
+ :given  [(= t1 t2) phi-subst phi var]
+ :conclusion [(substitution phi var t2)]
  :forward true}
-;; sometimes you need this
-{:id :equal-reflexivity
- :given      [(= a b)]
- :conclusion [(= b a)]
- :forward   true
- :backward  true}
