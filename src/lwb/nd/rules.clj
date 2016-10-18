@@ -15,9 +15,9 @@
 ;; Magic symbol for the logic variable for the conclusion in the logic relation
 ;; This symbol should not be used as the name of a proposition in rules and theorems
 (def
-  ^{:doc "Magic symbol for the logic variable for the conclusion in the logic relation.    
-          This symbol should not be used as the name of a proposition in rules and theorems."}
-  conclusion-query 'q6571)
+  ^{:doc "Magic number for the logic variable for the conclusion in the logic relation.    
+          Symbols of the form `qnnnn`should not be used as the name of a proposition in rules and theorems."}
+  conclusion-number 6571)
 
 ;; # Transformation of rules and theorems to core.logic relations
 
@@ -136,14 +136,19 @@
         cvars (flatten (map gen-fresh-arg conclusion))]
     (vec (distinct (concat gvars cvars)))))
 
-(defn- gen-conclusion
-  "Converts a result variable and a the conclusion vector into a unify row for the logic relation     
-   `q1 [(and a b)] => (== q1 ``(~'and ~a ~b))`"
-  [q [c]]
-  `(== ~q ~(cond
-             (contains? keywords c) (list `quote c)
-             (symbol? c) c
-             (list? c) (gen-term c))))
+(defn- gen-conclusion-row
+  "Converts a conclusion variable and an input into a unify row for the logic relation
+   `q1 (and a b) => (== q1 ``(~'and ~a ~b))`"
+  [q c]
+  `(== ~q ~(cond 
+              (contains? keywords c) (list `quote c)
+              (symbol? c) c
+              (list? c) (gen-term c))))
+
+(defn- gen-conclusions
+  "Generates all rows for the conclusions"
+  [conclusion qs]
+  (map gen-conclusion-row qs conclusion))
 
 (defn- gen-prereq-row
   "Converts a function call from the prerequisites into a valid core.logic restriction"
@@ -154,8 +159,8 @@
   "Generates all rows for the prerequisites for the project in core.logic,     
   i.e. `project [args] (== (prereq ...) true)`"
   [prereqs fresh-args qs]
-  (list (conj (map gen-prereq-row prereqs)
-              (conj fresh-args qs) `project)))
+  (list (conj (map gen-prereq-row prereqs) 
+              (vec (concat fresh-args qs)) `project)))
 
 (defn gen-roth-relation
   "Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth     
@@ -164,14 +169,15 @@
     `(fresh []`      
     `(== q1 `(~'and ~a ~b))))`"
   [prereq given extra conclusion]
-  (let [allargs (into [] (concat given extra))
+  (let [qs   (map #(symbol (str %1 %2)) (take (count conclusion) (cycle ['q])) (take (count conclusion) (iterate inc conclusion-number)))
+        allargs (into [] (concat given extra))
         args (gen-args allargs)
         fresh-args (apply vector (clojure.set/difference (set (gen-fresh-args given conclusion)) (set args)))
-        body (gen-body args given)
-        conclusion (gen-conclusion conclusion-query conclusion)
-        prereqs (when-not (nil? prereq) (gen-prereqs prereq fresh-args conclusion-query))
-        fn-body (conj (concat body (list conclusion) prereqs) fresh-args `fresh)]
-    `(fn ~(conj args conclusion-query)
+        body   (gen-body args given)
+        concs (gen-conclusions conclusion qs)
+        prereqs (when-not (nil? prereq) (gen-prereqs prereq fresh-args qs))
+        fn-body (conj (concat body concs prereqs) fresh-args `fresh)]
+    `(fn ~(apply conj args qs)
        ~fn-body)))
 
 ;; ## Utility functions for roths
@@ -184,6 +190,11 @@
     (let [r (roth-id @roths)]
       (gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r)))
     (throw (Exception. (str roth-id " not found in @roths.")))))
+
+(comment
+  (make-relation :and-i)
+  (make-relation :equal-e)
+  )
 
 (defn roth-exists?
   "Does a certain rule/theorem exist?"
@@ -431,4 +442,11 @@
   (apply-roth :equal-e '((= a b) (P a) (P z) z :?))         ; (step-f :equal-e m n u1 u2)
   ; dies ist die einzig sinnvolle Möglichkeit, d.h. wir brauchen alle given, weil wir ein prereq haben!
 
+  )
+
+(comment      ;ltl
+  (apply-roth :finally-e '((at [i] (finally A)) :? :?))     ; (step-f :finally-e m)
+  ; bisher einzige Regel mit mehreren Conclusions!!!!  kann dann natürlich nur vorwärts ausgeführt werden!!
+  
+  
   )
