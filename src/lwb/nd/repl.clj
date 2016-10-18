@@ -32,8 +32,12 @@
            (io/import-theorems "resources/nd/theorems-ltl.edn"))
     ))
 
+;(io/import-rules "resources/nd/rules-prop.edn")
+;(io/import-rules "resources/nd/rules-pred.edn")
+;(io/import-theorems "resources/nd/theorems-prop.edn")
+;(io/import-theorems "resources/nd/theorems-pred.edn"))
 ; Choose the logic for the session
-;(load-logic :prop)
+(load-logic :prop)
 (load-logic :pred)
 ;(load-logic :ltl)
 
@@ -115,6 +119,16 @@
       (swap! last_steps #(into [] (drop-last %)))
       (show))))
 
+(defn show-roth
+  "Prints rule or theorem of the current logic."
+  [id]
+  (if (contains? @roths id)
+    (let [roth (id @roths)
+          extra (:extra roth)
+          extras (if extra (str " + extra input " extra))]
+      (println (str id ": \t" (:given roth) extras " -> " (:conclusion roth))))
+    (println "No such rule or theorem found for the current logic.")))
+
 (defn show-roths
   "Prints rules and/or theorems of the current logic.       
   `:all` rules and theorems    
@@ -141,10 +155,3 @@
   []
   (show-roths :theorems))
 
-(defn show-roth
-  "Prints rule or theorem of the current logic."
-  [id]
-  (if (contains? @roths id)
-    (let [roth (id @roths)]
-      (println (str id ": \t" (:given roth) " -> " (:conclusion roth))))
-    (println "No such rule or theorem found for the current logic.")))

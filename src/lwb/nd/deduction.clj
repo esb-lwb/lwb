@@ -263,15 +263,15 @@
         user-inputs (remove number? args)
         num-inputs (count (filter #(.startsWith (str %) "_:")
                                   (if forward?
-                                    (:given (rules/get-rule rule))
-                                    (:conclusion (rules/get-rule rule)))))]
+                                    (:given (rules/get-roth rule))
+                                    (:conclusion (rules/get-roth rule)))))]
     (cond
       (not= (count user-inputs) num-inputs)
       (throw (Exception. (str "Wrong number of User-Inputs (rule: " num-inputs ", you: " (count user-inputs) ")")))
 
       ;; tests not regarding user-inputs
 
-      (not (rules/rule-exist? rule))
+      (not (rules/roth-exists? rule))
       (throw (Exception. (str "A rule named \"" rule "\" does not exists.")))
 
       (and forward? (not (rules/rule-forward? rule)))
@@ -412,7 +412,7 @@
 
     :else
     (let [;info (check-args proof rule [line] true)
-          r (prep-temporal (rules/get-rule rule))
+          r (prep-temporal (rules/get-roth rule))
           rule-exe (fn [node]
                      (let [res (apply rules/apply-rule (conj [r true] [node] []))]
                        (if (empty? res)

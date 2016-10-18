@@ -39,6 +39,7 @@
  :forward   true}
 {:id :equal-e
  :prereq [(substitution? phi-subst phi var t1)]
- :given  [(= t1 t2) phi-subst phi var]
+ :given  [(= t1 t2) phi-subst]
+ :extra  [phi var]
  :conclusion [(substitution phi var t2)]
  :forward true}
