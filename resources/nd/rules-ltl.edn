@@ -8,7 +8,7 @@
 
 ;; all data regarding forward/backward of the rules are without engagement
 
-;; AND
+; AND
 {:id :and-i
  :given      [(at [i] phi) (at [i] psi)]
  :conclusion [(at [i] (and phi psi))]}
@@ -19,7 +19,7 @@
  :given      [(at [i] (and phi psi))]
  :conclusion [(at [i] psi)]}
 
-;; OR
+; OR
 {:id :or-i1
  :given      [(at [i] phi)]
  :conclusion [(at [i] (or phi psi))]}
@@ -30,20 +30,7 @@
  :given      [(at [i] (or phi psi)) (infer (at [i] phi) (at [j] chi)) (infer (at [i] psi) (at[j] chi))]
  :conclusion [(at [j] chi)]}
 
-;; De Morgan -- müsste man herleiten können
-{:id :not-or
- :given      [(at [i] (not (or phi psi)))]
- :conclusion [(at [i] (and (not phi) (not psi)))]}
-
-;; NOT
-{:id :not-i
- :given      [(infer (at [j] phi) (at [i] contradiction))]
- :conclusion [(at [j] (not phi))]}
-{:id :not-e
- :given      [(at [i] (not (not phi)))]
- :conclusion [(at [i] phi)]}
-
-;; IMPL
+; IMPL
 {:id :impl-i
  :given      [(infer (at [i] phi) (at [i] psi))]
  :conclusion [(at [i] (impl phi psi))]}
@@ -51,7 +38,23 @@
  :given      [(at [i] (impl phi psi)) (at [i] phi)]
  :conclusion [(at [i] psi)]}
 
-;; ATNEXT
+; NOT
+{:id :not-i
+ :given      [(infer (at [j] phi) (at [i] contradiction))]
+ :conclusion [(at [j] (not phi))]}
+{:id :not-e
+ :given      [(at [i] (not phi)) (at [i] phi)]
+ :conclusion [(at [i] contradiction)]}
+
+; RAA/EFQ
+{:id :raa
+ :given      [(infer (at [j] (not phi)) (at [i] contradiction))]
+ :conclusion [(at [j] phi)]}
+{:id :efq
+ :given      [(at [i] contradiction)]
+ :conclusion [(at [j] phi)]}
+
+; ATNEXT
 {:id :atnext-i
  :given      [(at [j] phi) (succ i j)]
  :conclusion [(at [i] (atnext phi))]}
@@ -59,15 +62,15 @@
  :given      [(at [i] (atnext phi)) (succ i j)]
  :conclusion [(at [j] phi)]}
 
-;; ALWAYS
+; ALWAYS
 {:id :always-i
  :given      [(infer (<= i j) (at [j] phi))]
  :conclusion [(at [i] (always phi))]}
 {:id :always-e 
- :given      [(<= i j) (at [i] (always phi))]
+ :given      [(at [i] (always phi)) (<= i j)]
  :conclusion [(at [j] phi)]}
 
-;; FINALLY
+; FINALLY
 {:id :finally-i
  :given      [(at [j] phi) (<= i j)]
  :conclusion [(at [i] (finally phi))]}
@@ -75,12 +78,7 @@
  :given      [(at [i] (finally phi))]
  :conclusion [(<= i j) (at [j] phi)]}
 
-; kann man das herleiten??
-{:id :not-finally
- :given      [(at [i] (not (finally phi)))]
- :conclusion [(at [i] (always (not phi)))]}
-
-;; UNTIL
+; UNTIL
 {:id :until-i
  :given      [(at [i] psi)]
  :conclusion [(at [i] (until phi psi))]}
@@ -88,19 +86,16 @@
  :given      [(at [i] (always (impl psi chi)))
               (at [i] (always (impl (and phi (atnext chi)) chi)))]
  :conclusion [(at [i] (impl (until phi psi) chi))]}
-
-; kann man das herleiten?
 {:id :not-until
  :given      [(at [i] (not (until phi psi)))]
  :conclusion [(at [i] (or (always (not psi))
-                         (until (not psi) 
-                                (and (not phi) (not psi)))))]}
+                          (until (not psi) (and (not phi) (not psi)))))]}
 
-;; RELATIONAL JUDGEMENTS
+; RELATIONAL JUDGEMENTS
 {:id :reflexivity
  :given      []
- :conclusion [(<= i j)]}
-{:id :atnext-seriality
+ :conclusion [(<= i i)]}
+{:id :seriality
  :given      []
  :conclusion [(succ i j)]}
 {:id :</<=
