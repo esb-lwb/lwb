@@ -33,13 +33,13 @@
     ))
 
 ;(io/import-rules "resources/nd/rules-prop.edn")
-(io/import-rules "resources/nd/rules-pred.edn")
+;(io/import-rules "resources/nd/rules-pred.edn")
 ;(io/import-theorems "resources/nd/theorems-prop.edn")
 ;(io/import-theorems "resources/nd/theorems-pred.edn"))
 ; Choose the logic for the session
 ;(load-logic :prop)
-(load-logic :pred)
-;(load-logic :ltl)
+;(load-logic :pred)
+(load-logic :ltl)
 
 ;; holds the actual state of the proof 
 (def p (atom []))

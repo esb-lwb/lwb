@@ -19,12 +19,6 @@
           Symbols of the form `qnnnn`should not be used as the name of a proposition in rules and theorems."}
   conclusion-number 6571)
 
-; only one conclusion allowed
-#_(def
-  ^{:doc "Magic symbol for the logic variable for the conclusion in the logic relation.    
-          This symbol should not be used as the name of a proposition in rules and theorems."}
-  conclusion-query 'q6571)
-
 ;; # Transformation of rules and theorems to core.logic relations
 
 ;; ## Specification of rules and theorems
@@ -80,30 +74,28 @@
 ;; `m` = mandatory
 ;; `o` = optional
 ;; `1` = at least one them
-;; `b`= at most all but one of them
+;; `b` = at most all but one of them
 
 
-(defn map-givens
+(defn- map-givens-f
   [idx given]
   (cond
-    (and (list? given) (= 'infer (first given))) :?
-    (= idx 0)  :gm
+    (and (list? given) (= 'infer (first given))) :g?
+    (= idx 0) :gm
     :else :go
-  ))
+    ))
 
-(defn map-givens-b
+(defn- map-givens-b
   [idx given]
   (cond
-    (and (list? given) (= 'infer (first given))) :?
-    (= idx 0)  :go
+    (and (list? given) (= 'infer (first given))) :g?
+    (= idx 0) :go
     :else :gb
     ))
 
-; setzt voraus: exactly one conclusion
-;               infers kommen nach anderen givens
 (defn roth-structure-forward
   "Structure of the logic relation of the rule or theorem with the given `id`.      
-   Result e.g.: `[:gm :gm :? :? :co]`      
+   Result e.g.: `[:gm :gm :g? :g? :co]`      
    requires: @roths    
              `id` is a valid rule id."
   [id]
@@ -112,17 +104,17 @@
         has-actual (some #(and (list? %) (= 'actual (first %))) given)
         has-subst (some #(and (list? %) (= 'substitution (first %))) given)
         extra (:extra roth)
-        vg1   (vec (concat (map-indexed map-givens given) (map (constantly :em) extra)))
-        ; in case we have given of the form (actual t) or extra input all givens are mandatory
-        vg2   (if (or has-actual (contains? (set vg1) :em)) (mapv #(if (= % :go) :gm %) vg1) vg1)
-        ; in case we have mandatory and optional arguments just one of them must be given
-        vg    (if (= (set vg2) #{:gm :go}) (mapv (constantly :g1) vg2) vg2)]  
+        concl-cnt (count (:conclusion roth))
+        vg1 (vec (concat (map-indexed map-givens-f given) (map (constantly :em) extra)))
+        ; in case we have :given of the form (actual t) or extra input -> all givens are mandatory
+        vg2 (if (or has-actual (contains? (set vg1) :em)) (mapv #(if (= % :go) :gm %) vg1) vg1)
+        ; in case we have mandatory and optional arguments -> just one of them must be provided
+        vg (if (= (set vg2) #{:gm :go}) (mapv (constantly :g1) vg2) vg2)]
     (cond
-      (= (first vg) :?) nil    ; first given is an infer
-      has-subst nil            ; a given is a substitution -> only backward allowed
-      (contains? (set vg) :?) (conj vg :co)
-      :else (conj vg :?)
-    )))
+      (= (first vg) :g?) nil                                ; first given is an infer -> backward only
+      has-subst nil                                         ; a given is a substitution -> backward only
+      (and (= concl-cnt 1) (contains? (set vg) :g?)) (conj vg :co)
+      :else (into vg (repeat concl-cnt :c?)))))
 
 (defn roth-structure-backward
   "Structure of the logic relation of the rule or theorem with the given `id`.      
@@ -132,118 +124,120 @@
   [id]
   (let [roth (id @roths)
         given (:given roth)
+        extra (:extra roth)
         concl (:conclusion roth)
-        has-actual (some #(and (list? %) (= 'actual (first %))) given)
-        is-subst (= 'substitution (flatten concl))
-        has-extra (not-empty (:extra roth))
-        vg1 (map-indexed map-givens-b given) 
+        is-subst (contains? (set (flatten concl)) 'substitution)
+        vg1 (map-indexed map-givens-b given)
         ; in case we have only :go and :gb -> all :gb
-        vg2 (if (= (set vg1) #{:go :gb}) (mapv (constantly :gb) vg1) vg1) 
+        vg2 (if (= (set vg1) #{:go :gb}) (mapv (constantly :gb) vg1) vg1)
         ; in case we have just one given
-        vg  (if (= (count vg2) 1) [:?] vg2)]
+        vg (if (= (count vg2) 1) [:g?] vg2)]
     (cond
-      has-extra nil            ; rule with extra is forward only
-      (empty? vg) nil          ; rule is axiom that can only be used forward
-      is-subst nil             ; conclusion is a substitution -> forward only
-      :else (into [:cm] vg)
-      )))
+      (> (count concl) 1) nil                               ; multiple conclusions -> forwad only
+      (not-empty extra) nil                                 ; extra input -> forward only
+      (empty? vg) nil                                       ; rule is axiom -> forward only
+      is-subst nil                                          ; conclusion is a substitution -> forward only
+      :else (into [:cm] vg))))
 
-(def g (:given (:exists-e @roths)))
-(def vg1 (map-indexed map-givens-b g))
-vg1
-(if (= (set vg1) #{:go :gb}) (mapv (constantly :gb) vg1) vg1)
-(if (= (count vg1) 1) [:?] vg1)
-is-subst (= 'substitution (first (first concl)))
 (comment
 
   (roth-structure-forward :and-i)
-  ; => [:g1 :g1 :?] 
+  ; => [:g1 :g1 :c?] 
   (roth-structure-backward :and-i)
   ; => [:cm :gb :gb] 
-  
+
   (roth-structure-forward :and-e1)
-  ; => [:gm :?] 
+  ; => [:gm :c?] 
   (roth-structure-backward :and-e1)
-  ; => [:cm :?] 
-  
+  ; => [:cm :g?] 
+
   (roth-structure-forward :or-i1)
-  ; => [:gm :?] 
+  ; => [:gm :c?] 
   (roth-structure-backward :or-i1)
-  ; => [:cm :?] 
-  
+  ; => [:cm :g?] 
+
   (roth-structure-forward :or-e)
-  ; => [:gm :? :? :co] 
+  ; => [:gm :g? :g? :co] 
   (roth-structure-backward :or-e)
-  ; => [:cm :go :? :?] 
-  
+  ; => [:cm :go :g? :g?] 
+
   (roth-structure-forward :impl-i)
   ; => nil
   (roth-structure-backward :impl-i)
-  ; => [:cm :?] 
-  
+  ; => [:cm :g?] 
+
   (roth-structure-forward :impl-e)
-  ; => [:g1 :g1 :?] 
+  ; => [:g1 :g1 :c?] 
   (roth-structure-backward :impl-e)
   ; => [:cm :gb :gb] 
-  
+
   (roth-structure-forward :not-i)
   ; => nil
   (roth-structure-backward :not-i)
-  ; => [:cm :?] 
-  
+  ; => [:cm :g?] 
+
   (roth-structure-forward :not-e)
-  ; => [:g1 :g1 :?] 
+  ; => [:g1 :g1 :c?] 
   (roth-structure-backward :not-e)
   ; => [:cm :gb :gb] 
-  
+
   (roth-structure-forward :raa)
   ; => nil
   (roth-structure-backward :raa)
-  ; => [:cm :?] 
-  
+  ; => [:cm :g?] 
+
   (roth-structure-forward :efq)
-  ; => [:gm :?] 
+  ; => [:gm :c?] 
   (roth-structure-backward :efq)
-  ; => [:cm :?] 
-  
+  ; => [:cm :g?] 
+
   (roth-structure-forward :notnot-i)
-  ; => [:gm :?] 
+  ; => [:gm :c?] 
   (roth-structure-backward :notnot-i)
-  ; => [:cm :?] 
-  
+  ; => [:cm :?g] 
+
   (roth-structure-forward :tnd)
-  ; => [:?] 
+  ; => [:c?] 
   (roth-structure-backward :tnd)
   ; => nil
-  
+
   (roth-structure-forward :forall-i)
   ; => nil
   (roth-structure-backward :forall-i)
-  ; => [:cm :?] 
-  
+  ; => [:cm :g?] 
+
   (roth-structure-forward :forall-e)
-  ; => [:gm :gm :?] 
+  ; => [:gm :gm :c?] 
   (roth-structure-backward :forall-e)
   ; => nil
-  
+
   (roth-structure-forward :exists-i)
   ; => nil 
   (roth-structure-backward :exists-i)
   ; => [:cm :gb :gb] 
-  
+
   (roth-structure-forward :exists-e)
-  ; => [:gm :? :co] 
+  ; => [:gm :g? :co] 
   (roth-structure-backward :exists-e)
-  ; => [:cm :go :?] 
-  
+  ; => [:cm :go :g?] 
+
   (roth-structure-forward :equal-i)
-  ; => [:?] 
+  ; => [:c?] 
   (roth-structure-backward :equal-i)
   ; => nil
-  
+
   (roth-structure-forward :equal-e)
-  ; => [:gm :gm :em :em :?] 
+  ; => [:gm :gm :em :em :c?] 
   (roth-structure-backward :equal-e)
+  ; => nil
+  )
+
+(comment
+  ; load ltl
+
+  (roth-structure-forward :finally-e)
+  ; => [:gm :c? :c?]
+  (roth-structure-backward :finally-e)
   ; => nil
   )
 
@@ -313,16 +307,6 @@ is-subst (= 'substitution (first (first concl)))
   "Converts a conclusion variable and an input into a unify row for the logic relation
    `q1 (and a b) => (== q1 ``(~'and ~a ~b))`"
   [q c]
-  `(== ~q ~(cond 
-              (contains? keywords c) (list `quote c)
-              (symbol? c) c
-              (list? c) (gen-term c))))
-
-; only one conclusion
-#_(defn- gen-conclusion
-  "Converts a result variable and a the conclusion vector into a unify row for the logic relation     
-   `q1 [(and a b)] => (== q1 ``(~'and ~a ~b))`"
-  [q [c]]
   `(== ~q ~(cond
              (contains? keywords c) (list `quote c)
              (symbol? c) c
@@ -345,14 +329,6 @@ is-subst (= 'substitution (first (first concl)))
   (list (conj (map gen-prereq-row prereqs)
               (conj fresh-args qs) `project)))
 
-; only one conclusion
-#_(defn- gen-prereqs
-  "Generates all rows for the prerequisites for the project in core.logic,     
-  i.e. `project [args] (== (prereq ...) true)`"
-  [prereqs fresh-args qs]
-  (list (conj (map gen-prereq-row prereqs)
-              (conj fresh-args qs) `project)))
-
 (defn gen-roth-relation
   "Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth     
    e.g. \"and-i\" `[a b] => [(and a b)]`     
@@ -360,33 +336,15 @@ is-subst (= 'substitution (first (first concl)))
     `(fresh []`      
     `(== q1 `(~'and ~a ~b))))`"
   [prereq given extra conclusion]
-  (let [qs   (mapv #(symbol (str %1 %2)) (take (count conclusion) (cycle ['q])) (take (count conclusion) (iterate inc conclusion-number)))
+  (let [qs (mapv #(symbol (str %1 %2)) (take (count conclusion) (cycle ['q])) (take (count conclusion) (iterate inc conclusion-number)))
         allargs (into [] (concat given extra))
         args (gen-args allargs)
         fresh-args (apply vector (clojure.set/difference (set (gen-fresh-args given conclusion)) (set args)))
-        body   (gen-body args given)
+        body (gen-body args given)
         concs (gen-conclusions conclusion qs)
         prereqs (when-not (nil? prereq) (gen-prereqs prereq fresh-args qs))
         fn-body (conj (concat body concs prereqs) fresh-args `fresh)]
     `(fn ~(apply conj args qs)
-       ~fn-body)))
-
-; only one conclusion
-#_(defn gen-roth-relation
-  "Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth     
-   e.g. \"and-i\" `[a b] => [(and a b)]`     
-   `(fn [a b q1]`     
-    `(fresh []`      
-    `(== q1 `(~'and ~a ~b))))`"
-  [prereq given extra conclusion]
-  (let [allargs (into [] (concat given extra))
-        args (gen-args allargs)
-        fresh-args (apply vector (clojure.set/difference (set (gen-fresh-args given conclusion)) (set args)))
-        body (gen-body args given)
-        conclusion (gen-conclusion conclusion-query conclusion)
-        prereqs (when-not (nil? prereq) (gen-prereqs prereq fresh-args conclusion-query))
-        fn-body (conj (concat body (list conclusion) prereqs) fresh-args `fresh)]
-    `(fn ~(conj args conclusion-query)
        ~fn-body)))
 
 ;; ## Utility functions for roths
@@ -654,9 +612,8 @@ is-subst (= 'substitution (first (first concl)))
 
   )
 
-(comment      ;ltl
+(comment                                                    ;ltl
   (apply-roth :finally-e '((at [i] (finally A)) :? :?))     ; (step-f :finally-e m)
   ; bisher einzige Regel mit mehreren Conclusions!!!!  kann dann natürlich nur vorwärts ausgeführt werden!!
-  
-  
+
   )
