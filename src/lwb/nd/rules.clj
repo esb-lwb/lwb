@@ -382,7 +382,6 @@
     (roth-id @roths)
     (throw (Exception. (str roth-id " not found in @roths.")))))
 
-;; TODO!!!
 (defn given-cnt
   "Returns the number of givens for the certain rule/theorem"
   [roth-id]
@@ -393,15 +392,15 @@
   [roth-id]
   (count (:conclusion (roth-id @roths))))
 
-(defn rule-forward?
+(defn roth-forward?
   "Returns true if the rule/theorem can be used forwards"
-  [id]
-  true)
+  [roth-id]
+  (some? (:forward (roth-id @roths))))
 
-(defn rule-backward?
+(defn roth-backward?
   "Returns true if the rule/theorem can be used backwards"
-  [id]
-  true)
+  [roth-id]
+  (some? (:backward (roth-id @roths))))
 
 ; apply-rule without permutations
 
