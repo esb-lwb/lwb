@@ -10,36 +10,30 @@
 {:id :forall-i
  :given      [(infer (actual t)
                      (substitution phi x t))]
- :conclusion [(forall [x] phi)]
- :backward  true}
+ :conclusion [(forall [x] phi)}
 {:id :forall-e
  :given      [(forall [x] phi)
               (actual t)]
- :conclusion [(substitution phi x t)]
- :forward   true}
+ :conclusion [(substitution phi x t)]}
 
 ; EXISTS
 {:id :exists-i
  :given      [(actual t)
               (substitution phi x t)]
- :conclusion [(exists [x] phi)]
- :backward  true}
+ :conclusion [(exists [x] phi)]}
 {:id :exists-e
  :given      [(exists [x] phi)
               (infer [(actual t)
                       (substitution phi x t)]
                      chi)]
- :conclusion [chi]
- :forward  true}
+ :conclusion [chi]}
 
 ; EQUAL
 {:id :equal-i
  :given      []
- :conclusion [(= t t)]
- :forward   true}
+ :conclusion [(= t t)]}
 {:id :equal-e
  :prereq [(substitution? phi-subst phi var t1)]
  :given  [(= t1 t2) phi-subst]
  :extra  [phi var]
- :conclusion [(substitution phi var t2)]
- :forward true}
+ :conclusion [(substitution phi var t2)]}

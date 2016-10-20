@@ -11,153 +11,107 @@
 ;; AND
 {:id :and-i
  :given      [(at [i] phi) (at [i] psi)]
- :conclusion [(at [i] (and phi psi))]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] (and phi psi))]}
 {:id :and-e1
  :given      [(at [i] (and phi psi))]
- :conclusion [(at [i] phi)]
- :forward   true}
+ :conclusion [(at [i] phi)]}
 {:id :and-e2
  :given      [(at [i] (and phi psi))]
- :conclusion [(at [i] psi)]
- :forward   true}
+ :conclusion [(at [i] psi)]}
 
 ;; OR
 {:id :or-i1
  :given      [(at [i] phi)]
- :conclusion [(at [i] (or phi psi))]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] (or phi psi))]}
 {:id :or-i2
  :given      [(at [i] psi)]
- :conclusion [(at [i] (or phi psi))]
- :forward   true
- :backward  true}
-{:id :or-e1
- :given      [(at [i] (or phi psi)) (at [i] (not phi))]
- :conclusion [(at [i] psi)]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] (or phi psi))]}
+{:id :or-e
+ :given      [(at [i] (or phi psi)) (infer (at [i] phi) (at [j] chi)) (infer (at [i] psi) (at[j] chi))]
+ :conclusion [(at [j] chi)]}
 
-;; kann man dies herleiten??
-;; because of the nested structure of "(at i (or a b))" we need a rule for each side (a, b)
-{:id :or-e2
- :given      [(at [i] (or phi psi)) (at [i] (not psi))]
- :conclusion [(at [i] phi)]
- :forward   true
- :backward  true}
 ;; De Morgan -- müsste man herleiten können
 {:id :not-or
  :given      [(at [i] (not (or phi psi)))]
- :conclusion [(at [i] (and (not phi) (not psi)))]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] (and (not phi) (not psi)))]}
 
 ;; NOT
 {:id :not-i
  :given      [(infer (at [j] phi) (at [i] contradiction))]
- :conclusion [(at [j] (not phi))]
- :backward  true}
+ :conclusion [(at [j] (not phi))]}
 {:id :not-e
  :given      [(at [i] (not (not phi)))]
- :conclusion [(at [i] phi)]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] phi)]}
 
 ;; IMPL
 {:id :impl-i
  :given      [(infer (at [i] phi) (at [i] psi))]
- :conclusion [(at [i] (impl phi psi))]
- :backward  true}
+ :conclusion [(at [i] (impl phi psi))]}
 {:id :impl-e
  :given      [(at [i] (impl phi psi)) (at [i] phi)]
- :conclusion [(at [i] psi)]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] psi)]}
 
 ;; ATNEXT
 {:id :atnext-i
  :given      [(at [j] phi) (succ i j)]
- :conclusion [(at [i] (atnext phi))]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] (atnext phi))]}
 {:id :atnext-e
  :given      [(at [i] (atnext phi)) (succ i j)]
- :conclusion [(at [j] phi)]
- :forward   true}
+ :conclusion [(at [j] phi)]}
 
 ;; ALWAYS
 {:id :always-i
  :given      [(infer (<= i j) (at [j] phi))]
- :conclusion [(at [i] (always phi))]
- :backward  true}
+ :conclusion [(at [i] (always phi))]}
 {:id :always-e 
  :given      [(<= i j) (at [i] (always phi))]
- :conclusion [(at [j] phi)]
- :forward   true}
+ :conclusion [(at [j] phi)]}
 
 ;; FINALLY
 {:id :finally-i
  :given      [(at [j] phi) (<= i j)]
- :conclusion [(at [i] (finally phi))]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] (finally phi))]}
 {:id :finally-e
  :given      [(at [i] (finally phi))]
- :conclusion [(<= i j) (at [j] phi)]
- :forward   true}
+ :conclusion [(<= i j) (at [j] phi)]}
 
 ; kann man das herleiten??
 {:id :not-finally
  :given      [(at [i] (not (finally phi)))]
- :conclusion [(at [i] (always (not phi)))]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] (always (not phi)))]}
 
 ;; UNTIL
 {:id :until-i
  :given      [(at [i] psi)]
- :conclusion [(at [i] (until phi psi))]
- :forward   true
- :backward  true}
+ :conclusion [(at [i] (until phi psi))]}
 {:id :until-e
  :given      [(at [i] (always (impl psi chi)))
               (at [i] (always (impl (and phi (atnext chi)) chi)))]
- :conclusion [(at [i] (impl (until phi psi) chi))]
- :backward  true}
+ :conclusion [(at [i] (impl (until phi psi) chi))]}
 
 ; kann man das herleiten?
 {:id :not-until
  :given      [(at [i] (not (until phi psi)))]
  :conclusion [(at [i] (or (always (not psi))
                          (until (not psi) 
-                                (and (not phi) (not psi)))))]
- :forward   true}
+                                (and (not phi) (not psi)))))]}
 
 ;; RELATIONAL JUDGEMENTS
 {:id :reflexivity
  :given      []
- :conclusion [(<= i j)]
- :forward   true}
+ :conclusion [(<= i j)]}
 {:id :atnext-seriality
  :given      []
- :conclusion [(succ i j)]
- :forward   true}
+ :conclusion [(succ i j)]}
 {:id :</<=
  :given      [(< i j)]
- :conclusion [(<= i j)]
- :forward   true}
+ :conclusion [(<= i j)]}
 {:id :atnext/<=
  :given      [(succ i j)]
- :conclusion [(<= i j)]
- :forward   true
- :backward  true}
+ :conclusion [(<= i j)]}
 {:id :transitivity
  :given      [(<= i j) (<= j k)]
- :conclusion [(<= i k)]
- :forward   true}
+ :conclusion [(<= i k)]}
 {:id :linearity
  :given      [(<= i j) (<= i k)]
- :conclusion [(or (or (<= j k) (== j k)) (<= k j))]
- :forward   true}
+ :conclusion [(or (or (<= j k) (== j k)) (<= k j))]}

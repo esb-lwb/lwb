@@ -10,66 +10,48 @@
 ; AND
 {:id :and-i
  :given      [phi psi]
- :conclusion [(and phi psi)]
- :forward   true
- :backward  true}
+ :conclusion [(and phi psi)]}
 {:id :and-e1
  :given      [(and phi psi)]
- :conclusion [phi]
- :forward   true}
+ :conclusion [phi]}
 {:id :and-e2
  :given      [(and phi psi)]
- :conclusion [psi]
- :forward   true}
+ :conclusion [psi]}
 
 ; OR
 {:id :or-i1
  :given      [phi]
- :conclusion [(or phi psi)]
+ :conclusion [(or phi psi)]}
  :forward   true
- :backward  true}
 {:id :or-i2
  :given      [phi]
- :conclusion [(or psi phi)]
- :forward   true
- :backward  true}
+ :conclusion [(or psi phi)]}
 {:id :or-e
  :given      [(or phi psi)
               (infer phi chi)
               (infer psi chi)]
- :conclusion [chi]
- :forward  true
- :backward  true}
+ :conclusion [chi]}
 
 ; IMPL
 {:id :impl-i
  :given      [(infer phi psi)]
- :conclusion [(impl phi psi)]
- :backward   true}
+ :conclusion [(impl phi psi)]}
 {:id :impl-e
  :given      [(impl phi psi) phi]
- :conclusion [psi]
- :forward    true
- :backward   true}
+ :conclusion [psi]}
 
 ; NOT
 {:id :not-i
  :given      [(infer phi contradiction)]
- :conclusion [(not phi)]
- :backward   true}
+ :conclusion [(not phi)]}
 {:id :not-e
  :given      [(not phi) phi]
- :conclusion [contradiction]
- :forward   true
- :backward  true}
+ :conclusion [contradiction]}
 
 ; RAA/EFQ
 {:id :raa
  :given      [(infer (not phi) contradiction)]
- :conclusion [phi]
- :backward  true}
+ :conclusion [phi]}
 {:id :efq
  :given      [contradiction]
- :conclusion [phi]
- :forward   true
- :backward  true}
+ :conclusion [phi]}
