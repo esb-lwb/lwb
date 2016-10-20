@@ -93,18 +93,13 @@
     :else :gb
     ))
 
-(defn roth-structure-forward
-  "Structure of the logic relation of the rule or theorem with the given `id`.      
-   Result e.g.: `[:gm :gm :g? :g? :co]`      
-   requires: @roths    
-             `id` is a valid rule id."
-  [id]
-  (let [roth (id @roths)
-        given (:given roth)
-        has-actual (some #(and (list? %) (= 'actual (first %))) given)
+(defn roth-structure-f
+  "Structure of the logic relation of the rule or theorem.
+   Result e.g.: `[:gm :gm :g? :g? :co]`      "
+  [given extra conclusion]
+  (let [has-actual (some #(and (list? %) (= 'actual (first %))) given)
         has-subst (some #(and (list? %) (= 'substitution (first %))) given)
-        extra (:extra roth)
-        concl-cnt (count (:conclusion roth))
+        concl-cnt (count conclusion)
         vg1 (vec (concat (map-indexed map-givens-f given) (map (constantly :em) extra)))
         ; in case we have :given of the form (actual t) or extra input -> all givens are mandatory
         vg2 (if (or has-actual (contains? (set vg1) :em)) (mapv #(if (= % :go) :gm %) vg1) vg1)
@@ -116,28 +111,40 @@
       (and (= concl-cnt 1) (contains? (set vg) :g?)) (conj vg :co)
       :else (into vg (repeat concl-cnt :c?)))))
 
-(defn roth-structure-backward
+(defn roth-structure-b
   "Structure of the logic relation of the rule or theorem with the given `id`.      
-   Result e.g.: `[:cm :gb :gb]`      
-   requires: @roths    
-             `id` is a valid rule id."
-  [id]
-  (let [roth (id @roths)
-        given (:given roth)
-        extra (:extra roth)
-        concl (:conclusion roth)
-        is-subst (contains? (set (flatten concl)) 'substitution)
+   Result e.g.: `[:cm :gb :gb]`"
+  [given extra conclusion]
+  (let [is-subst (contains? (set (flatten conclusion)) 'substitution)
         vg1 (map-indexed map-givens-b given)
         ; in case we have only :go and :gb -> all :gb
         vg2 (if (= (set vg1) #{:go :gb}) (mapv (constantly :gb) vg1) vg1)
         ; in case we have just one given
         vg (if (= (count vg2) 1) [:g?] vg2)]
     (cond
-      (> (count concl) 1) nil                               ; multiple conclusions -> forwad only
+      (> (count conclusion) 1) nil                          ; multiple conclusions -> forwad only
       (not-empty extra) nil                                 ; extra input -> forward only
       (empty? vg) nil                                       ; rule is axiom -> forward only
       is-subst nil                                          ; conclusion is a substitution -> forward only
       :else (into [:cm] vg))))
+
+(defn roth-structure-forward
+  "Structure of the logic relation of the rule or theorem with the given `id`.      
+   Result e.g.: `[:gm :gm :g? :g? :co]`      
+   requires: @roths    
+             `id` is a valid rule id."
+  [roth-id]
+  (let [roth (roth-id @roths)]
+    (:forward roth)))
+
+(defn roth-structure-backward
+  "Structure of the logic relation of the rule or theorem with the given `id`.      
+   Result e.g.: `[:cm :gb :gb]`      
+   requires: @roths    
+             `id` is a valid rule id."
+  [id]
+  (let [roth (id @roths)]
+    (:backward roth)))
 
 (comment
 
@@ -376,15 +383,15 @@
     (throw (Exception. (str roth-id " not found in @roths.")))))
 
 ;; TODO!!!
-(defn rule-givens
+(defn given-cnt
   "Returns the number of givens for the certain rule/theorem"
-  [id]
-  (count (:given (:id @roths))))
+  [roth-id]
+  (count (:given (roth-id @roths))))
 
-(defn rule-conclusions
+(defn concl-cnt
   "Returns the number of conclusions for the certain rule/theorem"
-  [id]
-  1)
+  [roth-id]
+  (count (:conclusion (roth-id @roths))))
 
 (defn rule-forward?
   "Returns true if the rule/theorem can be used forwards"

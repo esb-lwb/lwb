@@ -37,9 +37,9 @@
 ;(io/import-theorems "resources/nd/theorems-prop.edn")
 ;(io/import-theorems "resources/nd/theorems-pred.edn"))
 ; Choose the logic for the session
-;(load-logic :prop)
+(load-logic :prop)
 ;(load-logic :pred)
-(load-logic :ltl)
+;(load-logic :ltl)
 
 ;; holds the actual state of the proof 
 (def p (atom []))

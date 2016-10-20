@@ -10,7 +10,7 @@
   (:require [clojure.java.io :as io]
             [clojure.edn :as edn]
             [lwb.nd.storage :refer [roths reset-roths]]
-            [lwb.nd.rules :refer [gen-roth-relation]]
+            [lwb.nd.rules :refer [gen-roth-relation roth-structure-f roth-structure-b]]
             [lwb.nd.proof :refer [proved?]])
   (:import [java.io PushbackReader]))
 
@@ -30,6 +30,8 @@
                             :given      (:given rule)
                             :extra      (:extra rule)
                             :conclusion (:conclusion rule)
+                            :forward    (roth-structure-f (:given rule) (:extra rule) (:conclusion rule))
+                            :backward   (roth-structure-b (:given rule) (:extra rule) (:conclusion rule))
                             :logic-rel  (eval (gen-roth-relation (:prereq rule) (:given rule) (:extra rule)
                                                                  (:conclusion rule)))}))]
     (apply (partial swap! roths merge) (map map-fn (read-roths filename)))))
@@ -47,6 +49,8 @@
                            {:type       :theorem 
                             :given      (:given theorem)
                             :conclusion (:conclusion theorem)
+                            :forward    (roth-structure-f (:given theorem) (:extra theorem) (:conclusion theorem))
+                            :backward   (roth-structure-b (:given theorem) (:extra theorem) (:conclusion theorem))
                             :logic-rel  (eval (gen-roth-relation nil (:given theorem) nil (:conclusion theorem)))}))]
     (apply (partial swap! roths merge) (map map-fn (read-roths filename)))))
 

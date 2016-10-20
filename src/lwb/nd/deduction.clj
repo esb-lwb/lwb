@@ -283,7 +283,7 @@
       ;; for forward rules with no premises (e.g. equality introduction)
       (and (empty? args)
            forward?
-           (zero? (rules/rule-givens rule)))
+           (zero? (rules/given-cnt rule)))
       {:todo         (first (filter #(= (:body %) :todo) (flatten proof)))
        :obligatories []
        :optional     []}
@@ -303,8 +303,8 @@
             obligatories (concat (if forward? (get-proofed-items items) (get-unproofed-items items))
                                  user-inputs)               ;; add the user-inputs to the obligatory line-items
             optional (if forward? (get-unproofed-items items) (get-proofed-items items))
-            numObligatories (if forward? (rules/rule-givens rule) (rules/rule-conclusions rule))
-            numOptionals (dec (if forward? (rules/rule-conclusions rule) (rules/rule-givens rule)))
+            numObligatories (if forward? (rules/given-cnt rule) (rules/concl-cnt rule))
+            numOptionals (dec (if forward? (rules/concl-cnt rule) (rules/given-cnt rule)))
             scope (get-scope proof (get-item proof lastline))
             todos (filter #(= (:body %) :todo) scope)]
         (cond
@@ -399,11 +399,11 @@
 (defn step-f-inside
   [proof rule line]
   (cond
-    (> (rules/rule-givens rule) 1)
+    (> (rules/given-cnt rule) 1)
     (throw (Exception.
              (str "The rule " rule " needs more than 1 premise. Inside-Steps can only be executed with rules that need exactly 1 premise.")))
 
-    (> (rules/rule-conclusions rule) 1)
+    (> (rules/concl-cnt rule) 1)
     (throw (Exception.
              (str "The rule " rule " has more than 1 conclusion. Inside-Steps only work with rules that have exactly 1 conclusion.")))
 
