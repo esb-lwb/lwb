@@ -27,8 +27,8 @@
  :given      [(at [i] psi)]
  :conclusion [(at [i] (or phi psi))]}
 {:id :or-e
- :given      [(at [i] (or phi psi)) (infer (at [i] phi) (at [j] chi)) (infer (at [i] psi) (at[j] chi))]
- :conclusion [(at [j] chi)]}
+ :given      [(at [i] (or phi psi)) (infer (at [i] phi) (at [i] chi)) (infer (at [i] psi) (at[i] chi))]
+ :conclusion [(at [i] chi)]}
 
 ; IMPL
 {:id :impl-i
@@ -44,7 +44,7 @@
  :conclusion [(at [j] (not phi))]}
 {:id :not-e
  :given      [(at [i] (not phi)) (at [i] phi)]
- :conclusion [(at [i] contradiction)]}
+ :conclusion [(at [j] contradiction)]}
 
 ; RAA/EFQ
 {:id :raa
@@ -92,10 +92,10 @@
                           (until (not psi) (and (not phi) (not psi)))))]}
 
 ; RELATIONAL JUDGEMENTS
-{:id :reflexivity
+{:id :reflexiv
  :given      []
  :conclusion [(<= i i)]}
-{:id :seriality
+{:id :serial
  :given      []
  :conclusion [(succ i j)]}
 {:id :</<=
@@ -104,9 +104,9 @@
 {:id :atnext/<=
  :given      [(succ i j)]
  :conclusion [(<= i j)]}
-{:id :transitivity
+{:id :transitiv
  :given      [(<= i j) (<= j k)]
  :conclusion [(<= i k)]}
-{:id :linearity
+{:id :linear
  :given      [(<= i j) (<= i k)]
  :conclusion [(or (or (<= j k) (== j k)) (<= k j))]}
