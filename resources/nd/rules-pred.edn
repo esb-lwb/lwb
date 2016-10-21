@@ -10,7 +10,7 @@
 {:id :forall-i
  :given      [(infer (actual t)
                      (substitution phi x t))]
- :conclusion [(forall [x] phi)}
+ :conclusion [(forall [x] phi)]}
 {:id :forall-e
  :given      [(forall [x] phi)
               (actual t)]
