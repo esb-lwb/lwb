@@ -22,7 +22,6 @@
 {:id :or-i1
  :given      [phi]
  :conclusion [(or phi psi)]}
- :forward   true
 {:id :or-i2
  :given      [phi]
  :conclusion [(or psi phi)]}
