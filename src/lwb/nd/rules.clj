@@ -81,6 +81,7 @@
   [idx given]
   (cond
     (and (list? given) (= 'infer (first given))) :g?
+    (and (list? given) (= 'succ (first given))) :gm
     (= idx 0) :gm
     :else :go
     ))
@@ -89,6 +90,7 @@
   [idx given]
   (cond
     (and (list? given) (= 'infer (first given))) :g?
+    (and (list? given) (= 'substitution (first given))) :g?
     (= idx 0) :go
     :else :gb
     ))
@@ -145,109 +147,6 @@
   [id]
   (let [roth (id @roths)]
     (:backward roth)))
-
-(comment
-
-  (roth-structure-forward :and-i)
-  ; => [:g1 :g1 :c?] 
-  (roth-structure-backward :and-i)
-  ; => [:cm :gb :gb] 
-
-  (roth-structure-forward :and-e1)
-  ; => [:gm :c?] 
-  (roth-structure-backward :and-e1)
-  ; => [:cm :g?] 
-
-  (roth-structure-forward :or-i1)
-  ; => [:gm :c?] 
-  (roth-structure-backward :or-i1)
-  ; => [:cm :g?] 
-
-  (roth-structure-forward :or-e)
-  ; => [:gm :g? :g? :co] 
-  (roth-structure-backward :or-e)
-  ; => [:cm :go :g? :g?] 
-
-  (roth-structure-forward :impl-i)
-  ; => nil
-  (roth-structure-backward :impl-i)
-  ; => [:cm :g?] 
-
-  (roth-structure-forward :impl-e)
-  ; => [:g1 :g1 :c?] 
-  (roth-structure-backward :impl-e)
-  ; => [:cm :gb :gb] 
-
-  (roth-structure-forward :not-i)
-  ; => nil
-  (roth-structure-backward :not-i)
-  ; => [:cm :g?] 
-
-  (roth-structure-forward :not-e)
-  ; => [:g1 :g1 :c?] 
-  (roth-structure-backward :not-e)
-  ; => [:cm :gb :gb] 
-
-  (roth-structure-forward :raa)
-  ; => nil
-  (roth-structure-backward :raa)
-  ; => [:cm :g?] 
-
-  (roth-structure-forward :efq)
-  ; => [:gm :c?] 
-  (roth-structure-backward :efq)
-  ; => [:cm :g?] 
-
-  (roth-structure-forward :notnot-i)
-  ; => [:gm :c?] 
-  (roth-structure-backward :notnot-i)
-  ; => [:cm :?g] 
-
-  (roth-structure-forward :tnd)
-  ; => [:c?] 
-  (roth-structure-backward :tnd)
-  ; => nil
-
-  (roth-structure-forward :forall-i)
-  ; => nil
-  (roth-structure-backward :forall-i)
-  ; => [:cm :g?] 
-
-  (roth-structure-forward :forall-e)
-  ; => [:gm :gm :c?] 
-  (roth-structure-backward :forall-e)
-  ; => nil
-
-  (roth-structure-forward :exists-i)
-  ; => nil 
-  (roth-structure-backward :exists-i)
-  ; => [:cm :gb :gb] 
-
-  (roth-structure-forward :exists-e)
-  ; => [:gm :g? :co] 
-  (roth-structure-backward :exists-e)
-  ; => [:cm :go :g?] 
-
-  (roth-structure-forward :equal-i)
-  ; => [:c?] 
-  (roth-structure-backward :equal-i)
-  ; => nil
-
-  (roth-structure-forward :equal-e)
-  ; => [:gm :gm :em :em :c?] 
-  (roth-structure-backward :equal-e)
-  ; => nil
-  )
-
-(comment
-  ; load ltl
-
-  (roth-structure-forward :finally-e)
-  ; => [:gm :c? :c?]
-  (roth-structure-backward :finally-e)
-  ; => nil
-  )
-
 
 ;; ## Functions for generating the core.logic relations that represent roths
 
@@ -354,6 +253,9 @@
     `(fn ~(apply conj args qs)
        ~fn-body)))
 
+(gen-roth-relation nil '[phi psi] nil '[(and phi psi)])
+(eval (gen-roth-relation nil '[phi psi] nil '[(and phi psi)]))
+
 ;; ## Utility functions for roths
 
 (defn make-relation
@@ -368,6 +270,10 @@
 (comment
   (make-relation :and-i)
   (make-relation :equal-e)
+  (make-relation :always-e)
+  (def f (eval (make-relation :not-until)))
+  (run 1 [q1 q2] (f q1 q2))
+  (make-relation :not-until)
   )
 
 (defn roth-exists?
@@ -409,7 +315,7 @@
 ; but: if we have more  than 2 givens and make a step backward
 ;      from the concept of the rules does the order of givens not play a role!!
 
-(defn apply-rule
+#_(defn apply-roth
   [rule forward? args & [optional]]
   (let [rule-map (cond
                    (map? rule) rule
@@ -441,17 +347,6 @@
       res))
 
 
-(comment
-  ; man kann die Regel vorwärts und rückwärts auswerten, ohne sie zu ändern
-  ; es hängt alles an der Bestückung der Parameter
-  (def and-i (eval (make-rule (:and-i @roths))))
-  (run 1 [q1] (and-i 'A 'B q1))
-  (run 1 [q1 q2] (and-i q1 q2 '(and A B)))
-  (run 1 [q1 q2] (and-i q1 q2 '(and (or A B) B)))
-
-  (keyword? :?)
-  )
-
 ; ergibt die Argumente für die Relation
 (defn- gen-relargs [args]
   (let [counter (atom -1)
@@ -472,154 +367,3 @@
         result (first (eval (list `run* run-args (list* (:logic-rel (roth @roths)) rel-args))))]
     (if-not (vector? result) [result] result)))
 
-
-(comment
-  ; and-i
-  (lwb.nd.repl/show-roth :and-i)
-  (apply-roth :and-i '(A B :?))                             ; Standardanwendung (stepf :and-i n m)
-  (apply-roth :and-i '(A :? :?))                            ; möglich (stepf :and-i n)
-  (apply-roth :and-i '(:? B :?))                            ; möglich (stepf :and-i :? m)
-  (apply-roth :and-i '(:? :? (and A B)))                    ; Standardanwendung (stepb :and-i k)
-  (apply-roth :and-i '(A :? (and A B)))                     ; möglich (stepb :and-i k n)
-  (apply-roth :and-i '(:? B (and A B)))                     ; möglich (stepb :and-i k :? m)
-
-  ; and-e1
-  (lwb.nd.repl/show-roth :and-e1)
-  (apply-roth :and-e1 '((and A B) :?))                      ; Standardanwendung (stepf :and-e1 n)
-  (apply-roth :and-e1 '(:? A))                              ; möglich (stepb :and-e1 k)
-
-  ; and-e2
-  (lwb.nd.repl/show-roth :and-e2)
-  (apply-roth :and-e2 '((and A B) :?))                      ; Standardanwendung (stepf :and-e2 n)
-  (apply-roth :and-e2 '(:? B))                              ; möglich (stepb :and-e1 k)
-
-  ; or-i1
-  (lwb.nd.repl/show-roth :or-i1)
-  (apply-roth :or-i1 '(A :?))                               ; Standardanwendung (stepf :or-i1 n)
-  (apply-roth :or-i1 '(:? (or A B)))                        ; Standardanwendung (stepb :or-i1 k)
-
-  ; or-i2
-  (lwb.nd.repl/show-roth :or-i2)
-  (apply-roth :or-i2 '(B :?))                               ; Standardanwendung (stepf :or-i2 m)
-  (apply-roth :or-i2 '(:? (or A B)))                        ; Standardanwendung (stepb :or-i2 k)
-
-  ; or-e
-  (lwb.nd.repl/show-roth :or-e)
-  (apply-roth :or-e '((or A B) :? :? :?))                   ; Standardanwendung (step-f :or-e n)
-  (apply-roth :or-e '((or A B) :? :? X))                    ; Standardanwendung (step-f :or-e n k) -- :? für infers automatisch
-  (apply-roth :or-e '(:? :? :? X))                          ; Standardanwendung (step-b :or-e k) 
-  (apply-roth :or-e '((or A B) :? :? X))                    ; Standardanwendung (step-b :or-e k n) -- :? für infers automatisch
-  ; man sieht dass hier step-f und step-b bis auf die Reihenfolge identisch sind
-
-  ; impl-i
-  (lwb.nd.repl/show-roth :impl-i)
-  (apply-roth :impl-i '(:? (impl A B)))                     ; Standardanwendung (step-b :impl-i k)
-  ; step-f ist nicht erlaubt, weil all givens infers sind
-  ; Vergleiche tnd, wo step-f erlaubt ist, weil es keine givens und keine infers gibt
-
-  ; impl-e
-  (lwb.nd.repl/show-roth :impl-e)
-  (apply-roth :impl-e '((impl A B) A :?))                   ; Standardanweisung (step-f :impl-e n m)
-  (apply-roth :impl-e '((impl A B) :? :?))                  ; möglich (step-f :impl-e n) -- ergäbe (impl A B)... A B
-  (apply-roth :impl-e '(:? A :?))                           ; möglich (step-f :impl-e :? m) -- ergäbe A ... (impl A V1) V1 ... 
-  (apply-roth :impl-e '((impl A B) :? B))                   ; möglich (step-f :impl-e n :? k) -- ergäbe (impl A B) ... A B
-  (apply-roth :impl-e '(:? :? B))                           ; möglich (step-b :impl-e k) -- ergäbe ... (impl V1 B) ... V1 B
-  (apply-roth :impl-e '(:? A B))                            ; möglich (step-b :impl-e k ? m) -- ergäbe A ... (impl A B) B
-  (apply-roth :impl-e '((impl A B) :? B))                   ; möglich? (step-b :impl-e k n) -- ergäbe (impl A B) ... A B
-
-  ; not-i
-  (lwb.nd.repl/show-roth :not-i)
-  (apply-roth :not-i '(:? (not A)))                         ; Standardanwendung (step-b :not-i k)
-
-  ; not-e
-  (lwb.nd.repl/show-roth :not-e)
-  (apply-roth :not-e '((not A) A :?))                       ; Standardanwendung (step-b :not-i m n)
-  (apply-roth :not-e '((not A) :? :?))                      ; möglich (step-f :not-e m) -- ergäbe (not A) ... A contradiction 
-  (apply-roth :not-e '(:? A :?))                            ; möglich (step-f :not-e :? n) -- ergäbe A ... (not A) contradiction
-  (apply-roth :not-e '(:? :? contradiction))                ; möglich (step-b :not-e k) -- ergäbe (not V1) ...  V1 contradiction
-  (apply-roth :not-e '((not A) :? contradiction))           ; möglich (step-b :not-e k m) -- ergäbe (not A) ...  A contradiction
-  (apply-roth :not-e '(:? A contradiction))                 ; möglich (step-b :not-e k :? n) -- ergäbe A ...  (not A) contradiction
-
-  ; raa
-  (lwb.nd.repl/show-roth :raa)
-  (apply-roth :raa '(:? A))                                 ; Standardanwendung (step-b :raa k)
-
-  ; efq
-  (lwb.nd.repl/show-roth :efq)
-  (apply-roth :efq '(contradiction :?))                     ; Standardanwendung (step-f :efq m)
-  (apply-roth :efq '(:? A))                                 ; Standardanwendung (step-f :efq m)
-
-  ; tnd
-  (lwb.nd.repl/show-roth :tnd)
-  (apply-roth :tnd '(:?))                                   ; Standardanwendung (step-f :tnd)
-  ; wenn es mehrere Möglichkeiten gibt tnd einzufügen, wo? an der ersten Stelle
-
-  ; notnot-i
-  ; als Beispiel für 1 given, 1 conclusion
-  (lwb.nd.repl/show-roth :notnot-i)
-  (apply-roth :notnot-i '(A :?))                            ; Standardanwendung (step-f :notnot-i m)
-  (apply-roth :notnot-i '(:? (not (not A))))                ; Standardanwendung (step-b :not-not-i k)
-
-  ; notnot-e
-  (lwb.nd.repl/show-roth :notnot-e)
-  (apply-roth :notnot-e '((not (not A)) :?))                ; Standardanwendung (step-f :not-not-e m)
-  (apply-roth :notnot-e '(:? A))                            ; Standardanwendung (step-b :not-not-e k)
-  ; alle Theoreme mit 1 given und 1 conclusion gehen so
-
-  ; mt
-  (lwb.nd.repl/show-roth :mt)
-  ; siehe mp
-
-  ; contrap
-  (lwb.nd.repl/show-roth :contrap)
-  ; siehe notnot-i
-  (apply-roth :contrap '((impl A B) :?))                    ; Standardanwendung (step-f :contrap m)
-
-  ; pierce
-  (lwb.nd.repl/show-roth :pierce)
-  ; siehe tnd
-  (apply-roth :pierce '(:?))                                ; Standardanwendung (step-f :pierce)
-
-  )
-
-(comment                                                    ;pred   
-
-  ; forall-i
-  (lwb.nd.repl/show-roth :forall-i)
-  (apply-roth :forall-i '(:? (forall [x] phi)))             ; (step-b :forall-i k)
-  ; nur step-b möglich
-
-  ; forall-e
-  (lwb.nd.repl/show-roth :forall-e)
-  (apply-roth :forall-e '((forall [x] phi) :? :?))          ; (step-f :forall-e m)
-  (apply-roth :forall-e '((forall [x] phi) (actual t) :?))  ; (step-f :forall-e m n)
-  ; nur step-f möglich, da conclusion eine substitution ist, d.h. wir müssen phi kennen
-
-  ; exists-i
-  (lwb.nd.repl/show-roth :exists-i)
-  (apply-roth :exists-i '(:? :? (exists [x] phi)))          ; (step-b :exists-i k)
-  (apply-roth :exists-i '((actual t) :? (exists [x] phi)))  ; (step-b :exists-i k m)
-  ; wenn in den given eine substitution vorkommt, ist kein step-f möglich
-
-  ; exists-e
-  (lwb.nd.repl/show-roth :exists-e)
-  (apply-roth :exists-e '((exists [x] (P (x))) :? :?))      ; (step-f :exists-e m)
-  (apply-roth :exists-e '((exists [x] (P (x))) :? X))       ; (step-f :exists-e m k) oder (step-b :exists-e k m)
-  (apply-roth :exists-e '(:? :? X))                         ; (step-b ;exists-e k)
-
-  ; equal-i
-  (lwb.nd.repl/show-roth :equal-i)
-  (apply-roth :equal-i '(:?))                               ; (step-f :equal-i) wie tnd
-
-  ; equal-e
-  (lwb.nd.repl/show-roth :equal-e)
-  (apply-roth :equal-e '((= a b) (P a) (P z) z :?))         ; (step-f :equal-e m n u1 u2)
-  ; dies ist die einzig sinnvolle Möglichkeit, d.h. wir brauchen alle given, weil wir ein prereq haben!
-
-  )
-
-(comment                                                    ;ltl
-  (apply-roth :finally-e '((at [i] (finally A)) :? :?))     ; (step-f :finally-e m)
-  ; bisher einzige Regel mit mehreren Conclusions!!!!  kann dann natürlich nur vorwärts ausgeführt werden!!
-
-  )
