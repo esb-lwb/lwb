@@ -33,8 +33,8 @@
          duplicate-items (filter #(contains? duplicates (:body %)) scope)
          equals (into [] (map val (group-by :body duplicate-items)))
          fn-smap (fn [equals]
-                   (let [remain (map :id (filter :rule equals))
-                         delete (map :id (filter (set sub) (remove :rule equals)))] ; just items from the actual sub can be deleted
+                   (let [remain (map :plid (filter :rule equals))
+                         delete (map :plid (filter (set sub) (remove :rule equals)))] ; just items from the actual sub can be deleted
                      (reduce #(assoc %1 %2 (last remain)) {} delete)))
          ids (apply merge (map fn-smap equals))]
      (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) ids sub))))
@@ -85,7 +85,7 @@
         proved-results (reduce fn-proved-results {} duplicates)
         fn-replace (fn [p [id1 id2]]
                      (let [item (get-item p (id-to-line p id1))]
-                       (replace-item p item {:id   id1
+                       (replace-item p item {:plid   id1
                                              :body (:body item)
                                              :rule (str "\"already proved\" (" id2 ") []")})))
         new-proof1 (reduce fn-replace proof proved-results)
@@ -142,12 +142,12 @@
   ([premises formula & [superproof?]]
    (let [desc (if superproof? :premise :assumption)
          prem (if (vector? premises)
-                (into [] (map #(hash-map :id (new-id)
+                (into [] (map #(hash-map :plid (new-id)
                                          :body %
                                          :rule desc) premises))
-                [{:id (new-id) :body premises :rule desc}])
-         todo {:id (new-id) :body :todo :rule nil}
-         form {:id (new-id) :body formula :rule nil}]
+                [{:plid (new-id) :body premises :rule desc}])
+         todo {:plid (new-id) :body :todo :rule nil}
+         form {:plid (new-id) :body formula :rule nil}]
      (check-duplicates (conj prem todo form)))))
 
 (defn re-infer
@@ -195,8 +195,8 @@
    Item can also be a subproof (vector)"
   [item]
   (if (not (vector? item))
-    (:id item)
-    [(:id (first item)) (:id (last item))]))
+    (:plid item)
+    [(:plid (first item)) (:plid (last item))]))
 ;; -----------------------------
 
 ;; functions for creating new proof items from given bodies
@@ -236,7 +236,7 @@
    (let [newbody (eval-body body)]
      (if (vector? newbody)
        newbody
-       {:id   (new-id)
+       {:plid   (new-id)
         :body newbody
         :rule rule}))))
 
@@ -375,7 +375,7 @@
             new-items (create-items items (:rule item))
             p1 (reduce #(add-after-item %1 item %2) proof new-items)
             ;; adjust the ids of the proof to point on the newly created items instead of the old "choose-item" before checking for duplicates
-            p2 (adjust-ids p1 {(:id item) (apply list (map #(if (vector? %) [(:id (first %)) (:id (last %))] (:id %)) new-items))})]
+            p2 (adjust-ids p1 {(:plid item) (apply list (map #(if (vector? %) [(:plid (first %)) (:plid (last %))] (:plid %)) new-items))})]
 
         (check-duplicates (remove-item p2 item))))))
 
@@ -389,7 +389,7 @@
     (if (and (= (first given) 'at)
              (= (first conclusion) 'at))
       (if (= (second given) (second conclusion))
-        {:id         (:id rule)
+        {:plid         (:id rule)
          :given      [(first (drop 2 given))]
          :conclusion [(first (drop 2 conclusion))]}
         (throw (Exception.
@@ -414,16 +414,16 @@
     (let [;info (check-args proof rule [line] true)
           r (prep-temporal (rules/get-roth rule))
           rule-exe (fn [node]
-                     (let [res (apply rules/apply-rule (conj [r true] [node] []))]
+                     (let [res (apply rules/apply-roth (conj [r true] [node] []))]
                        (if (empty? res)
                          node
                          (first res))))
           item (get-item proof line)
           body (:body item)
           new-body (clojure.walk/postwalk rule-exe body)
-          new-item {:id   (new-id)
+          new-item {:plid   (new-id)
                     :body new-body
-                    :rule (pr-str rule (list (:id item)))}]
+                    :rule (pr-str rule (list (:plid item)))}]
       (if (= body new-body)
         (do
           (println "Inside-step hasn't changed anything")
@@ -474,19 +474,19 @@
 
         obligatory-args (into [] (map item-to-rule-arg obligatory-items))
         optional-args (into [] (map item-to-rule-arg optional-items))
-        rule-result (apply rules/apply-rule (conj [rule true] obligatory-args optional-args))]
+        rule-result (apply rules/apply-roth (conj [rule true] obligatory-args optional-args))]
     ;; the user-inputs will be attached to the :rule of a new line, after the source lines
     (if (empty? rule-result)
       (throw (Exception. (str "Incorrect parameters for the rule \"" rule "\". Please check the description.")))
       ;; add the used rule to the optional items
-      (let [p1 (reduce #(replace-item %1 %2 {:id   (:id %2)
+      (let [p1 (reduce #(replace-item %1 %2 {:plid   (:plid %2)
                                              :body (:body %2)
                                              :rule (pr-str rule obligatory-ids obligatory-user-input)}) proof optional-items)]
         (if (> (count rule-result) 1)
           ;; more than one possible result, the user has to decide which one fits his needs
           (add-before-item p1
                            todo-item
-                           {:id   (new-id)
+                           {:plid   (new-id)
                             :body (apply merge (map-indexed #(hash-map (inc %1) %2) rule-result))
                             :rule (pr-str rule obligatory-ids obligatory-user-input)})
           ;; only one possible result (which can contain several items to insert)
@@ -510,7 +510,7 @@
         obligatory-user-input (into [] (remove map? obligatory-items))
         obligatory-args (into [] (map item-to-rule-arg obligatory-items))
         optional-args (into [] (map item-to-rule-arg optional-items))
-        rule-result (apply rules/apply-rule (conj [rule false] obligatory-args optional-args))]
+        rule-result (apply rules/apply-roth (conj [rule false] obligatory-args optional-args))]
     (cond
       (empty? rule-result)
       (throw (Exception. "Incorrect parameters for the given rule"))
@@ -518,12 +518,12 @@
       (> (count rule-result) 1)
       ;; more than one possible result, the user has to decide which one fits his needs
       (let [id (new-id)
-            p1 (reduce #(replace-item %1 %2 {:id   (:id %2)
+            p1 (reduce #(replace-item %1 %2 {:plid   (:plid %2)
                                              :body (:body %2)
                                              :rule (pr-str rule (conj optional-ids id) obligatory-user-input)}) proof obligatory-items)]
         (add-after-item p1
                         todo-item
-                        {:id   id
+                        {:plid   id
                          :body (apply merge (map-indexed #(hash-map (inc %1) %2) rule-result))
                          :rule nil}))
       :else
@@ -531,7 +531,7 @@
       (let [result (if (vector? (first rule-result)) (first rule-result) rule-result)
             new-items (create-items result)
             new-ids (map get-item-id new-items)
-            p1 (reduce #(replace-item %1 %2 {:id   (:id %2)
+            p1 (reduce #(replace-item %1 %2 {:plid   (:plid %2)
                                              :body (:body %2)
                                              :rule (pr-str rule (concat new-ids optional-ids) obligatory-user-input)}) proof obligatory-items)
             ;; add proved items (e.g. subproofs) before the "..."-item and unproved items after it

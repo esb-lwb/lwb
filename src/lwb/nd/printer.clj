@@ -7,7 +7,7 @@
 ; the terms of this license.
 
 (ns lwb.nd.printer
-  (:require [lwb.nd.proof :refer [plid->plno]]
+  (:require [lwb.nd.proof :refer [plid plid->plno]]
             [clojure.string :as str]
             [clojure.pprint :as pp]))
 
