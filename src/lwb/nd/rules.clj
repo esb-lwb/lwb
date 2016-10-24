@@ -303,6 +303,12 @@
   [roth-id]
   (some? (:forward (roth-id @roths))))
 
+(defn roth-pattern
+  [roth-id mode]
+  "The call pattern for a application of the roth.    
+   mode can be `:forward` or `:backward`. "
+  (mode (roth-id @roths)))
+
 (defn roth-backward?
   "Returns true if the rule/theorem can be used backwards"
   [roth-id]

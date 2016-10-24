@@ -461,6 +461,80 @@
                                              :rule (str "\"trivial\" (" (:id new-item) ")")})))))))
 
 
+; range of allowed arguments depending on the pattern of the roth
+(defn range-args
+  [pattern]
+  (let [g1 (count (filter #{:g1} pattern))
+        range-g1 (if (zero? g1) [0 0] [1 g1])
+        gm (count (filter #{:gm} pattern))
+        range-gm [gm gm]
+        gb (count (filter #{:gb} pattern))
+        range-gb (if (zero? gb) [0 0] [0 (dec gb)])
+        go (count (filter #{:go} pattern))
+        range-go (if (zero? go) [0 0] [0 go])
+        cm (count (filter #{:cm} pattern))
+        range-cm [cm cm]
+        co (count (filter #{:co} pattern))
+        range-co (if (zero? co) [0 0] [0 co])]
+    (mapv + range-g1 range-gm range-gb range-go range-cm range-co)
+    ))
+
+; was sind die Voraussetzungen?
+; rule existiert
+; forward ist erlaubt
+; Zahl der Argumente ist erlaubt?? -- oder dies hier checken???
+(defn match-argsv-f
+  [rule argsv]
+  ; get the pattern for forward step of the rule
+  (loop [pattern (rules/roth-pattern rule :forward)
+         args    argsv
+         result  []]
+    (let [p1 (first pattern) a1 (first args)]
+      (if (nil? p1) 
+        result
+        (cond
+          (nil? a1)  (recur (rest pattern) args (conj result [p1 :?]))
+          (= p1 :gm) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :g1) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :em) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?]))
+          (= p1 :c?) (recur (rest pattern) args (conj result [p1 :?]))
+          (and (= p1 :co) (not (nil? a1))) (recur (rest pattern) args (conj result [p1 a1]))
+        )))))
+                              
+; wie geht die Logik?
+; :gm -> argument übernehmen
+; :g1 -> argument übernehmen
+; :em -> argument übernehmen
+; :g? -> :? einfüllem
+; :co -> wenn noch ein Argument, dann einfüllen
+; keine argumente mehr -> mit :? auffüllem
+
+(defn match-argsv-b
+  [rule argsv]
+  ; get the pattern for backward step of the rule
+  (loop [pattern (rules/roth-pattern rule :backward)
+         args    argsv
+         result  []]
+    (let [p1 (first pattern) a1 (first args)]
+      (if (nil? p1)
+        result
+        (cond
+          (nil? a1)  (recur (rest pattern) args (conj result [p1 :?]))
+          (= p1 :cm) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :gb) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :go) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?]))
+          )))))
+
+; wie geht die Logik?
+; :cm -> argument übernehmen
+; :gb -> argument übernehmen
+
+(defn step-f2
+  [proof rule argsv]
+  [rule argsv])
+
 (defn step-f
   "Performs a forward step on proof by applying rule on the lines"
   [proof rule & lines]

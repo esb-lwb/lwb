@@ -59,6 +59,13 @@
    (reset! p (deduc/proof premises formula))
    (show)))
 
+(defn step-f2
+  "Execute a forward step"
+  [rule & args]
+  (swap! last_steps conj @p)
+  (swap! p deduc/step-f2 rule (vec args))
+  (show))
+
 (defn step-f
   "Execute a forward step"
   [rule & lines]
