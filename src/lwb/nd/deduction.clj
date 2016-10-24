@@ -472,11 +472,13 @@
         range-gb (if (zero? gb) [0 0] [0 (dec gb)])
         go (count (filter #{:go} pattern))
         range-go (if (zero? go) [0 0] [0 go])
+        em (count (filter #{:em} pattern))
+        range-em [em em]
         cm (count (filter #{:cm} pattern))
         range-cm [cm cm]
         co (count (filter #{:co} pattern))
         range-co (if (zero? co) [0 0] [0 co])]
-    (mapv + range-g1 range-gm range-gb range-go range-cm range-co)
+    (mapv + range-g1 range-gm range-gb range-go range-em range-cm range-co)
     ))
 
 ; was sind die Voraussetzungen?
