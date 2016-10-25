@@ -7,8 +7,7 @@
 ; the terms of this license.
 
 (ns lwb.nd.deduction
-  (:require [lwb.nd.proof :refer [plno->plid plbody get-item get-scope add-after-item add-before-item
-                                  remove-item replace-item id-to-line]]
+  (:require [lwb.nd.proof :refer :all]
             [lwb.nd.rules :as rules]))
 
 ;; atoms to provide unique ids for items and variables
@@ -22,6 +21,7 @@
 ;; ---------------------------------------------------
 
 ;; functions for removing duplicate entries from the proof
+;; TODO: überarbeiten und in proof verschieben
 (defn find-duplicates
   "Finds duplicates entries inside the proof that can be deleted.
    Returns a map with the deletable ids as key and the replacement items as value.
@@ -33,8 +33,8 @@
          duplicate-items (filter #(contains? duplicates (:body %)) scope)
          equals (into [] (map val (group-by :body duplicate-items)))
          fn-smap (fn [equals]
-                   (let [remain (map :plid (filter :rule equals))
-                         delete (map :plid (filter (set sub) (remove :rule equals)))] ; just items from the actual sub can be deleted
+                   (let [remain (map :plid (filter :roth equals))
+                         delete (map :plid (filter (set sub) (remove :roth equals)))] ; just items from the actual sub can be deleted
                      (reduce #(assoc %1 %2 (last remain)) {} delete)))
          ids (apply merge (map fn-smap equals))]
      (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) ids sub))))
@@ -52,8 +52,8 @@
         (fn [node]
           (if (vector? node)
             node
-            (if (string? (:rule node))
-              (assoc node :rule (clojure.string/replace (:rule node) regex #(get smap %)))
+            (if (string? (:roth node))
+              (assoc node :roth (clojure.string/replace (:roth node) regex #(get smap %)))
               node)))
         proof)
       proof)))
@@ -70,7 +70,7 @@
         ;; 1 (at x a) :premise             1 (at x a) :premise             1 (at x a) :premise
         ;; ----------------------          ----------------------          ----------------------
         ;; 2 (<= x y) :assumption          2 (<= x y) :assumption          2 (<= x y) :assumption
-        ;; 3 ...                           ----------------------          3 (at x a) "already" (1)
+        ;; 3 ...                           ----------------------          3 (at x a) "repeat" (1)
         ;; 4 (at x a)                      3 (at x (always x)) "always-i"  ----------------------
         ;; ----------------------                               ([2 1])    4 (at x (always a)) "always-i" 
         ;; 5 (at x (always a)) "always-i"                                                       ([2 3])
@@ -87,7 +87,7 @@
                      (let [item (get-item p (id-to-line p id1))]
                        (replace-item p item {:plid   id1
                                              :body (:body item)
-                                             :rule (str "\"already proved\" (" id2 ") []")})))
+                                             :roth (str "\"repeat\" (" id2 ") []")})))
         new-proof1 (reduce fn-replace proof proved-results)
         deletions (reduce dissoc duplicates (map key proved-results))
         delete-items (map #(get-item proof (id-to-line proof %)) (map key deletions))
@@ -97,7 +97,7 @@
 (defn remove-todos
   "Removes all \"...\" lines, if all lines inside the (sub)proof are solved (rule =! nil)"
   [proof]
-  (let [solved (< (count (remove :rule (remove #(= (:body %) :todo) (remove vector? proof)))) 1)]
+  (let [solved (< (count (remove :roth (remove #(= (:body %) :todo) (remove vector? proof)))) 1)]
     (loop [p proof
            np []]
       (cond
@@ -158,7 +158,7 @@
         prem-args (if (> (count premises) 1) premises (first premises))]
     `(~'infer ~prem-args ~(:body (last proof)))))
 
-(defn proof
+#_(defn proof
   "Creates a new superproof
    This is the entry point for new deductions"
   ([formula] (proof [] formula))
@@ -555,11 +555,13 @@
 
 ; das muss man schon beim check der Argumente verwenden!!
 (defn find-next-todo-plno
-  "`plno` of the next todo line following proof line with `plno`."
+  "`plno` of the next todo line following proof line with `plno`.
+  A result of `0` means that there is no such line."
   [proof n]
   (let [pv  (vec (flatten proof))
-        pv' (subvec pv n)]
-    (+ (inc n) (first (keep-indexed #(when (= :todo (:body %2)) %1) pv')))))
+        pv' (subvec pv n)
+        no  (first (keep-indexed #(when (= :todo (:body %2)) %1) pv'))]
+    (if (nil? no) 0 (+ (inc n) no))))
   
 (defn plid-to-manip
   "Gives the `plid` of the todo line where the manipulation of the proof must occur."
@@ -568,9 +570,42 @@
         todo-plno (find-next-todo-plno proof max-g)]
     (plno->plid proof todo-plno)))
 
+(defn- check-user-input
+  "Checks of user input to a proof step, independent of the direction of the step."
+  [proof roth argsv]
+  ; does the rule or theorem exist?
+  (if (not (rules/roth-exists? roth))
+    (throw (Exception. (format "There no such rule or theorem: %s" roth))))
+  ; are the line numbers in argsv distinct?
+  (if (and (not-empty argsv) (not (apply distinct? (filter number? argsv))))
+    (throw (Exception. (format "There are duplicates in your arguments: %s" (str argsv)))))
+  ; are the line numbers in argvs in the range of the proof?
+  (if (not-empty argsv)
+    (let [pl-cnt (count (flatten proof))
+          nos (filter number? argsv)
+          low (apply min nos)
+          high (apply max nos)]
+      (if (not (and (> low 0) (<= high pl-cnt)))
+        (throw (Exception. (format "Line numbers must refer lines in the proof: %s" (str argsv)))))))
+  )
+
+(defn check-user-input-f
+  "Checks the user input for a forward proof step, given as a roth and a vector.      
+   Throws exceptions if input not valid, and      
+   analyzes how to proceed the step. "
+  [proof roth argsv]
+  (check-user-input proof roth argsv) ; may throw exceptions
+  (cond
+    (not (rules/roth-forward? roth))
+     (throw (Exception. (format "This rule can't be used in a forward step: %s"  roth))))
+  ; TODO hier geht's weiter!!
+  )
+
 (defn step-f
   [proof roth argsv]
-  (let [pattern (match-argsv-f roth argsv)
+  (check-user-input-f proof roth argsv)
+  #_(let [pattern (match-argsv-f roth argsv)
+        
         rel-params (rel-params proof pattern)
         todo-plid (plid-to-manip proof pattern)
         result (rules/apply-roth roth rel-params)
@@ -585,14 +620,15 @@
    {:plid 4, :body :todo, :rule nil}
    {:plid 3, :body '(and A B), :rule nil}])
 
-(find-next-todo-plno p1 1)
-(find-next-todo-plno p1 2)
-(find-next-todo-plno p1 3)  ;; Exception NPE
 (step-f p1 :and-i [1 2])
+(step-f p1 :and-i [1 1])
+(step-f p1 :impl-i [4])
+(step-f p1 :x-i [1 2])
 (step-f p1 :or-i1 [1])
 (step-f p1 :or-i2 [1])
 (step-f p1 :and-e1 [4])
 (step-f p1 :and-e2 [4])
+(step-f p1 :tnd [])
 
 (def p2
   [{:plid 1, :rule :premise, :body '(or A B)}

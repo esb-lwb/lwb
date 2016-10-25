@@ -313,7 +313,7 @@
 
 ;; TODO
 
-#_(defn get-item
+(defn get-item
   "Returns the item from proof on line. 
    line x => returns item on line x
    line [x y] => returns subproof starting on line x (including all contained items and/or subproofs)"

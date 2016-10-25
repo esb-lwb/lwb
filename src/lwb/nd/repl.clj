@@ -8,7 +8,7 @@
 
 (ns lwb.nd.repl
   (:require [lwb.nd.deduction :as deduc]
-            [lwb.nd.proof :as proof]
+            [lwb.nd.proof :as pr]
             [lwb.nd.prereqs :refer :all]
             [lwb.nd.storage :refer [roths reset-roths]]
             [lwb.nd.io :as io]
@@ -57,7 +57,7 @@
   ([formula] (proof [] formula))
   ([premises formula]
    (reset! last_steps [])
-   (reset! p (proof/proof premises formula))
+   (reset! p (pr/proof premises formula))
    (show)))
 
 (defn step-f2
