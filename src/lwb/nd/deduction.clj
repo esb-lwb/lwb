@@ -7,7 +7,7 @@
 ; the terms of this license.
 
 (ns lwb.nd.deduction
-  (:require [lwb.nd.proof :refer [get-item get-scope add-after-item add-before-item
+  (:require [lwb.nd.proof :refer [plno->plid plbody get-item get-scope add-after-item add-before-item
                                   remove-item replace-item id-to-line]]
             [lwb.nd.rules :as rules]))
 
@@ -462,6 +462,7 @@
 
 
 ; range of allowed arguments depending on the pattern of the roth
+; brute force, works forward and backward provided that the patterns are not mixed!
 (defn range-args
   [pattern]
   (let [g1 (count (filter #{:g1} pattern))
@@ -481,14 +482,23 @@
     (mapv + range-g1 range-gm range-gb range-go range-em range-cm range-co)
     ))
 
+(defn max-given
+  "Maximal `plno` of a given parameter."
+  [pattern]
+  (apply max
+         (->> pattern
+              (filter #(= \g (first (name (first %)))))
+              (map second)
+              (filter number?))))
+
 ; was sind die Voraussetzungen?
 ; rule existiert
 ; forward ist erlaubt
 ; Zahl der Argumente ist erlaubt?? -- oder dies hier checken???
 (defn match-argsv-f
-  [rule argsv]
-  ; get the pattern for forward step of the rule
-  (loop [pattern (rules/roth-pattern rule :forward)
+  [roth argsv]
+  ; get the pattern for forward step of the roth
+  (loop [pattern (rules/roth-pattern roth :forward)
          args    argsv
          result  []]
     (let [p1 (first pattern) a1 (first args)]
@@ -501,7 +511,8 @@
           (= p1 :em) (recur (rest pattern) (rest args) (conj result [p1 a1]))
           (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?]))
           (= p1 :c?) (recur (rest pattern) args (conj result [p1 :?]))
-          (and (= p1 :co) (not (nil? a1))) (recur (rest pattern) args (conj result [p1 a1]))
+          (= p1 :co) (recur (rest pattern) args (conj result [p1 a1]))
+          ;(and (= p1 :co) (not (nil? a1))) (recur (rest pattern) args (conj result [p1 a1])); wird (nil? a1) nicht scxhon oben erledigt??
         )))))
                               
 ; wie geht die Logik?
@@ -512,10 +523,11 @@
 ; :co -> wenn noch ein Argument, dann einfüllen
 ; keine argumente mehr -> mit :? auffüllem
 
+; Voraussetzungen -- siehe oben!!
 (defn match-argsv-b
-  [rule argsv]
-  ; get the pattern for backward step of the rule
-  (loop [pattern (rules/roth-pattern rule :backward)
+  [roth argsv]
+  ; get the pattern for backward step of the roth
+  (loop [pattern (rules/roth-pattern roth :backward)
          args    argsv
          result  []]
     (let [p1 (first pattern) a1 (first args)]
@@ -533,11 +545,64 @@
 ; :cm -> argument übernehmen
 ; :gb -> argument übernehmen
 
-(defn step-f2
-  [proof rule argsv]
-  [rule argsv])
+(defn rel-params
+  "Parameters for the logic relation given the pattern for the call."
+  [proof pattern]
+  (->> pattern
+      (map second)
+      (mapv #(if (number? %) (plbody proof %) %))
+       ))
+
+; das muss man schon beim check der Argumente verwenden!!
+(defn find-next-todo-plno
+  "`plno` of the next todo line following proof line with `plno`."
+  [proof n]
+  (let [pv  (vec (flatten proof))
+        pv' (subvec pv n)]
+    (+ (inc n) (first (keep-indexed #(when (= :todo (:body %2)) %1) pv')))))
+  
+(defn plid-to-manip
+  "Gives the `plid` of the todo line where the manipulation of the proof must occur."
+  [proof pattern]
+  (let [max-g (max-given pattern)
+        todo-plno (find-next-todo-plno proof max-g)]
+    (plno->plid proof todo-plno)))
 
 (defn step-f
+  [proof roth argsv]
+  (let [pattern (match-argsv-f roth argsv)
+        rel-params (rel-params proof pattern)
+        todo-plid (plid-to-manip proof pattern)
+        result (rules/apply-roth roth rel-params)
+        
+        ]
+  [pattern todo-plid result]))
+
+
+(def p1
+  [{:plid 1, :rule :premise, :body 'A}
+   {:plid 2, :rule :premise, :body 'B}
+   {:plid 4, :body :todo, :rule nil}
+   {:plid 3, :body '(and A B), :rule nil}])
+
+(find-next-todo-plno p1 1)
+(find-next-todo-plno p1 2)
+(find-next-todo-plno p1 3)  ;; Exception NPE
+(step-f p1 :and-i [1 2])
+(step-f p1 :or-i1 [1])
+(step-f p1 :or-i2 [1])
+(step-f p1 :and-e1 [4])
+(step-f p1 :and-e2 [4])
+
+(def p2
+  [{:plid 1, :rule :premise, :body '(or A B)}
+   {:plid 4, :body :todo, :rule nil}
+   {:plid 3, :body 'X, :rule nil}])
+
+(step-f p2 :or-e [1])
+(step-f p2 :or-e [1 3])
+
+#_(defn step-f
   "Performs a forward step on proof by applying rule on the lines"
   [proof rule & lines]
   (let [info (check-args proof rule lines true)

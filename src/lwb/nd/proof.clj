@@ -11,7 +11,9 @@
             [clojure.zip :as zip]))
 
 ;; IDs for proof line
-(def plid (atom 0))
+(def plid 
+  "Global conter for the ids of proof lines."
+  (atom 0))
 
 (defn new-plid
   "Generates new id for proof lines.     
@@ -27,15 +29,15 @@
 ;; Keys in `:pline`
 (s/def ::plid int?)
 (s/def ::body (s/or :symbol symbol? :fml list? :keyword #{:todo}))
-(s/def ::rule (s/nilable keyword?))
+(s/def ::roth (s/nilable keyword?))
 (s/def ::refs vector?)
 
 ;; A proof line has a unique proof line id `:plid`,      
 ;; a `:body` which is a formula or a special keyword,     
-;; then the name of the `:rule` and if the rule is specified the      
+;; then the name of the rule or theorem `:roth` and if the rule is specified the      
 ;; `:refs` i.e. the plids of proof lines to which the application of the rule references
 (s/def ::pline
-  (s/keys :req-un [::plid ::body ::rule] :opt-un [::refs]))
+  (s/keys :req-un [::plid ::body ::roth] :opt-un [::refs]))
 
 ;; A proof is a nested vector of proof lines and subproofs
 (s/def ::proof (s/and vector? (s/* (s/or :pline ::pline :subproof ::proof))))
@@ -44,12 +46,12 @@
   "Generates a new todo line    
    Uses global atom `plid`!"
   []
-  {:plid (new-plid), :body :todo, :rule nil})
+  {:plid (new-plid), :body :todo, :roth nil})
 
 (defn- unproved-line?
-  "Checks whether a proof line has no rule."
+  "Checks whether a proof line has no roth."
   [pline]
-  (and (not= :todo (:body pline)) (nil? (:rule pline))))
+  (and (not= :todo (:body pline)) (nil? (:roth pline))))
 
 (defn- todoline?
   "Checks whether a proof line is a todo line."
@@ -90,7 +92,7 @@
   (2) the todo line is followed by a subproof."
   [loc]
   (and (todoline? (zip/node loc))
-       (or (not (nil? (:rule (zip/node (zip/right loc)))))
+       (or (not (nil? (:roth (zip/node (zip/right loc)))))
            (zip/branch? (zip/right loc)))))
 
 (defn remove-todo-lines
@@ -115,35 +117,35 @@
         (recur (zip/next loc))))))
 
 (add-below-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   21
-  {:plid 2, :body 'A, :rule :x}
+  {:plid 2, :body 'A, :roth :x}
   )
 
 (add-below-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   1
-  {:plid 2, :body 'A, :rule :x}
+  {:plid 2, :body 'A, :roth :x}
   )
 
 (add-below-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   21
-  [{:plid 2, :body 'A, :rule :x}
-   {:plid 3, :body 'A, :rule :x}]
+  [{:plid 2, :body 'A, :roth :x}
+   {:plid 3, :body 'A, :roth :x}]
   )
 
 (add-below-plid
-  [{:plid 21, :body :todo, :rule nil}
-   [{:plid 22, :body :todo, :rule nil}
-    {:plid 23, :body 'A, :rule :and-e}]
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   [{:plid 22, :body :todo, :roth nil}
+    {:plid 23, :body 'A, :roth :and-e}]
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   22
-  [{:plid 2, :body 'A, :rule :x}
-   {:plid 3, :body 'A, :rule :x}]
+  [{:plid 2, :body 'A, :roth :x}
+   {:plid 3, :body 'A, :roth :x}]
   )
 
 (defn add-above-plid
@@ -158,35 +160,35 @@
         (recur (zip/next loc))))))
 
 (add-above-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   1
-  {:plid 2, :body 'A, :rule :x}
+  {:plid 2, :body 'A, :roth :x}
   )
 
 (add-above-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   21
-  {:plid 2, :body 'A, :rule :x}
+  {:plid 2, :body 'A, :roth :x}
   )
 
 (add-above-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   21
-  [{:plid 2, :body 'A, :rule :x}
-   {:plid 3, :body 'A, :rule :x}]
+  [{:plid 2, :body 'A, :roth :x}
+   {:plid 3, :body 'A, :roth :x}]
   )
 
 (add-above-plid
-  [{:plid 21, :body :todo, :rule nil}
-   [{:plid 22, :body :todo, :rule nil}
-    {:plid 23, :body 'A, :rule :and-e}]
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   [{:plid 22, :body :todo, :roth nil}
+    {:plid 23, :body 'A, :roth :and-e}]
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   23
-  [{:plid 2, :body 'A, :rule :x}
-   {:plid 3, :body 'A, :rule :x}]
+  [{:plid 2, :body 'A, :roth :x}
+   {:plid 3, :body 'A, :roth :x}]
   )
 
 (defn remove-plid
@@ -201,23 +203,23 @@
         (recur (zip/next loc))))))
 
 (remove-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   1
   )
 
 (remove-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   21
   )
 
 (remove-plid
-  [{:plid 21, :body :todo, :rule nil}
-   [{:plid 22, :body :todo, :rule nil}
-    {:plid 24, :body :todo, :rule nil}
-    {:plid 23, :body 'A, :rule :and-e}]
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   [{:plid 22, :body :todo, :roth nil}
+    {:plid 24, :body :todo, :roth nil}
+    {:plid 23, :body 'A, :roth :and-e}]
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   24
   )
 
@@ -233,35 +235,35 @@
         (recur (zip/next loc))))))
 
 (replace-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   1
-  {:plid 2, :body 'A, :rule :x}
+  {:plid 2, :body 'A, :roth :x}
   )
 
 (replace-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   21
-  {:plid 2, :body 'A, :rule :x}
+  {:plid 2, :body 'A, :roth :x}
   )
 
 ; geht auch -- nötig??
 (replace-plid
-  [{:plid 21, :body :todo, :rule nil}
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   21
-  [{:plid 2, :body 'A, :rule :x}
-   {:plid 3, :body 'A, :rule :x}]
+  [{:plid 2, :body 'A, :roth :x}
+   {:plid 3, :body 'A, :roth :x}]
   )
 
 (replace-plid
-  [{:plid 21, :body :todo, :rule nil}
-   [{:plid 22, :body :todo, :rule nil}
-    {:plid 23, :body 'A, :rule :and-e}]
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   [{:plid 22, :body :todo, :roth nil}
+    {:plid 23, :body 'A, :roth :and-e}]
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   23
-  {:plid 2, :body 'A, :rule :x}
+  {:plid 2, :body 'A, :roth :x}
   )
 
 (defn proof
@@ -271,8 +273,8 @@
   (do
     (reset-plid)
     (let [premises-vec (if-not (vector? premises) [premises] premises)
-          premises-lines (vec (map #(hash-map :plid (new-plid) :body % :rule :premise) premises-vec))
-          proof-lines (conj premises-lines {:plid (new-plid) :body conclusion :rule nil})]
+          premises-lines (vec (map #(hash-map :plid (new-plid) :body % :roth :premise) premises-vec))
+          proof-lines (conj premises-lines {:plid (new-plid) :body conclusion :roth nil})]
       (add-todo-lines proof-lines))))
 
 (comment
@@ -284,11 +286,34 @@
   (lwb.nd.printer/pprint (proof '[A B] '(impl A B)))
   )
 
+(def p1
+  [{:plid 1, :roth :premise, :body 'A}
+   {:plid 2, :roth :premise, :body 'B}
+   {:plid 4, :body :todo, :roth nil}
+   {:plid 3, :body '(and A B), :roth nil}])
 
+(defn pline 
+  "Proof line of the `proof` at line with number `plno`.      
+   requires: `plno` valid."
+  [proof plno]
+  (let [fp (flatten proof)]
+    (nth fp (dec plno))))
+
+(pline p1 1)
+(pline p1 4)
+
+(defn plbody
+  "Body of the proof line at `plno`.     
+   requires: `plno` valid."
+  [proof plno]
+  (:body (pline proof plno)))
+
+(plbody p1 1)
+(plbody p1 4)
 
 ;; TODO
 
-(defn get-item
+#_(defn get-item
   "Returns the item from proof on line. 
    line x => returns item on line x
    line [x y] => returns subproof starting on line x (including all contained items and/or subproofs)"
@@ -325,11 +350,11 @@
     (:plid pline)))
 
 (def proof1
-  [{:plid 21, :body :todo, :rule nil}
-   [{:plid 22, :body :todo, :rule nil}
-    {:plid 23, :body 'A, :rule :and-e}
-    [{:plid 321, :body :todo, :rule :nil}]]
-   {:plid 1, :body '(or P (not P)), :rule nil}]
+  [{:plid 21, :body :todo, :roth nil}
+   [{:plid 22, :body :todo, :roth nil}
+    {:plid 23, :body 'A, :roth :and-e}
+    [{:plid 321, :body :todo, :roth :nil}]]
+   {:plid 1, :body '(or P (not P)), :roth nil}]
   )
 (plno->plid proof1 1)
 (plno->plid proof1 2)
@@ -382,7 +407,7 @@
                    (cond
                      (empty? p) u
                      (and (map? (first p))
-                          (nil? (:rule (first p)))) (recur (subvec p 1) (conj u (first p)))
+                          (nil? (:roth (first p)))) (recur (subvec p 1) (conj u (first p)))
                      (vector? (first p)) (recur (into [] (concat (first p) (subvec p 1))) u)
                      :else (recur (subvec p 1) u)))]
     (if (not-empty unproved)
