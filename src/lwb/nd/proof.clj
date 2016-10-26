@@ -349,24 +349,24 @@
   (let [pline (nth (flatten proof) (dec pos) nil)]
     (:plid pline)))
 
-(def proof1
+(def p1
   [{:plid 21, :body :todo, :roth nil}
    [{:plid 22, :body :todo, :roth nil}
     {:plid 23, :body 'A, :roth :and-e}
     [{:plid 321, :body :todo, :roth :nil}]]
    {:plid 1, :body '(or P (not P)), :roth nil}]
   )
-(plno->plid proof1 1)
-(plno->plid proof1 2)
-(plno->plid proof1 3)
-(plno->plid proof1 4)
-(plno->plid proof1 5)
-(plno->plid proof1 6) ;=> nil
+(plno->plid p1 1)
+(plno->plid p1 2)
+(plno->plid p1 3)
+(plno->plid p1 4)
+(plno->plid p1 5)
+(plno->plid p1 6) ;=> nil
 
-(plid->plno proof1 21)
-(plid->plno proof1 22)
-(plid->plno proof1 1)
-(plid->plno proof1 11) ;=> nil
+(plid->plno p1 21)
+(plid->plno p1 22)
+(plid->plno p1 1)
+(plid->plno p1 11) ;=> nil
 
 ; ersetzen durch pline-pos??
 (defn id-to-line
@@ -395,6 +395,9 @@
               (into [] (concat scope s))
               (recur (subvec p 1) (conj scope (first p))))
             :else (recur (subvec p 1) (conj scope (first p)))))))
+
+(get-scope [1 2 3] 2)
+(get-scope [1 2 [3 4] [5 6 7] 8] 2)
 
 (defn proved?
   "Checks if a proof is fully proved.

@@ -461,41 +461,50 @@
                                              :rule (str "\"trivial\" (" (:id new-item) ")")})))))))
 
 
-; range of allowed arguments depending on the pattern of the roth
-; brute force, works forward and backward provided that the patterns are not mixed!
-(defn range-args
+(defn- range-args-f
+  "Range of allowed arguments in a forward step."
   [pattern]
   (let [g1 (count (filter #{:g1} pattern))
         range-g1 (if (zero? g1) [0 0] [1 g1])
         gm (count (filter #{:gm} pattern))
         range-gm [gm gm]
-        gb (count (filter #{:gb} pattern))
+        em (count (filter #{:em} pattern))
+        range-em [em em]
+        co (count (filter #{:co} pattern))
+        range-co (if (zero? co) [0 0] [0 co])]
+    (mapv + range-g1 range-gm range-em range-co)))
+
+(defn- range-args-b
+  "Range of allowed arguments in a backward step."
+  [pattern]
+  (let [gb (count (filter #{:gb} pattern))
         range-gb (if (zero? gb) [0 0] [0 (dec gb)])
         go (count (filter #{:go} pattern))
         range-go (if (zero? go) [0 0] [0 go])
-        em (count (filter #{:em} pattern))
-        range-em [em em]
         cm (count (filter #{:cm} pattern))
-        range-cm [cm cm]
-        co (count (filter #{:co} pattern))
-        range-co (if (zero? co) [0 0] [0 co])]
-    (mapv + range-g1 range-gm range-gb range-go range-em range-cm range-co)
-    ))
+        range-cm [cm cm]]
+    (mapv + range-gb range-go range-cm)))
+
+(defn- type-args-ok?
+  "Are the args numbers or formulas according to the pattern?"
+  [pattern argsv]
+  (let [pattern' (map #(first (name %)) (filter #(not= \? (second (name %))) pattern))
+        check #(if (or (= %1 \g) (= %1 \c)) (number? %2) (or (symbol? %2) (list? %2)))]
+    (every? identity (map check pattern' argsv))))
 
 (defn max-given
   "Maximal `plno` of a given parameter."
-  [pattern]
+  [match-pattern]
   (apply max
-         (->> pattern
+         (->> match-pattern
               (filter #(= \g (first (name (first %)))))
               (map second)
               (filter number?))))
 
-; was sind die Voraussetzungen?
-; rule existiert
-; forward ist erlaubt
-; Zahl der Argumente ist erlaubt?? -- oder dies hier checken???
 (defn match-argsv-f
+  "Assigns the arguments to the pattern of a forward step.     
+   Returns match-pattern.      
+   requires: roth exists, forward is allowed"
   [roth argsv]
   ; get the pattern for forward step of the roth
   (loop [pattern (rules/roth-pattern roth :forward)
@@ -511,20 +520,12 @@
           (= p1 :em) (recur (rest pattern) (rest args) (conj result [p1 a1]))
           (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?]))
           (= p1 :c?) (recur (rest pattern) args (conj result [p1 :?]))
-          (= p1 :co) (recur (rest pattern) args (conj result [p1 a1]))
-          ;(and (= p1 :co) (not (nil? a1))) (recur (rest pattern) args (conj result [p1 a1])); wird (nil? a1) nicht scxhon oben erledigt??
-        )))))
+          (= p1 :co) (recur (rest pattern) args (conj result [p1 a1])) )))))
                               
-; wie geht die Logik?
-; :gm -> argument übernehmen
-; :g1 -> argument übernehmen
-; :em -> argument übernehmen
-; :g? -> :? einfüllem
-; :co -> wenn noch ein Argument, dann einfüllen
-; keine argumente mehr -> mit :? auffüllem
-
-; Voraussetzungen -- siehe oben!!
 (defn match-argsv-b
+  "Assigns the arguments to the pattern of a backward step.     
+   Returns match-pattern.      
+   requires: roth exists, backward is allowed"
   [roth argsv]
   ; get the pattern for backward step of the roth
   (loop [pattern (rules/roth-pattern roth :backward)
@@ -541,41 +542,55 @@
           (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?]))
           )))))
 
-; wie geht die Logik?
-; :cm -> argument übernehmen
-; :gb -> argument übernehmen
-
 (defn rel-params
-  "Parameters for the logic relation given the pattern for the call."
-  [proof pattern]
-  (->> pattern
+  "Parameters for the logic relation given the match pattern for the call."
+  [proof match-pattern]
+  (->> match-pattern
       (map second)
       (mapv #(if (number? %) (plbody proof %) %))
        ))
 
-; das muss man schon beim check der Argumente verwenden!!
-(defn find-next-todo-plno
+(defn- find-next-todo-plno
   "`plno` of the next todo line following proof line with `plno`.
-  A result of `0` means that there is no such line."
+  A result of `0` means that there is no such line.
+  requires: n is not out of bound of the proof."
   [proof n]
   (let [pv  (vec (flatten proof))
         pv' (subvec pv n)
         no  (first (keep-indexed #(when (= :todo (:body %2)) %1) pv'))]
     (if (nil? no) 0 (+ (inc n) no))))
   
-(defn plid-to-manip
-  "Gives the `plid` of the todo line where the manipulation of the proof must occur."
-  [proof pattern]
-  (let [max-g (max-given pattern)
+(defn- plid-to-manip
+  "Gives the `plid` of the todo line where the manipulation of the proof must occur.
+  A result of `0` means that there is no such line."
+  [proof match-pattern]
+  (let [max-g (max-given match-pattern)
         todo-plno (find-next-todo-plno proof max-g)]
-    (plno->plid proof todo-plno)))
+    (if (zero? todo-plno) 0 (plno->plid proof todo-plno))))
+
+(defn- concl-okay?
+  "Checks whether an optional conclusion is below the todo line."
+  [match-pattern todoline-no]
+  (let [concl (filter #(= (first %) :co) match-pattern)]
+    (if (empty? concl) true
+                       (> (second (first concl)) todoline-no))))
+
+(defn- scope-okay?
+  "Checks whether all arguments are in the same scope."
+  [proof match-pattern]
+  (let [plnos (filter number? (map second match-pattern))
+        max-plno (apply max plnos)
+        plines (map #(pline proof %) plnos)
+        scope (get-scope proof (pline proof max-plno))]
+    (every? #(contains? (set scope) %) plines)))
+
 
 (defn- check-user-input
   "Checks of user input to a proof step, independent of the direction of the step."
   [proof roth argsv]
   ; does the rule or theorem exist?
   (if (not (rules/roth-exists? roth))
-    (throw (Exception. (format "There no such rule or theorem: %s" roth))))
+    (throw (Exception. (format "There's no such rule or theorem: %s" roth))))
   ; are the line numbers in argsv distinct?
   (if (and (not-empty argsv) (not (apply distinct? (filter number? argsv))))
     (throw (Exception. (format "There are duplicates in your arguments: %s" (str argsv)))))
@@ -595,48 +610,67 @@
    analyzes how to proceed the step. "
   [proof roth argsv]
   (check-user-input proof roth argsv) ; may throw exceptions
-  (cond
-    (not (rules/roth-forward? roth))
+  ; can the roth be used in a forward step?
+  (if (not (rules/roth-forward? roth))
      (throw (Exception. (format "This rule can't be used in a forward step: %s"  roth))))
-  ; TODO hier geht's weiter!!
+  (let [pattern (rules/roth-pattern roth :forward)
+        range   (range-args-f pattern)]
+    ; size of argsv okay?
+    (if (not (and (>= (count argsv) (first range)) (<= (count argsv) (second range))))
+      (throw (Exception. (format "The number of arguments following the rule or theorem must be in the range: %s"  range))))
+    ; kind of args okay?
+    (if (not (type-args-ok? pattern argsv))
+      (throw (Exception. (format "Type of arguments doesn't match pattern: %s" pattern))))
+    (let [match-pattern (match-argsv-f roth argsv)
+          todo-plid (plid-to-manip proof match-pattern)
+          rel-params (rel-params proof match-pattern)]
+      (if (zero? todo-plid)
+        (throw (Exception. "Arguments refering givens must be above a todo line")))
+      (if (not (concl-okay? match-pattern (plid->plno proof todo-plid)))
+        (throw (Exception. "Arguments refering conclusion must be below a todo line")))
+      (if (not (scope-okay? proof match-pattern))
+        (throw (Exception. "Arguments must all be in the same scope.")))
+      {:match-pattern match-pattern
+       :todo-plid     todo-plid}))
   )
 
 (defn step-f
   [proof roth argsv]
-  (check-user-input-f proof roth argsv)
-  #_(let [pattern (match-argsv-f roth argsv)
-        
-        rel-params (rel-params proof pattern)
-        todo-plid (plid-to-manip proof pattern)
-        result (rules/apply-roth roth rel-params)
-        
-        ]
-  [pattern todo-plid result]))
+  (let [infos (check-user-input-f proof roth argsv)
+        rel-params (rel-params proof (:match-pattern infos))]
+    ;; TODO: hier geht's weiter
+    ;; dieses Ergebnis muss man in den Beweis einbauen.
+    (rules/apply-roth roth rel-params)))
+    
 
-
-(def p1
+(def proof1
   [{:plid 1, :rule :premise, :body 'A}
    {:plid 2, :rule :premise, :body 'B}
    {:plid 4, :body :todo, :rule nil}
    {:plid 3, :body '(and A B), :rule nil}])
 
-(step-f p1 :and-i [1 2])
-(step-f p1 :and-i [1 1])
-(step-f p1 :impl-i [4])
-(step-f p1 :x-i [1 2])
-(step-f p1 :or-i1 [1])
-(step-f p1 :or-i2 [1])
-(step-f p1 :and-e1 [4])
-(step-f p1 :and-e2 [4])
-(step-f p1 :tnd [])
+(comment
+  (step-f proof1 :and-i [1 2])
+  (step-f proof1 :and-i [1 1])
+  (step-f proof1 :and-i [:x 1])
+  (step-f proof1 :impl-i [4])
+  (step-f proof1 :x-i [1 2])
+  (step-f proof1 :or-i1 [1])
+  (step-f proof1 :or-i2 [1])
+  (step-f proof1 :and-e1 [4])
+  (step-f proof1 :and-e2 [4])
+  (step-f proof1 :tnd [])
+  (step-f proof1 :equal-e [1 2 'A 'B])
+  (step-f proof1 :equal-e [1 2 3 'B])
 
-(def p2
-  [{:plid 1, :rule :premise, :body '(or A B)}
-   {:plid 4, :body :todo, :rule nil}
-   {:plid 3, :body 'X, :rule nil}])
+  (def proof2
+    [{:plid 1, :rule :premise, :body '(or A B)}
+     {:plid 4, :body :todo, :rule nil}
+     {:plid 3, :body 'X, :rule nil}])
 
-(step-f p2 :or-e [1])
-(step-f p2 :or-e [1 3])
+  (step-f proof2 :or-e [1])
+  (step-f proof2 :or-e [1 3])
+  )
 
 #_(defn step-f
   "Performs a forward step on proof by applying rule on the lines"

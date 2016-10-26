@@ -33,13 +33,9 @@
            (io/import-theorems "resources/nd/theorems-ltl.edn"))
     ))
 
-;(io/import-rules "resources/nd/rules-prop.edn")
-;(io/import-rules "resources/nd/rules-pred.edn")
-;(io/import-theorems "resources/nd/theorems-prop.edn")
-;(io/import-theorems "resources/nd/theorems-pred.edn"))
 ; Choose the logic for the session
-(load-logic :prop)
-;(load-logic :pred)
+;(load-logic :prop)
+(load-logic :pred)
 ;(load-logic :ltl)
 
 ;; holds the actual state of the proof 
@@ -60,14 +56,14 @@
    (reset! p (pr/proof premises formula))
    (show)))
 
-(defn step-f2
+(defn step-f
   "Execute a forward step"
   [rule & args]
   (swap! last_steps conj @p)
-  (swap! p deduc/step-f2 rule (vec args))
+  (swap! p deduc/step-f rule (vec args))
   (show))
 
-(defn step-f
+#_(defn step-f
   "Execute a forward step"
   [rule & lines]
   (swap! last_steps conj @p)
