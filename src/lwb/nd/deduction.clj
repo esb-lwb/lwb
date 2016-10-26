@@ -493,7 +493,7 @@
     (every? identity (map check pattern' argsv))))
 
 (defn max-given
-  "Maximal `plno` of a given parameter."
+  "Maximal `plno` of the parameters for the givens."
   [match-pattern]
   (apply max
          (->> match-pattern
@@ -547,8 +547,7 @@
   [proof match-pattern]
   (->> match-pattern
       (map second)
-      (mapv #(if (number? %) (plbody proof %) %))
-       ))
+      (mapv #(if (number? %) (plbody proof %) %))))
 
 (defn- find-next-todo-plno
   "`plno` of the next todo line following proof line with `plno`.
@@ -637,10 +636,15 @@
 (defn step-f
   [proof roth argsv]
   (let [infos (check-user-input-f proof roth argsv)
-        rel-params (rel-params proof (:match-pattern infos))]
+        rel-params (rel-params proof (:match-pattern infos))
+        result (rules/apply-roth roth rel-params)]
+    ;; no result
+    (if (nil? (first result))
+      (throw (Exception. (format "Rule or theorem not applicable, check id and arguments: %s" (into (vector roth) argsv)))))
+    
     ;; TODO: hier geht's weiter
     ;; dieses Ergebnis muss man in den Beweis einbauen.
-    (rules/apply-roth roth rel-params)))
+    result))
     
 
 (def proof1
@@ -651,7 +655,7 @@
 
 (comment
   (step-f proof1 :and-i [1 2])
-  (step-f proof1 :and-i [1 1])
+  (step-f proof1 :and-e1 [1])
   (step-f proof1 :and-i [:x 1])
   (step-f proof1 :impl-i [4])
   (step-f proof1 :x-i [1 2])
