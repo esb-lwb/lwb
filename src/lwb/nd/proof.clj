@@ -352,8 +352,8 @@
   ([body rule refs]
    ;; handle special case that body = (infer ... or body = (substitution ...)
    (cond
-     (and (list? body) (= (first body) 'infer)) (new-subproof body)
-     (and (list? body) (= (first body) 'substitution)) :substitution
+     (and (seq? body) (= (first body) 'infer)) (new-subproof body)
+     (and (seq? body) (= (first body) 'substitution)) :substitution
      :else {:plid (new-plid) :body body :rule rule :refs refs})))
 
 (defn new-subproof
@@ -378,6 +378,7 @@
   (let [bodies' (replace-lvars bodies)]
     (map new-pline bodies')))
 
+(new-plines ['A '(and A B) '(infer A x)])
 ;; TODO
 
 (defn get-item

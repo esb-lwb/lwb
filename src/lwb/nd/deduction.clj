@@ -649,13 +649,13 @@
   (loop [rp refs-pattern
          np new-plines
          result []]
-    (let [rp1 (first rp) np1 (first np)]
+    (let [rp1 (first rp) np1 (first np) np1-plid (if (vector? np1) [(:plid (first np1))] (:plid np1))]
       (if (nil? rp1)
         result
         (cond
           ; if a :co was not given by the user, it's like a :c?
-          (and (= (second rp1) :?) (= (first rp1) :co)) (recur (rest rp) (rest np) (conj result [:c? (:plid np1)]))
-          (= (second rp1) :?)                           (recur (rest rp) (rest np) (conj result [(first rp1) (:plid np1)]))
+          (and (= (second rp1) :?) (= (first rp1) :co)) (recur (rest rp) (rest np) (conj result [:c? np1-plid]))
+          (= (second rp1) :?)                           (recur (rest rp) (rest np) (conj result [(first rp1) np1-plid]))
           :else                                         (recur (rest rp) np (conj result rp1)) )))))
     
 (defn step-f
@@ -668,6 +668,7 @@
     (if (nil? (first result))
       (throw (Exception. (format "Rule or theorem not applicable, check id and arguments: %s" (into (vector roth) argsv)))))
     
+    ;;result))
     ;; neue Zeilen
     (let [new-plines (new-plines result)
           refs-pattern (:refs-pattern infos)
@@ -677,6 +678,7 @@
         :c? ; -> entsprechende Zeilen in new-plines ersetzen
         )
                      
+      [new-plines refs-pattern']
       ; Schritt 2: wenn wir :co mit einer Nummer haben wird die Zeile im bisherigen proof ersetzt
       ; Schritt 3: wenn wir :c? mit einer Nummer haben, wird die entsprechende Zeile in den new-plines ersetzt
       ;; TODO: hier geht's weiter
@@ -712,6 +714,7 @@
      {:plid 4, :body :todo, :rule nil}
      {:plid 3, :body 'X, :rule nil}])
 
+  ; Wenn subproof, dann wird die plid der ersten Zeile als Vektor genommen
   (step-f proof2 :or-e [1])
   (step-f proof2 :or-e [1 3])
   )
