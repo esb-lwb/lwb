@@ -495,11 +495,16 @@
 (defn max-given
   "Maximal `plno` of the parameters for the givens."
   [match-pattern]
-  (apply max
-         (->> match-pattern
-              (filter #(= \g (first (name (first %)))))
-              (map second)
-              (filter number?))))
+  (if (= 1 (count match-pattern))   ; just one conclusion 
+    0
+    (apply max
+           (->> match-pattern
+                (filter #(= \g (first (name (first %)))))
+                (map second)
+                (filter number?)))))
+
+(max-given [[:c? :?]])
+(max-given [[:gm 2] [:c? :?]])
 
 (defn match-argsv-f
   "Assigns the arguments to the pattern of a forward step.     
@@ -539,8 +544,7 @@
           (= p1 :cm) (recur (rest pattern) (rest args) (conj result [p1 a1]))
           (= p1 :gb) (recur (rest pattern) (rest args) (conj result [p1 a1]))
           (= p1 :go) (recur (rest pattern) (rest args) (conj result [p1 a1]))
-          (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?]))
-          )))))
+          (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?])) )))))
 
 (defn rel-params
   "Parameters for the logic relation given the match pattern for the call."
@@ -570,18 +574,19 @@
 (defn- concl-okay?
   "Checks whether an optional conclusion is below the todo line."
   [match-pattern todoline-no]
-  (let [concl (filter #(= (first %) :co) match-pattern)]
+  (let [concl (filter #(and (= (first %) :co) (number? (second %))) match-pattern)]
     (if (empty? concl) true
                        (> (second (first concl)) todoline-no))))
 
 (defn- scope-okay?
   "Checks whether all arguments are in the same scope."
   [proof match-pattern]
-  (let [plnos (filter number? (map second match-pattern))
-        max-plno (apply max plnos)
-        plines (map #(pline proof %) plnos)
-        scope (get-scope proof (pline proof max-plno))]
-    (every? #(contains? (set scope) %) plines)))
+  (let [plnos (filter number? (map second match-pattern))]
+    (if (empty? plnos) true
+                       (let [max-plno (apply max plnos)
+                             plines (map #(pline proof %) plnos)
+                             scope (get-scope proof (pline proof max-plno))]
+                         (every? #(contains? (set scope) %) plines)))))
 
 
 (defn- check-user-input
@@ -619,37 +624,72 @@
       (throw (Exception. (format "The number of arguments following the rule or theorem must be in the range: %s"  range))))
     ; kind of args okay?
     (if (not (type-args-ok? pattern argsv))
-      (throw (Exception. (format "Type of arguments doesn't match pattern: %s" pattern))))
+      (throw (Exception. (format "Type of arguments doesn't match the call pattern: %s" pattern))))
     (let [match-pattern (match-argsv-f roth argsv)
-          todo-plid (plid-to-manip proof match-pattern)
-          rel-params (rel-params proof match-pattern)]
+          todo-plid (plid-to-manip proof match-pattern)]
       (if (zero? todo-plid)
         (throw (Exception. "Arguments refering givens must be above a todo line")))
+      ; TODO: keines der Argumente zeigt auf einen todo-line
+      ; TODO: :gm muss eine Nummer haben
+      ; TODO: mindestens eines der g1 muss eine Nummer haben
+      ; TODO: sieht so aus, dass type-args-ok komplexer ausgelegt werden muss
       (if (not (concl-okay? match-pattern (plid->plno proof todo-plid)))
-        (throw (Exception. "Arguments refering conclusion must be below a todo line")))
+        (throw (Exception. "Arguments refering conclusions must be below a todo line")))
       (if (not (scope-okay? proof match-pattern))
         (throw (Exception. "Arguments must all be in the same scope.")))
       {:match-pattern match-pattern
-       :todo-plid     todo-plid}))
+       :todo-plid     todo-plid
+       :refs-pattern  (map #(if (number? (second %)) [(first %) (plno->plid proof (second %))] %) match-pattern)}))
   )
 
+(defn- upgrade-refs-pattern
+  "Upgrades `refs-pattern` with the refs to new proof line in `new-plines.`
+   requires: #new-plines = # of :? in refs-pattern, this should be guaranteed since the call of the logic relation is ok."
+  [refs-pattern new-plines]
+  (loop [rp refs-pattern
+         np new-plines
+         result []]
+    (let [rp1 (first rp) np1 (first np)]
+      (if (nil? rp1)
+        result
+        (cond
+          ; if a :co was not given by the user, it's like a :c?
+          (and (= (second rp1) :?) (= (first rp1) :co)) (recur (rest rp) (rest np) (conj result [:c? (:plid np1)]))
+          (= (second rp1) :?)                           (recur (rest rp) (rest np) (conj result [(first rp1) (:plid np1)]))
+          :else                                         (recur (rest rp) np (conj result rp1)) )))))
+    
 (defn step-f
   [proof roth argsv]
   (let [infos (check-user-input-f proof roth argsv)
         rel-params (rel-params proof (:match-pattern infos))
-        result (rules/apply-roth roth rel-params)]
+        result (rules/apply-roth roth rel-params)
+        todo-plid (:todo-plid infos)]
     ;; no result
     (if (nil? (first result))
       (throw (Exception. (format "Rule or theorem not applicable, check id and arguments: %s" (into (vector roth) argsv)))))
     
-    ;; TODO: hier geht's weiter
-    ;; dieses Ergebnis muss man in den Beweis einbauen.
-    result))
+    ;; neue Zeilen
+    (let [new-plines (new-plines result)
+          refs-pattern (:refs-pattern infos)
+          refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)]
+      (if (not-empty (filter #(= :co (first %)) refs-pattern'))
+        :co ; -> Zeile in bisherigem proof ersetzen
+        :c? ; -> entsprechende Zeilen in new-plines ersetzen
+        )
+                     
+      ; Schritt 2: wenn wir :co mit einer Nummer haben wird die Zeile im bisherigen proof ersetzt
+      ; Schritt 3: wenn wir :c? mit einer Nummer haben, wird die entsprechende Zeile in den new-plines ersetzt
+      ;; TODO: hier geht's weiter
+      ;; TODO: verwende ref-pattern um die roth und die refs einzutragen
+      ;; das ergibt dann die wirkjlich einzutragenden neuen proof lines
+      ;;(reduce #(add-above-plid %1 todo-plid %2) proof' new-plines')
+      )
+    ))
     
 
 (def proof1
   [{:plid 1, :rule :premise, :body 'A}
-   {:plid 2, :rule :premise, :body 'B}
+   {:plid 5, :rule :premise, :body 'B}
    {:plid 4, :body :todo, :rule nil}
    {:plid 3, :body '(and A B), :rule nil}])
 
@@ -668,7 +708,7 @@
   (step-f proof1 :equal-e [1 2 3 'B])
 
   (def proof2
-    [{:plid 1, :rule :premise, :body '(or A B)}
+    [{:plid 8, :rule :premise, :body '(or A B)}
      {:plid 4, :body :todo, :rule nil}
      {:plid 3, :body 'X, :rule nil}])
 
