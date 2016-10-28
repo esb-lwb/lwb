@@ -354,7 +354,7 @@
    (cond
      (and (seq? body) (= (first body) 'infer)) (new-subproof body)
      (and (seq? body) (= (first body) 'substitution)) :substitution
-     :else {:plid (new-plid) :body body :rule rule :refs refs})))
+     :else {:plid (new-plid) :body body :roth rule :refs refs})))
 
 (defn new-subproof
   "Creates a new subproof from infer clause."
@@ -376,7 +376,7 @@
   "Creates all the new pline, that must be added to the proof"
   [bodies]
   (let [bodies' (replace-lvars bodies)]
-    (map new-pline bodies')))
+    (mapv new-pline bodies')))
 
 (new-plines ['A '(and A B) '(infer A x)])
 ;; TODO

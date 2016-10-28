@@ -649,7 +649,7 @@
   (loop [rp refs-pattern
          np new-plines
          result []]
-    (let [rp1 (first rp) np1 (first np) np1-plid (if (vector? np1) [(:plid (first np1))] (:plid np1))]
+    (let [rp1 (first rp) np1 (first np) np1-plid (if (vector? np1) [(:plid (first np1)) (:plid (last np1))] (:plid np1))]
       (if (nil? rp1)
         result
         (cond
@@ -657,7 +657,15 @@
           (and (= (second rp1) :?) (= (first rp1) :co)) (recur (rest rp) (rest np) (conj result [:c? np1-plid]))
           (= (second rp1) :?)                           (recur (rest rp) (rest np) (conj result [(first rp1) np1-plid]))
           :else                                         (recur (rest rp) np (conj result rp1)) )))))
-    
+
+(defn- upgrade-refs
+  "Upgrades the refs in the given vector or proof at the given plids with roth and refs."
+  [proof plids roth refs]
+  (let [old-plines (mapv #(pline proof (plid->plno proof %)) plids)
+        upg-plines (mapv #(assoc % :roth roth :refs refs) old-plines)]
+    (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines)
+  ))
+
 (defn step-f
   [proof roth argsv]
   (let [infos (check-user-input-f proof roth argsv)
@@ -667,33 +675,25 @@
     ;; no result
     (if (nil? (first result))
       (throw (Exception. (format "Rule or theorem not applicable, check id and arguments: %s" (into (vector roth) argsv)))))
-    
-    ;;result))
-    ;; neue Zeilen
+    ;; new proof lines
     (let [new-plines (new-plines result)
           refs-pattern (:refs-pattern infos)
-          refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)]
-      (if (not-empty (filter #(= :co (first %)) refs-pattern'))
-        :co ; -> Zeile in bisherigem proof ersetzen
-        :c? ; -> entsprechende Zeilen in new-plines ersetzen
-        )
-                     
-      [new-plines refs-pattern']
-      ; Schritt 2: wenn wir :co mit einer Nummer haben wird die Zeile im bisherigen proof ersetzt
-      ; Schritt 3: wenn wir :c? mit einer Nummer haben, wird die entsprechende Zeile in den new-plines ersetzt
-      ;; TODO: hier geht's weiter
-      ;; TODO: verwende ref-pattern um die roth und die refs einzutragen
-      ;; das ergibt dann die wirkjlich einzutragenden neuen proof lines
-      ;;(reduce #(add-above-plid %1 todo-plid %2) proof' new-plines')
+          refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)
+          refs (mapv second (filter #(= \g (first (name (first %)))) refs-pattern'))
+          new-plines' (upgrade-refs new-plines (mapv second (filter #(= :c? (first %)) refs-pattern')) roth refs)
+          proof' (upgrade-refs proof (mapv second (filter #(= :co (first %)) refs-pattern')) roth refs)
+          ]
+      (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines')
+      ;; TODO: Reduktion von Duplikaten
       )
     ))
     
 
 (def proof1
-  [{:plid 1, :rule :premise, :body 'A}
-   {:plid 5, :rule :premise, :body 'B}
-   {:plid 4, :body :todo, :rule nil}
-   {:plid 3, :body '(and A B), :rule nil}])
+  [{:plid 1, :roth :premise, :body 'A}
+   {:plid 5, :roth :premise, :body 'B}
+   {:plid 4, :body :todo, :roth nil}
+   {:plid 3, :body '(and A B), :roth nil}])
 
 (comment
   (step-f proof1 :and-i [1 2])
@@ -702,7 +702,7 @@
   (step-f proof1 :impl-i [4])
   (step-f proof1 :x-i [1 2])
   (step-f proof1 :or-i1 [1])
-  (step-f proof1 :or-i2 [1])
+  (step-f proof1 :or-i2 [2])
   (step-f proof1 :and-e1 [4])
   (step-f proof1 :and-e2 [4])
   (step-f proof1 :tnd [])
@@ -710,9 +710,9 @@
   (step-f proof1 :equal-e [1 2 3 'B])
 
   (def proof2
-    [{:plid 8, :rule :premise, :body '(or A B)}
-     {:plid 4, :body :todo, :rule nil}
-     {:plid 3, :body 'X, :rule nil}])
+    [{:plid 8, :roth :premise, :body '(or A B)}
+     {:plid 4, :body :todo, :roth nil}
+     {:plid 3, :body 'X, :roth nil}])
 
   ; Wenn subproof, dann wird die plid der ersten Zeile als Vektor genommen
   (step-f proof2 :or-e [1])
