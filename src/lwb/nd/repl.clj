@@ -58,19 +58,12 @@
 
 (defn step-f
   "Execute a forward step"
-  [rule & args]
+  [roth & args]
   (swap! last_steps conj @p)
-  (swap! p deduc/step-f rule (vec args))
+  (swap! p deduc/step-f roth (vec args))
   (show))
 
-#_(defn step-f
-  "Execute a forward step"
-  [rule & lines]
-  (swap! last_steps conj @p)
-  (swap! p #(apply deduc/step-f (conj (conj lines rule) %)))
-  (show))
-
-(defn step-f-inside
+#_(defn step-f-inside
   "Executes a forward step inside the chosen line"
   [rule line]
   (swap! last_steps conj @p)
@@ -79,16 +72,9 @@
 
 (defn step-b
   "Execute a backward step"
-  [rule & lines]
+  [roth & args]
   (swap! last_steps conj @p)
-  (swap! p #(apply deduc/step-b (conj (conj lines rule) %)))
-  (show))
-
-(defn choose-option
-  "Choose an option in the chosen line"
-  [line num]
-  (swap! last_steps conj @p)
-  (swap! p deduc/choose-option line num)
+  (swap! p deduc/step-b roth (vec args))
   (show))
 
 (defn unify

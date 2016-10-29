@@ -8,7 +8,7 @@
 
 (ns lwb.nd.printer
   (:require [lwb.nd.proof :refer [plid plid->plno]]
-            [clojure.string :as str]
+            [clojure.walk :as walk]
             [clojure.pprint :as pp]))
 
 ;; distance between left and right edge
@@ -16,53 +16,42 @@
 ;; length of the divider for subproofs
 (def divider-length 25)
 
-(defn pprint-line
-  [proof depth item]
-  (let [line (plid->plno proof (:plid item))
-        body (str (if (= (:body item) :todo) "..." (:body item)))
-        rule (condp = (:rule item)
-               nil         ""
-               :premise    "premise"
-               :assumption "assumption"
-               (let [name (subs (:rule item) 0 (.lastIndexOf (:rule item) "("))
-                     ids  (subs (:rule item) (inc (.lastIndexOf (:rule item) "(")) (.lastIndexOf (:rule item) ")"))
-                     ;; convert ids to line-numbers
-                     lines   (str/replace ids #"\b[0-9]+\b" #(str (plid->plno proof (Integer. %))))
-                     ;; [12 12] => [12]
-                     lines-1 (str/replace lines #"\[([0-9]+)\s\1\]" #(str "[" (second %) "]"))
-                     ;; sort the line-numbers asc
-                     lines-2 (if (zero? (count lines-1))
-                               ""
-                               (str "(" (str/join " " (sort (str/split lines-1 #"\s+(?=[^\])}]*([\[({]|$))"))) ")"))
-                                          user-inputs (subs (:rule item) (.lastIndexOf (:rule item) "["))
-                                          user-inputs-1 (if (> (count user-inputs) 2)
-                                                          (str " " user-inputs) nil)]
-                                  (str name lines-2 user-inputs-1)))]
+(defn- plid-plno-map
+  [proof]
+  (let [fp (flatten proof)]
+    (into {} (map-indexed #(vector (:plid %2) (inc %1)) fp))))
+
+(defn- pprint-line
+  [proof depth pline plid-plno-map]
+  (let [line (plid->plno proof (:plid pline))
+        body (str (if (= (:body pline) :todo) "..." (:body pline)))
+        refs (walk/postwalk-replace plid-plno-map (:refs pline))
+        roth (str (:roth pline) " " refs)]
     (print (pp/cl-format nil "~3d: " line))
     (when (pos? depth)
       (print " ")
       (dotimes [_ depth] (print "| ")))
     (print body)
     (dotimes [_ (- distance (count body) (if (> depth 0) (inc (* 2 depth)) 0))] (print " "))
-    (println rule)))
+    (println roth)))
 
 (defn pprint
   ([proof] (pprint proof proof 0))
   ([proof sub depth]
-    (print "     ")
-    (when (pos? depth)
-      (print " ")
-      (dotimes [_ (dec depth)] (print "| ")))
-    (dotimes [_ (- divider-length depth)] (print "--"))
-    (println)
-    (doseq [item sub]
-      (if (vector? item)
-        (pprint proof item (inc depth))
-        (pprint-line proof depth item)))
-    (print "     ") 
-    (when (pos? depth)
-      (print " ")
-      (dotimes [_ (dec depth)] (print "| ")))
-    (dotimes [_ (- divider-length depth)] (print "--"))
-    (println)))
-      
+   (let [smap (plid-plno-map proof)]
+     (print "     ")
+     (when (pos? depth)
+       (print " ")
+       (dotimes [_ (dec depth)] (print "| ")))
+     (dotimes [_ (- divider-length depth)] (print "--"))
+     (println)
+     (doseq [pline sub]
+       (if (vector? pline)
+         (pprint proof pline (inc depth))
+         (pprint-line proof depth pline smap)))
+     (print "     ")
+     (when (pos? depth)
+       (print " ")
+       (dotimes [_ (dec depth)] (print "| ")))
+     (dotimes [_ (- divider-length depth)] (print "--"))
+     (println))))

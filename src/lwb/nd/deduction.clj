@@ -655,6 +655,8 @@
         (cond
           ; if a :co was not given by the user, it's like a :c?
           (and (= (second rp1) :?) (= (first rp1) :co)) (recur (rest rp) (rest np) (conj result [:c? np1-plid]))
+          ; if a :go was not given by the user, it's like a :g?
+          (and (= (second rp1) :?) (= (first rp1) :go)) (recur (rest rp) (rest np) (conj result [:g? np1-plid]))
           (= (second rp1) :?)                           (recur (rest rp) (rest np) (conj result [(first rp1) np1-plid]))
           :else                                         (recur (rest rp) np (conj result rp1)) )))))
 
@@ -663,7 +665,7 @@
   [proof plids roth refs]
   (let [old-plines (mapv #(pline proof (plid->plno proof %)) plids)
         upg-plines (mapv #(assoc % :roth roth :refs refs) old-plines)]
-    (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines)
+    (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))
   ))
 
 (defn step-f
@@ -683,7 +685,7 @@
           new-plines' (upgrade-refs new-plines (mapv second (filter #(= :c? (first %)) refs-pattern')) roth refs)
           proof' (upgrade-refs proof (mapv second (filter #(= :co (first %)) refs-pattern')) roth refs)
           ]
-      (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines')
+      (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines'))
       ;; TODO: Reduktion von Duplikaten
       )
     ))
@@ -708,102 +710,82 @@
   (step-f proof1 :tnd [])
   (step-f proof1 :equal-e [1 2 'A 'B])
   (step-f proof1 :equal-e [1 2 3 'B])
+  )  
 
-  (def proof2
-    [{:plid 8, :roth :premise, :body '(or A B)}
-     {:plid 4, :body :todo, :roth nil}
-     {:plid 3, :body 'X, :roth nil}])
+(def proof2
+  [{:plid 8, :roth :premise, :body '(or A B)}
+   {:plid 4, :body :todo, :roth nil}
+   {:plid 3, :body 'X, :roth nil}])
 
+(comment
   ; Wenn subproof, dann wird die plid der ersten Zeile als Vektor genommen
   (step-f proof2 :or-e [1])
   (step-f proof2 :or-e [1 3])
   )
 
-#_(defn step-f
-  "Performs a forward step on proof by applying rule on the lines"
-  [proof rule & lines]
-  (let [info (check-args proof rule lines true)
-        todo-item (:todo info)
-        obligatory-items (:obligatories info)
-        optional-items (:optional info)
-        ;; separate ids (from lines) and inputs (from user-input))
-        obligatory-ids (map get-item-id (filter map? obligatory-items))
-        obligatory-user-input (into [] (remove map? obligatory-items))
+(defn check-user-input-b
+"Checks the user input for a backward proof step, given as a roth and a vector.      
+ Throws exceptions if input not valid, and      
+ analyzes how to proceed the step. "
+[proof roth argsv]
+(check-user-input proof roth argsv) ; may throw exceptions
+; can the roth be used in a forward step?
+(if (not (rules/roth-backward? roth))
+  (throw (Exception. (format "This rule can't be used in a forward step: %s"  roth))))
+(let [pattern (rules/roth-pattern roth :backward)
+      range   (range-args-b pattern)]
+  ; size of argsv okay?
+  (if (not (and (>= (count argsv) (first range)) (<= (count argsv) (second range))))
+    (throw (Exception. (format "The number of arguments following the rule or theorem must be in the range: %s"  range))))
+  ; kind of args okay?
+  (if (not (type-args-ok? pattern argsv))
+    (throw (Exception. (format "Type of arguments doesn't match the call pattern: %s" pattern))))
+  (let [match-pattern (match-argsv-b roth argsv)
+        concl-plid (plno->plid proof (first argsv))]
+    ; TODO: concl-plid zeigt wirkliuch auf eine conclusion line
+    ; TODO: alle g Argumente müssen oberhalb einer todo-line sein und oberhalb von concl
+    ; TODO: keines der Argumente zeigt auf einen todo-line
+    ; TODO: höchstens alle -1 der gb muss eine Nummer haben
+    ; TODO: sieht so aus, dass type-args-ok komplexer ausgelegt werden muss
+    (if (not (scope-okay? proof match-pattern))
+      (throw (Exception. "Arguments must all be in the same scope.")))
+    {:match-pattern match-pattern
+     :concl-plid    concl-plid
+     :refs-pattern  (map #(if (number? (second %)) [(first %) (plno->plid proof (second %))] %) match-pattern)}))
+)
 
-        obligatory-args (into [] (map item-to-rule-arg obligatory-items))
-        optional-args (into [] (map item-to-rule-arg optional-items))
-        rule-result (apply rules/apply-roth (conj [rule true] obligatory-args optional-args))]
-    ;; the user-inputs will be attached to the :rule of a new line, after the source lines
-    (if (empty? rule-result)
-      (throw (Exception. (str "Incorrect parameters for the rule \"" rule "\". Please check the description.")))
-      ;; add the used rule to the optional items
-      (let [p1 (reduce #(replace-item %1 %2 {:plid   (:plid %2)
-                                             :body (:body %2)
-                                             :rule (pr-str rule obligatory-ids obligatory-user-input)}) proof optional-items)]
-        (if (> (count rule-result) 1)
-          ;; more than one possible result, the user has to decide which one fits his needs
-          (add-before-item p1
-                           todo-item
-                           {:plid   (new-id)
-                            :body (apply merge (map-indexed #(hash-map (inc %1) %2) rule-result))
-                            :rule (pr-str rule obligatory-ids obligatory-user-input)})
-          ;; only one possible result (which can contain several items to insert)
-          (let [result (if (vector? (first rule-result)) (first rule-result) rule-result)
-                new-items (create-items result (pr-str rule obligatory-ids obligatory-user-input))]
-            ;; if there is no empty line, insert everthing behind the last obligatory item
-            (check-duplicates
-              (if todo-item
-                (reduce #(add-before-item %1 todo-item %2) p1 new-items)
-                (reduce #(add-after-item %1 (last obligatory-items) %2) p1 new-items)))))))))
+(defn- shift1
+  "Shifts first element of vector `v` at the end of the vector."
+  [v]
+  (conj (vec (rest v)) (first v)))
+
+(shift1 [1 2 3])
 
 (defn step-b
-  "Performs a backward step on proof by applying rule on the lines"
-  [proof rule & lines]
-  (let [info (check-args proof rule lines false)
-        todo-item (:todo info)
-        obligatory-items (:obligatories info)
-        optional-items (:optional info)
-        optional-ids (map get-item-id optional-items)
-        ;; separate user-inputs from obligatory-items
-        obligatory-user-input (into [] (remove map? obligatory-items))
-        obligatory-args (into [] (map item-to-rule-arg obligatory-items))
-        optional-args (into [] (map item-to-rule-arg optional-items))
-        rule-result (apply rules/apply-roth (conj [rule false] obligatory-args optional-args))]
-    (cond
-      (empty? rule-result)
-      (throw (Exception. "Incorrect parameters for the given rule"))
+  [proof roth argsv]
+  (let [infos (check-user-input-b proof roth argsv)
+        rel-params (shift1 (rel-params proof (:match-pattern infos)))
+        result (rules/apply-roth roth rel-params)
+        todo-plid (:concl-plid infos)]
+    ;; no result
+    (if (nil? (first result))
+      (throw (Exception. (format "Rule or theorem not applicable, check id and arguments: %s" (into (vector roth) argsv)))))
+    ;; new proof lines
+    (let [new-plines (new-plines result)
+          refs-pattern (:refs-pattern infos)
+          refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)
+          refs (mapv second (filter #(= \g (first (name (first %)))) refs-pattern'))
+          proof' (upgrade-refs proof (mapv second (filter #(= :cm (first %)) refs-pattern')) roth refs)
+          ]
+      (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines))
+      ;; TODO: Reduktion von Duplikaten
+      )
+    ))
+    
 
-      (> (count rule-result) 1)
-      ;; more than one possible result, the user has to decide which one fits his needs
-      (let [id (new-id)
-            p1 (reduce #(replace-item %1 %2 {:plid   (:plid %2)
-                                             :body (:body %2)
-                                             :rule (pr-str rule (conj optional-ids id) obligatory-user-input)}) proof obligatory-items)]
-        (add-after-item p1
-                        todo-item
-                        {:plid   id
-                         :body (apply merge (map-indexed #(hash-map (inc %1) %2) rule-result))
-                         :rule nil}))
-      :else
-      ;; only one possible result (which can contain several items to insert)
-      (let [result (if (vector? (first rule-result)) (first rule-result) rule-result)
-            new-items (create-items result)
-            new-ids (map get-item-id new-items)
-            p1 (reduce #(replace-item %1 %2 {:plid   (:plid %2)
-                                             :body (:body %2)
-                                             :rule (pr-str rule (concat new-ids optional-ids) obligatory-user-input)}) proof obligatory-items)
-            ;; add proved items (e.g. subproofs) before the "..."-item and unproved items after it
-            ;; That's wrong in the case of 'or-e'!!
-            ; a hack !! TODO: rethink this, it would be better to allow 'or-e' to be forward!!
-            ; all unproved
-            all-unproved (let [unproved-items' (remove #(or (vector? %) (not (nil? (:rule %)))) new-items)]
-                           (= (first new-items) (first unproved-items')))
-            proved-items (if all-unproved () (filter #(or (vector? %)
-                                                          (not (nil? (:rule %)))) new-items))
-            unproved-items (if all-unproved (reverse new-items) (remove #(or (vector? %)
-                                                                             (not (nil? (:rule %)))) new-items))
-
-            p2 (reduce #(add-after-item %1 todo-item %2) p1 unproved-items)]
-        (check-duplicates (reduce #(add-before-item %1 todo-item %2) p2 proved-items))))))
-
-
+(comment
+  (step-b proof1 :and-i [4])
+  (step-b proof1 :and-i [4 1])
+  (step-b proof2 :or-e [3])
+  (step-b proof2 :or-e [3 1])
+  )

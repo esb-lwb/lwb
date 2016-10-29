@@ -375,8 +375,13 @@
 (defn new-plines
   "Creates all the new pline, that must be added to the proof"
   [bodies]
-  (let [bodies' (replace-lvars bodies)]
-    (mapv new-pline bodies')))
+  (let [bodies' (replace-lvars bodies)
+        ; a hack for handling lazy sequences!!
+        non-lazy-bodies (clojure.walk/postwalk (fn [node]
+                                          (if (instance? clojure.lang.LazySeq node)
+                                            (apply list node)
+                                            node)) bodies')]
+    (mapv new-pline non-lazy-bodies)))
 
 (new-plines ['A '(and A B) '(infer A x)])
 ;; TODO
