@@ -441,17 +441,10 @@
 (plid->plno p1 1)
 (plid->plno p1 11) ;=> nil
 
-; ersetzen durch pline-pos??
-(defn id-to-line
-  "Returns the line, which contains the item, with the given id"
-  [proof id]
-  (if (not (vector? id))
-    (loop [p (flatten proof)
-           l 1]
-      (if (= (:plid (first p)) id)
-        l
-        (recur (rest p) (inc l))))
-    [(id-to-line proof (first id)) (id-to-line proof (last id))]))
+(defn pline-at-plid
+  "Returns the pline the the given plid."
+  [proof plid]
+  (pline proof (plid->plno proof plid)))
 
 (defn get-scope
   "Returns the scope for an item inside a proof
@@ -488,7 +481,7 @@
                      :else (recur (subvec p 1) u)))]
     (if (not-empty unproved)
       (throw (Exception. (str "There are still unproved lines inside the proof
-        (" (clojure.string/join " " (map #(id-to-line proof %) (map :id unproved))) ")")))
+        (" (clojure.string/join " " (map #(pline-at-plid proof %) (map :id unproved))) ")")))
       true)))
 
 ;; -----------------

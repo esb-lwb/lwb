@@ -17,7 +17,7 @@
 (def
   ^{:doc "Magic number for the logic variable for the conclusion in the logic relation.    
           Symbols of the form `qnnnn`should not be used as the name of a proposition in rules and theorems."}
-  conclusion-number 6571)
+  conclusion-number 3961)
 
 ;; # Transformation of rules and theorems to core.logic relations
 

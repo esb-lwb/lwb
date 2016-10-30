@@ -24,39 +24,45 @@
 ;; TODO: überarbeiten und in proof verschieben
 (defn find-duplicates
   "Finds duplicates entries inside the proof that can be deleted.
-   Returns a map with the deletable ids as key and the replacement items as value.
-   Only items without rule, in the same scope and the same subproof will be marked as deletable"
+   Returns a map with the deletable plids as key and the replacement plids as value.
+   Only plines without rule, in the same scope and the same subproof will be marked as deletable"
   ([proof] (find-duplicates proof proof))
   ([proof sub]
    (let [scope (get-scope proof (last sub))
+         ;; duplicates = duplicate bodies in scope but not :todo
          duplicates (disj (set (map first (filter #(> (val %) 1) (frequencies (map :body (remove vector? scope)))))) :todo)
-         duplicate-items (filter #(contains? duplicates (:body %)) scope)
-         equals (into [] (map val (group-by :body duplicate-items)))
+         ;; duplicate-plines = the pline with these duplicate bodies
+         duplicate-plines (filter #(contains? duplicates (:body %)) scope)
+         ;; duplicate-plines grouped into a vactor of vector of plines with equal body
+         equals (into [] (map val (group-by :body duplicate-plines)))
          fn-smap (fn [equals]
                    (let [remain (map :plid (filter :roth equals))
-                         delete (map :plid (filter (set sub) (remove :roth equals)))] ; just items from the actual sub can be deleted
+                         delete (map :plid (filter (set sub) (remove :roth equals)))] ; just plines from the actual sub can be deleted
                      (reduce #(assoc %1 %2 (last remain)) {} delete)))
-         ids (apply merge (map fn-smap equals))]
-     (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) ids sub))))
+         ;; map with pairs of plids where the first can be replace by the second
+         plid-map (apply merge (map fn-smap equals))]
+     (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) plid-map sub))))
 
-(defn adjust-ids
-  "Replaces all occurences of a certain ID inside proof with another.
-   Provide ids as a map with keys = IDs to replace | vals = replacement"
-  [proof ids]
-  (let [regex (java.util.regex.Pattern/compile (clojure.string/join "|" (map #(str "\\b" % "\\b") (map key ids))))
-        smap (apply merge (map #(hash-map (str (key %)) (if (list? (val %))
-                                                          (clojure.string/join " " (val %))
-                                                          (str (val %)))) ids))]
-    (if (not-empty ids)
-      (clojure.walk/postwalk
-        (fn [node]
-          (if (vector? node)
-            node
-            (if (string? (:roth node))
-              (assoc node :roth (clojure.string/replace (:roth node) regex #(get smap %)))
-              node)))
-        proof)
-      proof)))
+(defn- adjust-refs
+  "Upgrades the refs in the given proof according to the plid-map"
+  [proof plid-map]
+  (let [old-plines (flatten proof) ;; just all the plines of the current proof
+        upg-plines (mapv #(assoc % :roth (:roth %) :refs (clojure.walk/prewalk-replace plids-map (:refs %))) old-plines)]
+    (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))
+
+(def p12
+  [{:plid 1 :body 'A :roth :and-i}
+   {:plid 3 :body :todo}
+   {:plid 6 :body 'C :roth :x :refs [2 7]}
+   {:plid 5 :body 'B}
+   {:plid 7 :body 'B :roth :x}
+   {:plid 2 :body 'A :roth nil}
+   ])
+
+(def plids-map (find-duplicates p12))
+plids-map
+
+(adjust-refs p12 plids-map)
 
 (defn remove-duplicates
   "Removes all duplicate entries from proof and adjusting the changed IDs"
@@ -76,42 +82,33 @@
         ;; 5 (at x (always a)) "always-i"                                                       ([2 3])
         ;;                      ([2 4])
         fn-proved-results (fn [map [id1 id2]]
-                            (let [delete-item (get-item proof (id-to-line proof id1))
-                                  replace-item (get-item proof (id-to-line proof id2))
-                                  delete-scope (get-scope proof delete-item)]
-                              (if (and (= delete-item (last delete-scope))
-                                       (not= delete-scope (get-scope proof replace-item)))
+                            (let [delete-pline (pline-at-plid proof id1)
+                                  replace-pline (pline-at-plid proof id2)
+                                  delete-scope (get-scope proof delete-pline)]
+                              (if (and (= delete-pline (last delete-scope))
+                                       (not= delete-scope (get-scope proof replace-pline)))
                                 (assoc map id1 id2) map)))
         proved-results (reduce fn-proved-results {} duplicates)
         fn-replace (fn [p [id1 id2]]
-                     (let [item (get-item p (id-to-line p id1))]
-                       (replace-item p item {:plid   id1
-                                             :body (:body item)
-                                             :roth (str "\"repeat\" (" id2 ") []")})))
+                     (let [pline (pline-at-plid p id1)]
+                       (replace-plid p pline {:plid   id1
+                                              :body (:body pline)
+                                              :roth "repeat"
+                                              :refs [id2]})))
         new-proof1 (reduce fn-replace proof proved-results)
         deletions (reduce dissoc duplicates (map key proved-results))
-        delete-items (map #(get-item proof (id-to-line proof %)) (map key deletions))
-        new-proof2 (reduce remove-item new-proof1 delete-items)]
-    (adjust-ids new-proof2 deletions)))
+        delete-plines (map #(pline-at-plid proof %) (map key deletions))
+        new-proof2 (reduce remove-item new-proof1 delete-plines)]
+    (adjust-refs new-proof2 deletions)))
 
-(defn remove-todos
-  "Removes all \"...\" lines, if all lines inside the (sub)proof are solved (rule =! nil)"
-  [proof]
-  (let [solved (< (count (remove :roth (remove #(= (:body %) :todo) (remove vector? proof)))) 1)]
-    (loop [p proof
-           np []]
-      (cond
-        (empty? p) np
-        (vector? (first p)) (recur (subvec p 1) (conj np (remove-todos (first p))))
-        :else
-        (if (and solved (= (:body (first p)) :todo))
-          (recur (subvec p 1) np)
-          (recur (subvec p 1) (conj np (first p))))))))
+(remove-duplicates p12)
 
 (defn check-duplicates
-  "Removes duplicate lines, adjust leftover ids and remove \"...\" lines if possible"
+  "Removes duplicate lines, adjust leftover plids and removes todo lines if possible"
   [proof]
-  (remove-todos (remove-duplicates proof)))
+  (-> proof
+      remove-duplicates
+      remove-todo-lines))
 ;; -------------------------------------------------------
 
 ;; functions for special forms (e.g. infer, substitution)
@@ -684,9 +681,9 @@
           refs (mapv second (filter #(= \g (first (name (first %)))) refs-pattern'))
           new-plines' (upgrade-refs new-plines (mapv second (filter #(= :c? (first %)) refs-pattern')) roth refs)
           proof' (upgrade-refs proof (mapv second (filter #(= :co (first %)) refs-pattern')) roth refs)
+          new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines'))
           ]
-      (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines'))
-      ;; TODO: Reduktion von Duplikaten
+      (check-duplicates new-proof)
       )
     ))
     
@@ -776,9 +773,9 @@
           refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)
           refs (mapv second (filter #(= \g (first (name (first %)))) refs-pattern'))
           proof' (upgrade-refs proof (mapv second (filter #(= :cm (first %)) refs-pattern')) roth refs)
+          new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines))
           ]
-      (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines))
-      ;; TODO: Reduktion von Duplikaten
+      (check-duplicates new-proof)
       )
     ))
     

@@ -7,7 +7,8 @@
 ; the terms of this license.
 
 (ns lwb.nd.repl
-  (:require [lwb.nd.deduction :as deduc]
+  (:require [lwb.consts :refer :all]
+            [lwb.nd.deduction :as deduc]
             [lwb.nd.proof :as pr]
             [lwb.nd.prereqs :refer :all]
             [lwb.nd.storage :refer [roths reset-roths]]
@@ -41,7 +42,7 @@
 ;; holds the actual state of the proof 
 (def p (atom []))
 ;; holds the last steps since the beginning of the proof (for undo steps)
-(def last_steps (atom []))
+(def p-history (atom []))
 
 (defn show
   "Print the actual state of the proof"
@@ -52,42 +53,49 @@
   "Start a new proof"
   ([formula] (proof [] formula))
   ([premises formula]
-   (reset! last_steps [])
+   (reset! p-history [])
    (reset! p (pr/proof premises formula))
    (show)))
 
+; :TODO die anderen Aufrufe auch nach diesem Schema
 (defn step-f
   "Execute a forward step"
   [roth & args]
-  (swap! last_steps conj @p)
-  (swap! p deduc/step-f roth (vec args))
-  (show))
-
+  (try
+    (let [proof' (deduc/step-f @p roth (vec args))]
+      (swap! p-history conj @p)
+      (reset! p proof')
+      (show) )
+    (catch Exception e
+       (println welcome)
+       (println (str "Error: " (.getMessage e))
+       ))))
+  
 #_(defn step-f-inside
   "Executes a forward step inside the chosen line"
   [rule line]
-  (swap! last_steps conj @p)
+  (swap! p-history conj @p)
   (swap! p #(apply deduc/step-f-inside (conj (list rule line) %)))
   (show))
 
 (defn step-b
   "Execute a backward step"
   [roth & args]
-  (swap! last_steps conj @p)
+  (swap! p-history conj @p)
   (swap! p deduc/step-b roth (vec args))
   (show))
 
 (defn unify
   "Unifies symbols"
   [old new]
-  (swap! last_steps conj @p)
+  (swap! p-history conj @p)
   (swap! p deduc/unify old new)
   (show))
 
 #_(defn trivial
     "Apply the trivial-theorems inside the chosen line"
     [line]
-    (swap! last_steps conj @p)
+    (swap! p-history conj @p)
     (swap! p deduc/trivial line)
     (show))
 
@@ -102,11 +110,13 @@
 (defn undo
   "Undo the last change (you can't go further than the last state)"
   []
-  (if (empty? @last_steps)
-    (println "You reached the starting point, there is nothing more to undo")
+  (if (empty? @p-history)
     (do
-      (reset! p (last @last_steps))
-      (swap! last_steps #(into [] (drop-last %)))
+      (println welcome)
+      (println "Info: You reached the starting point of the proof, there is nothing more to undo"))
+    (do
+      (reset! p (last @p-history))
+      (swap! p-history #(into [] (drop-last %)))
       (show))))
 
 (defn show-roth
