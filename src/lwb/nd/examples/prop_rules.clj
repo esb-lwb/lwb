@@ -12,13 +12,22 @@
 
 ; interactive checking in the repl for nd
 
+(load-logic :prop)
+
 ; -----------------------------------------------------------------------------------------
 ; and-introduction
 
 ; forward
 (proof '[P1 P2] '(and P1 P2))
 (step-f :and-i 1 2)
-(choose-option 3 1)
+
+(proof '[P1 P2] '(and P1 P2))
+(step-f :and-i 1)
+(unify 'V1 'P2)
+
+(proof '[P1 P2] '(and P1 P2))
+(step-f :and-i :? 2)
+(unify 'V1 'P1)
 ;
 ; --------------------------------------------------
 ; 1: P1                                      premise
@@ -100,12 +109,28 @@
 ; -----------------------------------------------------------------------------------------
 ; or-elimination
 
-; should be possible forward too!
+; forward
+(proof '(or (and P R) (and Q R)) 'R)
+(step-f :or-e 1 3)
+(step-f :and-e2 2)
+(step-f :and-e2 4)
+;
+; --------------------------------------------------
+; 1: (or (and P R) (and Q R))                :premise
+; ------------------------------------------------
+; 2:  | (and P R)                            :assumption
+; 3:  | R                                    :and-e2 [2]
+; ------------------------------------------------
+; ------------------------------------------------
+; 4:  | (and Q R)                            :assumption
+; 5:  | R                                    :and-e2 [4]
+; ------------------------------------------------
+; 6: R                                       :or-e [1 [2 3] [4 5]]
+; --------------------------------------------------
 
 ; backward
 (proof '(or (and P R) (and Q R)) 'R)
 (step-b :or-e 3 1)
-(choose-option 3 2)                                         ;; order is not right!!
 (step-f :and-e2 2)
 (step-f :and-e2 4)
 ;
@@ -130,7 +155,7 @@
 (step-b :impl-i 2)
 (step-f :and-e1 1)
 (step-f :and-e2 1)
-(step-f :not-e 2 3)
+(step-f :not-e 3 2)
 (step-b :efq 6)
 
 ;
@@ -150,36 +175,26 @@
 
 ; forward
 (proof '[P (impl P Q)] 'Q)
-(step-f :impl-e 1 2)
+(step-f :impl-e 2 1)
 
 ;
 ; --------------------------------------------------
 ; 1: P                                       premise
 ; 2: (impl P Q)                              premise
-; 3: Q                                       "impl-e" (1 2)
+; 3: Q                                       "impl-e" (2 1)
 ; --------------------------------------------------
 
 ; backward
 (proof '[P (impl P Q)] 'Q)
-(step-b :impl-e 4 1)
-
-;
-; --------------------------------------------------
-; 1: P                                       premise
-; 2: (impl P Q)                              premise
-; 3: Q                                       "impl-e" (1 2)
-; --------------------------------------------------
-
+(step-b :impl-e 4 2)
 
 (proof '[P (impl P Q)] 'Q)
-(step-b :impl-e 4 2)
-(choose-option 4 2)
-
+(step-b :impl-e 4 :? 1)
 ;
 ; --------------------------------------------------
 ; 1: P                                       premise
 ; 2: (impl P Q)                              premise
-; 3: Q                                       "impl-e" (1 2)
+; 3: Q                                       "impl-e" (2 1)
 ; --------------------------------------------------
 
 ; -----------------------------------------------------------------------------------------
@@ -209,7 +224,13 @@
 (proof '(and P (not P)) 'Q)
 (step-f :and-e1 1)
 (step-f :and-e2 1)
-(step-f :not-e 2 3)
+(step-f :not-e 3 2)
+(step-b :efq 6)
+
+(proof '(and P (not P)) 'Q)
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-f :not-e 3 2)
 (step-f :efq 4)
 (unify 'V1 'Q)
 
@@ -227,7 +248,7 @@
 (step-b :efq 3)
 (step-f :and-e1 1)
 (step-f :and-e2 1)
-(step-f :not-e 2 3)
+(step-f :not-e 3 2)
 
 ;
 ; --------------------------------------------------
@@ -245,8 +266,8 @@
 ; notnot-introduction
 
 (proof 'P '(not (not P)))
-(step-b "not-i" 3)
-(step-f "not-e" 1 2)
+(step-b :not-i 3)
+(step-f :not-e 2 1)
 
 ;
 ;    --------------------------------------------------
@@ -263,8 +284,8 @@
 ; notnot-elimination
 
 (proof '(not (not P)) 'P)
-(step-b "raa" 3)
-(step-f "not-e" 1 2)
+(step-b :raa 3)
+(step-f :not-e 1 2)
 
 ;
 ;   --------------------------------------------------
@@ -280,9 +301,9 @@
 ; Modus Tollens
 
 (proof '[(impl P Q) (not Q)] '(not P))
-(step-b "not-i" 4)
-(step-f "impl-e" 3 1)
-(step-f "not-e" 2 4)
+(step-b :not-i 4)
+(step-f :impl-e 1 3)
+(step-f :not-e 2 4)
 
 ;
 ;    --------------------------------------------------
@@ -300,14 +321,13 @@
 ; Tertium non datur
 
 (proof '(or P (not P)))
-(step-b "raa" 2)
-(step-b "not-e" 3 1)
-(choose-option 3 2)
-(step-b "or-i2" 3)
-(step-b "not-i" 3)
-(step-f "or-i1" 2)
+(step-b :raa 2)
+(step-b :not-e 3 1)
+(step-b :or-i2 3)
+(step-b :not-i 3)
+(step-f :or-i1 2)
 (unify 'V1 '(not P))
-(step-f "not-e" 1 3)
+(step-f :not-e 1 3)
 
 ;
 ;    --------------------------------------------------

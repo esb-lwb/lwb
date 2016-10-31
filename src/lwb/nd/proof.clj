@@ -217,12 +217,15 @@
   or    
   (2) the todo line is at the end of a subproof or proof     
   or     
-  (3) the todo line is followed by a subproof."
+  (3) the todo line is follwed by another todo line     
+  or
+  (4) the todo line is followed by a subproof."
   [loc]
   (and (todoline? (zip/node loc))
        (or (and (not (nil? (zip/right loc)))
                      (not (nil? (:roth (zip/node (zip/right loc))))))
            (= (zip/rightmost loc) loc)
+           (and (not (nil? (zip/right loc))) (todoline? (zip/node (zip/right loc))))
            (zip/branch? (zip/right loc)))))
 
 (defn remove-todo-lines
@@ -235,6 +238,12 @@
         (recur (zip/next (zip/remove loc)))
         (recur (zip/next loc))))))
 
+(def p [{:plid 1, :roth :premise, :body 'P1}
+ {:plid 2, :roth :premise, :body 'P2}
+ {:plid 4, :body :todo, :roth nil}
+ {:plid 3, :body '(and P1 P2), :roth :and-i, :refs [1 2]}])
+
+(remove-todo-lines p)
 ;; ### Handling duplicate bodies in a proof
 
 (defn find-duplicates

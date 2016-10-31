@@ -59,7 +59,7 @@
   [pattern argsv]
   (let [pattern' (map #(first (name %)) (filter #(not= \? (second (name %))) pattern))
         check #(if (or (= %1 \g) (= %1 \c)) (number? %2) (or (symbol? %2) (list? %2)))]
-    (every? identity (map check pattern' argsv))))
+    (every? identity (map check pattern' (filter #(not= :? %) argsv)))))
 
 (defn max-given
   "Maximal `plno` of the parameters for the givens."
@@ -265,16 +265,17 @@
   (if (not (rules/roth-backward? roth))
     (throw (Exception. (format "This rule can't be used in a forward step: %s" roth))))
   (let [pattern (rules/roth-pattern roth :backward)
-        range (range-args-b pattern)]
+        range (range-args-b pattern)
+        no-args (count (filter #(not= :? %) argsv))]
     ; size of argsv okay?
-    (if (not (and (>= (count argsv) (first range)) (<= (count argsv) (second range))))
+    (if (not (and (>= no-args (first range)) (<= no-args (second range))))
       (throw (Exception. (format "The number of arguments following the rule or theorem must be in the range: %s" range))))
     ; kind of args okay?
     (if (not (type-args-ok? pattern argsv))
       (throw (Exception. (format "Type of arguments doesn't match the call pattern: %s" pattern))))
     (let [match-pattern (match-argsv-b roth argsv)
           concl-plid (plno->plid proof (first argsv))]
-      ; TODO: concl-plid zeigt wirkliuch auf eine conclusion line
+      ; TODO: concl-plid zeigt wirklich auf eine conclusion line
       ; TODO: alle g Argumente müssen oberhalb einer todo-line sein und oberhalb von concl
       ; TODO: keines der Argumente zeigt auf einen todo-line
       ; TODO: höchstens alle -1 der gb muss eine Nummer haben
@@ -306,9 +307,7 @@
           refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)
           refs (mapv second (filter #(= \g (first (name (first %)))) refs-pattern'))
           proof' (upgrade-refs proof (mapv second (filter #(= :cm (first %)) refs-pattern')) roth refs)
-          new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines))
-          ]
+          new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines)) ]
       (normalize new-proof)
       )
     ))
-
