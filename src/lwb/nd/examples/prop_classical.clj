@@ -10,6 +10,8 @@
   (:require [lwb.nd.repl :refer :all]))
 
 
+(load-logic :prop)
+
 ; interactive checking in the repl for nd
 ; -----------------------------------------------------------------------------------------
 ; Derived rules
@@ -79,12 +81,22 @@
 (step-b :raa 2)
 (step-b :not-e 3)
 (unify 'V1 '(or P (not P)))
-;(choose-option 3 2)
 (step-b :or-i2 3)
 (step-b :not-i 3)
 (step-f :or-i1 2)
 (unify 'V2 '(not P))
-(step-f :not-e 3 1)
+(step-f :not-e 1 3)
+
+;; or
+
+(proof '(or P (not P)))
+(step-b :raa 2)
+(step-b :not-e 3 1)
+(step-b :or-i2 3)
+(step-b :not-i 3)
+(step-f :or-i1 2)
+(unify 'V1 '(not P))
+(step-f :not-e 1 3)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :tnd)
 ;
@@ -111,8 +123,8 @@
 (proof '(impl P Q) '(impl (not Q) (not P)))
 (step-b :impl-i 3)
 (step-b :not-i 4)
-(step-f :impl-e 3 1)
-(step-b :not-e 6 4)
+(step-f :impl-e 1 3)
+(step-b :not-e 6 2)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :contrap)
 ;
@@ -138,11 +150,10 @@
 (step-b :raa 3)
 (step-b :not-e 4)
 (unify 'V1 'P)
-;(choose-option 4 2)
 (step-b :impl-e 4)
 (unify 'V2 '(impl P Q))
 (step-b :impl-i 4)
-(step-f :not-e 3 2)
+(step-f :not-e 2 3)
 (step-b :efq 6)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :pierce)
@@ -174,53 +185,47 @@
 (step-b :raa 3)
 (step-b :not-e 4)
 (unify 'V1 '(and P Q))
-;(choose-option 4 2)
 (step-b :and-i 4)
-(step-b :raa 5)
-(step-b :not-e 5)
+(step-b :raa 6)
+(step-b :not-e 7)
 (unify 'V2 '(or (not P) (not Q)))
-;(choose-option 5 2)
-(step-b :or-i2 5)
-(step-b :raa 7)
-(step-b :not-e 8)
+(step-b :or-i2 7)
+(step-b :raa 4)
+(step-b :not-e 5)
 (unify 'V3 '(or (not P) (not Q)))
-;(choose-option 8 2)
-(step-b :or-i1 8)
+(step-b :or-i1 5)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :not-and->or-not)
-;
-;     --------------------------------------------------
-;  1: (not (and P Q))                         premise
-;      ------------------------------------------------
-;  2:  | (not (or (not P) (not Q)))           assumption
-;      | ----------------------------------------------
-;  3:  | | (not Q)                            assumption
-;  4:  | | (or (not P) (not Q))               "or-i2" (3)
-;  5:  | | contradiction                      "not-e" (2 4)
-;      | ----------------------------------------------
-;      | ----------------------------------------------
-;  6:  | | (not P)                            assumption
-;  7:  | | (or (not P) (not Q))               "or-i1" (6)
-;  8:  | | contradiction                      "not-e" (2 7)
-;      | ----------------------------------------------
-;  9:  | P                                    "raa" ([6 8])
-; 10:  | Q                                    "raa" ([3 5])
-; 11:  | (and P Q)                            "and-i" (10 9)
-; 12:  | contradiction                        "not-e" (1 11)
-;      ------------------------------------------------
-; 13: (or (not P) (not Q))                    "raa" ([2 12])
-;     --------------------------------------------------
-
+; --------------------------------------------------
+; 1: (not (and P Q))                         :premise
+; ------------------------------------------------
+; 2:  | (not (or (not P) (not Q)))           :assumption
+; | ----------------------------------------------
+; 3:  | | (not P)                            :assumption
+; 4:  | | (or (not P) (not Q))               :or-i1 [3]
+; 5:  | | contradiction                      :not-e [2 4]
+; | ----------------------------------------------
+; 6:  | P                                    :raa [[3 5]]
+; | ----------------------------------------------
+; 7:  | | (not Q)                            :assumption
+; 8:  | | (or (not P) (not Q))               :or-i2 [7]
+; 9:  | | contradiction                      :not-e [2 8]
+; | ----------------------------------------------
+; 10:  | Q                                    :raa [[7 9]]
+; 11:  | (and P Q)                            :and-i [6 10]
+; 12:  | contradiction                        :not-e [1 11]
+; ------------------------------------------------
+; 13: (or (not P) (not Q))                    :raa [[2 12]]
+; --------------------------------------------------
 
 (proof '(or (not P) (not Q)) '(not (and P Q)))
 (step-b :or-e 3 1)
-;(choose-option 3 2)
 (step-b :not-i 4)
 (step-f :and-e1 3)
-(step-f :not-e 4 2)
+(step-f :not-e 2 4)
 (step-b :not-i 9)
 (step-f :and-e2 8)
-(step-f :not-e 9 7)
+(step-f :not-e 7 9)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :or-not->not-and)
 ;
@@ -252,57 +257,56 @@
 (step-b :not-i 3)
 (step-f :or-i1 2)
 (unify 'V1 'Q)
-(step-f :not-e 3 1)
+(step-f :not-e 1 3)
 (step-b :not-i 7)
-(step-f :or-i2 5)
+(step-f :or-i2 6)
 (unify 'V2 'P)
-(step-f :not-e 6 1)
+(step-f :not-e 1 7)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :not-or->and-not)
 ;
-;     --------------------------------------------------
-;  1: (not (or P Q))                          premise
-;      ------------------------------------------------
-;  2:  | P                                    assumption
-;  3:  | (or P Q)                             "or-i1" (2)
-;  4:  | contradiction                        "not-e" (1 3)
-;      ------------------------------------------------
-;      ------------------------------------------------
-;  5:  | Q                                    assumption
-;  6:  | (or P Q)                             "or-i2" (5)
-;  7:  | contradiction                        "not-e" (1 6)
-;      ------------------------------------------------
-;  8: (not P)                                 "not-i" ([2 4])
-;  9: (not Q)                                 "not-i" ([5 7])
-; 10: (and (not P) (not Q))                   "and-i" (8 9)
-;     --------------------------------------------------
+; --------------------------------------------------
+; 1: (not (or P Q))                          :premise
+; ------------------------------------------------
+; 2:  | P                                    :assumption
+; 3:  | (or P Q)                             :or-i1 [2]
+; 4:  | contradiction                        :not-e [1 3]
+; ------------------------------------------------
+; 5: (not P)                                 :not-i [[2 4]]
+; ------------------------------------------------
+; 6:  | Q                                    :assumption
+; 7:  | (or P Q)                             :or-i2 [6]
+; 8:  | contradiction                        :not-e [1 7]
+; ------------------------------------------------
+; 9: (not Q)                                 :not-i [[6 8]]
+; 10: (and (not P) (not Q))                   :and-i [5 9]
+; --------------------------------------------------
 
 (proof '(and (not P) (not Q)) '(not (or P Q)))
-(step-b :not-i 3)
 (step-f :and-e1 1)
 (step-f :and-e2 1)
-(step-b :or-e 6 4)
-;(choose-option 6 1)
-(step-f :not-e 5 3)
-(step-f :not-e 7 2)
+(step-b :not-i 5)
+(step-f :or-e 4 6)
+(step-f :not-e 2 5)
+(step-f :not-e 3 7)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :and-not->not-or)
 ;
-;     --------------------------------------------------
-;  1: (and (not P) (not Q))                   premise
-;  2: (not Q)                                 "and-e2" (1)
-;  3: (not P)                                 "and-e1" (1)
-;      ------------------------------------------------
-;  4:  | (or P Q)                             assumption
-;      | ----------------------------------------------
-;  5:  | | Q                                  assumption
-;  6:  | | contradiction                      "not-e" (2 5)
-;      | ----------------------------------------------
-;      | ----------------------------------------------
-;  7:  | | P                                  assumption
-;  8:  | | contradiction                      "not-e" (3 7)
-;      | ----------------------------------------------
-;  9:  | contradiction                        "or-e" (4 [5 6] [7 8])
-;      ------------------------------------------------
-; 10: (not (or P Q))                          "not-i" ([4 9])
-;     --------------------------------------------------
+; --------------------------------------------------
+; 1: (and (not P) (not Q))                   :premise
+; 2: (not P)                                 :and-e1 [1]
+; 3: (not Q)                                 :and-e2 [1]
+; ------------------------------------------------
+; 4:  | (or P Q)                             :assumption
+; | ----------------------------------------------
+; 5:  | | P                                  :assumption
+; 6:  | | contradiction                      :not-e [2 5]
+; | ----------------------------------------------
+; | ----------------------------------------------
+; 7:  | | Q                                  :assumption
+; 8:  | | contradiction                      :not-e [3 7]
+; | ----------------------------------------------
+; 9:  | contradiction                        :or-e [4 [5 6] [7 8]]
+; ------------------------------------------------
+; 10: (not (or P Q))                          :not-i [[4 9]]
+; --------------------------------------------------
