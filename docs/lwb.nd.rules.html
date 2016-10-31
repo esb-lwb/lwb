@@ -2869,31 +2869,108 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.nd.rules
   (:refer-clojure :exclude [==])
   (:require [clojure.core.logic :refer :all]
-            [lwb.nd.storage :refer [rules theorems]]
-            [clojure.math.combinatorics :refer [permutations]]
-            [clojure.spec :as s]))</pre></td></tr><tr><td class="docs"><h1>Transformation of rules and theorems to core.logic relations</h1>
+            [lwb.nd.storage :refer [roths]]
+            [clojure.spec :as s]))</pre></td></tr><tr><td class="docs"><p>Magic number for the logic variable for the conclusion in the logic relation. <br />
+          Symbols of the form <code>qnnnn</code>should not be used as the name of a proposition in rules and theorems.</p>
+
+<p>Magic symbol for the logic variable for the conclusion in the logic relation
+This symbol should not be used as the name of a proposition in rules and theorems</p>
+</td><td class="codes"><pre class="brush: clojure">(def
+  conclusion-number 3961)</pre></td></tr><tr><td class="docs"><h1>Transformation of rules and theorems to core.logic relations</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><h2>Specification of rules and theorems</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>The following specs describe the internal representation of rules and so on</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The following specs describe the internal representation of rules and theorems (called roths)</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Expressions in rules</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::expr (s/or :list list? :symbol symbol?))</pre></td></tr><tr><td class="docs"><p>Id of rule or theorem</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::expr (s/or :list list? :symbol symbol?))</pre></td></tr><tr><td class="docs"><p>Id of roth</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::id keyword?)</pre></td></tr><tr><td class="docs"><p>Prerequisite for the application of the rule</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::prereq (s/nilable (s/coll-of ::expr :kind vector?)))</pre></td></tr><tr><td class="docs"><p>Given premises</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::given (s/coll-of ::expr :kind vector))</pre></td></tr><tr><td class="docs"><p>Conclusion</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::conclusion (s/coll-of ::expr :kind vector))</pre></td></tr><tr><td class="docs"><p>Applicability of the rule</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::forward (s/nilable boolean?))
-(s/def ::backward (s/nilable boolean?))</pre></td></tr><tr><td class="docs"><p>Entity map for the body of a rule</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::rule-body (s/keys :un-req [::given ::conclusion ::prereq ::forward ::backward]))</pre></td></tr><tr><td class="docs"><p>Rule</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::rule (s/cat :id ::id :body ::rule-body))</pre></td></tr><tr><td class="docs"><p>NEW LOGIC (add additional keywords that should not be handled like symbols)
+</td><td class="codes"><pre class="brush: clojure">(s/def ::given (s/coll-of ::expr :kind vector))</pre></td></tr><tr><td class="docs"><p>Extra arguments for the evaluation of a rule i.e. :equal-e</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::extra (s/nilable (s/coll-of ::expr :kind vector)))</pre></td></tr><tr><td class="docs"><p>Conclusion</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::conclusion (s/coll-of ::expr :kind vector))</pre></td></tr><tr><td class="docs"><p>Entity map for the body of a rule</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::rule-body (s/keys :un-req [::given ::extra ::conclusion ::prereq]))</pre></td></tr><tr><td class="docs"><p>Rule</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::rule (s/cat :id ::id :body ::rule-body))</pre></td></tr><tr><td class="docs"><p>Entity map for the body of a theorem</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::theorem-body (s/keys :un-req [::given ::conclusion]))</pre></td></tr><tr><td class="docs"><p>Theorem</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::theorem (s/cat :id ::id :body ::theorem-body))</pre></td></tr><tr><td class="docs"><p>NEW LOGIC (add additional keywords that should not be handled like symbols)
 those "keywords" will not be handled as symbols but constants</p>
-</td><td class="codes"><pre class="brush: clojure">(def keywords #{'truth 'contradiction 'true 'false})</pre></td></tr><tr><td class="docs"><h2>Functions for generating the core.logic relations that represent rules</h2>
+</td><td class="codes"><pre class="brush: clojure">(def keywords #{'truth 'contradiction 'true 'false})</pre></td></tr><tr><td class="docs"><h2>Functions for the structure of the rule or theorem</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>the structure of the roth determines how to use the rule or theorem
+and which steps are okay</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Naming conventions for the structure of a rule or theorem</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p><code>g</code> = given
+<code>c</code> = conclusion
+<code>e</code> = extra input not part of the current proof
+<code>?</code> = queried parameter of the logic relation</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p><code>m</code> = mandatory
+<code>o</code> = optional
+<code>1</code> = at least one them
+<code>b</code> = at most all but one of them</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- map-givens-f
+  [idx given]
+  (cond
+    (and (list? given) (= 'infer (first given))) :g?
+    (and (list? given) (= 'succ (first given))) :gm
+    (= idx 0) :gm
+    :else :go))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- map-givens-b
+  [idx given]
+  (cond
+    (and (list? given) (= 'infer (first given))) :g?
+    (and (list? given) (= 'substitution (first given))) :g?
+    (= idx 0) :go
+    :else :gb))</pre></td></tr><tr><td class="docs"><p>Structure of the logic relation of the rule or theorem.
+   Result e.g.: <code>[:gm :gm :g? :g? :co]</code>      </p>
+</td><td class="codes"><pre class="brush: clojure">(defn roth-structure-f
+  [given extra conclusion]
+  (let [has-actual (some #(and (list? %) (= 'actual (first %))) given)
+        has-subst (some #(and (list? %) (= 'substitution (first %))) given)
+        concl-cnt (count conclusion)
+        vg1 (vec (concat (map-indexed map-givens-f given) (map (constantly :em) extra)))
+        ; in case we have :given of the form (actual t) or extra input -&gt; all givens are mandatory
+        vg2 (if (or has-actual (contains? (set vg1) :em)) (mapv #(if (= % :go) :gm %) vg1) vg1)
+        ; in case we have mandatory and optional arguments -&gt; just one of them must be provided
+        vg (if (= (set vg2) #{:gm :go}) (mapv (constantly :g1) vg2) vg2)]
+    (cond
+      (= (first vg) :g?) nil                                ; first given is an infer -&gt; backward only
+      has-subst nil                                         ; a given is a substitution -&gt; backward only
+      (and (= concl-cnt 1) (contains? (set vg) :g?)) (conj vg :co)
+      :else (into vg (repeat concl-cnt :c?)))))</pre></td></tr><tr><td class="docs"><p>Structure of the logic relation of the rule or theorem with the given <code>id</code>. <br />
+   Result e.g.: <code>[:cm :gb :gb]</code></p>
+</td><td class="codes"><pre class="brush: clojure">(defn roth-structure-b
+  [given extra conclusion]
+  (let [is-subst (contains? (set (flatten conclusion)) 'substitution)
+        vg1 (map-indexed map-givens-b given)
+        ; in case we have only :go and :gb -&gt; all :gb
+        vg2 (if (= (set vg1) #{:go :gb}) (mapv (constantly :gb) vg1) vg1)
+        ; in case we have just one given
+        vg (if (= (count vg2) 1) [:g?] vg2)]
+    (cond
+      (&gt; (count conclusion) 1) nil                          ; multiple conclusions -&gt; forwad only
+      (not-empty extra) nil                                 ; extra input -&gt; forward only
+      (empty? vg) nil                                       ; rule is axiom -&gt; forward only
+      is-subst nil                                          ; conclusion is a substitution -&gt; forward only
+      :else (into [:cm] vg))))</pre></td></tr><tr><td class="docs"><p>Structure of the logic relation of the rule or theorem with the given <code>id</code>. <br />
+   Result e.g.: <code>[:gm :gm :g? :g? :co]</code> <br />
+   requires: @roths <br />
+             <code>id</code> is a valid rule id.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn roth-structure-forward
+  [roth-id]
+  (let [roth (roth-id @roths)]
+    (:forward roth)))</pre></td></tr><tr><td class="docs"><p>Structure of the logic relation of the rule or theorem with the given <code>id</code>. <br />
+   Result e.g.: <code>[:cm :gb :gb]</code> <br />
+   requires: @roths <br />
+             <code>id</code> is a valid rule id.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn roth-structure-backward
+  [id]
+  (let [roth (id @roths)]
+    (:backward roth)))</pre></td></tr><tr><td class="docs"><h2>Functions for generating the core.logic relations that represent roths</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>If the expr is a symbol, it's the argument. <br />
    If the expr is a list, we generate an alias from the operator together with a number.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- gen-arg 
+</td><td class="codes"><pre class="brush: clojure">(defn- gen-arg
   [expr n]
-  (cond 
+  (cond
     (symbol? expr) expr
-    (list? expr)   (symbol (str (first expr) n))
-    :else (throw (Exception. (str &quot;Can't generate argument for the logic relation from \&quot;&quot; expr &quot;\&quot;&quot;)))))</pre></td></tr><tr><td class="docs"><p>Generates the top level arguments for the logic relation from the given premises. <br />
+    (list? expr) (symbol (str (first expr) n))
+    :else (throw (Exception. (str &quot;Can't generate argument for the logic relation from \&quot;&quot; expr &quot;\&quot;&quot;)))))</pre></td></tr><tr><td class="docs"><p>Generates the top level arguments for the logic relation from the given premises and potentially extra arguments.. <br />
    e.g. <code>[a (and a b) (not b)] =&gt; [a and2 not3]</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-args
   [given]
@@ -2908,223 +2985,149 @@ those "keywords" will not be handled as symbols but constants</p>
     (vector? arg) (mapv gen-term arg)
     (list? arg) (let [op (list `quote (first arg))
                       params (mapv gen-term (rest arg))]
-                  (list* `list op params))))</pre></td></tr><tr><td class="docs"><p>Converts an argument and an given input into a unify-logic-row: <br />
+                  (list* `list op params))))</pre></td></tr><tr><td class="docs"><p>Converts an argument and an given input into a unify row for the logic relation <br />
    <code>[and1 (and a b)] -&gt; (== and1 ``(~'and ~a ~b))</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-body-row
   [arg g]
-  (cond 
+  (cond
     (contains? keywords g) `(== ~arg ~(list `quote arg))
     (symbol? g) ()
     (list? g) `(== ~arg ~(gen-term g))
-    :else (throw (Exception. (str &quot;Can't create body-row from &quot; arg &quot; &quot; g)))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the body of the function, removes empty ones</p>
+    :else (throw (Exception. (str &quot;Can't create unify constraint from &quot; arg &quot; &quot; g)))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the body of the function, removes empty ones</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-body
   [args given]
   (remove empty? (map gen-body-row args given)))</pre></td></tr><tr><td class="docs"><p>Extracts symbols in arg</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-fresh-arg
   [arg]
-  (cond 
+  (cond
     (contains? keywords arg) []
     (symbol? arg) [arg]
     (list? arg) (vec (flatten (map gen-fresh-arg (rest arg))))
-    (vector? arg) (vec (flatten (map gen-fresh-arg arg)))))</pre></td></tr><tr><td class="docs"><p>Generates the arguments for the core.logic/fresh function</p>
+    (vector? arg) (vec (flatten (map gen-fresh-arg arg)))))</pre></td></tr><tr><td class="docs"><p>Generates the arguments for the fresh function in the logic relation</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-fresh-args
   [given conclusion]
   (let [gvars (flatten (map gen-fresh-arg given))
         cvars (flatten (map gen-fresh-arg conclusion))]
-    (vec (distinct (concat gvars cvars)))))</pre></td></tr><tr><td class="docs"><p>Converts a result-variable and an input into a unify-logic-row <br />
+    (vec (distinct (concat gvars cvars)))))</pre></td></tr><tr><td class="docs"><p>Converts a conclusion variable and an input into a unify row for the logic relation
    <code>q1 (and a b) =&gt; (== q1 ``(~'and ~a ~b))</code></p>
-</td><td class="codes"><pre class="brush: clojure">(defn- gen-result-row
+</td><td class="codes"><pre class="brush: clojure">(defn- gen-conclusion-row
   [q c]
-  `(== ~q ~(cond 
-              (contains? keywords c) (list `quote c)
-              (symbol? c) c
-              (list? c) (gen-term c))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the conclusions</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- gen-result
+  `(== ~q ~(cond
+             (contains? keywords c) (list `quote c)
+             (symbol? c) c
+             (list? c) (gen-term c))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the conclusions</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- gen-conclusions
   [conclusion qs]
-  (map gen-result-row qs conclusion))</pre></td></tr><tr><td class="docs"><p>Converts a function call from the prerequisites into a valid core.logic restriction</p>
+  (map gen-conclusion-row qs conclusion))</pre></td></tr><tr><td class="docs"><p>Converts a function call from the prerequisites into a valid core.logic restriction</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-prereq-row
   [prereq]
-  `(== ~prereq true))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the prerequisites</p>
+  `(== ~prereq true))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the prerequisites for the project in core.logic, <br />
+  i.e. <code>project [args] (== (prereq ...) true)</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-prereqs
   [prereqs fresh-args qs]
-  (list (conj (map gen-prereq-row prereqs) 
-              (vec (concat fresh-args qs)) `project)))</pre></td></tr><tr><td class="docs"><p>Takes given and conclusions from a rule and builds a core.logic relation that will represent that rule <br />
+  (list (conj (map gen-prereq-row prereqs)
+              (conj fresh-args qs) `project)))</pre></td></tr><tr><td class="docs"><p>Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth <br />
    e.g. "and-i" <code>[a b] =&gt; [(and a b)]</code> <br />
    <code>(fn [a b q1]</code> <br />
     <code>(fresh []</code> <br />
     <code>(== q1</code>(~'and ~a ~b))))`</p>
-</td><td class="codes"><pre class="brush: clojure">(defn gen-logic-function
-  [prereq given conclusion]
-  (let [qs   (map #(symbol (str %1 %2)) (take (count conclusion) (cycle ['q])) (take (count conclusion) (iterate inc 1)))
-        args (gen-args given)
+</td><td class="codes"><pre class="brush: clojure">(defn gen-roth-relation
+  [prereq given extra conclusion]
+  (let [qs (mapv #(symbol (str %1 %2)) (take (count conclusion) (cycle ['q])) (take (count conclusion) (iterate inc conclusion-number)))
+        allargs (into [] (concat given extra))
+        args (gen-args allargs)
         fresh-args (apply vector (clojure.set/difference (set (gen-fresh-args given conclusion)) (set args)))
-        body   (gen-body args given)
-        result (gen-result conclusion qs)
+        body (gen-body args given)
+        concs (gen-conclusions conclusion qs)
         prereqs (when-not (nil? prereq) (gen-prereqs prereq fresh-args qs))
-        fn-body (conj (concat body result prereqs) fresh-args `fresh)]
+        fn-body (conj (concat body concs prereqs) fresh-args `fresh)]
     `(fn ~(apply conj args qs)
-       ~fn-body)))</pre></td></tr><tr><td class="docs"><h2>Utility functions for rules</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Takes either a map or the id of an existing rule or theorem to create
-   the appropriate core.logic-function for this rule</p>
-</td><td class="codes"><pre class="brush: clojure">(defn make-rule
-  [rule]
-  (cond
-    (map? rule)
-    (gen-logic-function (:prereq rule) (:given rule) (:conclusion rule))
-    (keyword? rule)
-    (let [r (or (rule @rules) (rule @theorems))]
-      (gen-logic-function (:prereq r) (:given r) (:conclusion r)))
-    :else (throw (Exception. (str &quot;The argument you provided is neither a legal rule-map nor the id of a valid rule or theorem (&quot; rule &quot;)&quot;)))))</pre></td></tr><tr><td class="docs"><p>Returns the rule/theorem if it exists</p>
-</td><td class="codes"><pre class="brush: clojure">(defn get-rule
-  [id]
-  (let [rule (id @rules)
-        theorem (id @theorems)]
-    (or rule 
-        (or theorem (throw (Exception. (str &quot;A rule/theorem \&quot;&quot; id &quot;\&quot; doesn't exist&quot;)))))))</pre></td></tr><tr><td class="docs"><p>Does a certain rule/theorem exist?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn rule-exist?
-  [id]
-  (if (or (id @rules)
-          (id @theorems)) true false))</pre></td></tr><tr><td class="docs"><p>Returns the number of givens for the certain rule/theorem</p>
-</td><td class="codes"><pre class="brush: clojure">(defn rule-givens
-  [id]
-  (let [rule (or (id @rules) (id @theorems))]
-    (count (:given rule))))</pre></td></tr><tr><td class="docs"><p>Returns the number of conclusions for the certain rule/theorem</p>
-</td><td class="codes"><pre class="brush: clojure">(defn rule-conclusions
-  [id]
-  (let [rule (or (id @rules) (id @theorems))]
-    (count (:conclusion rule))))</pre></td></tr><tr><td class="docs"><p>Returns true if the rule/theorem can be used forwards</p>
-</td><td class="codes"><pre class="brush: clojure">(defn rule-forward?
-  [id]
-  (if-let [rule (or (id @rules) (id @theorems))]
-    (if (:forward rule)
-      true
-      false)
-    (throw (Exception. (str &quot;A rule/theorem \&quot;&quot; id &quot;\&quot; doesn't exist&quot;)))))</pre></td></tr><tr><td class="docs"><p>Returns true if the rule/theorem can be used backwards</p>
-</td><td class="codes"><pre class="brush: clojure">(defn rule-backward?
-  [id]
-  (if-let [rule (or (id @rules) (id @theorems))]
-    (if (:backward rule)
-      true
-      false)
-    (throw (Exception. (str &quot;A rule/theorem \&quot;&quot; id &quot;\&quot; doesn't exist&quot;)))))</pre></td></tr><tr><td class="docs"><p>NOTE - right now "apply-rule" can't separate arguments from lines and user-inputs, which may cause absurd behavior </p>
-</td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">#_(defn apply-rule 
-  &quot;Applies the rule/theorem (rule [string or map]) either forward or backward (forward?) 
-   on the given parameters (args &amp; optional).     
-   The obligatory arguments (args) will always be the first arguments passed to 
-   the core.logic relation (in different permutations).     
-   The optional arguments (optional) will be mixed with the generated logical arguments and  
-   will passed last to the core.logic relation (in different permutations).     
-   This way it is ensured that \&quot;given\&quot;-arguments will never handled as \&quot;conclusion\&quot;-arguments and vice versa.&quot;
+       ~fn-body)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(gen-roth-relation nil '[phi psi] nil '[(and phi psi)])
+(eval (gen-roth-relation nil '[phi psi] nil '[(and phi psi)]))</pre></td></tr><tr><td class="docs"><h2>Utility functions for roths</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Gives the code for the logic relation for the given <code>id</code> of a roth in <code>@roths</code>. <br />
+   The functions helps to check that the generation process is okay.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn make-relation
+  [roth-id]
+  (if (contains? @roths roth-id)
+    (let [r (roth-id @roths)]
+      (gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r)))
+    (throw (Exception. (str roth-id &quot; not found in @roths.&quot;)))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(comment
+  (make-relation :and-i)
+  (make-relation :equal-e)
+  (make-relation :always-e)
+  (def f (eval (make-relation :not-until)))
+  (run 1 [q1 q2] (f q1 q2))
+  (make-relation :not-until))</pre></td></tr><tr><td class="docs"><p>Does a certain rule/theorem exist?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn roth-exists?
+  [roth-id]
+  (contains? @roths roth-id))</pre></td></tr><tr><td class="docs"><p>Returns the rule/theorem if it exists</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-roth
+  [roth-id]
+  (if (roth-exists? roth-id)
+    (roth-id @roths)
+    (throw (Exception. (str roth-id &quot; not found in @roths.&quot;)))))</pre></td></tr><tr><td class="docs"><p>Returns the number of givens for the certain rule/theorem</p>
+</td><td class="codes"><pre class="brush: clojure">(defn given-cnt
+  [roth-id]
+  (count (:given (roth-id @roths))))</pre></td></tr><tr><td class="docs"><p>Returns the number of conclusions for the certain rule/theorem</p>
+</td><td class="codes"><pre class="brush: clojure">(defn concl-cnt
+  [roth-id]
+  (count (:conclusion (roth-id @roths))))</pre></td></tr><tr><td class="docs"><p>Returns true if the rule/theorem can be used forwards</p>
+</td><td class="codes"><pre class="brush: clojure">(defn roth-forward?
+  [roth-id]
+  (some? (:forward (roth-id @roths))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn roth-pattern
+  [roth-id mode]
+  &quot;The call pattern for a application of the roth.    
+   mode can be `:forward` or `:backward`. &quot;
+  (mode (roth-id @roths)))</pre></td></tr><tr><td class="docs"><p>Returns true if the rule/theorem can be used backwards</p>
+</td><td class="codes"><pre class="brush: clojure">(defn roth-backward?
+  [roth-id]
+  (some? (:backward (roth-id @roths))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">#_(defn apply-roth
   [rule forward? args &amp; [optional]]
   (let [rule-map (cond
                    (map? rule) rule
-                   (keyword? rule) (or (rule @rules) (rule @theorems))
-                   :else (throw (Exception. &quot;RULES | Wrong type of argument: \&quot;rule\&quot; has to be a keyword or a map.&quot;)))
-        frule (if forward? rule-map (assoc rule-map :given (:conclusion rule-map) :conclusion (:given rule-map)))
-        obligatory-args (map #(conj (list %) `quote) args)
-        optional-args   (map #(conj (list %) `quote) optional)
-        logic-args-num (- (+ (count (:given frule)) (count (:conclusion frule)))
-                          (+ (count obligatory-args) (count optional-args)))
-        logic-args (mapv #(symbol (str %1 %2))
-                                 (take logic-args-num (cycle ['q]))
-                                 (take logic-args-num (iterate inc 1)))
-        fn (eval (make-rule frule))
-        results (if (empty? optional)
-                (for [x (permutations obligatory-args)]
-                  (eval (list `run* logic-args (conj (concat x logic-args) fn))))
-                (for [x (permutations obligatory-args)
-                      y (permutations (concat optional-args logic-args))]
-                  (eval (list `run* logic-args (conj (concat x y) fn)))))]
-    (map first (remove empty? results))))
-; apply-rule without permutations
-; without permutations on must in certain situations use unify
-; but on the other side one needs not to make choices
-; but: if we have more  than 2 givens and make a step backward
-;      from the concept of the rules does the order of givens not play a role!!
-(defn apply-rule
-  [rule forward? args &amp; [optional]]
-  (let [rule-map (cond
-                   (map? rule) rule
-                   (keyword? rule) (or (rule @rules) (rule @theorems))
+                   (keyword? rule) (rule @roths)
                    :else (throw (Exception. &quot;Wrong type of argument: \&quot;rule\&quot; has to be a keyword or a map.&quot;)))
         frule (if forward? rule-map (assoc rule-map :given (:conclusion rule-map) :conclusion (:given rule-map)))
         obligatory-args (mapv #(list `quote %) args)
-        optional-args   (mapv #(list `quote %) optional)
+        optional-args (mapv #(list `quote %) optional)
         logic-args-num (- (+ (count (:given frule)) (count (:conclusion frule)))
                           (+ (count obligatory-args) (count optional-args)))
         logic-args (mapv #(symbol (str %1 %2))
                          (take logic-args-num (cycle ['q]))
                          (take logic-args-num (iterate inc 1)))
-        logic-rel (eval (make-rule frule))]
-        (eval (list `run* logic-args (list* logic-rel (concat obligatory-args optional-args logic-args))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(comment
-  (apply-rule :and-i false '[(and A B)])
-  (apply-rule' :and-i false '[(and A B)])
-  (apply-rule' :and-i true '[A B])
-  (apply-rule :or-e false '[X])
-  (apply-rule' :or-e false '[X])
-  (apply-rule :or-e false '[X] '[(or A B)])
-  (apply-rule' :or-e false '[X] '[(or A B)])
-  (def args '[A B])
-  (map #(conj (list %) `quote) args)
-  (def args' (map #(list `quote %) args))
-  args'
-  (def fnx (eval (make-rule :and-i)))
-  (make-rule :and-i)
-  (def logic-args-num 1)
-  (def logic-args (mapv #(symbol (str %1 %2))
-                        (take logic-args-num (cycle ['q]))
-                        (take logic-args-num (iterate inc 1))))
-  logic-args
-  (list 'run* logic-args (conj (concat args' logic-args) fnx))
-  (eval (list 'run* logic-args (conj (concat args' logic-args) fnx)))
-  (concat args' logic-args)
-  (list `run* logic-args (list* fnx (concat args' logic-args)))
-  (eval (list `run* logic-args (list* fnx (concat args' logic-args)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">#_(defn apply-trivials
-  &quot;Applies all trivial theorems to the given form and returns the first successful result.     
-   To extend the predefined trivial theorems use the \&quot;import-trivials\&quot; function (ns: io)&quot;
-  [form]
-  (let [ids (map key @trivials)
-        f (fn [id arg]
-            (run* [q] ((eval (make-rule (id @trivials))) arg q)))
-        results (map #(f % form) ids)
-        res (first (drop-while empty? results))]
-    res))
-(comment
-  ; man kann die Regel vorwärts und rückwärts auswerten, ohne sie zu ändern
-  ; es längt alles an der Bestückung der Parameter
-  (def and-i (eval (make-rule (:and-i @rules))))
-  (run 1 [q1] (and-i 'A 'B q1))
-  (run 1 [q1 q2] (and-i q1 q2 '(and A B)))
-  (run 1 [q1 q2] (and-i q1 q2 '(and (or A B) B)))
-  (keyword? :?)
-  ; ergibt die Argumente für die Relation
-  (defn- gen-relargs [args]
-    (let [counter (atom -1)
-          tr (fn [arg] (if (= :? arg)
-                         (symbol (str \q (swap! counter inc)))
-                         (list `quote arg)))]
-      (mapv tr args)))
-  #_(defn apply-rule'
-    [logic-rel args]
-    (let [rel-args (gen-relargs args)
-          run-args (vec (filter symbol? rel-args))]
-      (eval (list `run* run-args (list* logic-rel rel-args)))))
-  ; Diese Variante von apply-rule setzt voraus, dass der Speicher für die Regeln bereits die
-  ; logische Relation enthält.
-  (defn apply-rule'
-    [rule args]
-    (let [rel-args (gen-relargs args)
-          run-args (vec (filter symbol? rel-args))]
-      (eval (list `run* run-args (list* (:logic-rel (rule @rules)) rel-args)))))
-  (lwb.nd.io/import-rules &quot;resources/nd/rules-prop.edn&quot;)
-  ; so geht :and-i vorwärts und rückwärts
-  (apply-rule' :and-i '(A B :?))
-  (apply-rule' :and-i '(A :? :?))
-  (apply-rule' :and-i '(:? :? :?))
-  (apply-rule' :and-i '(:? :? (and A B))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+        ; setzt voraus, dass make-relation eine map versteht. Das ist aber nicht mehr so
+        logic-rel (eval (make-relation frule))]
+    (eval (list `run* logic-args (list* logic-rel (concat obligatory-args optional-args logic-args))))))
+;; wird nicht mehr gebraucht
+#_(defn apply-trivials
+    &quot;Applies all trivial theorems to the given form and returns the first successful result.     
+     To extend the predefined trivial theorems use the \&quot;import-trivials\&quot; function (ns: io)&quot;
+    [form]
+    (let [ids (map key @trivials)
+          f (fn [id arg]
+              (run* [q] ((eval (make-rule (id @trivials))) arg q)))
+          results (map #(f % form) ids)
+          res (first (drop-while empty? results))]
+      res))
+; ergibt die Argumente für die Relation
+(defn- gen-relargs [args]
+  (let [counter (atom -1)
+        tr (fn [arg] (if (= :? arg)
+                       (symbol (str \q (swap! counter inc)))
+                       (list `quote arg)))]
+    (mapv tr args)))</pre></td></tr><tr><td class="docs"><p>Takes the id <code>roth</code> of a rule or a theorem and applies the according logical relation,
+  with the given <code>args</code> where <code>:?</code> stands for the unknown. <br />
+  Result is given as a vector which size is equal to the number of <code>:?</code>s in the args.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn apply-roth
+  [roth args]
+  (let [rel-args (gen-relargs args)
+        run-args (vec (filter symbol? rel-args))
+        result (first (eval (list `run* run-args (list* (:logic-rel (roth @roths)) rel-args))))]
+    (if-not (vector? result) [result] result)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

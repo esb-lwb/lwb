@@ -8,15 +8,18 @@
 
 (ns lwb.nd.proof
   (:require [clojure.spec :as s]
+            [clojure.set :as set]
             [clojure.zip :as zip]))
 
-;; IDs for proof line
+;; # Proof in natural deduction
+
+;; Each proof line has a unique id `plid`.
 (def plid 
-  "Global conter for the ids of proof lines."
+  "Global counter for the ids of proof lines."
   (atom 0))
 
 (defn new-plid
-  "Generates new id for proof lines.     
+  "Generates new plid for proof lines.     
    Uses global `plid`." 
   []
   (swap! plid inc))
@@ -26,9 +29,13 @@
   []
   (reset! plid 0))
 
-;; Names for free logical variables, i.e. new variables
+;; Some rules generate new logical variables, e.g. new atomic propositions
+;; They get new names beginning with the letter `V` and follwed by a unique number.
+
+;; Caveat: Don't use this naming convention for propositions in formulas.
+
 (def lvno
-  "Global counter for the numbers if new variables."
+  "Global counter for the numbers of new variables."
   (atom 0))
 
 (defn new-vsymbol
@@ -42,7 +49,7 @@
   []
   (reset! lvno 0))
 
-;; Structure of a proof line
+;; # Structure of a proof line and a proof
 
 ;; Keys in `:pline`
 (s/def ::plid int?)
@@ -52,13 +59,114 @@
 
 ;; A proof line has a unique proof line id `:plid`,      
 ;; a `:body` which is a formula or a special keyword,     
-;; then the name of the rule or theorem `:roth` and if the rule is specified the      
-;; `:refs` i.e. the plids of proof lines to which the application of the rule references
+;; then the name of the rule or theorem `:roth` and if the roth is specified the      
+;; `:refs` i.e. the plids of proof lines to which the application of the roth references
 (s/def ::pline
   (s/keys :req-un [::plid ::body ::roth] :opt-un [::refs]))
 
 ;; A proof is a nested vector of proof lines and subproofs
 (s/def ::proof (s/and vector? (s/* (s/or :pline ::pline :subproof ::proof))))
+
+(declare normalize)
+(defn proof
+  "Gives a new proof for the premises and the conclusion.     
+   Uses global atoms `plid` and `lvno`."
+  [premises conclusion]
+  (do
+    (reset-plid)
+    (reset-lvno)
+    (let [premises-vec (if-not (vector? premises) [premises] premises)
+          premises-lines (vec (map #(hash-map :plid (new-plid) :body % :roth :premise) premises-vec))
+          proof (conj premises-lines {:plid (new-plid) :body conclusion :roth nil})]
+      (normalize proof))))
+
+;; ## Functions to access proof lines 
+
+(defn plid->plno
+  "Returns the line number `plno` of the proof line with the given `plid`."
+  [proof plid]
+  (let [flat-proof (flatten proof)]
+    (first (keep-indexed #(when (= plid (:plid %2)) (inc %1)) flat-proof))))
+
+(defn plno->plid
+  "Returns the id `plid` of the proof line at line number `plno` in the `proof`."
+  [proof pos]
+  (let [pline (nth (flatten proof) (dec pos) nil)]
+    (:plid pline)))
+
+(defn pline-at-plno
+  "Proof line of the `proof` at line with number `plno`.      
+   requires: `plno` valid."
+  [proof plno]
+  (let [fp (flatten proof)]
+    (nth fp (dec plno))))
+
+(defn plbody-at-plno
+  "Body of the proof line at `plno`.     
+   requires: `plno` valid."
+  [proof plno]
+  (:body (pline-at-plno proof plno)))
+
+(defn pline-at-plid
+  "Proof line of the `proof` at line with id `plid`.      
+   requires: `plid` valid."
+  [proof plid]
+  (pline-at-plno proof (plid->plno proof plid)))
+
+(defn get-scope
+  "Returns the scope for an item inside a proof
+   e.g. proof = [1 2 [3 4] [5 6 7] 8] & item = 5
+   => scope = [1 2 [3 4] 5 6 7]"
+  [proof item]
+  (if (contains? (set proof) item)
+    proof
+    (loop [p proof
+           scope []]
+      (cond (empty? p) nil
+            (vector? (first p))
+            (if-let [s (get-scope (first p) item)]
+              (into [] (concat scope s))
+              (recur (subvec p 1) (conj scope (first p))))
+            :else (recur (subvec p 1) (conj scope (first p)))))))
+
+;; ## Functions for editing a proof
+
+(defn add-above-plid
+  "Adds a proof line or a subproof above the item with the given `plid`.    
+   requires: the added plines have new plids!"
+  [proof plid pline-or-subproof]
+  (loop [loc (zip/vector-zip proof)]
+    (if (zip/end? loc)
+      (zip/node loc)
+      (if (= (:plid (zip/node loc)) plid)
+        (recur (zip/next (zip/insert-left loc pline-or-subproof)))
+        (recur (zip/next loc))))))
+
+(defn replace-plid
+  "Replaces the proof line with the given `plid` with the new proof line.    
+   requires: there are no more references to the old proof line."
+  [proof plid pline]
+  (loop [loc (zip/vector-zip proof)]
+    (if (zip/end? loc)
+      (zip/node loc)
+      (if (= (:plid (zip/node loc)) plid)
+        (recur (zip/next (zip/replace loc pline)))
+        (recur (zip/next loc))))))
+
+(defn remove-plid
+  "Removes the proof line with the given `plid`.    
+   requires: there are no more references to that proof line."
+  [proof plid]
+  (loop [loc (zip/vector-zip proof)]
+    (if (zip/end? loc)
+      (zip/node loc)
+      (if (= (:plid (zip/node loc)) plid)
+        (recur (zip/next (zip/remove loc)))
+        (recur (zip/next loc))))))
+
+;; ## Functions for the normalization of a proof
+
+;; ### Adding todo lines if necessary
 
 (defn new-todo-line
   "Generates a new todo line    
@@ -101,16 +209,20 @@
         (recur (zip/next (zip/insert-left loc (new-todo-line))))
         (recur (zip/next loc))))))
 
-; the implementation assumes that if there is a todo line,
-; it is above of a regular line
+;; ### Removing  todo lines if necessary
+
 (defn- remove-current?
   "Is the current loc a todo line and should it line be removed?    
   (1) the todo line is followed by a pline which is solved     
   or    
-  (2) the todo line is followed by a subproof."
+  (2) the todo line is at the end of a subproof or proof     
+  or     
+  (3) the todo line is followed by a subproof."
   [loc]
   (and (todoline? (zip/node loc))
-       (or (not (nil? (:roth (zip/node (zip/right loc)))))
+       (or (and (not (nil? (zip/right loc)))
+                     (not (nil? (:roth (zip/node (zip/right loc))))))
+           (= (zip/rightmost loc) loc)
            (zip/branch? (zip/right loc)))))
 
 (defn remove-todo-lines
@@ -123,212 +235,72 @@
         (recur (zip/next (zip/remove loc)))
         (recur (zip/next loc))))))
 
-(defn add-below-plid
-  "Adds a proof line or a subproof below the item with the given `plid`.    
-   requires: the added plines have new plids!"
-  [proof plid pline-or-subproof]
-  (loop [loc (zip/vector-zip proof)]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (= (:plid (zip/node loc)) plid)
-        (recur (zip/next (zip/insert-right loc pline-or-subproof)))
-        (recur (zip/next loc))))))
+;; ### Handling duplicate bodies in a proof
 
-(add-below-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  21
-  {:plid 2, :body 'A, :roth :x}
-  )
+(defn find-duplicates
+  "Finds duplicates bodies in the proof that can be deleted.      
+   Returns a map with the deletable plids as key and the replacement plids as value.     
+   Only plines without rule, in the same scope and the same subproof will be marked as deletable."
+  ([proof] (find-duplicates proof proof))
+  ([proof sub]
+   (let [scope (get-scope proof (last sub))
+         ;; duplicates = duplicate bodies in scope but not :todo
+         duplicates (disj (set (map first (filter #(> (val %) 1) (frequencies (map :body (remove vector? scope)))))) :todo)
+         ;; duplicate-plines = the pline with these duplicate bodies
+         duplicate-plines (filter #(contains? duplicates (:body %)) scope)
+         ;; duplicate-plines grouped into a vactor of vector of plines with equal body
+         equals (into [] (map val (group-by :body duplicate-plines)))
+         fn-smap (fn [equals]
+                   (let [remain (map :plid (filter :roth equals))
+                         delete (map :plid (filter (set sub) (remove :roth equals)))] ; just plines from the actual sub can be deleted
+                     (reduce #(assoc %1 %2 (last remain)) {} delete)))
+         ;; map with pairs of plids where the first can be replace by the second
+         plid-map (apply merge (map fn-smap equals))]
+     (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) plid-map sub))))
 
-(add-below-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  1
-  {:plid 2, :body 'A, :roth :x}
-  )
+(defn- adjust-refs
+  "Upgrades the refs in the given proof according to the plid-map."
+  [proof plid-map]
+  (let [old-plines (vec (filter #(not-empty (set/intersection (set (keys plid-map)) (set (flatten (:refs %))))) (flatten proof))) 
+        upg-plines (mapv #(assoc % :roth (:roth %) :refs (clojure.walk/prewalk-replace plid-map (:refs %))) old-plines)]
+    (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))
 
-(add-below-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  21
-  [{:plid 2, :body 'A, :roth :x}
-   {:plid 3, :body 'A, :roth :x}]
-  )
+(defn remove-duplicates
+  "Removes all duplicate bodies from proof and adjusts the changed ids of proof lines."
+  [proof]
+  (let [duplicates (find-duplicates proof)
+        ;; if a body is the conclusion of a subproof but above already proved,
+        ;; it's not deleted but marked with :repeat.
+        fn-proved-results (fn [map [id1 id2]]
+                            (let [delete-pline (pline-at-plid proof id1)
+                                  replace-pline (pline-at-plid proof id2)
+                                  delete-scope (get-scope proof delete-pline)
+                                  plno1 (plid->plno proof id1)
+                                  plno2 (plid->plno proof id2)]
+                              (if (and (= delete-pline (last delete-scope))
+                                       (or (not= delete-scope (get-scope proof replace-pline))
+                                           (contains? #{:premise :assumption} (:roth replace-pline))))
+                                (assoc map id1 id2) map)))
+        proved-results (reduce fn-proved-results {} duplicates)
+        fn-replace (fn [p [id1 id2]]
+                     (let [pline (pline-at-plid p id1)]
+                       (replace-plid p id1 {:plid id1
+                                              :body (:body pline)
+                                              :roth :repeat
+                                              :refs [id2]})))
+        new-proof1 (reduce fn-replace proof proved-results)
+        deletions (reduce dissoc duplicates (map key proved-results))
+        delete-plids (keys deletions)
+        new-proof2 (reduce remove-plid new-proof1 delete-plids)]
+    (adjust-refs new-proof2 deletions)))
 
-(add-below-plid
-  [{:plid 21, :body :todo, :roth nil}
-   [{:plid 22, :body :todo, :roth nil}
-    {:plid 23, :body 'A, :roth :and-e}]
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  22
-  [{:plid 2, :body 'A, :roth :x}
-   {:plid 3, :body 'A, :roth :x}]
-  )
-
-(defn add-above-plid
-  "Adds a proof line or a subproof above the item with the given `plid`.    
-   requires: the added plines have new plids!"
-  [proof plid pline-or-subproof]
-  (loop [loc (zip/vector-zip proof)]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (= (:plid (zip/node loc)) plid)
-        (recur (zip/next (zip/insert-left loc pline-or-subproof)))
-        (recur (zip/next loc))))))
-
-(add-above-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  1
-  {:plid 2, :body 'A, :roth :x}
-  )
-
-(add-above-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  21
-  {:plid 2, :body 'A, :roth :x}
-  )
-
-(add-above-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  21
-  [{:plid 2, :body 'A, :roth :x}
-   {:plid 3, :body 'A, :roth :x}]
-  )
-
-(add-above-plid
-  [{:plid 21, :body :todo, :roth nil}
-   [{:plid 22, :body :todo, :roth nil}
-    {:plid 23, :body 'A, :roth :and-e}]
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  23
-  [{:plid 2, :body 'A, :roth :x}
-   {:plid 3, :body 'A, :roth :x}]
-  )
-
-(defn remove-plid
-  "Removes the proof line with the given `plid`.    
-   requires: there are no more references to that proof line."
-  [proof plid]
-  (loop [loc (zip/vector-zip proof)]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (= (:plid (zip/node loc)) plid)
-        (recur (zip/next (zip/remove loc)))
-        (recur (zip/next loc))))))
-
-(remove-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  1
-  )
-
-(remove-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  21
-  )
-
-(remove-plid
-  [{:plid 21, :body :todo, :roth nil}
-   [{:plid 22, :body :todo, :roth nil}
-    {:plid 24, :body :todo, :roth nil}
-    {:plid 23, :body 'A, :roth :and-e}]
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  24
-  )
-
-(defn replace-plid
-  "Replaces the proof line with the given `plid` with the new proof line.    
-   requires: there are no more references to the old proof line."
-  [proof plid pline]
-  (loop [loc (zip/vector-zip proof)]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (= (:plid (zip/node loc)) plid)
-        (recur (zip/next (zip/replace loc pline)))
-        (recur (zip/next loc))))))
-
-(replace-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  1
-  {:plid 2, :body 'A, :roth :x}
-  )
-
-(replace-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  21
-  {:plid 2, :body 'A, :roth :x}
-  )
-
-; geht auch -- nötig??
-(replace-plid
-  [{:plid 21, :body :todo, :roth nil}
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  21
-  [{:plid 2, :body 'A, :roth :x}
-   {:plid 3, :body 'A, :roth :x}]
-  )
-
-(replace-plid
-  [{:plid 21, :body :todo, :roth nil}
-   [{:plid 22, :body :todo, :roth nil}
-    {:plid 23, :body 'A, :roth :and-e}]
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  23
-  {:plid 2, :body 'A, :roth :x}
-  )
-
-(defn proof
-  "Gives a new proof for the premises and the conclusion.
-   Uses global atom `plid`."
-  [premises conclusion]
-  (do
-    (reset-plid)
-    (reset-lvno)
-    (let [premises-vec (if-not (vector? premises) [premises] premises)
-          premises-lines (vec (map #(hash-map :plid (new-plid) :body % :roth :premise) premises-vec))
-          proof-lines (conj premises-lines {:plid (new-plid) :body conclusion :roth nil})]
-      (add-todo-lines proof-lines))))
-
-(comment
-  (proof '[A B] 'X)
-  (proof '[A B C] 'X)
-  (proof 'A 'X)
-  (proof [] 'X)
-  (lwb.nd.printer/pprint (proof '[A B] 'X))
-  (lwb.nd.printer/pprint (proof '[A B] '(impl A B)))
-  )
-
-(def p1
-  [{:plid 1, :roth :premise, :body 'A}
-   {:plid 2, :roth :premise, :body 'B}
-   {:plid 4, :body :todo, :roth nil}
-   {:plid 3, :body '(and A B), :roth nil}])
-
-(defn pline 
-  "Proof line of the `proof` at line with number `plno`.      
-   requires: `plno` valid."
-  [proof plno]
-  (let [fp (flatten proof)]
-    (nth fp (dec plno))))
-
-(pline p1 1)
-(pline p1 4)
-
-(defn plbody
-  "Body of the proof line at `plno`.     
-   requires: `plno` valid."
-  [proof plno]
-  (:body (pline proof plno)))
-
-(plbody p1 1)
-(plbody p1 4)
+(defn normalize
+  "Removes duplicate lines, adjust leftover plids and removes todo lines if possible"
+  [proof]
+  (-> proof
+      add-todo-lines
+      remove-duplicates
+      remove-todo-lines))
 
 (defn replace-lvars
   "Replaces logical variables from core.logic like `_0` by generated variable names `V1`.     
@@ -340,8 +312,6 @@
               (if (contains? lvars %) (get smap %) %)
               (clojure.walk/prewalk-replace smap %)) bodies )))
 
-(reset-lvno)
-(replace-lvars ['(and _0 _1) '(and _0 (or _1 _0) _2)])
 
 ; TODO: substitution bei new-pline
 
@@ -365,13 +335,6 @@
         cl (new-pline claim)]
     (conj al t cl)))
 
-(new-pline '(infer phi psi))
-(new-pline '(infer [phi x] psi))
-(new-pline '(and A B) :and-i [1 2])
-(new-pline '(and A B))
-(new-pline 'A)
-(new-pline '(infer phi psi))
-
 (defn new-plines
   "Creates all the new pline, that must be added to the proof"
   [bodies]
@@ -383,160 +346,11 @@
                                             node)) bodies')]
     (mapv new-pline non-lazy-bodies)))
 
-(new-plines ['A '(and A B) '(infer A x)])
-;; TODO
-
-(defn get-item
-  "Returns the item from proof on line. 
-   line x => returns item on line x
-   line [x y] => returns subproof starting on line x (including all contained items and/or subproofs)"
-  [proof line]
-  (if (not (vector? line))
-    (nth (flatten proof) (dec line))
-    (loop [p proof
-           l 1]
-      (cond
-        (empty? p) nil
-        (= (first line) l) (first p)
-        (vector? (first p)) (recur (into [] (concat (first p) (subvec p 1))) (inc l))
-        :else (recur (subvec p 1) (inc l))))))
-
-; seems to be not used
-#_(defn line-to-id
-    "Returns the id for the given line"
-    [proof line]
-    (if (not (vector? line))
-      (:plid (nth (flatten proof) (dec line)))
-      [(line-to-id proof (first line)) (line-to-id proof (last line))]))
-
-
-(defn plid->plno
-  "Returns the line number `plno` of the proof line with the given `plid`."
-  [proof plid]
-  (let [flat-proof (flatten proof)]
-    (first (keep-indexed #(when (= plid (:plid %2)) (inc %1)) flat-proof))))
-
-(defn plno->plid
-  "Returns the id `plid` of the proof line at line number `plno` in the `proof`."
-  [proof pos]
-  (let [pline (nth (flatten proof) (dec pos) nil)]
-    (:plid pline)))
-
-(def p1
-  [{:plid 21, :body :todo, :roth nil}
-   [{:plid 22, :body :todo, :roth nil}
-    {:plid 23, :body 'A, :roth :and-e}
-    [{:plid 321, :body :todo, :roth :nil}]]
-   {:plid 1, :body '(or P (not P)), :roth nil}]
-  )
-(plno->plid p1 1)
-(plno->plid p1 2)
-(plno->plid p1 3)
-(plno->plid p1 4)
-(plno->plid p1 5)
-(plno->plid p1 6) ;=> nil
-
-(plid->plno p1 21)
-(plid->plno p1 22)
-(plid->plno p1 1)
-(plid->plno p1 11) ;=> nil
-
-(defn pline-at-plid
-  "Returns the pline the the given plid."
-  [proof plid]
-  (pline proof (plid->plno proof plid)))
-
-(defn get-scope
-  "Returns the scope for an item inside a proof
-   e.g. proof = [1 2 [3 4] [5 6 7] 8] & item = 5
-   => scope = [1 2 [3 4] 5 6 7]"
-  [proof item]
-  (if (contains? (set proof) item)
-    proof
-    (loop [p proof
-           scope []]
-      (cond (empty? p) nil
-            (vector? (first p))
-            (if-let [s (get-scope (first p) item)]
-              (into [] (concat scope s))
-              (recur (subvec p 1) (conj scope (first p))))
-            :else (recur (subvec p 1) (conj scope (first p)))))))
-
-(get-scope [1 2 3] 2)
-(get-scope [1 2 [3 4] [5 6 7] 8] 2)
-
 (defn proved?
-  "Checks if a proof is fully proved.
-   If not throws an Exception with a description which lines are still unproved"
+  "Checks if a proof is fully proved.     
+   Requires: the proof is normalized."
   [proof]
   (if (empty? proof)
-    (throw (Exception. "The proof is empty/There is no proof")))
-  (let [unproved (loop [p proof
-                        u []]
-                   (cond
-                     (empty? p) u
-                     (and (map? (first p))
-                          (nil? (:roth (first p)))) (recur (subvec p 1) (conj u (first p)))
-                     (vector? (first p)) (recur (into [] (concat (first p) (subvec p 1))) u)
-                     :else (recur (subvec p 1) u)))]
-    (if (not-empty unproved)
-      (throw (Exception. (str "There are still unproved lines inside the proof
-        (" (clojure.string/join " " (map #(pline-at-plid proof %) (map :id unproved))) ")")))
-      true)))
-
-;; -----------------
-;; functions for editing the proof
-(defn edit-proof
-  [proof item newitem mode]
-  (let [index (.indexOf proof item)]
-    (if (not= index -1)
-      (condp = mode
-        :add-before (with-meta (into [] (concat (subvec proof 0 index) [newitem] (subvec proof index))) {:found? true})
-        :add-after (with-meta (into [] (concat (subvec proof 0 (inc index)) [newitem] (subvec proof (inc index)))) {:found? true})
-        :replace (with-meta (into [] (concat (subvec proof 0 index) [newitem] (subvec proof (inc index)))) {:found? true})
-        :remove (with-meta (into [] (concat (subvec proof 0 index) (subvec proof (inc index)))) {:found? true}))
-      (loop [p proof
-             res []]
-        (cond
-          (empty? p) (with-meta res {})
-          (vector? (first p))
-          (let [v (edit-proof (first p) item newitem mode)]
-            (if (:found? (meta v))
-              (with-meta (into [] (concat res [v] (subvec p 1))) {:found? true})
-              (recur (subvec p 1) (conj res v))))
-          :else (recur (subvec p 1) (conj res (first p))))))))
-
-; not used
-#_(defn add-after-line
-    [proof after newitem]
-    (let [item (get-item proof after)]
-      edit-proof proof item newitem :add-after))
-
-(defn add-after-item
-  [proof after newitem]
-  (edit-proof proof after newitem :add-after))
-
-; not used
-#_(defn add-before-line
-    [proof before newitem]
-    (let [item (get-item proof before)]
-      (edit-proof proof item newitem :add-before)))
-
-(defn add-before-item
-  [proof before newitem]
-  (edit-proof proof before newitem :add-before))
-
-(defn remove-item
-  [proof item]
-  (edit-proof proof item nil :remove))
-
-; not used
-#_(defn replace-line
-    [proof line newitem]
-    (let [item (get-item proof line)]
-      (edit-proof proof item newitem :replace)))
-
-(defn replace-item
-  [proof item newitem]
-  (edit-proof proof item newitem :replace))
-;; -------------------------------
+    (throw (Exception. "The proof is empty")))
+  (let [plines (flatten proof)]
+    (empty? (filter #(= :todo (:body %))plines ))))

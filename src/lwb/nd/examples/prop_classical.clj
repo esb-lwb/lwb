@@ -19,7 +19,7 @@
 
 (proof 'P '(not (not P)))
 (step-b :not-i 3)
-(step-f :not-e 1 2)
+(step-f :not-e 2 1)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :notnot-i)
 ;
@@ -38,7 +38,7 @@
 
 (proof '(not (not P)) 'P)
 (step-b :raa 3)
-(step-f :not-e 2 1)
+(step-f :not-e 1 2)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :notnot-e)
 ;
@@ -56,8 +56,8 @@
 
 (proof '[(impl P Q) (not Q)] '(not P))
 (step-b :not-i 4)
-(step-f :impl-e 3 1)
-(step-f :not-e 4 2)
+(step-f :impl-e 1 3)
+(step-f :not-e 2 4)
 
 ;(export-theorem "resources/nd/theorems-prop.clj" :mt)
 ;
