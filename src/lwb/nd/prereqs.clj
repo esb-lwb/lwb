@@ -27,7 +27,7 @@
   (let [fn-bvars (fn [path]
                    (reduce #(if (vector? (second %2))
                               (concat %1 (second %2)) %1) [] path))
-        vars (reduce #(concat %1 %2) [] (map fn-bvars paths))]
+        vars (reduce concat [] (map fn-bvars paths))]
     (set vars)))
 
 (defn- get-vars

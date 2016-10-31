@@ -32,7 +32,7 @@
       (print " ")
       (dotimes [_ depth] (print "| ")))
     (print body)
-    (dotimes [_ (- distance (count body) (if (> depth 0) (inc (* 2 depth)) 0))] (print " "))
+    (dotimes [_ (- distance (count body) (if (pos? depth) (inc (* 2 depth)) 0))] (print " "))
     (println roth)))
 
 (defn pprint

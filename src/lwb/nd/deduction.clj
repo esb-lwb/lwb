@@ -170,7 +170,7 @@
           nos (filter number? argsv)
           low (apply min nos)
           high (apply max nos)]
-      (if (not (and (> low 0) (<= high pl-cnt)))
+      (if (not (and (pos? low) (<= high pl-cnt)))
         (throw (Exception. (format "Line numbers must refer lines in the proof: %s" (str argsv)))))))
   )
 

@@ -82,7 +82,7 @@
   (cond
     (and (list? given) (= 'infer (first given))) :g?
     (and (list? given) (= 'succ (first given))) :gm
-    (= idx 0) :gm
+    (zero? idx) :gm
     :else :go
     ))
 
@@ -91,7 +91,7 @@
   (cond
     (and (list? given) (= 'infer (first given))) :g?
     (and (list? given) (= 'substitution (first given))) :g?
-    (= idx 0) :go
+    (zero? idx) :go
     :else :gb
     ))
 
@@ -243,7 +243,7 @@
     `(== q1 `(~'and ~a ~b))))`"
   [prereq given extra conclusion]
   (let [qs (mapv #(symbol (str %1 %2)) (take (count conclusion) (cycle ['q])) (take (count conclusion) (iterate inc conclusion-number)))
-        allargs (into [] (concat given extra))
+        allargs (vec (concat given extra))
         args (gen-args allargs)
         fresh-args (apply vector (clojure.set/difference (set (gen-fresh-args given conclusion)) (set args)))
         body (gen-body args given)

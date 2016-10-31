@@ -121,11 +121,10 @@
   "Undo the last change (you can't go further than the last state)"
   []
   (if (empty? @p-history)
-    (do
-      (println "Info: You reached the starting point of the proof, there is nothing more to undo"))
+      (println "Info: You reached the starting point of the proof, there is nothing more to undo")
     (do
       (reset! p (last @p-history))
-      (swap! p-history #(into [] (drop-last %)))
+      (swap! p-history #(vec (drop-last %)))
       (show))))
 
 ;; ## Functions that print rules and theorems

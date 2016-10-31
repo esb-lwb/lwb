@@ -20,8 +20,7 @@
       (persistent! result)
       (let [l (first in)
             l' (- l)]
-        (if (= (result l') l')  ; contains? does not work with transient set, see CLJ-700
-          nil
+        (when-not (= (result l') l')  ; contains? does not work with transient set, see CLJ-700
           (recur (next in) (conj! result l)))))))
 
 ; examples
@@ -46,7 +45,7 @@
   "Returns the set of the resolvents of the clauses,
    ignoring tautologies, i.e. with tautlogy elimination."
   ([c1 c2]
-   (cl-set (filter #(not (nil? %))
+   (cl-set (remove nil?
                    (map #(clause (concat (disj c1 %) (disj c2 (- %))))
                         (filter #(contains? c2 (- %)) c1)))))
   ([c1 c2 & more]

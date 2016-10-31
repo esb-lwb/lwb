@@ -125,7 +125,7 @@
       (cond (empty? p) nil
             (vector? (first p))
             (if-let [s (get-scope (first p) item)]
-              (into [] (concat scope s))
+              (vec (concat scope s))
               (recur (subvec p 1) (conj scope (first p))))
             :else (recur (subvec p 1) (conj scope (first p)))))))
 
@@ -194,7 +194,7 @@
   [loc]
   (let [prev-loc (zip/left loc)
         curr-line (zip/node loc)
-        prev-line (if prev-loc (zip/node prev-loc) nil)]
+        prev-line (when prev-loc (zip/node prev-loc))]
     (and (not (zip/branch? loc)) (unproved-line? curr-line) (not (todoline? prev-line)))))
 
 (defn add-todo-lines
@@ -258,7 +258,7 @@
          ;; duplicate-plines = the pline with these duplicate bodies
          duplicate-plines (filter #(contains? duplicates (:body %)) scope)
          ;; duplicate-plines grouped into a vactor of vector of plines with equal body
-         equals (into [] (map val (group-by :body duplicate-plines)))
+         equals (vec (map val (group-by :body duplicate-plines)))
          fn-smap (fn [equals]
                    (let [remain (map :plid (filter :roth equals))
                          delete (map :plid (filter (set sub) (remove :roth equals)))] ; just plines from the actual sub can be deleted
