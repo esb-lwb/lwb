@@ -304,54 +304,15 @@
   (some? (:forward (roth-id @roths))))
 
 (defn roth-pattern
-  [roth-id mode]
   "The call pattern for a application of the roth.    
    mode can be `:forward` or `:backward`. "
+  [roth-id mode]
   (mode (roth-id @roths)))
 
 (defn roth-backward?
   "Returns true if the rule/theorem can be used backwards"
   [roth-id]
   (some? (:backward (roth-id @roths))))
-
-; apply-rule without permutations
-
-; without permutations on must in certain situations use unify
-; but on the other side one needs not to make choices
-; but: if we have more  than 2 givens and make a step backward
-;      from the concept of the rules does the order of givens not play a role!!
-
-#_(defn apply-roth
-  [rule forward? args & [optional]]
-  (let [rule-map (cond
-                   (map? rule) rule
-                   (keyword? rule) (rule @roths)
-                   :else (throw (Exception. "Wrong type of argument: \"rule\" has to be a keyword or a map.")))
-        frule (if forward? rule-map (assoc rule-map :given (:conclusion rule-map) :conclusion (:given rule-map)))
-        obligatory-args (mapv #(list `quote %) args)
-        optional-args (mapv #(list `quote %) optional)
-        logic-args-num (- (+ (count (:given frule)) (count (:conclusion frule)))
-                          (+ (count obligatory-args) (count optional-args)))
-        logic-args (mapv #(symbol (str %1 %2))
-                         (take logic-args-num (cycle ['q]))
-                         (take logic-args-num (iterate inc 1)))
-        ; setzt voraus, dass make-relation eine map versteht. Das ist aber nicht mehr so
-        logic-rel (eval (make-relation frule))]
-    (eval (list `run* logic-args (list* logic-rel (concat obligatory-args optional-args logic-args))))))
-
-
-;; wird nicht mehr gebraucht
-#_(defn apply-trivials
-    "Applies all trivial theorems to the given form and returns the first successful result.     
-     To extend the predefined trivial theorems use the \"import-trivials\" function (ns: io)"
-    [form]
-    (let [ids (map key @trivials)
-          f (fn [id arg]
-              (run* [q] ((eval (make-rule (id @trivials))) arg q)))
-          results (map #(f % form) ids)
-          res (first (drop-while empty? results))]
-      res))
-
 
 ; ergibt die Argumente für die Relation
 (defn- gen-relargs [args]

@@ -169,8 +169,8 @@
 ;; ## TeX-Code for typesetting the current proof
 
 (defn texify
-  []
   "Generates TeX-Code from the current proof."
+  []
   #_(pprint/texify @p)
   "TODO: yet to be implemented.")
 
