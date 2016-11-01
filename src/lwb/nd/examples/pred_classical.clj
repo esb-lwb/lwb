@@ -28,7 +28,7 @@
 (choose-option 6 2)
 (step-b :exists-i 6 3)
 
-;(export-theorem "resources/nd/theorems-pred.clj" :not-forall->exists-not)
+;(export-theorem "resources/nd/theorems-pred.edn" :not-forall->exists-not)
 
 ; exists-not->not-forall
 
@@ -41,7 +41,7 @@
 (step-f :forall-e 2 3)
 (step-b :not-e 6 7)
 
-;(export-theorem "resources/nd/theorems-pred.clj" :exists-not->not-forall)
+;(export-theorem "resources/nd/theorems-pred.edn" :exists-not->not-forall)
 
 ; not-exists->forall-not
 
@@ -53,7 +53,7 @@
 (choose-option 5 2)
 (step-b :exists-i 5 2)
 
-;(export-theorem "resources/nd/theorems-pred.clj" :not-exists->forall-not)
+;(export-theorem "resources/nd/theorems-pred.edn" :not-exists->forall-not)
 
 ; forall-not->not-exists
 
@@ -65,7 +65,7 @@
 (step-f :forall-e 1 3)
 (step-f :not-e 4 5)
 
-;(export-theorem "resources/nd/theorems-pred.clj" :forall-not->not-exists)
+;(export-theorem "resources/nd/theorems-pred.edn" :forall-not->not-exists)
 
 ; -----------------------------------------------------------------------------------------
 ; The basic aristotelian syllogisms
@@ -85,7 +85,7 @@
 (step-f :impl-e 4 6)
 (step-f :impl-e 5 7)
 
-;(export-theorem "resources/nd/theorems-pred.clj" :modus-barbara)
+;(export-theorem "resources/nd/theorems-pred.edn" :modus-barbara)
 
 ; Modus Celarent 
 ; "EAE
@@ -99,7 +99,7 @@
 (step-f :impl-e 5 6)
 (step-f :impl-e 4 7)
 
-;(export-theorem "resources/nd/theorems-pred.clj" :modus-celarent)
+;(export-theorem "resources/nd/theorems-pred.edn" :modus-celarent)
 
 ; Modus Darii
 ; "AII"

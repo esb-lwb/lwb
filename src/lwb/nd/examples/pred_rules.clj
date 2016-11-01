@@ -6,7 +6,7 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(ns lwb.nd.examples.pred-rules
+(ns lwb.nd.examples.bornat
   (:require [lwb.nd.prereqs :refer :all]
             [lwb.nd.repl :refer :all]))
 
