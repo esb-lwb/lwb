@@ -7,7 +7,6 @@
 ; the terms of this license.
 
 (ns lwb.pred-test
-  (:refer-clojure :exclude [var?])
   (:require [clojure.test :refer :all]
             [clojure.spec :as s]
             [lwb.pred :refer :all]))
