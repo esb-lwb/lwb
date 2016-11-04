@@ -334,8 +334,31 @@
 ; p.99
 (proof '[(actual :k) Dark (impl Dark (forall [x] (forall [y] (not (Saw x y)))))] '(not (exists [z] (Saw z, :k))))
 (step-b :not-i 5)
-(step-f :exists-e 4 1) 
-;; geht nicht, weil wir keine substitution haben
+(step-f :exists-e 4 6) 
+(unify 'V1 :i)
+(step-f :impl-e 3 2)
+(step-f :forall-e 7 5)
+(step-f :forall-e 8 1)
+(step-f :not-e 9 6)
+
+;     --------------------------------------------------
+;  1: (actual :k)                             :premise
+;  2: Dark                                    :premise
+;  3: (impl Dark (forall [x] (forall [y] (not (Saw x y))))):premise
+;      ------------------------------------------------
+;  4:  | (exists [z] (Saw z :k))              :assumption
+;      | ----------------------------------------------
+;  5:  | | (actual :i)                        :assumption
+;  6:  | | (Saw :i :k)                        :assumption
+;  7:  | | (forall [x] (forall [y] (not (Saw x y)))):impl-e [3 2]
+;  8:  | | (forall [y] (not (Saw :i y)))      :forall-e [7 5]
+;  9:  | | (not (Saw :i :k))                  :forall-e [8 1]
+; 10:  | | contradiction                      :not-e [9 6]
+;      | ----------------------------------------------
+; 11:  | contradiction                        :exists-e [4 [5 10]]
+;      ------------------------------------------------
+; 12: (not (exists [z] (Saw z :k)))           :not-i [[4 11]]
+;     --------------------------------------------------
 
 ; -----------------------------------------------------------------------------------------
 ; p.111
@@ -349,27 +372,184 @@
 (step-f :impl-e 4 6)
 (step-f :impl-e 5 7)
 
+;     --------------------------------------------------
+;  1: (forall [x] (impl (R x) (S x)))         :premise
+;  2: (forall [y] (impl (S y) (T y)))         :premise
+;      ------------------------------------------------
+;  3:  | (actual :i)                          :assumption
+;  4:  | (impl (R :i) (S :i))                 :forall-e [1 3]
+;  5:  | (impl (S :i) (T :i))                 :forall-e [2 3]
+;      | ----------------------------------------------
+;  6:  | | (R :i)                             :assumption
+;  7:  | | (S :i)                             :impl-e [4 6]
+;  8:  | | (T :i)                             :impl-e [5 7]
+;      | ----------------------------------------------
+;  9:  | (impl (R :i) (T :i))                 :impl-i [[6 8]]
+;      ------------------------------------------------
+; 10: (forall [z] (impl (R z) (T z)))         :forall-i [[3 9]]
+;     --------------------------------------------------
 
 ; -----------------------------------------------------------------------------------------
 ; p.112
 
 (proof '[(actual :j) (forall [x] (R x))] '(exists [y] (R y)))
+(step-f :forall-e 2 1)
+(step-b :exists-i 5 1)
 
+; --------------------------------------------------
+; 1: (actual :j)                             :premise
+; 2: (forall [x] (R x))                      :premise
+; 3: (R :j)                                  :forall-e [2 1]
+; 4: (exists [y] (R y))                      :exists-i [1 3]
+; --------------------------------------------------
 
 ; -----------------------------------------------------------------------------------------
 ; p.114
 
 (proof '(forall [x] (Green x)) '(forall [y] (impl (Sheep y) (Green y))))
+(step-b :forall-i 3)
+(unify 'V1 :i)
+(step-b :impl-i 4)
+(step-f :forall-e 1 2)
 
+;    --------------------------------------------------
+; 1: (forall [x] (Green x))                  :premise
+;     ------------------------------------------------
+; 2:  | (actual :i)                          :assumption
+;     | ----------------------------------------------
+; 3:  | | (Sheep :i)                         :assumption
+; 4:  | | (Green :i)                         :forall-e [1 2]
+;     | ----------------------------------------------
+; 5:  | (impl (Sheep :i) (Green :i))         :impl-i [[3 4]]
+;     ------------------------------------------------
+; 6: (forall [y] (impl (Sheep y) (Green y))) :forall-i [[2 5]]
+;    --------------------------------------------------
 
 ; -----------------------------------------------------------------------------------------
 ; p.115
 
 (proof '[(forall [x] (not (Green x))) (forall [y] (not (Sheep y)))] '(forall [z] (impl (Sheep z) (Green z))))
+(step-b :forall-i 4)
+(unify 'V1 :i)
+(step-b :impl-i 5)
+(step-f :forall-e 2 3)
+(step-f :not-e 5 4)
+(step-b :efq 8)
 
+;    --------------------------------------------------
+; 1: (forall [x] (not (Green x)))            :premise
+; 2: (forall [y] (not (Sheep y)))            :premise
+;     ------------------------------------------------
+; 3:  | (actual :i)                          :assumption
+;     | ----------------------------------------------
+; 4:  | | (Sheep :i)                         :assumption
+; 5:  | | (not (Sheep :i))                   :forall-e [2 3]
+; 6:  | | contradiction                      :not-e [5 4]
+; 7:  | | (Green :i)                         :efq [6]
+;     | ----------------------------------------------
+; 8:  | (impl (Sheep :i) (Green :i))         :impl-i [[4 7]]
+;     ------------------------------------------------
+; 9: (forall [z] (impl (Sheep z) (Green z))) :forall-i [[3 8]]
+;    --------------------------------------------------
 
 ; -----------------------------------------------------------------------------------------
 ; p.117 Drinker's paradoxon
 
-(proof '[(actual :j) (axctual :k)] '(exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))))
+; That's my proof
+(proof '[(actual :j) (actual :k)] '(exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))))
+(step-f :tnd)
+(unify 'V1 '(and (Drunk :j) (Drunk :k)))
+(step-f :or-e 3 5)
+(step-f :and-e1 4)
+(step-b :exists-i 7 1)
+(step-b :impl-i 7)
+(step-f :not-and->or-not 10)
+(step-f :or-e 11 13)
+(step-b :exists-i 14 1)
+(step-b :impl-i 14)
+(step-f :not-e 12 13)
+(step-b :efq 16)
+(step-b :exists-i 20 2)
+(step-b :impl-i 20)
+(step-f :not-e 18 19)
+(step-b :efq 22)
 
+;     --------------------------------------------------
+;  1: (actual :j)                             :premise
+;  2: (actual :k)                             :premise
+;  3: (or (and (Drunk :j) (Drunk :k)) (not (and (Drunk :j) (Drunk :k)))):tnd []
+;      ------------------------------------------------
+;  4:  | (and (Drunk :j) (Drunk :k))          :assumption
+;  5:  | (Drunk :j)                           :and-e1 [4]
+;      | ----------------------------------------------
+;  6:  | | (Drunk :j)                         :assumption
+;  7:  | | (and (Drunk :j) (Drunk :k))        :repeat [4]
+;      | ----------------------------------------------
+;  8:  | (impl (Drunk :j) (and (Drunk :j) (Drunk :k))):impl-i [[6 7]]
+;  9:  | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [1 8]
+;      ------------------------------------------------
+;      ------------------------------------------------
+; 10:  | (not (and (Drunk :j) (Drunk :k)))    :assumption
+; 11:  | (or (not (Drunk :j)) (not (Drunk :k))):not-and->or-not [10]
+;      | ----------------------------------------------
+; 12:  | | (not (Drunk :j))                   :assumption
+;      | | --------------------------------------------
+; 13:  | | | (Drunk :j)                       :assumption
+; 14:  | | | contradiction                    :not-e [12 13]
+; 15:  | | | (and (Drunk :j) (Drunk :k))      :efq [14]
+;      | | --------------------------------------------
+; 16:  | | (impl (Drunk :j) (and (Drunk :j) (Drunk :k))):impl-i [[13 15]]
+; 17:  | | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [1 16]
+;      | ----------------------------------------------
+;      | ----------------------------------------------
+; 18:  | | (not (Drunk :k))                   :assumption
+;      | | --------------------------------------------
+; 19:  | | | (Drunk :k)                       :assumption
+; 20:  | | | contradiction                    :not-e [18 19]
+; 21:  | | | (and (Drunk :j) (Drunk :k))      :efq [20]
+;      | | --------------------------------------------
+; 22:  | | (impl (Drunk :k) (and (Drunk :j) (Drunk :k))):impl-i [[19 21]]
+; 23:  | | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [2 22]
+;      | ----------------------------------------------
+; 24:  | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):or-e [11 [12 17] [18 23]]
+;      ------------------------------------------------
+; 25: (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):or-e [3 [4 9] [10 24]]
+;     --------------------------------------------------
+
+
+; That's Bornat's proof
+(proof '[(actual :j) (actual :k)] '(exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))))
+(step-b :raa 4)
+(step-b :not-e 5 3)
+(step-b :exists-i 5 1)
+(step-b :impl-i 5)
+(step-b :and-i 6)
+(step-b :efq 6)
+(step-b :not-e 6 3)
+(step-b :exists-i 6 2)
+(step-b :impl-i 6)
+(step-b :and-i 7)
+
+;     --------------------------------------------------
+;  1: (actual :j)                             :premise
+;  2: (actual :k)                             :premise
+;      ------------------------------------------------
+;  3:  | (not (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k))))):assumption
+;      | ----------------------------------------------
+;  4:  | | (Drunk :j)                         :assumption
+;      | | --------------------------------------------
+;  5:  | | | (Drunk :k)                       :assumption
+;  6:  | | | (and (Drunk :j) (Drunk :k))      :and-i [4 5]
+;      | | --------------------------------------------
+;  7:  | | (impl (Drunk :k) (and (Drunk :j) (Drunk :k))):impl-i [[5 6]]
+;  8:  | | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [2 7]
+;  9:  | | contradiction                      :not-e [3 8]
+; 10:  | | (Drunk :k)                         :efq [9]
+; 11:  | | (and (Drunk :j) (Drunk :k))        :and-i [4 10]
+;      | ----------------------------------------------
+; 12:  | (impl (Drunk :j) (and (Drunk :j) (Drunk :k))):impl-i [[4 11]]
+; 13:  | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [1 12]
+; 14:  | contradiction                        :not-e [3 13]
+;      ------------------------------------------------
+; 15: (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):raa [[3 14]]
+;     --------------------------------------------------
