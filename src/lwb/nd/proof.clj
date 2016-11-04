@@ -330,12 +330,12 @@
 (defn new-pline
   "Creates a new proof line or subproof from body and [optional] rule and refs."
   ([body] (new-pline body nil nil))
-  ([body rule refs]
+  ([body roth refs]
    ;; handle special case that body = (infer ... or body = (substitution ...)
    (cond
      (and (seq? body) (= (first body) 'infer)) (new-subproof body)
-     (and (seq? body) (= (first body) 'substitution)) {:plid (new-plid) :body (eval-subs body) :roth rule :refs refs}
-     :else {:plid (new-plid) :body body :roth rule :refs refs})))
+     (and (seq? body) (= (first body) 'substitution)) {:plid (new-plid) :body (eval-subs body) :roth roth :refs refs}
+     :else {:plid (new-plid) :body body :roth roth :refs refs})))
 
 (defn new-subproof
   "Creates a new subproof from infer clause."

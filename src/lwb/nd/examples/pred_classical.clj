@@ -63,6 +63,20 @@
 ;(export-theorem "resources/nd/theorems-pred.edn" :forall-not->not-exists)
 
 ; -----------------------------------------------------------------------------------------
+; Laws of equality
+
+; equal-refl: equality is reflexiv
+
+(proof '(= t1 t2) '(= t2 t1))
+(step-f :equal-i)
+(unify 'V1 't1)
+(step-f :equal-e 1 2 '(= x t1) 'x)
+
+
+
+
+;(export-theorem "resources/nd/theorems-pred.edn" :equal-refl)
+; -----------------------------------------------------------------------------------------
 ; The basic aristotelian syllogisms
 
 ; Modus Barbara

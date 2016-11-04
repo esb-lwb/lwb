@@ -247,7 +247,7 @@
     (let [new-plines (new-plines result)
           refs-pattern (:refs-pattern infos)
           refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)
-          refs (mapv second (filter #(= \g (first (name (first %)))) refs-pattern'))
+          refs (mapv second (filter #(contains? #{\g \e} (first (name (first %)))) refs-pattern'))
           new-plines' (upgrade-refs new-plines (mapv second (filter #(= :c? (first %)) refs-pattern')) roth refs)
           proof' (upgrade-refs proof (mapv second (filter #(= :co (first %)) refs-pattern')) roth refs)
           new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines'))]
