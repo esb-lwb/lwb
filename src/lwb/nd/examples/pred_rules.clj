@@ -6,9 +6,8 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(ns lwb.nd.examples.bornat
-  (:require [lwb.nd.prereqs :refer :all]
-            [lwb.nd.repl :refer :all]))
+(ns lwb.nd.examples.pred-rules
+  (:require [lwb.nd.repl :refer :all]))
 
 
 ; interactive checking in the repl for nd
@@ -28,28 +27,28 @@
 ; -----------------------------------------------------------------------------------------
 ; equal-elimination, substitution
 
-;(proof '[(= :x :y) (P :x)] '(P :y))
-;(step-f "equal-e" 1 2 :y)
-
-; TODO fix that
-; => Prerequisite | Invalid term (:x): A term can only contain symbols and lists.,
-
+(proof '[(= :x :y) (P :x)] '(P :y))
+; for the step we need (1) the equality
+;                      (2) the ref to the substitution with :x
+;                      ('(P x)) the formula at which the substitutions are applied
+;                      ('x) the variable in the formula that is substituted
+(step-f :equal-e 1 2 '(P x) 'x)
 
 ; --------------------------------------------------------------------------------------
 ; forall-introduction
 
 (proof '(forall [x] (or (P x) (not (P x)))))
 (step-b :forall-i 2)
+(unify 'V1 :t)
 (step-f :tnd)
-(unify 'V2 '(P V1))
+(unify 'V2 '(P :t))
 
-;
 ;    --------------------------------------------------
 ;     ------------------------------------------------
-; 1:  | (actual V1)                          assumption
-; 2:  | (or (P V1) (not (P V1)))             "tnd"
+; 1:  | (actual :t)                          :assumption
+; 2:  | (or (P :t) (not (P :t)))             :tnd []
 ;     ------------------------------------------------
-; 3: (forall [x] (or (P x) (not (P x))))     "forall-i" ([1 2])
+; 3: (forall [x] (or (P x) (not (P x))))     :forall-i [[1 2]]
 ;    --------------------------------------------------
 
 ; --------------------------------------------------------------------------------------
@@ -82,12 +81,10 @@
 ; exists-elimination
 
 (proof '(exists [x] (P x)) '(or (P :t) (not (P :t))))
-(step-b :exists-e 3 1)
+(step-f :exists-e 1 3)
 (unify 'V1 :t)
 (step-f :or-i1 3)
 (unify 'V2 '(not (P :t)))
-
-; TODO wrong!!
 
 ;
 ;    --------------------------------------------------
