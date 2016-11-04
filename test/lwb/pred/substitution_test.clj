@@ -36,9 +36,11 @@
   )
 
 (deftest lwb.pred.substitution-test
-  (is (thrown? Exception (substitution '(exists [y] (R x y)) 'x 'y)))
   (is (= '(P :e) (substitution '(P x) 'x :e)))
+  (is (= '(P (f x)) (substitution '(P x) 'x '(f x))))
+  (is (= '(P (f (g x))) (substitution '(P x) 'x '(f (g x)))))
   (is (= '(and (P :e) (forall [x] (S x))) (substitution '(and (P x) (forall [x] (S x))) 'x :e)))
+  (is (thrown? Exception (substitution '(exists [y] (R x y)) 'x 'y)))
   )
 
 (run-tests)
