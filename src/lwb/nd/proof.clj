@@ -113,8 +113,8 @@
   [proof plid]
   (pline-at-plno proof (plid->plno proof plid)))
 
-(defn scope
-  "Returns the scope for a pline inside a proof
+(defn get-scope
+  "Returns the scope for an item inside a proof
    e.g. proof = [1 2 [3 4] [5 6 7] 8] & item = 5
    => scope = [1 2 [3 4] 5 6 7]"
   [proof pline]
@@ -124,7 +124,7 @@
            scope []]
       (cond (empty? p) nil
             (vector? (first p))
-            (if-let [s (scope (first p) pline)]
+            (if-let [s (get-scope (first p) pline)]
               (vec (concat scope s))
               (recur (subvec p 1) (conj scope (first p))))
             :else (recur (subvec p 1) (conj scope (first p)))))))
@@ -252,7 +252,7 @@
    Only plines without rule, in the same scope and the same subproof will be marked as deletable."
   ([proof] (find-duplicates proof proof))
   ([proof sub]
-   (let [scope (scope proof (last sub))
+   (let [scope (get-scope proof (last sub))
          ;; duplicates = duplicate bodies in scope but not :todo
          duplicates (disj (set (map first (filter #(> (val %) 1) (frequencies (map :body (remove vector? scope)))))) :todo)
          ;; duplicate-plines = the pline with these duplicate bodies
@@ -283,11 +283,11 @@
         fn-proved-results (fn [map [id1 id2]]
                             (let [delete-pline (pline-at-plid proof id1)
                                   replace-pline (pline-at-plid proof id2)
-                                  delete-scope (scope proof delete-pline)
+                                  delete-scope (get-scope proof delete-pline)
                                   plno1 (plid->plno proof id1)
                                   plno2 (plid->plno proof id2)]
                               (if (and (= delete-pline (last delete-scope))
-                                       (or (not= delete-scope (scope proof replace-pline))
+                                       (or (not= delete-scope (get-scope proof replace-pline))
                                            (contains? #{:premise :assumption} (:roth replace-pline))))
                                 (assoc map id1 id2) map)))
         proved-results (reduce fn-proved-results {} duplicates)

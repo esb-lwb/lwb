@@ -151,7 +151,7 @@
     (if (empty? plnos) true
                        (let [max-plno (apply max plnos)
                              plines (map #(pline-at-plno proof %) plnos)
-                             scope (scope proof (pline-at-plno proof max-plno))]
+                             scope (get-scope proof (pline-at-plno proof max-plno))]
                          (every? #(contains? (set scope) %) plines)))))
 
 
