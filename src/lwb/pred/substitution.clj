@@ -52,7 +52,6 @@
 ;; of any of the variables in `t`.     
 ;; In other words: In the substitution of `var` by `t` no variable in `t` gets in the scope of a quantor.
 
-
 (defn freefor? 
   "Is the term `t` free for variable `var` in `phi`?"
   [phi var t]
@@ -60,3 +59,16 @@
         tvars (set/difference (vars-in-term t) #{var}) ; we don't need to check var itself
         scope? (fn [tvar paths] (map #(in-scope? % var tvar) paths))]
     (not-any? true? (flatten (map #(scope? %1 paths) tvars)))))
+
+(defn substitution
+  "Substitution of variable `var` by term `t` in formaula `phi`."
+  [phi var t]
+  (if (not (freefor? phi var t))
+    (throw (Exception. (format "The term %s is not free for %s in the formula %s." t var phi))))
+  (loop [loc (zip/seq-zip phi)]
+    (if (zip/end? loc)
+      (zip/node loc)
+      (if (and (= var (zip/node loc)) (not (bounded? (zip/path loc) var)))
+        (recur (zip/next (zip/replace loc t)))
+        (recur (zip/next loc))))))
+

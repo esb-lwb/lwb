@@ -22,6 +22,7 @@
   )
 
 (deftest freefor?-test
+  (is (= true (freefor? '(P x) 'x :t)))
   (is (= true
          (freefor? '(forall [x] (and (impl (P x) (Q x)) (S x y))) 'x '(f x y))))
   (is (= true
@@ -32,6 +33,12 @@
          (freefor? '(exists [z] (impl (R z y) (forall [x] (R x y)))) 'y 'x)))
   (is (= true
          (freefor? '(exists [z] (impl (R z y) (forall [x] (R x z)))) 'y 'x)))
+  )
+
+(deftest lwb.pred.substitution-test
+  (is (thrown? Exception (substitution '(exists [y] (R x y)) 'x 'y)))
+  (is (= '(P :e) (substitution '(P x) 'x :e)))
+  (is (= '(and (P :e) (forall [x] (S x))) (substitution '(and (P x) (forall [x] (S x))) 'x :e)))
   )
 
 (run-tests)
