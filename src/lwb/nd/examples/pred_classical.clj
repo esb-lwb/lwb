@@ -72,7 +72,23 @@
 (unify 'V1 't1)
 (step-f :equal-e 1 2 '(= x t1) 'x)
 
+; --------------------------------------------------
+; 1: (= t1 t2)                               :premise
+; 2: (= t1 t1)                               :equal-i []
+; 3: (= t2 t1)                               :equal-e [1 2 (= x t1) x]
+; --------------------------------------------------
+;(export-theorem "resources/nd/theorems-pred.edn" :equals-refl)
 
+; equal-trans: equality is transitiv
+
+(proof '[(= t1 t2) (= t2 t3)] '(= t1 t3))
+(step-f :equal-e 2 1 '(= t1 x) 'x)
+
+; --------------------------------------------------
+; 1: (= t1 t2)                               :premise
+; 2: (= t2 t3)                               :premise
+; 3: (= t1 t3)                               :equal-e [2 1 (= t1 x) x]
+; --------------------------------------------------
 
 
 ;(export-theorem "resources/nd/theorems-pred.edn" :equal-refl)
