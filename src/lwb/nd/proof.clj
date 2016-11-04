@@ -114,7 +114,7 @@
   [proof plid]
   (pline-at-plno proof (plid->plno proof plid)))
 
-(defn get-scope
+(defn scope
   "Returns the scope for an item inside a proof
    e.g. proof = [1 2 [3 4] [5 6 7] 8] & item = 5
    => scope = [1 2 [3 4] 5 6 7]"
@@ -122,13 +122,13 @@
   (if (contains? (set proof) pline)
     proof
     (loop [p proof
-           scope []]
+           result []]
       (cond (empty? p) nil
             (vector? (first p))
-            (if-let [s (get-scope (first p) pline)]
-              (vec (concat scope s))
-              (recur (subvec p 1) (conj scope (first p))))
-            :else (recur (subvec p 1) (conj scope (first p)))))))
+            (if-let [s (scope (first p) pline)]
+              (vec (concat result s))
+              (recur (subvec p 1) (conj result (first p))))
+            :else (recur (subvec p 1) (conj result (first p)))))))
 
 ;; ## Functions for editing a proof
 
@@ -253,11 +253,11 @@
    Only plines without rule, in the same scope and the same subproof will be marked as deletable."
   ([proof] (find-duplicates proof proof))
   ([proof sub]
-   (let [scope (get-scope proof (last sub))
+   (let [dupl-scope (scope proof (last sub))
          ;; duplicates = duplicate bodies in scope but not :todo
-         duplicates (disj (set (map first (filter #(> (val %) 1) (frequencies (map :body (remove vector? scope)))))) :todo)
+         duplicates (disj (set (map first (filter #(> (val %) 1) (frequencies (map :body (remove vector? dupl-scope)))))) :todo)
          ;; duplicate-plines = the pline with these duplicate bodies
-         duplicate-plines (filter #(contains? duplicates (:body %)) scope)
+         duplicate-plines (filter #(contains? duplicates (:body %)) dupl-scope)
          ;; duplicate-plines grouped into a vactor of vector of plines with equal body
          equals (vec (map val (group-by :body duplicate-plines)))
          fn-smap (fn [equals]
@@ -284,11 +284,11 @@
         fn-proved-results (fn [map [id1 id2]]
                             (let [delete-pline (pline-at-plid proof id1)
                                   replace-pline (pline-at-plid proof id2)
-                                  delete-scope (get-scope proof delete-pline)
+                                  delete-scope (scope proof delete-pline)
                                   plno1 (plid->plno proof id1)
                                   plno2 (plid->plno proof id2)]
                               (if (and (= delete-pline (last delete-scope))
-                                       (or (not= delete-scope (get-scope proof replace-pline))
+                                       (or (not= delete-scope (scope proof replace-pline))
                                            (contains? #{:premise :assumption} (:roth replace-pline))))
                                 (assoc map id1 id2) map)))
         proved-results (reduce fn-proved-results {} duplicates)

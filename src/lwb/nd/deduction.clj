@@ -151,8 +151,8 @@
     (if (empty? plnos) true
                        (let [max-plno (apply max plnos)
                              plines (map #(pline-at-plno proof %) plnos)
-                             scope (get-scope proof (pline-at-plno proof max-plno))]
-                         (every? #(contains? (set scope) %) plines)))))
+                             curr-scope (scope proof (pline-at-plno proof max-plno))]
+                         (every? #(contains? (set curr-scope) %) plines)))))
 
 
 (defn- check-user-input
