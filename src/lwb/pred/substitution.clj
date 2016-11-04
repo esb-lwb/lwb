@@ -65,10 +65,12 @@
   [phi var t]
   (if (not (freefor? phi var t))
     (throw (Exception. (format "The term %s is not free for %s in the formula %s." t var phi))))
-  (loop [loc (zip/seq-zip phi)]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (and (= var (zip/node loc)) (not (bounded? (zip/path loc) var)))
-        (recur (zip/next (zip/replace loc t)))
-        (recur (zip/next loc))))))
+  (apply list
+         (loop [loc (zip/seq-zip phi)]
+           (if (zip/end? loc)
+             (zip/node loc)
+             (if (and (= var (zip/node loc)) (not (bounded? (zip/path loc) var)))
+               (recur (zip/next (zip/replace loc t)))
+               (recur (zip/next loc))))))
+  )
 

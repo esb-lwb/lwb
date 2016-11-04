@@ -18,6 +18,7 @@
 
 ; a little hack
 (pot/import-vars
+  [lwb.pred.substitution substitution]
   [lwb.nd.prereqs substitution?])
 
 ;; # Functions for interactive use of natural deduction in the REPL

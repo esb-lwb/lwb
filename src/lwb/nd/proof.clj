@@ -9,7 +9,8 @@
 (ns lwb.nd.proof
   (:require [clojure.spec :as s]
             [clojure.set :as set]
-            [clojure.zip :as zip]))
+            [clojure.zip :as zip]
+            [lwb.pred.substitution :refer [substitution]]))
 
 ;; # Proof in natural deduction
 
@@ -332,8 +333,12 @@
    ;; handle special case that body = (infer ... or body = (substitution ...)
    (cond
      (and (seq? body) (= (first body) 'infer)) (new-subproof body)
-     (and (seq? body) (= (first body) 'substitution)) :substitution
+     (and (seq? body) (= (first body) 'substitution)) {:plid (new-plid) :body (eval-subs body) :roth rule :refs refs}
      :else {:plid (new-plid) :body body :roth rule :refs refs})))
+
+(defn eval-subs
+  [[subst phi var t]]
+  (substitution phi var t))
 
 (defn new-subproof
   "Creates a new subproof from infer clause."

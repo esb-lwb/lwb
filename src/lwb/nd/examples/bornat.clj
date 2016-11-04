@@ -342,6 +342,12 @@
 
 (proof '[(forall [x] (impl (R x) (S x))) (forall [y] (impl (S y) (T y)))] '(forall [z] (impl (R z) (T z))))
 (step-b :forall-i 4)
+(unify 'V1 :i)
+(step-f :forall-e 1 3)
+(step-f :forall-e 2 3)
+(step-b :impl-i 7)
+(step-f :impl-e 4 6)
+(step-f :impl-e 5 7)
 
 
 ; -----------------------------------------------------------------------------------------
