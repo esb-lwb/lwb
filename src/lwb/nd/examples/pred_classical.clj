@@ -9,6 +9,7 @@
 (ns lwb.nd.examples.pred-classical
   (:require [lwb.nd.repl :refer :all]))
 
+(load-logic :pred)
 
 ; interactive checking in the repl for nd
 
@@ -20,26 +21,22 @@
 (proof '(not (forall [x] (P x))) '(exists [x] (not (P x))))
 (step-b :raa 3)
 (step-b :not-e 4 1)
-(choose-option 4 2)
 (step-b :forall-i 4)
 (unify 'V1 :i)
 (step-b :raa 5)
 (step-b :not-e 6 2)
-(choose-option 6 2)
 (step-b :exists-i 6 3)
 
 ;(export-theorem "resources/nd/theorems-pred.edn" :not-forall->exists-not)
 
 ; exists-not->not-forall
 
-;; TODO :exists-e
 (proof '(exists [x] (not (P x))) '(not (forall [x] (P x))))
 (step-b :not-i 3)
 (step-f :exists-e 1 4)
-(choose-option 4 1)
 (unify 'V1 :i)
 (step-f :forall-e 2 3)
-(step-b :not-e 6 7)
+(step-f :not-e 4 5)
 
 ;(export-theorem "resources/nd/theorems-pred.edn" :exists-not->not-forall)
 
@@ -50,20 +47,18 @@
 (unify 'V1 :i)
 (step-b :not-i 4)
 (step-b :not-e 5 1)
-(choose-option 5 2)
 (step-b :exists-i 5 2)
 
 ;(export-theorem "resources/nd/theorems-pred.edn" :not-exists->forall-not)
 
 ; forall-not->not-exists
 
-;; TODO :exists-e
 (proof '(forall [x] (not (P x))) '(not (exists [x] (P x))))
 (step-b :not-i 3)
-(step-f :exists-e 4 2)
+(step-f :exists-e 2 4)
 (unify 'V1 :i)
 (step-f :forall-e 1 3)
-(step-f :not-e 4 5)
+(step-f :not-e 5 4)
 
 ;(export-theorem "resources/nd/theorems-pred.edn" :forall-not->not-exists)
 
@@ -104,15 +99,30 @@
 ; Modus Darii
 ; "AII"
 
-;(proof '[(forall [x] (impl (P x) (Q x))) (exists [x] (and (R x) (P x)))] '(exists [x] (and (R x) (Q x))))
+(proof '[(forall [x] (impl (P x) (Q x))) (exists [x] (and (R x) (P x)))] '(exists [x] (and (R x) (Q x))))
+(step-f :exists-e 2)
+(unify 'V1 :i)
+(step-f :forall-e 1 3)
+(unify 'V2 '(exists [x] (and (R x) (Q x))))
+(step-f :and-e2 4)
+(step-f :impl-e 5 6)
+(step-f :and-e1 4)
+(step-f :and-i 8 7)
+(step-b :exists-i 11 3)
 
-; TODO
-; rule "exists-e" is wrong
 
 ; Modus Ferio
 ; "EIO"
 
-;(proof '[(forall [x] (impl (P x) (not (Q x)))) (exists [x] (and (R x) (P x)))] '(exists [x] (R x) (not (Q x))))
+(proof '[(forall [x] (impl (P x) (not (Q x)))) (exists [x] (and (R x) (P x)))] '(exists [x] (and (R x) (not (Q x)))))
+(step-f :exists-e 2)
+(unify 'V1 :i)
+(unify 'V2 '(exists [x] (and (R x) (not (Q x)))))
+(step-f :forall-e 1 3)
+(step-f :and-e2 4)
+(step-f :impl-e 5 6)
+(step-f :and-e1 4)
+(step-f :and-i 8 7)
+(step-b :exists-i 11 3)
 
-; rule "exists-e" is wrong
 

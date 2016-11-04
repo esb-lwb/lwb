@@ -10,6 +10,8 @@
   (:require [lwb.nd.repl :refer :all]))
 
 
+(load-logic :pred)
+
 ; interactive checking in the repl for nd
 
 ; -----------------------------------------------------------------------------------------

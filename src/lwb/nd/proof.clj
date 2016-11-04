@@ -322,8 +322,9 @@
               (if (contains? lvars %) (get smap %) %)
               (clojure.walk/prewalk-replace smap %)) bodies )))
 
-
-; TODO: substitution bei new-pline
+(defn eval-subs
+  [[subst phi var t]]
+  (substitution phi var t))
 
 (declare new-subproof)
 (defn new-pline
@@ -335,10 +336,6 @@
      (and (seq? body) (= (first body) 'infer)) (new-subproof body)
      (and (seq? body) (= (first body) 'substitution)) {:plid (new-plid) :body (eval-subs body) :roth rule :refs refs}
      :else {:plid (new-plid) :body body :roth rule :refs refs})))
-
-(defn eval-subs
-  [[subst phi var t]]
-  (substitution phi var t))
 
 (defn new-subproof
   "Creates a new subproof from infer clause."
