@@ -333,14 +333,15 @@
 ; -----------------------------------------------------------------------------------------
 ; p.99
 (proof '[(actual :k) Dark (impl Dark (forall [x] (forall [y] (not (Saw x y)))))] '(not (exists [z] (Saw z, :k))))
-(step-b :not-i 3)
-(step-f :exists-e 2 4) 
+(step-b :not-i 5)
+(step-f :exists-e 4 1) 
 ;; geht nicht, weil wir keine substitution haben
 
 ; -----------------------------------------------------------------------------------------
 ; p.111
 
 (proof '[(forall [x] (impl (R x) (S x))) (forall [y] (impl (S y) (T y)))] '(forall [z] (impl (R z) (T z))))
+(step-b :forall-i 4)
 
 
 ; -----------------------------------------------------------------------------------------
