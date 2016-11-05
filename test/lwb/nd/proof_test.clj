@@ -21,88 +21,88 @@
 
 (deftest add-todo-test
   ; an unproved line has a ... above
-  (is (= [{:plid 21, :body :todo, :rule nil}
-          {:plid 1, :body '(or P (not P)), :rule nil}]
+  (is (= [{:plid 21, :body :todo, :roth nil}
+          {:plid 1, :body '(or P (not P)), :roth nil}]
          (add-todo-lines
-           [{:plid 1, :body '(or P (not P)), :rule nil}])))
+           [{:plid 1, :body '(or P (not P)), :roth nil}])))
   ; if there is already a ..., nothing happens
-  (is (= [{:plid 21, :body :todo, :rule nil}
-          {:plid 1, :body '(or P (not P)), :rule nil}]
+  (is (= [{:plid 21, :body :todo, :roth nil}
+          {:plid 1, :body '(or P (not P)), :roth nil}]
          (add-todo-lines
-           [{:plid 21, :body :todo, :rule nil}
-            {:plid 1, :body '(or P (not P)), :rule nil}])))
+           [{:plid 21, :body :todo, :roth nil}
+            {:plid 1, :body '(or P (not P)), :roth nil}])))
   ; each unproved line has a ... above
-  (is (= [{:plid 22, :body :todo, :rule nil}
-          {:plid 1, :body '(or P (not P)), :rule nil}
-          {:plid 23, :body :todo, :rule nil}
-          {:plid 2, :body '(or P (not P)), :rule nil}]
+  (is (= [{:plid 22, :body :todo, :roth nil}
+          {:plid 1, :body '(or P (not P)), :roth nil}
+          {:plid 23, :body :todo, :roth nil}
+          {:plid 2, :body '(or P (not P)), :roth nil}]
          (add-todo-lines
-           [{:plid 1, :body '(or P (not P)), :rule nil}
-            {:plid 2, :body '(or P (not P)), :rule nil}])))
+           [{:plid 1, :body '(or P (not P)), :roth nil}
+            {:plid 2, :body '(or P (not P)), :roth nil}])))
   ; add-todo-lines works fine with subproofs too
-  (is (= [{:plid 3, :body :todo, :rule nil}
-          {:plid 1, :body '(or P (not P)), :rule nil}
-          [{:plid 24, :body :todo :rule nil}
-           {:plid 4, :body 'A :rule nil}]]
+  (is (= [{:plid 3, :body :todo, :roth nil}
+          {:plid 1, :body '(or P (not P)), :roth nil}
+          [{:plid 24, :body :todo :roth nil}
+           {:plid 4, :body 'A :roth nil}]]
          (add-todo-lines
-           [{:plid 3, :body :todo, :rule nil}
-            {:plid 1, :body '(or P (not P)), :rule nil}
-            [{:plid 4, :body 'A :rule nil}]])))
+           [{:plid 3, :body :todo, :roth nil}
+            {:plid 1, :body '(or P (not P)), :roth nil}
+            [{:plid 4, :body 'A :roth nil}]])))
   ; no ... above subproofs
-  (is (= [{:plid 3, :body :todo, :rule nil}
-          {:plid 1, :body '(or P (not P)), :rule nil}
-          [{:plid 5, :body 'B, :rule :x}
-           {:plid 25, :body :todo, :rule nil}
-           {:plid 4, :body 'A, :rule nil}]]
+  (is (= [{:plid 3, :body :todo, :roth nil}
+          {:plid 1, :body '(or P (not P)), :roth nil}
+          [{:plid 5, :body 'B, :roth :x}
+           {:plid 25, :body :todo, :roth nil}
+           {:plid 4, :body 'A, :roth nil}]]
          (add-todo-lines
-           [{:plid 3, :body :todo, :rule nil}
-            {:plid 1, :body '(or P (not P)), :rule nil}
-            [{:plid 5, :body 'B, :rule :x}
-             {:plid 4, :body 'A, :rule nil}]])))
+           [{:plid 3, :body :todo, :roth nil}
+            {:plid 1, :body '(or P (not P)), :roth nil}
+            [{:plid 5, :body 'B, :roth :x}
+             {:plid 4, :body 'A, :roth nil}]])))
          )
 
 (deftest remove-todo-test
   ; if there is no ..., nothing happens
-  (is (= [{:plid 1, :body '(or P (not P)), :rule nil}]
+  (is (= [{:plid 1, :body '(or P (not P)), :roth nil}]
       (remove-todo-lines
-        [{:plid 1, :body '(or P (not P)), :rule nil}])))
+        [{:plid 1, :body '(or P (not P)), :roth nil}])))
   ; a ... above a proved line gets removed
-  (is (= [{:plid 1, :body '(or P (not P)), :rule :tnd}]
+  (is (= [{:plid 1, :body '(or P (not P)), :roth :tnd}]
          (remove-todo-lines
-           [{:plid 21, :body :todo, :rule nil}
-            {:plid 1, :body '(or P (not P)), :rule :tnd}])))
+           [{:plid 21, :body :todo, :roth nil}
+            {:plid 1, :body '(or P (not P)), :roth :tnd}])))
   ; a ... between two checked lines gets removed
-  (is (= [{:plid 2, :body 'A, :rule :and-e} 
-          {:plid 1, :body '(or P (not P)), :rule :x}]
+  (is (= [{:plid 2, :body 'A, :roth :and-e} 
+          {:plid 1, :body '(or P (not P)), :roth :x}]
          (remove-todo-lines
-           [{:plid 2, :body 'A, :rule :and-e}
-            {:plid 21, :body :todo, :rule nil}
-            {:plid 1, :body '(or P (not P)), :rule :x}])))
+           [{:plid 2, :body 'A, :roth :and-e}
+            {:plid 21, :body :todo, :roth nil}
+            {:plid 1, :body '(or P (not P)), :roth :x}])))
   ; a ... in a subproof is not removed if not followed by a checked line
-  (is (= [{:plid 1, :body '(or P (not P)), :rule :x} 
-          [{:plid 4, :body 'A, :rule nil}]]
+  (is (= [{:plid 1, :body '(or P (not P)), :roth :x} 
+          [{:plid 4, :body 'A, :roth nil}]]
          (remove-todo-lines
-           [{:plid 3, :body :todo, :rule nil}
-            {:plid 1, :body '(or P (not P)), :rule :x}
-            [{:plid 4, :body 'A, :rule nil}]])))
+           [{:plid 3, :body :todo, :roth nil}
+            {:plid 1, :body '(or P (not P)), :roth :x}
+            [{:plid 4, :body 'A, :roth nil}]])))
   ; fn is okay in subproofs
-  (is (= [{:plid 3, :body :todo, :rule nil} 
-          {:plid 1, :body '(or P (not P)), :rule nil} 
-          [{:plid 4, :body 'A, :rule :x}]]
+  (is (= [{:plid 3, :body :todo, :roth nil} 
+          {:plid 1, :body '(or P (not P)), :roth nil} 
+          [{:plid 4, :body 'A, :roth :x}]]
          (remove-todo-lines
-           [{:plid 3, :body :todo, :rule nil}
-            {:plid 1, :body '(or P (not P)), :rule nil}
-            [{:plid 5, :body :todo, :rule nil}
-             {:plid 4, :body 'A, :rule :x}]])))
+           [{:plid 3, :body :todo, :roth nil}
+            {:plid 1, :body '(or P (not P)), :roth nil}
+            [{:plid 5, :body :todo, :roth nil}
+             {:plid 4, :body 'A, :roth :x}]])))
   ; a ... above a subproof gets removed
-  (is (= [[{:plid 5, :body 'B, :rule :assumption} 
-           {:plid 4, :body :todo, :rule nil} 
-           {:plid 6, :body '(impl B A), :rule nil}]]
+  (is (= [[{:plid 5, :body 'B, :roth :assumption} 
+           {:plid 4, :body :todo, :roth nil} 
+           {:plid 6, :body '(impl B A), :roth nil}]]
          (remove-todo-lines
-           [{:plid 3, :body :todo, :rule nil}
-            [{:plid 5, :body 'B, :rule :assumption}
-             {:plid 4, :body :todo, :rule nil}
-             {:plid 6, :body '(impl B A), :rule nil}]])))
+           [{:plid 3, :body :todo, :roth nil}
+            [{:plid 5, :body 'B, :roth :assumption}
+             {:plid 4, :body :todo, :roth nil}
+             {:plid 6, :body '(impl B A), :roth nil}]])))
   )
 
 

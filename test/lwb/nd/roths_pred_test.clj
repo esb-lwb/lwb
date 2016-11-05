@@ -9,7 +9,6 @@
 (ns lwb.nd.roths-pred-test
   (:require [clojure.test :refer :all]
             [lwb.nd.rules :refer :all]
-            [lwb.nd.prereqs :refer :all]
             [lwb.nd.repl :refer :all]))
 
 (defn setup []

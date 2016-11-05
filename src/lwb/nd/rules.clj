@@ -9,8 +9,17 @@
 (ns lwb.nd.rules
   (:refer-clojure :exclude [==])
   (:require [clojure.core.logic :refer :all]
-            [lwb.nd.storage :refer [roths]]
             [clojure.spec :as s]))
+
+;; global storage for the rules and theorems (roths, so to say) of the current logic.
+
+(def roths
+  "Global storage for rules and theorems"
+  (atom {}))
+
+(defn reset-roths
+  "Resets the internal storage for rules"
+  [] (reset! roths {}))
 
 ;; Magic symbol for the logic variable for the conclusion in the logic relation
 ;; This symbol should not be used as the name of a proposition in rules and theorems
@@ -130,23 +139,19 @@
       is-subst nil                                          ; conclusion is a substitution -> forward only
       :else (into [:cm] vg))))
 
+;; the following two functions are just for test purposes
+
 (defn roth-structure-forward
-  "Structure of the logic relation of the rule or theorem with the given `id`.      
-   Result e.g.: `[:gm :gm :g? :g? :co]`      
-   requires: @roths    
-             `id` is a valid rule id."
+  "Structure of the logic relation of the rule or theorem with the given `roth-id`.      
+   Result e.g.: `[:gm :gm :g? :g? :co]`"
   [roth-id]
-  (let [roth (roth-id @roths)]
-    (:forward roth)))
+  (:forward (roth-id @roths)))
 
 (defn roth-structure-backward
-  "Structure of the logic relation of the rule or theorem with the given `id`.      
-   Result e.g.: `[:cm :gb :gb]`      
-   requires: @roths    
-             `id` is a valid rule id."
-  [id]
-  (let [roth (id @roths)]
-    (:backward roth)))
+  "Structure of the logic relation of the rule or theorem with the given `roth-id`.      
+   Result e.g.: `[:cm :gb :gb]`"      
+  [roth-id]
+  (:backward (roth-id @roths)))
 
 ;; ## Functions for generating the core.logic relations that represent roths
 
@@ -253,9 +258,6 @@
     `(fn ~(apply conj args qs)
        ~fn-body)))
 
-(gen-roth-relation nil '[phi psi] nil '[(and phi psi)])
-(eval (gen-roth-relation nil '[phi psi] nil '[(and phi psi)]))
-
 ;; ## Utility functions for roths
 
 (defn make-relation
@@ -267,36 +269,10 @@
       (gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r)))
     (throw (Exception. (str roth-id " not found in @roths.")))))
 
-(comment
-  (make-relation :and-i)
-  (make-relation :equal-e)
-  (make-relation :always-e)
-  (def f (eval (make-relation :not-until)))
-  (run 1 [q1 q2] (f q1 q2))
-  (make-relation :not-until)
-  )
-
 (defn roth-exists?
   "Does a certain rule/theorem exist?"
   [roth-id]
   (contains? @roths roth-id))
-
-(defn get-roth
-  "Returns the rule/theorem if it exists"
-  [roth-id]
-  (if (roth-exists? roth-id)
-    (roth-id @roths)
-    (throw (Exception. (str roth-id " not found in @roths.")))))
-
-(defn given-cnt
-  "Returns the number of givens for the certain rule/theorem"
-  [roth-id]
-  (count (:given (roth-id @roths))))
-
-(defn concl-cnt
-  "Returns the number of conclusions for the certain rule/theorem"
-  [roth-id]
-  (count (:conclusion (roth-id @roths))))
 
 (defn roth-forward?
   "Returns true if the rule/theorem can be used forwards"
@@ -314,23 +290,26 @@
   [roth-id]
   (some? (:backward (roth-id @roths))))
 
-; ergibt die Argumente für die Relation
-(defn- gen-relargs [args]
+(defn- gen-relargs 
+  "Gets the arguments for the logic relation from args."
+  [args]
   (let [counter (atom -1)
         tr (fn [arg] (if (= :? arg)
                        (symbol (str \q (swap! counter inc)))
                        (list `quote arg)))]
     (mapv tr args)))
 
-; Diese Variante von apply-rule setzt voraus, dass der Speicher für die Regeln bereits die
-; logische Relation enthält.
+;; This is the function that actually runs core.logic 
+
 (defn apply-roth
-  "Takes the id `roth` of a rule or a theorem and applies the according logical relation,
-  with the given `args` where `:?` stands for the unknown.     
-  Result is given as a vector which size is equal to the number of `:?`s in the args."
-  [roth args]
+  "Takes the `roth-id` of a rule or a theorem and applies the according logical relation,
+   with the given `args` where `:?` stands for the unknown.     
+   Requires: a roth with `roth-id` exists      
+             the global atom `roths` provides the logic relation for the roth in `:logic-rel`  
+   Returns:  a vector of formulas which size is equal to the number of `:?`s in the args."
+  [roth-id args]
   (let [rel-args (gen-relargs args)
         run-args (vec (filter symbol? rel-args))
-        result (first (eval (list `run* run-args (list* (:logic-rel (roth @roths)) rel-args))))]
+        result (first (eval (list `run* run-args (list* (:logic-rel (roth-id @roths)) rel-args))))]
     (if-not (vector? result) [result] result)))
 

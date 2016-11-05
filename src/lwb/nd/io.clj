@@ -9,10 +9,11 @@
 (ns lwb.nd.io
   (:require [clojure.java.io :as io]
             [clojure.edn :as edn]
-            [lwb.nd.storage :refer [roths reset-roths]]
             [lwb.nd.rules :refer [gen-roth-relation roth-structure-f roth-structure-b]]
             [lwb.nd.proof :refer [proved?]])
   (:import [java.io PushbackReader]))
+
+;TODO: validate inout of rules and theorems
 
 (defn read-roths
   "Reads sequence of items from file"
@@ -21,8 +22,10 @@
     (doall (take-while some? (repeatedly #(edn/read {:eof nil} r))))))
 
 (defn import-rules
-  "Imports all rules from `filename` into global atom `roths`."
-  [filename]
+  "Imports all rules from `filename` into global atom `roths`.     
+   Requires: `filename` exists and has valid rules.     
+   Modifies; global atom `roths`."
+  [filename roths]
   (let [map-fn (fn [rule]
                  (hash-map (:id rule)
                            {:type       :rule
@@ -36,14 +39,11 @@
                                                                  (:conclusion rule)))}))]
     (apply (partial swap! roths merge) (map map-fn (read-roths filename)))))
 
-(comment
-  (reset-roths)
-  (import-rules "./resources/nd/rules-prop.edn")
-  )
-
 (defn import-theorems
-  "Imports all theorems from `filename` into global atom `roths`."
-  [filename]
+  "Imports all theorems from `filename` into global atom `roths`.        
+   Requires: `filename` exists and has valid theorems.
+   Modifies; global atom `roths`."
+  [filename roths]
   (let [map-fn (fn [theorem]
                  (hash-map (:id theorem)
                            {:type       :theorem 
@@ -53,26 +53,6 @@
                             :backward   (roth-structure-b (:given theorem) (:extra theorem) (:conclusion theorem))
                             :logic-rel  (eval (gen-roth-relation nil (:given theorem) nil (:conclusion theorem)))}))]
     (apply (partial swap! roths merge) (map map-fn (read-roths filename)))))
-
-(comment
-  (import-theorems "./resources/nd/theorems-prop.edn")
-  )
-
-;; das braucht man nicht, wenn man von vorneherein Formeln mit true oder false ausschließt
-#_(defn import-trivials
-    "Imports all trivial-theorems from filename into the internal trivial-theorems-storage.
-     Existing trivial-theorems will be kept."
-    [filename]
-    (with-open [reader (io/reader filename)]
-      (loop [item (read (PushbackReader. reader) false nil)
-             result {}]
-        (if item
-          (recur (read (PushbackReader. reader) false nil)
-                 (assoc result (:id item) {:given      (:given item)
-                                           :conclusion (:conclusion item)
-                                           :forward    true}))
-          (swap! trivials merge result)))))
-
 
 ;; TODO: Das muss neu programmiert werden
 #_(defn export-theorem

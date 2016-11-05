@@ -12,7 +12,7 @@
             [lwb.nd.proof :as proof]
             [lwb.nd.deduction :as deduc]
             [lwb.nd.prereqs :as prereqs]
-            [lwb.nd.storage :refer [roths reset-roths]]
+            [lwb.nd.rules :refer [roths reset-roths]]
             [lwb.nd.io :as io]
             [lwb.nd.printer :refer [pprint]]))
 
@@ -34,25 +34,28 @@
 
 (defn load-logic
   "Load rules and theorems of the logic to use.      
-   Logic can be `:prop`, `:pred`, `:ltl`."
+   Logic can be `:prop`, `:pred`, `:ltl`.    
+   Requires: files with rules and theorems     
+   Modifies; global `roths`"
   [logic]
   (reset-roths)
   (case logic
     :prop (do
-            (io/import-rules "resources/nd/rules-prop.edn")
-            (io/import-theorems "resources/nd/theorems-prop.edn"))
+            (io/import-rules "resources/nd/rules-prop.edn" roths)
+            (io/import-theorems "resources/nd/theorems-prop.edn" roths))
     :pred (do
-            (io/import-rules "resources/nd/rules-prop.edn")
-            (io/import-rules "resources/nd/rules-pred.edn")
-            (io/import-theorems "resources/nd/theorems-prop.edn")
-            (io/import-theorems "resources/nd/theorems-pred.edn"))
+            (io/import-rules "resources/nd/rules-prop.edn" roths)
+            (io/import-rules "resources/nd/rules-pred.edn" roths)
+            (io/import-theorems "resources/nd/theorems-prop.edn" roths)
+            (io/import-theorems "resources/nd/theorems-pred.edn" roths))
     :ltl (do
-           (io/import-rules "resources/nd/rules-ltl.edn")
-           (io/import-theorems "resources/nd/theorems-ltl.edn")))
+           (io/import-rules "resources/nd/rules-ltl.edn" roths)
+           (io/import-theorems "resources/nd/theorems-ltl.edn" roths)))
   (println welcome)
   (println (str "Info: Rules and theorems loaded: " logic)))
 
-;; Choose the logic for the session
+;; Choose the logic for the session:
+
 (comment
   (load-logic :prop)
   (load-logic :pred)
@@ -79,7 +82,8 @@
 ;; ## Creating a new proof
 
 (defn proof
-  "Starts a new proof."
+  "Starts a new proof.     
+   Modifies: atom `p`."
   ([conclusion] (proof [] conclusion))
   ([premises conclusion]
    (reset! p-history [])
@@ -91,7 +95,9 @@
 ;; ## Functions that perform steps in proving a conclusion
 
 (defn step-f
-  "Execute a forward step"
+  "Execute a forward step.      
+   Modifies: atom `p`, the proof, and       
+             atom `p-history, the history of the current proof."
   [roth & args]
   (try
     (let [proof' (deduc/step-f @p roth (vec args))]
@@ -102,7 +108,9 @@
       (println (str "Error: " (.getMessage e))))))
 
 (defn step-b
-  "Execute a backward step"
+  "Execute a backward step.      
+   Modifies: atom `p`, the proof, and
+             atom `p-history, the history of the current proof."
   [roth & args]
   (try
     (let [proof' (deduc/step-b @p roth (vec args))]
@@ -113,7 +121,9 @@
       (println (str "Error: " (.getMessage e))))))
 
 (defn unify
-  "Unifies symbols"
+  "Unifies symbols.     
+   Modifies: atom `p`, the proof, and
+             atom `p-history, the history of the current proof."
   [old new]
   (try
     (let [proof' (deduc/unify @p old new)]
@@ -124,7 +134,9 @@
       (println (str "Error: " (.getMessage e))))))
 
 (defn undo
-  "Undo the last change (you can't go further than the last state)"
+  "Undo the last change of the proof.     
+   Modifies: atom `p`, the proof, and
+             atom `p-history, the history of the current proof."
   []
   (if (empty? @p-history)
     (println "Info: You reached the starting point of the proof, there is nothing more to undo")
