@@ -50,24 +50,6 @@
   []
   (reset! lvno 0))
 
-;; # Structure of a proof line and a proof
-
-;; Keys in `:pline`
-(s/def ::plid int?)
-(s/def ::body (s/or :symbol symbol? :fml list? :keyword #{:todo}))
-(s/def ::roth (s/nilable keyword?))
-(s/def ::refs vector?)
-
-;; A proof line has a unique proof line id `:plid`,      
-;; a `:body` which is a formula or a special keyword,     
-;; then the name of the rule or theorem `:roth` and if the roth is specified the      
-;; `:refs` i.e. the plids of proof lines to which the application of the roth references
-(s/def ::pline
-  (s/keys :req-un [::plid ::body ::roth] :opt-un [::refs]))
-
-;; A proof is a nested vector of proof lines and subproofs
-(s/def ::proof (s/and vector? (s/* (s/or :pline ::pline :subproof ::proof))))
-
 (declare normalize)
 (defn proof
   "Gives a new proof for the premises and the conclusion.     

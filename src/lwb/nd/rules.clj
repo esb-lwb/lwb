@@ -34,39 +34,7 @@
      forall exists actual = substitution
      at succ atnext always finally until <=});; # Transformation of rules and theorems to core.logic relations
 
-;; ## Specification of rules and theorems
 
-;; The following specs describe the internal representation of rules and theorems (called roths)
-
-;; Expressions in rules
-(s/def ::expr (s/or :list list? :symbol symbol?))
-
-;; Id of roth
-(s/def ::id keyword?)
-
-;; Prerequisite for the application of the rule
-(s/def ::prereq (s/nilable (s/coll-of ::expr :kind vector?)))
-
-;; Given premises
-(s/def ::given (s/coll-of ::expr :kind vector))
-
-;; Extra arguments for the evaluation of a rule i.e. :equal-e
-(s/def ::extra (s/nilable (s/coll-of ::expr :kind vector)))
-
-;; Conclusion
-(s/def ::conclusion (s/coll-of ::expr :kind vector))
-
-;; Entity map for the body of a rule
-(s/def ::rule-body (s/keys :un-req [::given ::extra ::conclusion ::prereq]))
-
-;; Rule
-(s/def ::rule (s/cat :id ::id :body ::rule-body))
-
-;; Entity map for the body of a theorem
-(s/def ::theorem-body (s/keys :un-req [::given ::conclusion]))
-
-;; Theorem
-(s/def ::theorem (s/cat :id ::id :body ::theorem-body))
 
 ;; NEW LOGIC (add additional keywords that should not be handled like symbols)
 ;; those "keywords" will not be handled as symbols but constants
