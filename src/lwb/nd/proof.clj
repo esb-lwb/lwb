@@ -175,12 +175,12 @@
   []
   {:plid (new-plid), :body :todo, :roth nil})
 
-(defn- unproved-line?
+(defn unproved-line?
   "Checks whether a proof line has no roth."
   [pline]
   (and (not= :todo (:body pline)) (nil? (:roth pline))))
 
-(defn- todoline?
+(defn todoline?
   "Checks whether a proof line is a todo line."
   [pline]
   (= :todo (:body pline)))

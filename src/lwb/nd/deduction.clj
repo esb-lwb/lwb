@@ -13,7 +13,7 @@
 
 
 (defn unify
-  "Unifies all instances of `old` inside the `proof` with `new`."
+  "Unifies all instances of symbol `old` inside the `proof` with `new`."
   [proof old new]
   (if (symbol? old)
     (normalize
@@ -154,6 +154,16 @@
                              curr-scope (scope proof (pline-at-plno proof max-plno))]
                          (every? #(contains? (set curr-scope) %) plines)))))
 
+(defn- no-ref-to-todoline?
+  "Checks if there is no ref to a todoline"
+  [proof match-pattern]
+  (let [plnos (filter number? (map second match-pattern))]
+    (if (empty? plnos) true
+                       (empty? (filter todoline? 
+                               (map #(pline-at-plno proof %) plnos)
+                               ))
+                       )))
+
 
 (defn- check-user-input
   "Checks of user input to a proof step, independent of the direction of the step."
@@ -195,7 +205,8 @@
           todo-plid (plid-to-manip proof match-pattern)]
       (if (zero? todo-plid)
         (throw (Exception. "Arguments refering givens must be above a todo line")))
-      ; TODO: keines der Argumente zeigt auf einen todo-line
+      (if-not (no-ref-to-todoline? proof match-pattern)
+        (throw (Exception. "Arguments may not refer todo lines")))
       ; TODO: :gm muss eine Nummer haben
       ; TODO: mindestens eines der g1 muss eine Nummer haben
       ; TODO: sieht so aus, dass type-args-ok komplexer ausgelegt werden muss
@@ -207,6 +218,14 @@
        :todo-plid     todo-plid
        :refs-pattern  (map #(if (number? (second %)) [(first %) (plno->plid proof (second %))] %) match-pattern)}))
   )
+
+(def p1 [{:plid 1 :body :xtodo}
+         {:plid 2 :body 'A}
+         {:plid 3 :body :xtodo}
+         {:plid 4 :body 'B}])
+
+(no-ref-to-todoline? p1 [])
+(no-ref-to-todoline? p1 [[:g1 1] [:g1 2] [:g1 3] [:g1 4]])
 
 (defn- upgrade-refs-pattern
   "Upgrades `refs-pattern` with the refs to new proof line in `new-plines.`
@@ -277,6 +296,8 @@
           concl-plid (plno->plid proof (first argsv))]
       ; TODO: concl-plid zeigt wirklich auf eine conclusion line
       ; TODO: alle g Argumente müssen oberhalb einer todo-line sein und oberhalb von concl
+      (if-not (no-ref-to-todoline? proof match-pattern)
+        (throw (Exception. "Arguments may not refer todo lines")))
       ; TODO: keines der Argumente zeigt auf einen todo-line
       ; TODO: höchstens alle -1 der gb muss eine Nummer haben
       ; TODO: sieht so aus, dass type-args-ok komplexer ausgelegt werden muss
