@@ -7,21 +7,21 @@
 ; the terms of this license.
 
 (ns lwb.nd.proof
-  (:require [clojure.spec :as s]
-            [clojure.set :as set]
+  (:require [clojure.set :as set]
             [clojure.zip :as zip]
-            [lwb.pred.substitution :refer [substitution]]))
+            [lwb.pred.substitution :refer [substitution]])
+  (:import (clojure.lang LazySeq)))
 
 ;; # Proof in natural deduction
 
 ;; Each proof line has a unique id `plid`.
-(def plid 
+(def plid
   "Global counter for the ids of proof lines."
   (atom 0))
 
 (defn new-plid
   "Generates new plid for proof lines.     
-   Uses global `plid`." 
+   Uses global `plid`."
   []
   (swap! plid inc))
 
@@ -98,8 +98,8 @@
 
 (defn scope
   "Returns the scope for an item inside a proof
-   e.g. proof = [1 2 [3 4] [5 6 7] 8] & item = 5
-   => scope = [1 2 [3 4] 5 6 7]"
+   e.g. proof = `[1 2 [3 4] [5 6 7] 8]` & item = `5`
+   => scope = `[1 2 [3 4] 5 6 7]`"
   [proof pline]
   (if (contains? (set proof) pline)
     proof
@@ -206,7 +206,7 @@
   [loc]
   (and (todoline? (zip/node loc))
        (or (and (not (nil? (zip/right loc)))
-                     (not (nil? (:roth (zip/node (zip/right loc))))))
+                (not (nil? (:roth (zip/node (zip/right loc))))))
            (= (zip/rightmost loc) loc)
            (and (not (nil? (zip/right loc))) (todoline? (zip/node (zip/right loc))))
            (zip/branch? (zip/right loc)))))
@@ -221,12 +221,6 @@
         (recur (zip/next (zip/remove loc)))
         (recur (zip/next loc))))))
 
-(def p [{:plid 1, :roth :premise, :body 'P1}
- {:plid 2, :roth :premise, :body 'P2}
- {:plid 4, :body :todo, :roth nil}
- {:plid 3, :body '(and P1 P2), :roth :and-i, :refs [1 2]}])
-
-(remove-todo-lines p)
 ;; ### Handling duplicate bodies in a proof
 
 (defn find-duplicates
@@ -253,7 +247,7 @@
 (defn- adjust-refs
   "Upgrades the refs in the given proof according to the plid-map."
   [proof plid-map]
-  (let [old-plines (vec (filter #(not-empty (set/intersection (set (keys plid-map)) (set (flatten (:refs %))))) (flatten proof))) 
+  (let [old-plines (vec (filter #(not-empty (set/intersection (set (keys plid-map)) (set (flatten (:refs %))))) (flatten proof)))
         upg-plines (mapv #(assoc % :roth (:roth %) :refs (clojure.walk/prewalk-replace plid-map (:refs %))) old-plines)]
     (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))
 
@@ -266,9 +260,7 @@
         fn-proved-results (fn [map [id1 id2]]
                             (let [delete-pline (pline-at-plid proof id1)
                                   replace-pline (pline-at-plid proof id2)
-                                  delete-scope (scope proof delete-pline)
-                                  plno1 (plid->plno proof id1)
-                                  plno2 (plid->plno proof id2)]
+                                  delete-scope (scope proof delete-pline)]
                               (if (and (= delete-pline (last delete-scope))
                                        (or (not= delete-scope (scope proof replace-pline))
                                            (contains? #{:premise :assumption} (:roth replace-pline))))
@@ -277,9 +269,9 @@
         fn-replace (fn [p [id1 id2]]
                      (let [pline (pline-at-plid p id1)]
                        (replace-plid p id1 {:plid id1
-                                              :body (:body pline)
-                                              :roth :repeat
-                                              :refs [id2]})))
+                                            :body (:body pline)
+                                            :roth :repeat
+                                            :refs [id2]})))
         new-proof1 (reduce fn-replace proof proved-results)
         deletions (reduce dissoc duplicates (map key proved-results))
         delete-plids (keys deletions)
@@ -301,11 +293,12 @@
   (let [lvars (set (filter #(.startsWith (str %) "_") (flatten bodies)))
         smap (reduce #(assoc %1 %2 (new-vsymbol)) {} lvars)]
     (mapv #(if (symbol? %)
-              (if (contains? lvars %) (get smap %) %)
-              (clojure.walk/prewalk-replace smap %)) bodies )))
+            (if (contains? lvars %) (get smap %) %)
+            (clojure.walk/prewalk-replace smap %)) bodies)))
 
 (defn eval-subs
-  [[subst phi var t]]
+  "Performs the substitution of `var` by `t` in `phi`."
+  [[_ phi var t]]
   (substitution phi var t))
 
 (declare new-subproof)
@@ -313,7 +306,7 @@
   "Creates a new proof line or subproof from body and [optional] rule and refs."
   ([body] (new-pline body nil nil))
   ([body roth refs]
-   ;; handle special case that body = (infer ... or body = (substitution ...)
+    ; handle special case that body = (infer ...) or body = (substitution ...)
    (cond
      (and (seq? body) (= (first body) 'infer)) (new-subproof body)
      (and (seq? body) (= (first body) 'substitution)) {:plid (new-plid) :body (eval-subs body) :roth roth :refs refs}
@@ -321,10 +314,10 @@
 
 (defn new-subproof
   "Creates a new subproof from infer clause."
-  [[infer assumptions claim]]
-  (let [a  (if (vector? assumptions) assumptions [assumptions])
+  [[_ assumptions claim]]
+  (let [a (if (vector? assumptions) assumptions [assumptions])
         al (mapv #(new-pline % :assumption nil) a)
-        t  (new-pline :todo)
+        t (new-pline :todo)
         cl (new-pline claim)]
     (conj al t cl)))
 
@@ -334,9 +327,9 @@
   (let [bodies' (replace-lvars bodies)
         ; a hack for handling lazy sequences!!
         non-lazy-bodies (clojure.walk/postwalk (fn [node]
-                                          (if (instance? clojure.lang.LazySeq node)
-                                            (apply list node)
-                                            node)) bodies')]
+                                                 (if (instance? LazySeq node)
+                                                   (apply list node)
+                                                   node)) bodies')]
     (mapv new-pline non-lazy-bodies)))
 
 (defn proved?
@@ -346,4 +339,4 @@
   (if (empty? proof)
     (throw (Exception. "The proof is empty")))
   (let [plines (flatten proof)]
-    (empty? (filter #(= :todo (:body %))plines ))))
+    (empty? (filter #(= :todo (:body %)) plines))))

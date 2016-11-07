@@ -40,12 +40,10 @@
 
 (s/def ::extra (s/nilable (s/coll-of ::expr :kind vector)))
 
-
 ;; ## Structure of a rule
 
 (s/def ::rule (s/keys :req-un [::id ::given ::conclusion]
                       :opt-un [::prereq ::extra]))
-
 
 ;; Id of a proof line
 
@@ -60,22 +58,27 @@
 (s/def ::roth (s/nilable keyword?))
 
 ;; References of the justification
+
 (s/def ::refs (s/nilable vector?))
 
 ;; A proof line has a unique proof line id `:plid`,      
 ;; a `:body` which is a formula or a special keyword,     
 ;; then the name of the rule or theorem `:roth` and if the roth is specified the      
-;; `:refs` i.e. the plids of proof lines to which the application of the roth references
+;; `:refs` i.e. the plids of proof lines to which the application of the roth references.
 
 (s/def ::pline
   (s/keys :req-un [::plid ::body] :opt-un [::roth ::refs]))
 
 ;; ## Structure a proof
-;; A proof is a nested vector of proof lines and subproofs
+
+;; A proof is a nested vector of proof lines and subproofs.
 
 (s/def ::proof (s/and vector? (s/* (s/or :pline ::pline :subproof ::proof))))
 
 ;; ## Structure of a theorem
+
+;; A theorem is a vector of givens, a vector with the conclusion, and the proof of the
+;; theorem.
 
 (s/def ::theorem (s/keys :req-un [::id ::given ::conclusion ::proof]))
 

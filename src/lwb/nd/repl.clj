@@ -202,8 +202,11 @@
   "Saves the current proof with `id` in the file with `filename`.      
    Requires: Proof is completed.    
    If there is already a theorem with that `id`, the replacement can be forced 
-   by a mode of `:replace`."
+   by a mode of `:force`."
   ([filename id] (export filename id :check))
   ([filename id mode]
-   "TODO: yet to be implemented"))
+   (try 
+    (io/export-theorem @p filename id mode)
+    (catch Exception e
+      (println (str "Error: " (.getMessage e)))))))
 

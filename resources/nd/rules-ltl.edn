@@ -1,4 +1,5 @@
 ; lwb Logic WorkBench -- Natural deduction
+; Rules for linear temporal logic
 
 ; Copyright (c) 2015 - 2016 Tobias Völzel, Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the

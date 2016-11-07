@@ -8,8 +8,7 @@
 
 (ns lwb.nd.rules
   (:refer-clojure :exclude [==])
-  (:require [clojure.core.logic :refer :all]
-            [clojure.spec :as s]))
+  (:require [clojure.core.logic :refer :all]))
 
 ;; global storage for the rules and theorems (roths, so to say) of the current logic.
 

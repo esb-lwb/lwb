@@ -23,7 +23,8 @@
 (step-b :not-i 3)
 (step-f :not-e 2 1)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :notnot-i)
+; (export "resources/nd/theorems-prop.edn" :notnot-i)
+
 ;
 ;    --------------------------------------------------
 ; 1: P                                       premise
@@ -42,7 +43,8 @@
 (step-b :raa 3)
 (step-f :not-e 1 2)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :notnot-e)
+; (export "resources/nd/theorems-prop.edn" :notnot-e)
+ 
 ;
 ;   --------------------------------------------------
 ; 1: (not (not P))                           premise
@@ -61,7 +63,8 @@
 (step-f :impl-e 1 3)
 (step-f :not-e 2 4)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :mt)
+;(export "resources/nd/theorems-prop.edn" :mt)
+
 ;
 ;    --------------------------------------------------
 ; 1: (impl P Q)                              premise
@@ -98,7 +101,8 @@
 (unify 'V1 '(not P))
 (step-f :not-e 1 3)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :tnd)
+;(export "resources/nd/theorems-prop.edn" :tnd)
+
 ;
 ;    --------------------------------------------------
 ;     ------------------------------------------------
@@ -126,7 +130,8 @@
 (step-f :impl-e 1 3)
 (step-b :not-e 6 2)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :contrap)
+; (export "resources/nd/theorems-prop.edn" :contrap)
+
 ;
 ;     --------------------------------------------------
 ; 1: (impl P Q)                              premise
@@ -156,7 +161,8 @@
 (step-f :not-e 2 3)
 (step-b :efq 6)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :pierce)
+; (export "resources/nd/theorems-prop.edn" :pierce)
+
 ;
 ;    --------------------------------------------------
 ;     ------------------------------------------------
@@ -195,7 +201,8 @@
 (unify 'V3 '(or (not P) (not Q)))
 (step-b :or-i1 5)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :not-and->or-not)
+; (export "resources/nd/theorems-prop.edn" :not-and->or-not)
+
 ; --------------------------------------------------
 ; 1: (not (and P Q))                         :premise
 ; ------------------------------------------------
@@ -227,7 +234,8 @@
 (step-f :and-e2 8)
 (step-f :not-e 7 9)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :or-not->not-and)
+;(export "resources/nd/theorems-prop.edn" :or-not->not-and)
+
 ;
 ;     --------------------------------------------------
 ;  1: (or (not P) (not Q))                    premise
@@ -263,7 +271,8 @@
 (unify 'V2 'P)
 (step-f :not-e 1 7)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :not-or->and-not)
+;(export "resources/nd/theorems-prop.edn" :not-or->and-not)
+
 ;
 ; --------------------------------------------------
 ; 1: (not (or P Q))                          :premise
@@ -290,7 +299,8 @@
 (step-f :not-e 2 5)
 (step-f :not-e 3 7)
 
-;(export-theorem "resources/nd/theorems-prop.edn" :and-not->not-or)
+; (export "resources/nd/theorems-prop.edn" :and-not->not-or)
+
 ;
 ; --------------------------------------------------
 ; 1: (and (not P) (not Q))                   :premise
