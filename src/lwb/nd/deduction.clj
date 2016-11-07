@@ -160,11 +160,7 @@
   (let [plnos (filter number? (map second match-pattern))]
     (if (empty? plnos) true
                        (empty? (filter todoline? 
-                               (map #(pline-at-plno proof %) plnos)
-                               ))
-                       )))
-
-
+                               (map #(pline-at-plno proof %) plnos) ))))) 
 (defn- check-user-input
   "Checks of user input to a proof step, independent of the direction of the step."
   [proof roth argsv]
