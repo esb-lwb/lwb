@@ -16,7 +16,12 @@
             [lwb.nd.io :as io]
             [lwb.nd.printer :refer [pprint]]))
 
-; a little hack
+(def rothpath
+  "Path to the files for rules and theorems"
+  "resources/nd/")
+
+; a little hack: we expose some symbols from other namespaces to users of nd.repl
+
 (pot/import-vars
   [lwb.pred.substitution substitution]
   [lwb.nd.prereqs substitution?])
@@ -41,16 +46,16 @@
   (reset-roths)
   (case logic
     :prop (do
-            (io/import-rules "resources/nd/rules-prop.edn" roths)
-            (io/import-theorems "resources/nd/theorems-prop.edn" roths))
+            (io/import-rules (str rothpath "rules-prop.edn") roths)
+            (io/import-theorems (str rothpath "theorems-prop.edn") roths))
     :pred (do
-            (io/import-rules "resources/nd/rules-prop.edn" roths)
-            (io/import-rules "resources/nd/rules-pred.edn" roths)
-            (io/import-theorems "resources/nd/theorems-prop.edn" roths)
-            (io/import-theorems "resources/nd/theorems-pred.edn" roths))
+            (io/import-rules (str rothpath "rules-prop.edn") roths)
+            (io/import-rules (str rothpath "rules-pred.edn") roths)
+            (io/import-theorems (str rothpath "theorems-prop.edn") roths)
+            (io/import-theorems (str rothpath "theorems-pred.edn") roths))
     :ltl (do
-           (io/import-rules "resources/nd/rules-ltl.edn" roths)
-           (io/import-theorems "resources/nd/theorems-ltl.edn" roths)))
+           (io/import-rules (str rothpath "rules-ltl.edn") roths)
+           (io/import-theorems (str rothpath "theorems-ltl.edn") roths)))
   (println welcome)
   (println (str "Info: Rules and theorems loaded: " logic)))
 
