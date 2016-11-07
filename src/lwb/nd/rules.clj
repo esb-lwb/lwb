@@ -23,12 +23,16 @@
 
 ;; Magic symbol for the logic variable for the conclusion in the logic relation
 ;; This symbol should not be used as the name of a proposition in rules and theorems
-(def
-  ^{:doc "Magic number for the logic variable for the conclusion in the logic relation.    
-          Symbols of the form `qnnnn`should not be used as the name of a proposition in rules and theorems."}
-  conclusion-number 3961)
+(def conclusion-number
+  "Magic number for the logic variable for the conclusion in the logic relation.    
+   Symbols of the form `qnnnn`should not be used as the name of a proposition in rules and theorems."
+  3961)
 
-;; # Transformation of rules and theorems to core.logic relations
+(def reserved
+  "Reserved terms in construction the logic relation."
+  '#{not and or impl infer
+     forall exists actual = substitution
+     at succ atnext always finally until <=});; # Transformation of rules and theorems to core.logic relations
 
 ;; ## Specification of rules and theorems
 
@@ -149,7 +153,7 @@
 
 (defn roth-structure-backward
   "Structure of the logic relation of the rule or theorem with the given `roth-id`.      
-   Result e.g.: `[:cm :gb :gb]`"      
+   Result e.g.: `[:cm :gb :gb]`"
   [roth-id]
   (:backward (roth-id @roths)))
 
@@ -171,6 +175,8 @@
   (let [numbers (take (count given) (iterate inc 1))]
     (mapv gen-arg given numbers)))
 
+
+
 (defn- gen-term
   "Converts a given list into a quoted sequence      
    '(and a b) => (list (quote and) a b)"
@@ -179,9 +185,13 @@
     (contains? keywords arg) (list `quote arg)
     (symbol? arg) arg
     (vector? arg) (mapv gen-term arg)
-    (list? arg) (let [op (list `quote (first arg))
-                      params (mapv gen-term (rest arg))]
-                  (list* `list op params))))
+    (and (list? arg) (contains? reserved (first arg))) (let [op (list `quote (first arg))
+                                                             params (mapv gen-term (rest arg))]
+                                                         (list* `list op params))
+    (and (list? arg) (not (contains? reserved (first arg)))) (let [op (first arg)
+                                                                   params (mapv gen-term (rest arg))]
+                                                               (list* `list op params))
+    ))
 
 (defn- gen-body-row
   "Converts an argument and an given input into a unify row for the logic relation     
@@ -203,8 +213,9 @@
   [arg]
   (cond
     (contains? keywords arg) []
+    (contains? reserved arg) []
     (symbol? arg) [arg]
-    (list? arg) (vec (flatten (map gen-fresh-arg (rest arg))))
+    (list? arg) (vec (flatten (map gen-fresh-arg arg)))
     (vector? arg) (vec (flatten (map gen-fresh-arg arg)))))
 
 (defn- gen-fresh-args
@@ -269,6 +280,16 @@
       (gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r)))
     (throw (Exception. (str roth-id " not found in @roths.")))))
 
+(comment
+(make-relation :and-i)
+(make-relation :exists-e)
+(make-relation :not-forall->exists-not)
+(def r
+  {:given '[(not (forall [x] (P x)))], :conclusion '[(exists [x] (not (P x)))]}
+  )
+(gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r))
+)
+
 (defn roth-exists?
   "Does a certain rule/theorem exist?"
   [roth-id]
@@ -290,7 +311,7 @@
   [roth-id]
   (some? (:backward (roth-id @roths))))
 
-(defn- gen-relargs 
+(defn- gen-relargs
   "Gets the arguments for the logic relation from args."
   [args]
   (let [counter (atom -1)

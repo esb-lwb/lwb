@@ -48,6 +48,19 @@
 ; 10: (exists [x] (not (P x)))                :raa [[2 9]]
 ;    --------------------------------------------------
 
+; application of the theorem
+(proof '(not (forall [x] (P x))) '(exists [x] (not (P x))))
+(step-f :not-forall->exists-not 1)
+
+(proof '(not (forall [x] (P x))) '(exists [x] (not (P x))))
+(step-b :not-forall->exists-not 3)
+
+(proof '(not (forall [y] (P y))) '(exists [y] (not (P y))))
+(step-f :not-forall->exists-not 1)
+
+(proof '(not (forall [y] (Q y))) '(exists [y] (not (Q y))))
+(step-f :not-forall->exists-not 1)
+
 ; exists-not->not-forall
 
 (proof '(exists [x] (not (P x))) '(not (forall [x] (P x))))
@@ -73,6 +86,11 @@
 ;     ------------------------------------------------
 ; 8: (not (forall [x] (P x)))                :not-i [[2 7]]
 ;    --------------------------------------------------
+
+; application of the theorem
+(proof '(exists [y] (not (Q y))) '(not (forall [y] (Q y))))
+(step-f :exists-not->not-forall 1)
+
 
 ; not-exists->forall-not
 
