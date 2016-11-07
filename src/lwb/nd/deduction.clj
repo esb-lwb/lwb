@@ -167,18 +167,21 @@
   ; does the rule or theorem exist?
   (if (not (rules/roth-exists? roth))
     (throw (Exception. (format "There's no such rule or theorem: %s" roth))))
+  ; argsv is empty or has at least ref to a line number
+  (if (and (not-empty argsv) (empty? (filter number? argsv)))
+    (throw (Exception. (format "There must be at least one ref to a proof line in your arguments: %s" (str argsv))))) 
   ; are the line numbers in argsv distinct?
   (if (and (not-empty argsv) (not (apply distinct? (filter number? argsv))))
     (throw (Exception. (format "There are duplicates in your arguments: %s" (str argsv)))))
   ; are the line numbers in argvs in the range of the proof?
-  (if (not-empty argsv)
+  (if (and (not-empty argsv) (not-empty (filter number? argsv)))
     (let [pl-cnt (count (flatten proof))
           nos (filter number? argsv)
           low (apply min nos)
           high (apply max nos)]
       (if (not (and (pos? low) (<= high pl-cnt)))
-        (throw (Exception. (format "Line numbers must refer lines in the proof: %s" (str argsv)))))))
-  )
+        (throw (Exception. (format "Line numbers must refer to lines in the proof: %s" (str argsv))))))))
+
 
 (defn check-user-input-f
   "Checks the user input for a forward proof step, given as a roth and a vector.      
@@ -203,25 +206,15 @@
         (throw (Exception. "Arguments refering givens must be above a todo line")))
       (if-not (no-ref-to-todoline? proof match-pattern)
         (throw (Exception. "Arguments may not refer todo lines")))
-      ; TODO: :gm muss eine Nummer haben
-      ; TODO: mindestens eines der g1 muss eine Nummer haben
-      ; TODO: sieht so aus, dass type-args-ok komplexer ausgelegt werden muss
+      (if-not (empty? (filter #(and (= :gm (first %)) (not (number? (second %)))) match-pattern))
+        (throw (Exception. (format "Argument to a :gm must be a line number: %s" pattern))))
       (if (not (concl-okay? match-pattern (plid->plno proof todo-plid)))
         (throw (Exception. "Arguments refering conclusions must be below a todo line")))
       (if (not (scope-okay? proof match-pattern))
         (throw (Exception. "Arguments must all be in the same scope.")))
       {:match-pattern match-pattern
        :todo-plid     todo-plid
-       :refs-pattern  (map #(if (number? (second %)) [(first %) (plno->plid proof (second %))] %) match-pattern)}))
-  )
-
-(def p1 [{:plid 1 :body :xtodo}
-         {:plid 2 :body 'A}
-         {:plid 3 :body :xtodo}
-         {:plid 4 :body 'B}])
-
-(no-ref-to-todoline? p1 [])
-(no-ref-to-todoline? p1 [[:g1 1] [:g1 2] [:g1 3] [:g1 4]])
+       :refs-pattern  (map #(if (number? (second %)) [(first %) (plno->plid proof (second %))] %) match-pattern)})))
 
 (defn- upgrade-refs-pattern
   "Upgrades `refs-pattern` with the refs to new proof line in `new-plines.`
