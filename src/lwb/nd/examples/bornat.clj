@@ -556,23 +556,19 @@
 
 ; That's the proof for the more general theorem
 
-(proof '[(actual :i) (actual :j)] '(exists [x] (impl (Drunk x) (forall [y] (Drunk y)))))
+(proof '(actual :i) '(exists [x] (impl (Drunk x) (forall [y] (Drunk y)))))
 (step-f :tnd)
 (unify 'V1 '(forall [y] (Drunk y)))
-(step-f :or-e 3 5)
-(step-b :exists-i 6 1)
-(step-b :impl-i 6)
-(step-f :not-forall->exists-not 9)
-(step-f :exists-e 10)
-(unify 'V2 :k)
-(unify 'V3 '(impl (Drunk :k) (forall [y] (Drunk y))))
-(step-b :impl-i 14)
-(step-f :not-e 12 13)
-(step-b :efq 16)
-(step-b :exists-i 19 2)
-(step-b :impl-i 19)
-(step-b :forall-i 20)
-(unify 'V4 :j)   ;;??? this step is not allowed!!
+(step-f :or-e 2 4)
+(step-b :exists-i 5 1)
+(step-b :impl-i 5)
+(step-f :not-forall->exists-not 8)
+(step-f :exists-e 9 11)
+(unify 'V3 :j)
+(step-b :exists-i 13 10)
+(step-b :impl-i 13)
+(step-f :not-e 11 12)
+(step-b :efq 15)
 
 ;     --------------------------------------------------
 ;  1: (actual :i)                             :premise
@@ -598,10 +594,9 @@
 ; 14:  | | | (forall [y] (Drunk y))           :efq [13]
 ;      | | --------------------------------------------
 ; 15:  | | (impl (Drunk :j) (forall [y] (Drunk y))):impl-i [[12 14]]
+; 16:  | | (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))):exists-i [10 15]
 ;      | ----------------------------------------------
-; 16:  | (impl (Drunk :j) (forall [y] (Drunk y))):exists-e [9 [10 15]]
-; 17:  | ...
-; 18:  | (exists [x] (impl (Drunk x) (forall [y] (Drunk y))))
+; 17:  | (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))):exists-e [9 [10 16]]
 ;      ------------------------------------------------
-; 19: (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))):or-e [2 [3 7] [8 18]]
+; 18: (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))):or-e [2 [3 7] [8 17]]
 ;     --------------------------------------------------
