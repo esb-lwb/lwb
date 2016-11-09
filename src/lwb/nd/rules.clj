@@ -10,7 +10,25 @@
   (:refer-clojure :exclude [==])
   (:require [clojure.core.logic :refer :all]))
 
-;; global storage for the rules and theorems (roths, so to say) of the current logic.
+;; # Management of rules and theorems
+
+;; Naming convention: we call rules and theorems short roths.
+
+;; This namespace provides functionality for
+
+;; - global storage of rules and theorems
+;; - classification of the structure of roths
+;; - generation of the logical relation for the application of the roth
+
+;; The idea:
+
+;; - when loading the roths from a file
+;; - we analyze the structure for forward and backward apllication
+;; - we generate the code for the logical relation
+;; - and we store (see lwb.nd.io) the structure and the logical relation together with
+;;   the roth in the global storage.
+
+;; ## Global storage for the rules and theorems (roths, so to say) of the current logic.
 
 (def roths
   "Global storage for rules and theorems"
@@ -20,9 +38,11 @@
   "Resets the internal storage for rules"
   [] (reset! roths {}))
 
+;; ## Global symbols 
+
 ;; Magic symbol for the logic variable for the conclusion in the logic relation
 ;; This symbol should not be used as the name of a proposition in rules and theorems
-(def conclusion-number
+(def ^:const conclusion-number
   "Magic number for the logic variable for the conclusion in the logic relation.    
    Symbols of the form `qnnnn`should not be used as the name of a proposition in rules and theorems."
   3961)
@@ -31,13 +51,11 @@
   "Reserved terms in construction the logic relation."
   '#{not and or impl infer
      forall exists actual = substitution
-     at succ atnext always finally until <=});; # Transformation of rules and theorems to core.logic relations
+     at succ atnext always finally until <=})
 
-
-
-;; NEW LOGIC (add additional keywords that should not be handled like symbols)
-;; those "keywords" will not be handled as symbols but constants
-(def keywords #{'truth 'contradiction 'true 'false})
+(def keywords
+  "Reserved terms in rules."
+  #{'truth 'contradiction 'true 'false})
 
 ;; ## Functions for the structure of the rule or theorem
 
@@ -57,23 +75,26 @@
 ;; `b` = at most all but one of them
 
 
+;; ### Helper functions 
 (defn- map-givens-f
+  "Function for mapping givens in rules for forward application"
   [idx given]
   (cond
     (and (list? given) (= 'infer (first given))) :g?
     (and (list? given) (= 'succ (first given))) :gm
     (zero? idx) :gm
-    :else :go
-    ))
+    :else :go))
 
 (defn- map-givens-b
+  "Function for mapping givens in rules for backward application"
   [idx given]
   (cond
     (and (list? given) (= 'infer (first given))) :g?
     (and (list? given) (= 'substitution (first given))) :g?
     (zero? idx) :go
-    :else :gb
-    ))
+    :else :gb))
+
+;; ### Functions determing the structure of a roth
 
 (defn roth-structure-f
   "Structure of the logic relation of the rule or theorem.
@@ -126,6 +147,8 @@
 
 ;; ## Functions for generating the core.logic relations that represent roths
 
+;; ### Helper functions
+
 (defn- gen-arg
   "If the expr is a symbol, it's the argument.         
    If the expr is a list, we generate an alias from the operator together with a number."
@@ -142,8 +165,6 @@
   (let [numbers (take (count given) (iterate inc 1))]
     (mapv gen-arg given numbers)))
 
-
-
 (defn- gen-term
   "Converts a given list into a quoted sequence      
    '(and a b) => (list (quote and) a b)"
@@ -157,8 +178,7 @@
                                                          (list* `list op params))
     (and (list? arg) (not (contains? reserved (first arg)))) (let [op (first arg)
                                                                    params (mapv gen-term (rest arg))]
-                                                               (list* `list op params))
-    ))
+                                                               (list* `list op params))))
 
 (defn- gen-body-row
   "Converts an argument and an given input into a unify row for the logic relation     
@@ -218,6 +238,8 @@
   (list (conj (map gen-prereq-row prereqs)
               (conj fresh-args qs) `project)))
 
+;; ### Function for users of this namespace
+
 (defn gen-roth-relation
   "Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth     
    e.g. \"and-i\" `[a b] => [(and a b)]`     
@@ -238,6 +260,7 @@
 
 ;; ## Utility functions for roths
 
+; make-relation is for test purposes
 (defn make-relation
   "Gives the code for the logic relation for the given `id` of a roth in `@roths`.    
    The functions helps to check that the generation process is okay."
@@ -246,16 +269,6 @@
     (let [r (roth-id @roths)]
       (gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r)))
     (throw (Exception. (str roth-id " not found in @roths.")))))
-
-(comment
-(make-relation :and-i)
-(make-relation :exists-e)
-(make-relation :not-forall->exists-not)
-(def r
-  {:given '[(not (forall [x] (P x)))], :conclusion '[(exists [x] (not (P x)))]}
-  )
-(gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r))
-)
 
 (defn roth-exists?
   "Does a certain rule/theorem exist?"
@@ -267,16 +280,20 @@
   [roth-id]
   (some? (:forward (roth-id @roths))))
 
+(defn roth-backward?
+  "Returns true if the rule/theorem can be used backwards"
+  [roth-id]
+  (some? (:backward (roth-id @roths))))
+
 (defn roth-pattern
   "The call pattern for a application of the roth.    
    mode can be `:forward` or `:backward`. "
   [roth-id mode]
   (mode (roth-id @roths)))
 
-(defn roth-backward?
-  "Returns true if the rule/theorem can be used backwards"
-  [roth-id]
-  (some? (:backward (roth-id @roths))))
+;; ## Running the core.logic relation
+
+;; ### Helper for the arguments to the run
 
 (defn- gen-relargs
   "Gets the arguments for the logic relation from args."
@@ -287,17 +304,16 @@
                        (list `quote arg)))]
     (mapv tr args)))
 
-;; This is the function that actually runs core.logic 
+;; ### The function that actually runs core.logic 
 
 (defn apply-roth
   "Takes the `roth-id` of a rule or a theorem and applies the according logical relation,
    with the given `args` where `:?` stands for the unknown.     
    Requires: a roth with `roth-id` exists      
-             the global atom `roths` provides the logic relation for the roth in `:logic-rel`  
+             the global atom `roths` provides the logic relation for the roth in `:logic-rel`     
    Returns:  a vector of formulas which size is equal to the number of `:?`s in the args."
   [roth-id args]
   (let [rel-args (gen-relargs args)
         run-args (vec (filter symbol? rel-args))
         result (first (eval (list `run* run-args (list* (:logic-rel (roth-id @roths)) rel-args))))]
     (if-not (vector? result) [result] result)))
-

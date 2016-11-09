@@ -564,7 +564,7 @@
 (step-b :impl-i 5)
 (step-f :not-forall->exists-not 8)
 (step-f :exists-e 9 11)
-(unify 'V3 :j)
+(unify 'V2 :j)
 (step-b :exists-i 13 10)
 (step-b :impl-i 13)
 (step-f :not-e 11 12)

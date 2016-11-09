@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Natural deduction
 
-; Copyright (c) 2015 Tobias Völzel, THM. All rights reserved.
+; Copyright (c) 2015 - 2016 Tobias Völzel, Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -11,24 +11,15 @@
             [lwb.nd.proof :refer :all]
             [lwb.nd.rules :as rules]))
 
+;; # Application of deduction steps to proofs
 
-(defn unify
-  "Unifies all instances of symbol `old` inside the `proof` with `new`."
-  [proof old new]
-  (if (symbol? old)
-    (normalize
-      (walk/postwalk
-        (fn [node]
-          (if (map? node)
-            (cond
-              (symbol? (:body node)) (if (= (:body node) old)
-                                       (assoc node :body new)
-                                       node)
-              (list? (:body node)) (assoc node :body (walk/prewalk-replace {old new} (:body node)))
-              :else node)
-            node))
-        proof))
-    (throw (Exception. (str "\"" old "\" is not a symbol. You can only unify symbols (not lists, vectors, etc.)")))))
+;; The basic idea: 
+;; 
+;; 1. We generate a logical relation for core.logic that is used to determine
+;; the result of the application of a rule or a theorem to the proof.
+;; 2. We put the result into the proof at the appropriate position.
+
+;; ## Helper functions
 
 (defn- range-args-f
   "Range of allowed arguments in a forward step."
@@ -61,7 +52,7 @@
         check #(if (or (= %1 \g) (= %1 \c)) (number? %2) (or (symbol? %2) (list? %2)))]
     (every? identity (map check pattern' (filter #(not= :? %) argsv)))))
 
-(defn max-given
+(defn- max-given
   "Maximal `plno` of the parameters for the givens."
   [match-pattern]
   (if (= 1 (count match-pattern))                           ; just one conclusion 
@@ -72,7 +63,7 @@
                 (map second)
                 (filter number?)))))
 
-(defn match-argsv-f
+(defn- match-argsv-f
   "Assigns the arguments to the pattern of a forward step.     
    Returns match-pattern.      
    requires: roth exists, forward is allowed"
@@ -93,7 +84,7 @@
           (= p1 :c?) (recur (rest pattern) args (conj result [p1 :?]))
           (= p1 :co) (recur (rest pattern) args (conj result [p1 a1])))))))
 
-(defn match-argsv-b
+(defn- match-argsv-b
   "Assigns the arguments to the pattern of a backward step.     
    Returns match-pattern.      
    requires: roth exists, backward is allowed"
@@ -112,7 +103,7 @@
           (= p1 :go) (recur (rest pattern) (rest args) (conj result [p1 a1]))
           (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?])))))))
 
-(defn rel-params
+(defn- rel-params
   "Parameters for the logic relation given the match pattern for the call."
   [proof match-pattern]
   (->> match-pattern
@@ -120,9 +111,9 @@
        (mapv #(if (number? %) (plbody-at-plno proof %) %))))
 
 (defn- find-next-todo-plno
-  "`plno` of the next todo line following proof line with `plno`.
-  A result of `0` means that there is no such line.
-  requires: n is not out of bound of the proof."
+  "`plno` of the next todo line following proof line with `plno`.      
+  A result of `0` means that there is no such line.        
+  requires: `n` is not out of bound of the proof."
   [proof n]
   (let [pv (vec (flatten proof))
         pv' (subvec pv n)
@@ -161,6 +152,7 @@
     (if (empty? plnos) true
                        (empty? (filter todoline? 
                                (map #(pline-at-plno proof %) plnos) ))))) 
+
 (defn- check-user-input
   "Checks of user input to a proof step, independent of the direction of the step."
   [proof roth argsv]
@@ -182,8 +174,7 @@
       (if (not (and (pos? low) (<= high pl-cnt)))
         (throw (Exception. (format "Line numbers must refer to lines in the proof: %s" (str argsv))))))))
 
-
-(defn check-user-input-f
+(defn- check-user-input-f
   "Checks the user input for a forward proof step, given as a roth and a vector.      
    Throws exceptions if input not valid, and      
    analyzes how to proceed the step. "
@@ -216,8 +207,38 @@
        :todo-plid     todo-plid
        :refs-pattern  (map #(if (number? (second %)) [(first %) (plno->plid proof (second %))] %) match-pattern)})))
 
+(defn- check-user-input-b
+  "Checks the user input for a backward proof step, given as a roth and a vector.      
+   Throws exceptions if input not valid, and      
+   analyzes how to proceed the step. "
+  [proof roth argsv]
+  (check-user-input proof roth argsv)                       ; may throw exceptions
+  ; can the roth be used in a backward step?
+  (if (not (rules/roth-backward? roth))
+    (throw (Exception. (format "This rule can't be used in a backward step: %s" roth))))
+  (let [pattern (rules/roth-pattern roth :backward)
+        range (range-args-b pattern)
+        no-args (count (filter #(not= :? %) argsv))]
+    ; size of argsv okay?
+    (if (not (and (>= no-args (first range)) (<= no-args (second range))))
+      (throw (Exception. (format "The number of arguments following the rule or theorem must be in the range: %s" range))))
+    ; kind of args okay?
+    (if (not (type-args-ok? pattern argsv))
+      (throw (Exception. (format "Type of arguments doesn't match the call pattern: %s" pattern))))
+    (let [match-pattern (match-argsv-b roth argsv)
+          concl-plid (plno->plid proof (first argsv))]
+      (if-not (= nil (:roth (pline-at-plid proof concl-plid)))
+        (throw (Exception. "The first argument must not refer an unsolved proof line")))
+      (if-not (no-ref-to-todoline? proof match-pattern)
+        (throw (Exception. "Arguments may not refer todo lines")))
+      (if (not (scope-okay? proof match-pattern))
+        (throw (Exception. "Arguments must all be in the same scope.")))
+      {:match-pattern match-pattern
+       :concl-plid    concl-plid
+       :refs-pattern  (map #(if (number? (second %)) [(first %) (plno->plid proof (second %))] %) match-pattern)})))
+
 (defn- upgrade-refs-pattern
-  "Upgrades `refs-pattern` with the refs to new proof line in `new-plines.`
+  "Upgrades `refs-pattern` with the refs to new proof line in `new-plines.`        
    requires: #new-plines = # of :? in refs-pattern, this should be guaranteed since the call of the logic relation is ok."
   [refs-pattern new-plines]
   (loop [rp refs-pattern
@@ -239,10 +260,12 @@
   [proof plids roth refs]
   (let [old-plines (mapv #(pline-at-plid proof %) plids)
         upg-plines (mapv #(assoc % :roth roth :refs refs) old-plines)]
-    (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))
-    ))
+    (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))
+
+;; ## Interface for user of deduction
 
 (defn step-f
+  "Deduction step forward on `proof` with `roth` and the argument vector `argsv`."
   [proof roth argsv]
   (let [infos (check-user-input-f proof roth argsv)
         rel-params (rel-params proof (:match-pattern infos))
@@ -259,52 +282,13 @@
           new-plines' (upgrade-refs new-plines (mapv second (filter #(= :c? (first %)) refs-pattern')) roth refs)
           proof' (upgrade-refs proof (mapv second (filter #(= :co (first %)) refs-pattern')) roth refs)
           new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines'))]
-      (normalize new-proof)
-      )
-    ))
-
-(defn check-user-input-b
-  "Checks the user input for a backward proof step, given as a roth and a vector.      
-   Throws exceptions if input not valid, and      
-   analyzes how to proceed the step. "
-  [proof roth argsv]
-  (check-user-input proof roth argsv)                       ; may throw exceptions
-  ; can the roth be used in a forward step?
-  (if (not (rules/roth-backward? roth))
-    (throw (Exception. (format "This rule can't be used in a forward step: %s" roth))))
-  (let [pattern (rules/roth-pattern roth :backward)
-        range (range-args-b pattern)
-        no-args (count (filter #(not= :? %) argsv))]
-    ; size of argsv okay?
-    (if (not (and (>= no-args (first range)) (<= no-args (second range))))
-      (throw (Exception. (format "The number of arguments following the rule or theorem must be in the range: %s" range))))
-    ; kind of args okay?
-    (if (not (type-args-ok? pattern argsv))
-      (throw (Exception. (format "Type of arguments doesn't match the call pattern: %s" pattern))))
-    (let [match-pattern (match-argsv-b roth argsv)
-          concl-plid (plno->plid proof (first argsv))]
-      ; TODO: concl-plid zeigt wirklich auf eine conclusion line
-      ; TODO: alle g Argumente müssen oberhalb einer todo-line sein und oberhalb von concl
-      (if-not (no-ref-to-todoline? proof match-pattern)
-        (throw (Exception. "Arguments may not refer todo lines")))
-      ; TODO: keines der Argumente zeigt auf einen todo-line
-      ; TODO: höchstens alle -1 der gb muss eine Nummer haben
-      ; TODO: sieht so aus, dass type-args-ok komplexer ausgelegt werden muss
-      (if (not (scope-okay? proof match-pattern))
-        (throw (Exception. "Arguments must all be in the same scope.")))
-      {:match-pattern match-pattern
-       :concl-plid    concl-plid
-       :refs-pattern  (map #(if (number? (second %)) [(first %) (plno->plid proof (second %))] %) match-pattern)}))
-  )
-
-(defn- shift1
-  "Shifts first element of vector `v` at the end of the vector."
-  [v]
-  (conj (vec (rest v)) (first v)))
+      (normalize new-proof))))
 
 (defn step-b
+  "Deduction step backward on `proof` with `roth` and the argument vector `argsv`."
   [proof roth argsv]
   (let [infos (check-user-input-b proof roth argsv)
+        shift1 (fn [v] (conj (vec (rest v)) (first v)))
         rel-params (shift1 (rel-params proof (:match-pattern infos)))
         result (rules/apply-roth roth rel-params)
         todo-plid (:concl-plid infos)]
@@ -318,6 +302,22 @@
           refs (mapv second (filter #(= \g (first (name (first %)))) refs-pattern'))
           proof' (upgrade-refs proof (mapv second (filter #(= :cm (first %)) refs-pattern')) roth refs)
           new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines)) ]
-      (normalize new-proof)
-      )
-    ))
+      (normalize new-proof))))
+
+(defn unify
+  "Unifies all instances of symbol `old` inside the `proof` with `new`."
+  [proof old new]
+  (if (symbol? old)
+    (normalize
+      (walk/postwalk
+        (fn [node]
+          (if (map? node)
+            (cond
+              (symbol? (:body node)) (if (= (:body node) old)
+                                       (assoc node :body new)
+                                       node)
+              (list? (:body node)) (assoc node :body (walk/prewalk-replace {old new} (:body node)))
+              :else node)
+            node))
+        proof))
+    (throw (Exception. (str "\"" old "\" is not a symbol. You can only unify symbols.")))))

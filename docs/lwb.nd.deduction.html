@@ -2865,273 +2865,280 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.nd.proof" name="lwb.nd.proof"><h1 class="project-name">lwb.nd.proof</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns lwb.nd.proof
-  (:require [clojure.set :as set]
-            [clojure.zip :as zip]
-            [lwb.pred.substitution :refer [substitution]])
-  (:import (clojure.lang LazySeq)))</pre></td></tr><tr><td class="docs"><h1>Proof in natural deduction</h1>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Each proof line has a unique id <code>plid</code>.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Global counter for the ids of proof lines.</p>
-</td><td class="codes"><pre class="brush: clojure">(def plid
-  (atom 0))</pre></td></tr><tr><td class="docs"><p>Generates new plid for proof lines. <br />
-   Uses global <code>plid</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn new-plid
-  []
-  (swap! plid inc))</pre></td></tr><tr><td class="docs"><p>Resets global <code>plid</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn reset-plid
-  []
-  (reset! plid 0))</pre></td></tr><tr><td class="docs"><p>Some rules generate new logical variables, e.g. new atomic propositions
-They get new names beginning with the letter <code>V</code> and follwed by a unique number.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Caveat: Don't use this naming convention for propositions in formulas.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Global counter for the numbers of new variables.</p>
-</td><td class="codes"><pre class="brush: clojure">(def lvno
-  (atom 0))</pre></td></tr><tr><td class="docs"><p>Generates a new name for a variable. <br />
-   Uses global <code>lvno</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn new-vsymbol
-  []
-  (symbol (str \V (swap! lvno inc))))</pre></td></tr><tr><td class="docs"><p>Resets global <code>lvno</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn reset-lvno
-  []
-  (reset! lvno 0))</pre></td></tr><tr><td class="docs"><h2>Creating  new proofs</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Gives a new proof for the premises and the conclusion. <br />
-   Uses global atoms <code>plid</code> and <code>lvno</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(declare normalize)
-(defn proof
-  [premises conclusion]
-  (do
-    (reset-plid)
-    (reset-lvno)
-    (let [premises-vec (if-not (vector? premises) [premises] premises)
-          premises-lines (vec (map #(hash-map :plid (new-plid) :body % :roth :premise) premises-vec))
-          proof (conj premises-lines {:plid (new-plid) :body conclusion :roth nil})]
-      (normalize proof))))</pre></td></tr><tr><td class="docs"><h2>Functions to access proof lines</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns the line number <code>plno</code> of the proof line with the given <code>plid</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn plid-&gt;plno
-  [proof plid]
-  (let [flat-proof (flatten proof)]
-    (first (keep-indexed #(when (= plid (:plid %2)) (inc %1)) flat-proof))))</pre></td></tr><tr><td class="docs"><p>Returns the id <code>plid</code> of the proof line at line number <code>plno</code> in the <code>proof</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn plno-&gt;plid
-  [proof pos]
-  (let [pline (nth (flatten proof) (dec pos) nil)]
-    (:plid pline)))</pre></td></tr><tr><td class="docs"><p>Proof line of the <code>proof</code> at line with number <code>plno</code>. <br />
-   requires: <code>plno</code> valid.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn pline-at-plno
-  [proof plno]
-  (let [fp (flatten proof)]
-    (nth fp (dec plno))))</pre></td></tr><tr><td class="docs"><p>Body of the proof line at <code>plno</code>. <br />
-   requires: <code>plno</code> valid.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn plbody-at-plno
-  [proof plno]
-  (:body (pline-at-plno proof plno)))</pre></td></tr><tr><td class="docs"><p>Proof line of the <code>proof</code> at line with id <code>plid</code>. <br />
-   requires: <code>plid</code> valid.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn pline-at-plid
-  [proof plid]
-  (pline-at-plno proof (plid-&gt;plno proof plid)))</pre></td></tr><tr><td class="docs"><p>Returns the scope for an item inside a proof
-   e.g. proof = <code>[1 2 [3 4] [5 6 7] 8]</code> &amp; item = <code>5</code>
-   => scope = <code>[1 2 [3 4] 5 6 7]</code></p>
-</td><td class="codes"><pre class="brush: clojure">(defn scope
-  [proof pline]
-  (if (contains? (set proof) pline)
-    proof
-    (loop [p proof
-           result []]
-      (cond (empty? p) nil
-            (vector? (first p))
-            (if-let [s (scope (first p) pline)]
-              (vec (concat result s))
-              (recur (subvec p 1) (conj result (first p))))
-            :else (recur (subvec p 1) (conj result (first p)))))))</pre></td></tr><tr><td class="docs"><h2>Functions for editing a proof</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Adds a proof line or a subproof above the item with the given <code>plid</code>. <br />
-   requires: the added plines have new plids!</p>
-</td><td class="codes"><pre class="brush: clojure">(defn add-above-plid
-  [proof plid pline-or-subproof]
-  (loop [loc (zip/vector-zip proof)]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (= (:plid (zip/node loc)) plid)
-        (recur (zip/next (zip/insert-left loc pline-or-subproof)))
-        (recur (zip/next loc))))))</pre></td></tr><tr><td class="docs"><p>Replaces the proof line with the given <code>plid</code> with the new proof line. <br />
-   requires: there are no more references to the old proof line.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn replace-plid
-  [proof plid pline]
-  (loop [loc (zip/vector-zip proof)]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (= (:plid (zip/node loc)) plid)
-        (recur (zip/next (zip/replace loc pline)))
-        (recur (zip/next loc))))))</pre></td></tr><tr><td class="docs"><p>Removes the proof line with the given <code>plid</code>. <br />
-   requires: there are no more references to that proof line.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn remove-plid
-  [proof plid]
-  (loop [loc (zip/vector-zip proof)]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (= (:plid (zip/node loc)) plid)
-        (recur (zip/next (zip/remove loc)))
-        (recur (zip/next loc))))))</pre></td></tr><tr><td class="docs"><h2>Functions for the normalization of a proof</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><h3>Adding todo lines if necessary</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Generates a new todo line <br />
-   Uses global atom <code>plid</code>!</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- new-todo-line
-  []
-  {:plid (new-plid), :body :todo, :roth nil})</pre></td></tr><tr><td class="docs"><p>Checks whether a proof line has no roth.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- unproved-line?
-  [pline]
-  (and (not= :todo (:body pline)) (nil? (:roth pline))))</pre></td></tr><tr><td class="docs"><p>Checks whether a proof line is a todo line.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn todoline?
-  [pline]
-  (= :todo (:body pline)))</pre></td></tr><tr><td class="docs"><p>Must a todo line be inserted above of this loc? <br />
-  (1) the current proof line is not a subproof <br />
-  and
-  (2) the current proof line is not solved <br />
-  and <br />
-  (3) there is not already a todo line left of the current line.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- insert-above?
-  [loc]
-  (let [prev-loc (zip/left loc)
-        curr-line (zip/node loc)
-        prev-line (when prev-loc (zip/node prev-loc))]
-    (and (not (zip/branch? loc)) (unproved-line? curr-line) (not (todoline? prev-line)))))</pre></td></tr><tr><td class="docs"><p>Returns proof with todo lines added. <br />
-   Whenever there is a line in a proof without a rule, we have to insert a todo line
-   above the proof line.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn add-todo-lines
-  [proof]
-  (loop [loc (zip/next (zip/vector-zip proof))]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (insert-above? loc)
-        (recur (zip/next (zip/insert-left loc (new-todo-line))))
-        (recur (zip/next loc))))))</pre></td></tr><tr><td class="docs"><h3>Removing  todo lines if necessary</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Is the current loc a todo line and should it line be removed? <br />
-  (1) the todo line is followed by a pline which is solved <br />
-  or <br />
-  (2) the todo line is at the end of a subproof or proof <br />
-  or <br />
-  (3) the todo line is follwed by another todo line <br />
-  or
-  (4) the todo line is followed by a subproof.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- remove-current?
-  [loc]
-  (and (todoline? (zip/node loc))
-       (or (and (not (nil? (zip/right loc)))
-                (not (nil? (:roth (zip/node (zip/right loc))))))
-           (= (zip/rightmost loc) loc)
-           (and (not (nil? (zip/right loc))) (todoline? (zip/node (zip/right loc))))
-           (zip/branch? (zip/right loc)))))</pre></td></tr><tr><td class="docs"><p>Returns proof where todo lines that are solved are removed.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn remove-todo-lines
-  [proof]
-  (loop [loc (zip/vector-zip proof)]
-    (if (zip/end? loc)
-      (zip/node loc)
-      (if (remove-current? loc)
-        (recur (zip/next (zip/remove loc)))
-        (recur (zip/next loc))))))</pre></td></tr><tr><td class="docs"><h3>Handling duplicate bodies in a proof</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Finds duplicates bodies in the proof that can be deleted. <br />
-   Returns a map with the deletable plids as key and the replacement plids as value. <br />
-   Only plines without rule, in the same scope and the same subproof will be marked as deletable.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- find-duplicates
-  ([proof] (find-duplicates proof proof))
-  ([proof sub]
-   (let [dupl-scope (scope proof (last sub))
-         ;; duplicates = duplicate bodies in scope but not :todo
-         duplicates (disj (set (map first (filter #(&gt; (val %) 1) (frequencies (map :body (remove vector? dupl-scope)))))) :todo)
-         ;; duplicate-plines = the pline with these duplicate bodies
-         duplicate-plines (filter #(contains? duplicates (:body %)) dupl-scope)
-         ;; duplicate-plines grouped into a vactor of vector of plines with equal body
-         equals (vec (map val (group-by :body duplicate-plines)))
-         fn-smap (fn [equals]
-                   (let [remain (map :plid (filter :roth equals))
-                         delete (map :plid (filter (set sub) (remove :roth equals)))] ; just plines from the actual sub can be deleted
-                     (reduce #(assoc %1 %2 (last remain)) {} delete)))
-         ;; map with pairs of plids where the first can be replace by the second
-         plid-map (apply merge (map fn-smap equals))]
-     (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) plid-map sub))))</pre></td></tr><tr><td class="docs"><p>Upgrades the refs in the given proof according to the plid-map.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- adjust-refs
-  [proof plid-map]
-  (let [old-plines (vec (filter #(not-empty (set/intersection (set (keys plid-map)) (set (flatten (:refs %))))) (flatten proof)))
-        upg-plines (mapv #(assoc % :roth (:roth %) :refs (clojure.walk/prewalk-replace plid-map (:refs %))) old-plines)]
-    (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))</pre></td></tr><tr><td class="docs"><p>Removes all duplicate bodies from proof and adjusts the changed ids of proof lines.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- remove-duplicates
-  [proof]
-  (let [duplicates (find-duplicates proof)
-        ;; if a body is the conclusion of a subproof but above already proved,
-        ;; it's not deleted but marked with :repeat.
-        fn-proved-results (fn [map [id1 id2]]
-                            (let [delete-pline (pline-at-plid proof id1)
-                                  replace-pline (pline-at-plid proof id2)
-                                  delete-scope (scope proof delete-pline)]
-                              (if (and (= delete-pline (last delete-scope))
-                                       (or (not= delete-scope (scope proof replace-pline))
-                                           (contains? #{:premise :assumption} (:roth replace-pline))))
-                                (assoc map id1 id2) map)))
-        proved-results (reduce fn-proved-results {} duplicates)
-        fn-replace (fn [p [id1 id2]]
-                     (let [pline (pline-at-plid p id1)]
-                       (replace-plid p id1 {:plid id1
-                                            :body (:body pline)
-                                            :roth :repeat
-                                            :refs [id2]})))
-        new-proof1 (reduce fn-replace proof proved-results)
-        deletions (reduce dissoc duplicates (map key proved-results))
-        delete-plids (keys deletions)
-        new-proof2 (reduce remove-plid new-proof1 delete-plids)]
-    (adjust-refs new-proof2 deletions)))</pre></td></tr><tr><td class="docs"><h3>The interface for the user of this namespace: Normalizing a proof</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Removes duplicate lines, adjust leftover plids and removes todo lines if possible</p>
-</td><td class="codes"><pre class="brush: clojure">(defn normalize
-  [proof]
-  (-&gt; proof
-      add-todo-lines
-      remove-duplicates
-      remove-todo-lines))</pre></td></tr><tr><td class="docs"><h2>Preparing new proof lines after a deduction step</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><h3>Helper functions</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Replaces logical variables from core.logic like <code>_0</code> by generated variable names <code>V1</code>. <br />
-  This must be done with all the formulas generated by a run of core.logic simultaneously.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- replace-lvars
-  [bodies]
-  (let [lvars (set (filter #(.startsWith (str %) &quot;_&quot;) (flatten bodies)))
-        smap (reduce #(assoc %1 %2 (new-vsymbol)) {} lvars)]
-    (mapv #(if (symbol? %)
-            (if (contains? lvars %) (get smap %) %)
-            (clojure.walk/prewalk-replace smap %)) bodies)))</pre></td></tr><tr><td class="docs"><p>Performs the substitution of <code>var</code> by <code>t</code> in <code>phi</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- eval-subs
-  [[_ phi var t]]
-  (substitution phi var t))</pre></td></tr><tr><td class="docs"><p>Creates a new proof line or subproof from body and [optional] rule and refs.</p>
-</td><td class="codes"><pre class="brush: clojure">(declare new-subproof)
-(defn- new-pline
-  ([body] (new-pline body nil nil))
-  ([body roth refs]
-    ; handle special case that body = (infer ...) or body = (substitution ...)
-   (cond
-     (and (seq? body) (= (first body) 'infer)) (new-subproof body)
-     (and (seq? body) (= (first body) 'substitution)) {:plid (new-plid) :body (eval-subs body) :roth roth :refs refs}
-     :else {:plid (new-plid) :body body :roth roth :refs refs})))</pre></td></tr><tr><td class="docs"><p>Creates a new subproof from infer clause.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- new-subproof
-  [[_ assumptions claim]]
-  (let [a (if (vector? assumptions) assumptions [assumptions])
-        al (mapv #(new-pline % :assumption nil) a)
-        t (new-pline :todo)
-        cl (new-pline claim)]
-    (conj al t cl)))</pre></td></tr><tr><td class="docs"><h3>Interface for the user of proof: New plines as result of a deduction step</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Creates all the new plines that must be added to the proof</p>
-</td><td class="codes"><pre class="brush: clojure">(defn new-plines
-  [bodies]
-  (let [bodies' (replace-lvars bodies)
-        ; a hack for handling lazy sequences!!
-        non-lazy-bodies (clojure.walk/postwalk (fn [node]
-                                                 (if (instance? LazySeq node)
-                                                   (apply list node)
-                                                   node)) bodies')]
-    (mapv new-pline non-lazy-bodies)))</pre></td></tr><tr><td class="docs"><h2>Is the proof completed?</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Checks if a proof is fully proved. <br />
-   Requires: the proof is normalized. <br />
-   Throws: Exception, if the proof is empty.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn proved?
-  [proof]
-  (if (empty? proof)
-    (throw (Exception. &quot;The proof is empty&quot;)))
-  (let [plines (flatten proof)]
-    (empty? (filter #(= :todo (:body %)) plines))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.nd.deduction" name="lwb.nd.deduction"><h1 class="project-name">lwb.nd.deduction</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns lwb.nd.deduction
+  (:require [clojure.walk :as walk]
+            [lwb.nd.proof :refer :all]
+            [lwb.nd.rules :as rules]))</pre></td></tr><tr><td class="docs"><h1>Application of deduction steps to proofs</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The basic idea: </p>
+
+<ol>
+<li>We generate a logical relation for core.logic that is used to determine
+the result of the application of a rule or a theorem to the proof.</li>
+<li>We put the result into the proof at the appropriate position.</li>
+</ol>
+</td><td class="codes"></td></tr><tr><td class="docs"><h2>Helper functions</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Range of allowed arguments in a forward step.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- range-args-f
+  [pattern]
+  (let [g1 (count (filter #{:g1} pattern))
+        range-g1 (if (zero? g1) [0 0] [1 g1])
+        gm (count (filter #{:gm} pattern))
+        range-gm [gm gm]
+        em (count (filter #{:em} pattern))
+        range-em [em em]
+        co (count (filter #{:co} pattern))
+        range-co (if (zero? co) [0 0] [0 co])]
+    (mapv + range-g1 range-gm range-em range-co)))</pre></td></tr><tr><td class="docs"><p>Range of allowed arguments in a backward step.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- range-args-b
+  [pattern]
+  (let [gb (count (filter #{:gb} pattern))
+        range-gb (if (zero? gb) [0 0] [0 (dec gb)])
+        go (count (filter #{:go} pattern))
+        range-go (if (zero? go) [0 0] [0 go])
+        cm (count (filter #{:cm} pattern))
+        range-cm [cm cm]]
+    (mapv + range-gb range-go range-cm)))</pre></td></tr><tr><td class="docs"><p>Are the args numbers or formulas according to the pattern?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- type-args-ok?
+  [pattern argsv]
+  (let [pattern' (map #(first (name %)) (filter #(not= \? (second (name %))) pattern))
+        check #(if (or (= %1 \g) (= %1 \c)) (number? %2) (or (symbol? %2) (list? %2)))]
+    (every? identity (map check pattern' (filter #(not= :? %) argsv)))))</pre></td></tr><tr><td class="docs"><p>Maximal <code>plno</code> of the parameters for the givens.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- max-given
+  [match-pattern]
+  (if (= 1 (count match-pattern))                           ; just one conclusion 
+    0
+    (apply max
+           (-&gt;&gt; match-pattern
+                (filter #(= \g (first (name (first %)))))
+                (map second)
+                (filter number?)))))</pre></td></tr><tr><td class="docs"><p>Assigns the arguments to the pattern of a forward step. <br />
+   Returns match-pattern. <br />
+   requires: roth exists, forward is allowed</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- match-argsv-f
+  [roth argsv]
+  ; get the pattern for forward step of the roth
+  (loop [pattern (rules/roth-pattern roth :forward)
+         args argsv
+         result []]
+    (let [p1 (first pattern) a1 (first args)]
+      (if (nil? p1)
+        result
+        (cond
+          (nil? a1) (recur (rest pattern) args (conj result [p1 :?]))
+          (= p1 :gm) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :g1) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :em) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?]))
+          (= p1 :c?) (recur (rest pattern) args (conj result [p1 :?]))
+          (= p1 :co) (recur (rest pattern) args (conj result [p1 a1])))))))</pre></td></tr><tr><td class="docs"><p>Assigns the arguments to the pattern of a backward step. <br />
+   Returns match-pattern. <br />
+   requires: roth exists, backward is allowed</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- match-argsv-b
+  [roth argsv]
+  ; get the pattern for backward step of the roth
+  (loop [pattern (rules/roth-pattern roth :backward)
+         args argsv
+         result []]
+    (let [p1 (first pattern) a1 (first args)]
+      (if (nil? p1)
+        result
+        (cond
+          (nil? a1) (recur (rest pattern) args (conj result [p1 :?]))
+          (= p1 :cm) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :gb) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :go) (recur (rest pattern) (rest args) (conj result [p1 a1]))
+          (= p1 :g?) (recur (rest pattern) args (conj result [p1 :?])))))))</pre></td></tr><tr><td class="docs"><p>Parameters for the logic relation given the match pattern for the call.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- rel-params
+  [proof match-pattern]
+  (-&gt;&gt; match-pattern
+       (map second)
+       (mapv #(if (number? %) (plbody-at-plno proof %) %))))</pre></td></tr><tr><td class="docs"><p><code>plno</code> of the next todo line following proof line with <code>plno</code>. <br />
+  A result of <code>0</code> means that there is no such line. <br />
+  requires: <code>n</code> is not out of bound of the proof.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- find-next-todo-plno
+  [proof n]
+  (let [pv (vec (flatten proof))
+        pv' (subvec pv n)
+        no (first (keep-indexed #(when (= :todo (:body %2)) %1) pv'))]
+    (if (nil? no) 0 (+ (inc n) no))))</pre></td></tr><tr><td class="docs"><p>Gives the <code>plid</code> of the todo line where the manipulation of the proof must occur.
+  A result of <code>0</code> means that there is no such line.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- plid-to-manip
+  [proof match-pattern]
+  (let [max-g (max-given match-pattern)
+        todo-plno (find-next-todo-plno proof max-g)]
+    (if (zero? todo-plno) 0 (plno-&gt;plid proof todo-plno))))</pre></td></tr><tr><td class="docs"><p>Checks whether an optional conclusion is below the todo line.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- concl-okay?
+  [match-pattern todoline-no]
+  (let [concl (filter #(and (= (first %) :co) (number? (second %))) match-pattern)]
+    (if (empty? concl) true
+                       (&gt; (second (first concl)) todoline-no))))</pre></td></tr><tr><td class="docs"><p>Checks whether all arguments are in the same scope.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- scope-okay?
+  [proof match-pattern]
+  (let [plnos (filter number? (map second match-pattern))]
+    (if (empty? plnos) true
+                       (let [max-plno (apply max plnos)
+                             plines (map #(pline-at-plno proof %) plnos)
+                             curr-scope (scope proof (pline-at-plno proof max-plno))]
+                         (every? #(contains? (set curr-scope) %) plines)))))</pre></td></tr><tr><td class="docs"><p>Checks if there is no ref to a todoline</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- no-ref-to-todoline?
+  [proof match-pattern]
+  (let [plnos (filter number? (map second match-pattern))]
+    (if (empty? plnos) true
+                       (empty? (filter todoline? 
+                               (map #(pline-at-plno proof %) plnos) ))))) </pre></td></tr><tr><td class="docs"><p>Checks of user input to a proof step, independent of the direction of the step.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- check-user-input
+  [proof roth argsv]
+  ; does the rule or theorem exist?
+  (if (not (rules/roth-exists? roth))
+    (throw (Exception. (format &quot;There's no such rule or theorem: %s&quot; roth))))
+  ; argsv is empty or has at least ref to a line number
+  (if (and (not-empty argsv) (empty? (filter number? argsv)))
+    (throw (Exception. (format &quot;There must be at least one ref to a proof line in your arguments: %s&quot; (str argsv))))) 
+  ; are the line numbers in argsv distinct?
+  (if (and (not-empty argsv) (not (apply distinct? (filter number? argsv))))
+    (throw (Exception. (format &quot;There are duplicates in your arguments: %s&quot; (str argsv)))))
+  ; are the line numbers in argvs in the range of the proof?
+  (if (and (not-empty argsv) (not-empty (filter number? argsv)))
+    (let [pl-cnt (count (flatten proof))
+          nos (filter number? argsv)
+          low (apply min nos)
+          high (apply max nos)]
+      (if (not (and (pos? low) (&lt;= high pl-cnt)))
+        (throw (Exception. (format &quot;Line numbers must refer to lines in the proof: %s&quot; (str argsv))))))))</pre></td></tr><tr><td class="docs"><p>Checks the user input for a forward proof step, given as a roth and a vector. <br />
+   Throws exceptions if input not valid, and <br />
+   analyzes how to proceed the step. </p>
+</td><td class="codes"><pre class="brush: clojure">(defn- check-user-input-f
+  [proof roth argsv]
+  (check-user-input proof roth argsv)                       ; may throw exceptions
+  ; can the roth be used in a forward step?
+  (if (not (rules/roth-forward? roth))
+    (throw (Exception. (format &quot;This rule can't be used in a forward step: %s&quot; roth))))
+  (let [pattern (rules/roth-pattern roth :forward)
+        range (range-args-f pattern)]
+    ; size of argsv okay?
+    (if (not (and (&gt;= (count argsv) (first range)) (&lt;= (count argsv) (second range))))
+      (throw (Exception. (format &quot;The number of arguments following the rule or theorem must be in the range: %s&quot; range))))
+    ; kind of args okay?
+    (if (not (type-args-ok? pattern argsv))
+      (throw (Exception. (format &quot;Type of arguments doesn't match the call pattern: %s&quot; pattern))))
+    (let [match-pattern (match-argsv-f roth argsv)
+          todo-plid (plid-to-manip proof match-pattern)]
+      (if (zero? todo-plid)
+        (throw (Exception. &quot;Arguments refering givens must be above a todo line&quot;)))
+      (if-not (no-ref-to-todoline? proof match-pattern)
+        (throw (Exception. &quot;Arguments may not refer todo lines&quot;)))
+      (if-not (empty? (filter #(and (= :gm (first %)) (not (number? (second %)))) match-pattern))
+        (throw (Exception. (format &quot;Argument to a :gm must be a line number: %s&quot; pattern))))
+      (if (not (concl-okay? match-pattern (plid-&gt;plno proof todo-plid)))
+        (throw (Exception. &quot;Arguments refering conclusions must be below a todo line&quot;)))
+      (if (not (scope-okay? proof match-pattern))
+        (throw (Exception. &quot;Arguments must all be in the same scope.&quot;)))
+      {:match-pattern match-pattern
+       :todo-plid     todo-plid
+       :refs-pattern  (map #(if (number? (second %)) [(first %) (plno-&gt;plid proof (second %))] %) match-pattern)})))</pre></td></tr><tr><td class="docs"><p>Checks the user input for a backward proof step, given as a roth and a vector. <br />
+   Throws exceptions if input not valid, and <br />
+   analyzes how to proceed the step. </p>
+</td><td class="codes"><pre class="brush: clojure">(defn- check-user-input-b
+  [proof roth argsv]
+  (check-user-input proof roth argsv)                       ; may throw exceptions
+  ; can the roth be used in a backward step?
+  (if (not (rules/roth-backward? roth))
+    (throw (Exception. (format &quot;This rule can't be used in a backward step: %s&quot; roth))))
+  (let [pattern (rules/roth-pattern roth :backward)
+        range (range-args-b pattern)
+        no-args (count (filter #(not= :? %) argsv))]
+    ; size of argsv okay?
+    (if (not (and (&gt;= no-args (first range)) (&lt;= no-args (second range))))
+      (throw (Exception. (format &quot;The number of arguments following the rule or theorem must be in the range: %s&quot; range))))
+    ; kind of args okay?
+    (if (not (type-args-ok? pattern argsv))
+      (throw (Exception. (format &quot;Type of arguments doesn't match the call pattern: %s&quot; pattern))))
+    (let [match-pattern (match-argsv-b roth argsv)
+          concl-plid (plno-&gt;plid proof (first argsv))]
+      (if-not (= nil (:roth (pline-at-plid proof concl-plid)))
+        (throw (Exception. &quot;The first argument must not refer an unsolved proof line&quot;)))
+      (if-not (no-ref-to-todoline? proof match-pattern)
+        (throw (Exception. &quot;Arguments may not refer todo lines&quot;)))
+      (if (not (scope-okay? proof match-pattern))
+        (throw (Exception. &quot;Arguments must all be in the same scope.&quot;)))
+      {:match-pattern match-pattern
+       :concl-plid    concl-plid
+       :refs-pattern  (map #(if (number? (second %)) [(first %) (plno-&gt;plid proof (second %))] %) match-pattern)})))</pre></td></tr><tr><td class="docs"><p>Upgrades <code>refs-pattern</code> with the refs to new proof line in <code>new-plines.</code> <br />
+   requires: #new-plines = # of :? in refs-pattern, this should be guaranteed since the call of the logic relation is ok.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- upgrade-refs-pattern
+  [refs-pattern new-plines]
+  (loop [rp refs-pattern
+         np new-plines
+         result []]
+    (let [rp1 (first rp) np1 (first np) np1-plid (if (vector? np1) [(:plid (first np1)) (:plid (last np1))] (:plid np1))]
+      (if (nil? rp1)
+        result
+        (cond
+          ; if a :co was not given by the user, it's like a :c?
+          (and (= (second rp1) :?) (= (first rp1) :co)) (recur (rest rp) (rest np) (conj result [:c? np1-plid]))
+          ; if a :go was not given by the user, it's like a :g?
+          (and (= (second rp1) :?) (= (first rp1) :go)) (recur (rest rp) (rest np) (conj result [:g? np1-plid]))
+          (= (second rp1) :?) (recur (rest rp) (rest np) (conj result [(first rp1) np1-plid]))
+          :else (recur (rest rp) np (conj result rp1)))))))</pre></td></tr><tr><td class="docs"><p>Upgrades the refs in the given vector or proof at the given plids with roth and refs.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- upgrade-refs
+  [proof plids roth refs]
+  (let [old-plines (mapv #(pline-at-plid proof %) plids)
+        upg-plines (mapv #(assoc % :roth roth :refs refs) old-plines)]
+    (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))</pre></td></tr><tr><td class="docs"><h2>Interface for user of deduction</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Deduction step forward on <code>proof</code> with <code>roth</code> and the argument vector <code>argsv</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn step-f
+  [proof roth argsv]
+  (let [infos (check-user-input-f proof roth argsv)
+        rel-params (rel-params proof (:match-pattern infos))
+        result (rules/apply-roth roth rel-params)
+        todo-plid (:todo-plid infos)]
+    ;; no result
+    (if (nil? (first result))
+      (throw (Exception. (format &quot;Rule or theorem not applicable, check id and arguments: %s&quot; (into (vector roth) argsv)))))
+    ;; new proof lines
+    (let [new-plines (new-plines result)
+          refs-pattern (:refs-pattern infos)
+          refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)
+          refs (mapv second (filter #(contains? #{\g \e} (first (name (first %)))) refs-pattern'))
+          new-plines' (upgrade-refs new-plines (mapv second (filter #(= :c? (first %)) refs-pattern')) roth refs)
+          proof' (upgrade-refs proof (mapv second (filter #(= :co (first %)) refs-pattern')) roth refs)
+          new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines'))]
+      (normalize new-proof))))</pre></td></tr><tr><td class="docs"><p>Deduction step backward on <code>proof</code> with <code>roth</code> and the argument vector <code>argsv</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn step-b
+  [proof roth argsv]
+  (let [infos (check-user-input-b proof roth argsv)
+        shift1 (fn [v] (conj (vec (rest v)) (first v)))
+        rel-params (shift1 (rel-params proof (:match-pattern infos)))
+        result (rules/apply-roth roth rel-params)
+        todo-plid (:concl-plid infos)]
+    ;; no result
+    (if (nil? (first result))
+      (throw (Exception. (format &quot;Rule or theorem not applicable, check id and arguments: %s&quot; (into (vector roth) argsv)))))
+    ;; new proof lines
+    (let [new-plines (new-plines result)
+          refs-pattern (:refs-pattern infos)
+          refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)
+          refs (mapv second (filter #(= \g (first (name (first %)))) refs-pattern'))
+          proof' (upgrade-refs proof (mapv second (filter #(= :cm (first %)) refs-pattern')) roth refs)
+          new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines)) ]
+      (normalize new-proof))))</pre></td></tr><tr><td class="docs"><p>Unifies all instances of symbol <code>old</code> inside the <code>proof</code> with <code>new</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn unify
+  [proof old new]
+  (if (symbol? old)
+    (normalize
+      (walk/postwalk
+        (fn [node]
+          (if (map? node)
+            (cond
+              (symbol? (:body node)) (if (= (:body node) old)
+                                       (assoc node :body new)
+                                       node)
+              (list? (:body node)) (assoc node :body (walk/prewalk-replace {old new} (:body node)))
+              :else node)
+            node))
+        proof))
+    (throw (Exception. (str &quot;\&quot;&quot; old &quot;\&quot; is not a symbol. You can only unify symbols.&quot;)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

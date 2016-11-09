@@ -33,7 +33,7 @@
 ;; - Load a logic with `(load-logic logic)`
 ;; - Create a new proof with `(proof premises conclusion)` 
 ;; - Prove the conclusion form the promises by
-;;      - forward steps '(step-f ...)`
+;;      - forward steps `(step-f ...)`
 ;;      - backward steps `(step-b ...)` 
 ;;      - unifying symbols `(unify ...)`
 
@@ -41,7 +41,7 @@
   "Load rules and theorems of the logic to use.      
    Logic can be `:prop`, `:pred`, `:ltl`.    
    Requires: files with rules and theorems     
-   Modifies; global `roths`"
+   Modifies: global `roths`"
   [logic]
   (reset-roths)
   (case logic
@@ -102,7 +102,7 @@
 (defn step-f
   "Execute a forward step.      
    Modifies: atom `p`, the proof, and       
-             atom `p-history, the history of the current proof."
+             atom `p-history`, the history of the current proof."
   [roth & args]
   (try
     (let [proof' (deduc/step-f @p roth (vec args))]
@@ -115,7 +115,7 @@
 (defn step-b
   "Execute a backward step.      
    Modifies: atom `p`, the proof, and
-             atom `p-history, the history of the current proof."
+             atom `p-history`, the history of the current proof."
   [roth & args]
   (try
     (let [proof' (deduc/step-b @p roth (vec args))]
@@ -128,7 +128,7 @@
 (defn unify
   "Unifies symbols.     
    Modifies: atom `p`, the proof, and
-             atom `p-history, the history of the current proof."
+             atom `p-history`, the history of the current proof."
   [old new]
   (try
     (let [proof' (deduc/unify @p old new)]
@@ -141,7 +141,7 @@
 (defn undo
   "Undo the last change of the proof.     
    Modifies: atom `p`, the proof, and
-             atom `p-history, the history of the current proof."
+             atom `p-history`, the history of the current proof."
   []
   (if (empty? @p-history)
     (println "Info: You reached the starting point of the proof, there is nothing more to undo")

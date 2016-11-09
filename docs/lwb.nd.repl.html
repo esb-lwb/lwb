@@ -2885,14 +2885,14 @@ net.brehaut.ClojureTools = (function (SH) {
 <li>Load a logic with <code>(load-logic logic)</code></li>
 <li>Create a new proof with <code>(proof premises conclusion)</code></li>
 <li>Prove the conclusion form the promises by
-<ul><li>forward steps '(step-f ...)`</li>
+<ul><li>forward steps <code>(step-f ...)</code></li>
 <li>backward steps <code>(step-b ...)</code></li>
 <li>unifying symbols <code>(unify ...)</code></li></ul></li>
 </ul>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Load rules and theorems of the logic to use. <br />
    Logic can be <code>:prop</code>, <code>:pred</code>, <code>:ltl</code>. <br />
    Requires: files with rules and theorems <br />
-   Modifies; global <code>roths</code></p>
+   Modifies: global <code>roths</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn load-logic
   [logic]
   (reset-roths)
@@ -2937,7 +2937,7 @@ net.brehaut.ClojureTools = (function (SH) {
      (println &quot;Info: There are no rules available, please load a logic with load-logic.&quot;))))</pre></td></tr><tr><td class="docs"><h2>Functions that perform steps in proving a conclusion</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Execute a forward step. <br />
    Modifies: atom <code>p</code>, the proof, and <br />
-             atom `p-history, the history of the current proof.</p>
+             atom <code>p-history</code>, the history of the current proof.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn step-f
   [roth &amp; args]
   (try
@@ -2948,7 +2948,7 @@ net.brehaut.ClojureTools = (function (SH) {
     (catch Exception e
       (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs"><p>Execute a backward step. <br />
    Modifies: atom <code>p</code>, the proof, and
-             atom `p-history, the history of the current proof.</p>
+             atom <code>p-history</code>, the history of the current proof.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn step-b
   [roth &amp; args]
   (try
@@ -2959,7 +2959,7 @@ net.brehaut.ClojureTools = (function (SH) {
     (catch Exception e
       (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs"><p>Unifies symbols. <br />
    Modifies: atom <code>p</code>, the proof, and
-             atom `p-history, the history of the current proof.</p>
+             atom <code>p-history</code>, the history of the current proof.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn unify
   [old new]
   (try
@@ -2970,7 +2970,7 @@ net.brehaut.ClojureTools = (function (SH) {
     (catch Exception e
       (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs"><p>Undo the last change of the proof. <br />
    Modifies: atom <code>p</code>, the proof, and
-             atom `p-history, the history of the current proof.</p>
+             atom <code>p-history</code>, the history of the current proof.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn undo
   []
   (if (empty? @p-history)

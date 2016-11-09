@@ -9,6 +9,8 @@
 (ns lwb.nd.prereqs
   (:require [lwb.pred.substitution :refer [substitution]]))
 
+;; # Functions used in prerequisites of rules
+
 (defn substitution?
   "Is `phi'` the substitution of `var` in `phi`?    
    Throws exception if that's not the case."
