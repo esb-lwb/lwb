@@ -309,7 +309,7 @@
   (is (= (roth-structure-backward :</<=)
          [:cm :g?] ))
   (is (= (apply-roth :</<= '(:? (<= i j)))
-         '[(< i j)]))
+         '[(_0 i j)]))
          
   (is (= (roth-structure-forward :atnext/<=)
          [:gm :c?] ))
@@ -342,11 +342,11 @@
   (is (= (roth-structure-forward :linear)
          [:g1 :g1 :c?]))
   (is (= (apply-roth :linear '((<= i j) (<= i k) :?))
-         '[(or (or (<= j k) (== j k)) (<= k j))]))
+         '[(or (or (<= j k) (_0 j k)) (<= k j))]))
   (is (= (apply-roth :linear '(:? (<= i k) :?))
-         '[(<= i _0) (or (or (<= _0 k) (== _0 k)) (<= k _0))]))
+         '[(<= i _0) (or (or (<= _0 k) (_1 _0 k)) (<= k _0))]))
   (is (= (apply-roth :linear '((<= i j) :? :?))
-         '[(<= i _0) (or (or (<= j _0) (== j _0)) (<= _0 j))]))
+         '[(<= i _0) (or (or (<= j _0) (_1 j _0)) (<= _0 j))]))
          
   (is (= (roth-structure-backward :linear)
          [:cm :gb :gb] ))

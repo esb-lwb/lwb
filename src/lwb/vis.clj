@@ -12,7 +12,7 @@
             [clojure.string :as str]
             [clojure.java.shell :as shell]))
 
-;; #Visualisation of formulae
+;; # Visualisation of formulas
 ;;
 ;; The syntax tree of a formula of propositional logic, predicate logic or
 ;; linear temporal logic is transformed into code for tikz and the package
@@ -51,7 +51,7 @@
   [loc]
   (= :end (zip/node loc)))
 
-(defn- mark-end-of-branch 
+(defn- mark-end-of-branch
   "To facilitate the generation of code in tikz, we mark the ends of
    lists with `:end`"
   [phi]
@@ -80,18 +80,18 @@
                  :finally "\\lozenge"
                  :atnext  "\\medcircle"
                  :until   "\\mathcal{U}"}
-        nkey     (keyword (name node))]
-      (if (contains? symbols nkey)
-        (str " [.\\node{$" (nkey symbols) "$};")
-        (str " [.\\node{$" node "$};")))) 
+        nkey (keyword (name node))]
+    (if (contains? symbols nkey)
+      (str " [.\\node{$" (nkey symbols) "$};")
+      (str " [.\\node{$" node "$};"))))
 
 (defn- process-quantor
   "Generates texcode for quantors"
   [node vars]
   (let [quantors {:forall "\\forall"
                   :exists "\\exists"}
-        nkey     (keyword (name node))]
-    (str " [.\\node{$" (nkey quantors) " " 
+        nkey (keyword (name node))]
+    (str " [.\\node{$" (nkey quantors) " "
          (str/join "\\, " vars) "$};")))
 
 (defn- process-atom
@@ -100,8 +100,8 @@
    one can use `<` and `>`
    as characters for grouping subscripts e.g."
   [node]
-  (let [node-str   (str node)
-        node-str'  (str/replace node-str \< \{)
+  (let [node-str (str node)
+        node-str' (str/replace node-str \< \{)
         node-str'' (str/replace node-str' \> \})]
     (str " $" node-str'' "$")))
 
@@ -110,25 +110,25 @@
   [loc]
   (let [n (zip/node loc)]
     (cond
-      (vector? n)       "" ; already processed
-      (first? loc)         ; head with special case of quantor
-                        (if (or (= n 'forall) (= n 'exists))
-                          (let [n' (-> loc zip/next zip/node)]
-                            (process-quantor n n'))
-                          (process-head n))
-      (end? loc)       " ]"    ; last in list
-      :else (process-atom n ))))   ; in the middle of the list
+      (vector? n) ""                                        ; already processed
+      (first? loc)                                          ; head with special case of quantor
+      (if (or (= n 'forall) (= n 'exists))
+        (let [n' (-> loc zip/next zip/node)]
+          (process-quantor n n'))
+        (process-head n))
+      (end? loc) " ]"                                       ; last in list
+      :else (process-atom n))))                             ; in the middle of the list
 
 (defn- vis-tikz-body
   "Visualization with tikz, the body"
   [phi]
-  (let [phi-n (if (symbol? phi) (list phi) phi) ; special case
-        phi'  (mark-end-of-branch phi-n)
+  (let [phi-n (if (symbol? phi) (list phi) phi)             ; special case
+        phi' (mark-end-of-branch phi-n)
         loc (zip/seq-zip (seq phi'))]
     (str/join
-           (map mapfn (remove zip/branch? 
-                              (take-while (complement zip/end?)
-                                  (iterate zip/next loc)))))))
+      (map mapfn (remove zip/branch?
+                         (take-while (complement zip/end?)
+                                     (iterate zip/next loc)))))))
 
 (defn vis
   "Visualisation of the syntax tree of formula `phi`.
@@ -165,10 +165,10 @@
 
   (def ltl-phi
     '(and
-       (always  p)
+       (always p)
        (finally q)
-       (atnext  r)
-       (until   s t)))
+       (atnext r)
+       (until s t)))
 
   (vis-pdf ltl-phi "ltl")
-)
+  )

@@ -2957,7 +2957,6 @@ to files.</p>
      (throw (Exception. &quot;The proof is not completed yet.&quot;)))
    ;; if there is no such file we generate it
    (.createNewFile ^File (io/as-file filename))
-   ;; 
    (let [theorems-v (import-v filename valid-theorem?)
          ids (set (map :id theorems-v))
          already-there? (contains? ids id)]

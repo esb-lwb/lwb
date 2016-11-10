@@ -14,7 +14,7 @@
             [lwb.nd.prereqs :as prereqs]
             [lwb.nd.rules :refer [roths reset-roths]]
             [lwb.nd.io :as io]
-            [lwb.nd.printer :refer [pprint]]))
+            [lwb.nd.printer :as printer]))
 
 (def rothpath
   "Path to the files for rules and theorems"
@@ -55,7 +55,7 @@
             (io/import-theorems (str rothpath "theorems-pred.edn") roths))
     :ltl (do
            (io/import-rules (str rothpath "rules-ltl.edn") roths)
-           (io/import-theorems (str rothpath "theorems-ltl.edn") roths)))
+           #_(io/import-theorems (str rothpath "theorems-ltl.edn") roths)))
   (println welcome)
   (println (str "Info: Rules and theorems loaded: " logic)))
 
@@ -82,7 +82,7 @@
 (defn show
   "Print the actual state of the proof."
   []
-  (pprint @p))
+  (printer/pprint @p))
 
 ;; ## Creating a new proof
 
@@ -191,10 +191,13 @@
 ;; ## TeX-Code for typesetting the current proof
 
 (defn texify
-  "Generates TeX-Code from the current proof."
-  []
-  #_(pprint/texify @p)
-  "TODO: yet to be implemented.")
+  "Generates TeX-Code from the current proof.       
+   The generated code uses the packages `MnSymbol` and `logicproof`.     
+   If a filename is given as argument, a pdf file will be generated.      
+   In this case the function uses the shell command `texi2pdf` that compiles tex code,
+   and `open` to show the generated file."
+  ([] (printer/texify @p))
+  ([filename] (printer/texify @p filename)))
 
 ;; ## Function that exports the current proof as a reusable theorem
 

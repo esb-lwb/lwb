@@ -2869,7 +2869,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.vis
   (:require [clojure.zip :as zip]
             [clojure.string :as str]
-            [clojure.java.shell :as shell]))</pre></td></tr><tr><td class="docs"><h1>Visualisation of formulae</h1>
+            [clojure.java.shell :as shell]))</pre></td></tr><tr><td class="docs"><h1>Visualisation of formulas</h1>
 
 <p>The syntax tree of a formula of propositional logic, predicate logic or
 linear temporal logic is transformed into code for tikz and the package
@@ -2900,7 +2900,7 @@ linear temporal logic is transformed into code for tikz and the package
   [loc]
   (= :end (zip/node loc)))</pre></td></tr><tr><td class="docs"><p>To facilitate the generation of code in tikz, we mark the ends of
    lists with <code>:end</code></p>
-</td><td class="codes"><pre class="brush: clojure">(defn- mark-end-of-branch 
+</td><td class="codes"><pre class="brush: clojure">(defn- mark-end-of-branch
   [phi]
   (loop [loc (zip/seq-zip (seq phi))]
     (if (zip/end? loc)
@@ -2925,47 +2925,47 @@ linear temporal logic is transformed into code for tikz and the package
                  :finally &quot;\\lozenge&quot;
                  :atnext  &quot;\\medcircle&quot;
                  :until   &quot;\\mathcal{U}&quot;}
-        nkey     (keyword (name node))]
-      (if (contains? symbols nkey)
-        (str &quot; [.\\node{$&quot; (nkey symbols) &quot;$};&quot;)
-        (str &quot; [.\\node{$&quot; node &quot;$};&quot;)))) </pre></td></tr><tr><td class="docs"><p>Generates texcode for quantors</p>
+        nkey (keyword (name node))]
+    (if (contains? symbols nkey)
+      (str &quot; [.\\node{$&quot; (nkey symbols) &quot;$};&quot;)
+      (str &quot; [.\\node{$&quot; node &quot;$};&quot;))))</pre></td></tr><tr><td class="docs"><p>Generates texcode for quantors</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- process-quantor
   [node vars]
   (let [quantors {:forall &quot;\\forall&quot;
                   :exists &quot;\\exists&quot;}
-        nkey     (keyword (name node))]
-    (str &quot; [.\\node{$&quot; (nkey quantors) &quot; &quot; 
+        nkey (keyword (name node))]
+    (str &quot; [.\\node{$&quot; (nkey quantors) &quot; &quot;
          (str/join &quot;\\, &quot; vars) &quot;$};&quot;)))</pre></td></tr><tr><td class="docs"><p>Generates texcode for atoms <br />
    Since <code>{</code> and <code>}</code> are a reserved character in Clojure, 
    one can use <code>&lt;</code> and <code>&gt;</code>
    as characters for grouping subscripts e.g.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- process-atom
   [node]
-  (let [node-str   (str node)
-        node-str'  (str/replace node-str \&lt; \{)
+  (let [node-str (str node)
+        node-str' (str/replace node-str \&lt; \{)
         node-str'' (str/replace node-str' \&gt; \})]
     (str &quot; $&quot; node-str'' &quot;$&quot;)))</pre></td></tr><tr><td class="docs"><p>Mapping function that generates the tikz code from the traversing of the tree.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- mapfn
   [loc]
   (let [n (zip/node loc)]
     (cond
-      (vector? n)       &quot;&quot; ; already processed
-      (first? loc)         ; head with special case of quantor
-                        (if (or (= n 'forall) (= n 'exists))
-                          (let [n' (-&gt; loc zip/next zip/node)]
-                            (process-quantor n n'))
-                          (process-head n))
-      (end? loc)       &quot; ]&quot;    ; last in list
-      :else (process-atom n ))))   ; in the middle of the list</pre></td></tr><tr><td class="docs"><p>Visualization with tikz, the body</p>
+      (vector? n) &quot;&quot;                                        ; already processed
+      (first? loc)                                          ; head with special case of quantor
+      (if (or (= n 'forall) (= n 'exists))
+        (let [n' (-&gt; loc zip/next zip/node)]
+          (process-quantor n n'))
+        (process-head n))
+      (end? loc) &quot; ]&quot;                                       ; last in list
+      :else (process-atom n))))                             ; in the middle of the list</pre></td></tr><tr><td class="docs"><p>Visualization with tikz, the body</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- vis-tikz-body
   [phi]
-  (let [phi-n (if (symbol? phi) (list phi) phi) ; special case
-        phi'  (mark-end-of-branch phi-n)
+  (let [phi-n (if (symbol? phi) (list phi) phi)             ; special case
+        phi' (mark-end-of-branch phi-n)
         loc (zip/seq-zip (seq phi'))]
     (str/join
-           (map mapfn (remove zip/branch? 
-                              (take-while (complement zip/end?)
-                                  (iterate zip/next loc)))))))</pre></td></tr><tr><td class="docs"><p>Visualisation of the syntax tree of formula <code>phi</code>.
+      (map mapfn (remove zip/branch?
+                         (take-while (complement zip/end?)
+                                     (iterate zip/next loc)))))))</pre></td></tr><tr><td class="docs"><p>Visualisation of the syntax tree of formula <code>phi</code>.
    Generates code for tikz.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn vis
   [phi]
@@ -2992,10 +2992,10 @@ linear temporal logic is transformed into code for tikz and the package
   (vis-pdf '(or (and (or p q) q) r) &quot;simple2&quot;)
   (def ltl-phi
     '(and
-       (always  p)
+       (always p)
        (finally q)
-       (atnext  r)
-       (until   s t)))
+       (atnext r)
+       (until s t)))
   (vis-pdf ltl-phi &quot;ltl&quot;))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 

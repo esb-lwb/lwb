@@ -227,7 +227,7 @@
       (throw (Exception. (format "Type of arguments doesn't match the call pattern: %s" pattern))))
     (let [match-pattern (match-argsv-b roth argsv)
           concl-plid (plno->plid proof (first argsv))]
-      (if-not (= nil (:roth (pline-at-plid proof concl-plid)))
+      (if-not (nil? (:roth (pline-at-plid proof concl-plid)))
         (throw (Exception. "The first argument must not refer an unsolved proof line")))
       (if-not (no-ref-to-todoline? proof match-pattern)
         (throw (Exception. "Arguments may not refer todo lines")))

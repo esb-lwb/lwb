@@ -2874,7 +2874,7 @@ net.brehaut.ClojureTools = (function (SH) {
             [lwb.nd.prereqs :as prereqs]
             [lwb.nd.rules :refer [roths reset-roths]]
             [lwb.nd.io :as io]
-            [lwb.nd.printer :refer [pprint]]))</pre></td></tr><tr><td class="docs"><p>Path to the files for rules and theorems</p>
+            [lwb.nd.printer :as printer]))</pre></td></tr><tr><td class="docs"><p>Path to the files for rules and theorems</p>
 </td><td class="codes"><pre class="brush: clojure">(def rothpath
   &quot;resources/nd/&quot;)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(pot/import-vars
@@ -2924,7 +2924,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Print the actual state of the proof.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn show
   []
-  (pprint @p))</pre></td></tr><tr><td class="docs"><h2>Creating a new proof</h2>
+  (printer/pprint @p))</pre></td></tr><tr><td class="docs"><h2>Creating a new proof</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Starts a new proof. <br />
    Modifies: atom <code>p</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn proof
@@ -3007,11 +3007,14 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn show-theorems
   []
   (show-roths :theorems))</pre></td></tr><tr><td class="docs"><h2>TeX-Code for typesetting the current proof</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX-Code from the current proof.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX-Code from the current proof. <br />
+   The generated code uses the packages <code>MnSymbol</code> and <code>logicproof</code>. <br />
+   If a filename is given as argument, a pdf file will be generated. <br />
+   In this case the function uses the shell command <code>texi2pdf</code> that compiles tex code,
+   and <code>open</code> to show the generated file.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify
-  []
-  #_(pprint/texify @p)
-  &quot;TODO: yet to be implemented.&quot;)</pre></td></tr><tr><td class="docs"><h2>Function that exports the current proof as a reusable theorem</h2>
+  ([] (printer/texify @p))
+  ([filename] (printer/texify @p filename)))</pre></td></tr><tr><td class="docs"><h2>Function that exports the current proof as a reusable theorem</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Saves the current proof with <code>id</code> in the file with <code>filename</code>. <br />
    Requires: Proof is completed. <br />
    If there is already a theorem with that <code>id</code>, the replacement can be forced 

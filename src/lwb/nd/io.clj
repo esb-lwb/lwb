@@ -59,7 +59,7 @@
   "Returns: Map with the theorem from the `proof` with the given `id`.     
    Requires: The theorem is proved."
   [proof id]
-  (let [given (into [] (map :body (filter #(= (:roth %) :premise) (flatten proof))))
+  (let [given (vec (map :body (filter #(= (:roth %) :premise) (flatten proof))))
         conclusion (vector (:body (last proof)))]
     {:id id, :given given, :conclusion conclusion, :proof  proof}))
 
@@ -121,7 +121,6 @@
      (throw (Exception. "The proof is not completed yet.")))
    ;; if there is no such file we generate it
    (.createNewFile ^File (io/as-file filename))
-   ;; 
    (let [theorems-v (import-v filename valid-theorem?)
          ids (set (map :id theorems-v))
          already-there? (contains? ids id)]
