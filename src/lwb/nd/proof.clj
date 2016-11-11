@@ -240,12 +240,14 @@
          duplicate-plines (filter #(contains? duplicates (:body %)) dupl-scope)
          ;; duplicate-plines grouped into a vactor of vector of plines with equal body
          equals (vec (map val (group-by :body duplicate-plines)))
+         ;; equals must have at least one :roth that's not nil
+         equals' (vec (filter (fn [x] (not-every? nil? (map :roth x))) equals))
          fn-smap (fn [equals]
                    (let [remain (map :plid (filter :roth equals))
                          delete (map :plid (filter (set sub) (remove :roth equals)))] ; just plines from the actual sub can be deleted
                      (reduce #(assoc %1 %2 (last remain)) {} delete)))
          ;; map with pairs of plids where the first can be replace by the second
-         plid-map (apply merge (map fn-smap equals))]
+         plid-map (apply merge (map fn-smap equals'))]
      (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) plid-map sub))))
 
 (defn- adjust-refs
