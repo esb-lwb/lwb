@@ -2919,9 +2919,9 @@ net.brehaut.ClojureTools = (function (SH) {
        (dotimes [_ (dec depth)] (print &quot;| &quot;)))
      (dotimes [_ (- divider-length depth)] (print &quot;--&quot;))
      (println))))</pre></td></tr><tr><td class="docs"><h2>Generating TeX-Code</h2>
-</td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- height [tree]
-  &quot;Height of a tree of nested vectors.&quot;
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Height of a tree of nested vectors.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- height
+  [tree]
   (if-let [sub-trees (seq (filter vector? tree))]
     (inc (apply max (map height sub-trees)))
     0))</pre></td></tr><tr><td class="docs"><p>Logical symbols in TeX.</p>

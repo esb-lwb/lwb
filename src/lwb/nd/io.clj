@@ -26,9 +26,9 @@
 ;; ## Helper functions
 
 (defn- read-roths
-  "Reads sequence of items from file"
+  "Reads sequence of items from  a resource file"
   [filename]
-  (with-open [r (PushbackReader. (io/reader filename))]
+  (with-open [r (PushbackReader. (io/reader (io/resource filename)))]
     (doall (take-while some? (repeatedly #(edn/read {:eof nil} r))))))
 
 (defn- valid-rule?

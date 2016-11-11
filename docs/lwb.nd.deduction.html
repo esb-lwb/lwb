@@ -3056,7 +3056,7 @@ the result of the application of a rule or a theorem to the proof.</li>
       (throw (Exception. (format &quot;Type of arguments doesn't match the call pattern: %s&quot; pattern))))
     (let [match-pattern (match-argsv-b roth argsv)
           concl-plid (plno-&gt;plid proof (first argsv))]
-      (if-not (= nil (:roth (pline-at-plid proof concl-plid)))
+      (if-not (nil? (:roth (pline-at-plid proof concl-plid)))
         (throw (Exception. &quot;The first argument must not refer an unsolved proof line&quot;)))
       (if-not (no-ref-to-todoline? proof match-pattern)
         (throw (Exception. &quot;Arguments may not refer todo lines&quot;)))

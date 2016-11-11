@@ -2874,9 +2874,9 @@ net.brehaut.ClojureTools = (function (SH) {
             [lwb.nd.prereqs :as prereqs]
             [lwb.nd.rules :refer [roths reset-roths]]
             [lwb.nd.io :as io]
-            [lwb.nd.printer :as printer]))</pre></td></tr><tr><td class="docs"><p>Path to the files for rules and theorems</p>
+            [lwb.nd.printer :as printer]))</pre></td></tr><tr><td class="docs"><p>Path to the files for rules and theorems as resources</p>
 </td><td class="codes"><pre class="brush: clojure">(def rothpath
-  &quot;resources/nd/&quot;)</pre></td></tr><tr><td class="docs">
+  &quot;nd/&quot;)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(pot/import-vars
   [lwb.pred.substitution substitution]
   [lwb.nd.prereqs substitution?])</pre></td></tr><tr><td class="docs"><h1>Functions for interactive use of natural deduction in the REPL</h1>
@@ -2907,7 +2907,7 @@ net.brehaut.ClojureTools = (function (SH) {
             (io/import-theorems (str rothpath &quot;theorems-pred.edn&quot;) roths))
     :ltl (do
            (io/import-rules (str rothpath &quot;rules-ltl.edn&quot;) roths)
-           (io/import-theorems (str rothpath &quot;theorems-ltl.edn&quot;) roths)))
+           #_(io/import-theorems (str rothpath &quot;theorems-ltl.edn&quot;) roths)))
   (println welcome)
   (println (str &quot;Info: Rules and theorems loaded: &quot; logic)))</pre></td></tr><tr><td class="docs"><p>Choose the logic for the session:</p>
 </td><td class="codes"></td></tr><tr><td class="docs">

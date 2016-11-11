@@ -17,8 +17,8 @@
             [lwb.nd.printer :as printer]))
 
 (def rothpath
-  "Path to the files for rules and theorems"
-  "resources/nd/")
+  "Path to the files for rules and theorems as resources"
+  "nd/")
 
 ; a little hack: we expose some symbols from other namespaces to users of nd.repl
 

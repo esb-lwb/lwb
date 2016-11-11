@@ -20,5 +20,5 @@
                  [potemkin "0.4.3"]
                  [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]
                  [de.fosd.typechef/javabdd_repackaged_2.10 "0.1"]]
-  :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}} 
-  :jvm-opts ["-Xms2G"])
+  :jvm-opts ["-Xms2G"]
+  :uberjar-name "lwb.jar")

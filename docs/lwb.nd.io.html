@@ -2880,10 +2880,10 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"></td></tr><tr><td class="docs"><p>These functions are used in lwb.nd.repl to load a logic and to export theorems
 to files.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><h2>Helper functions</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Reads sequence of items from file</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Reads sequence of items from  a resource file</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- read-roths
   [filename]
-  (with-open [r (PushbackReader. (io/reader filename))]
+  (with-open [r (PushbackReader. (io/reader (io/resource filename)))]
     (doall (take-while some? (repeatedly #(edn/read {:eof nil} r))))))</pre></td></tr><tr><td class="docs"><p>Does the given map fulfill the spec of a rule? <br />
    Throws: Exception if not.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- valid-rule?
@@ -2906,7 +2906,7 @@ to files.</p>
    Requires: The theorem is proved.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- theorem
   [proof id]
-  (let [given (into [] (map :body (filter #(= (:roth %) :premise) (flatten proof))))
+  (let [given (vec (map :body (filter #(= (:roth %) :premise) (flatten proof))))
         conclusion (vector (:body (last proof)))]
     {:id id, :given given, :conclusion conclusion, :proof  proof}))</pre></td></tr><tr><td class="docs"><p>Writes the vector of theorems one by one in file named <code>filename</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- write-theorems

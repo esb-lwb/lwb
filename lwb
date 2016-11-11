@@ -1,0 +1,7 @@
+#!/bin/bash
+# ----------------------------------------------------------------------------
+# Copyright (c) 2016 by Burkhardt Renz. All rights reserved.
+# REPL for natural deduction with the Logic Workbench
+# ----------------------------------------------------------------------------
+rlwrap java -Xms2G -cp ~/bin/lwb.jar clojure.main -i @lwb/main.clj -r
+
