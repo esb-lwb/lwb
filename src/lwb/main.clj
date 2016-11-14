@@ -18,21 +18,24 @@
 
 ;; This command opens a repl in namespace `user` and shows the startinfo.
 
-(defn startinfo
-  "Startinfo"
+(defn man
+  "Manual"
   []
-  (let [si (str/join \newline
-                     [welcome
-                      "Propositional logic:"
-                      "- (load \"lwb/prop\")"
-                      "Predicate logic:"
-                      "- (load \"lwb/pred\")"
-                      "Linear temporal logic:"
-                      "- (load \"lwb/ltl\")"
-                      "Natural deduction:"
-                      "- (load \"lwb/nd/repl\")"
-                      ])]
-    (println si)))
+  (let [info (str/join \newline
+                       [welcome
+                        "Propositional logic:"
+                        "- (load \"lwb/prop\")"
+                        "- (ns lwb.prop)"
+                        "Predicate logic:"
+                        "- (load \"lwb/pred\")"
+                        "- (ns lwb.pred)"
+                        "Linear temporal logic:"
+                        "- (load \"lwb/ltl\")"
+                        "- (ns lwb.ltl)"
+                        "Natural deduction:"
+                        "- (load \"lwb/nd/repl\")"
+                        "- (ns lwb.nd.repl)"])]
+    (println info)))
 
-(startinfo)
+(man)
 

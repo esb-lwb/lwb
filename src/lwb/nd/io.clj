@@ -25,10 +25,16 @@
 
 ;; ## Helper functions
 
-(defn- read-roths
-  "Reads sequence of items from  a resource file"
+(defn- read-roths-from-resource
+  "Reads sequence of roths from a resource file"
+  [resource-name]
+  (with-open [r (PushbackReader. (io/reader (io/resource resource-name)))]
+    (doall (take-while some? (repeatedly #(edn/read {:eof nil} r))))))
+
+(defn- read-roths-from-file
+  "Reads sequence of roths from a file"
   [filename]
-  (with-open [r (PushbackReader. (io/reader (io/resource filename)))]
+  (with-open [r (PushbackReader. (io/reader (io/file filename)))]
     (doall (take-while some? (repeatedly #(edn/read {:eof nil} r))))))
 
 (defn- valid-rule?
@@ -48,12 +54,20 @@
     (throw (Exception. ^String (s/explain-str :lwb.nd.specs/theorem theorem-map)))))
 
 (defn- import-v
+  "Validated vector of roths from the import resource.      
+   Returns: validated vector of rules or theorems respectively.    
+   Throws: Exceptions if the resource can't be opened.    
+           Exception if content of the resource is not valid."
+  [name validation-fn]
+  (vec (filter validation-fn (read-roths-from-resource name))))
+
+(defn- import-file-v
   "Validated vector of roths from the import file.      
    Returns: validated vector of rules or theorems respectively.    
    Throws: Exceptions if the file can't be opened.    
            Exception if content of the file is not valid."
   [filename validation-fn]
-  (vec (filter validation-fn (read-roths filename))))
+  (vec (filter validation-fn (read-roths-from-file filename))))
 
 (defn- theorem
   "Returns: Map with the theorem from the `proof` with the given `id`.     
@@ -71,14 +85,13 @@
         content (reduce println-str theorems-v)]
     (spit filename (str header content))))
 
-
 ;; ## User Interface for lwb.nd.repl
 
 (defn import-rules
-  "Imports all rules from `filename` into global atom `roths`.     
-   Requires: `filename` exists and has valid rules.     
+  "Imports all rules from `resource-name` into global atom `roths`.     
+   Requires: `resource-name` exists and has valid rules.     
    Modifies; global atom `roths`."
-  [filename roths]
+  [resource-name roths]
   (let [map-fn (fn [rule]
                  (hash-map (:id rule)
                            {:type       :rule
@@ -90,13 +103,15 @@
                             :backward   (roth-structure-b (:given rule) (:extra rule) (:conclusion rule))
                             :logic-rel  (eval (gen-roth-relation (:prereq rule) (:given rule) (:extra rule)
                                                                  (:conclusion rule)))}))]
-    (apply (partial swap! roths merge) (map map-fn (import-v filename valid-rule?)))))
+    (apply (partial swap! roths merge) (map map-fn (import-v resource-name valid-rule?)))))
 
 (defn import-theorems
-  "Imports all theorems from `filename` into global atom `roths`.        
-   Requires: `filename` exists and has valid theorems.
+  "Imports all theorems from `name` into global atom `roths`.        
+   If mode is `resource` the theorems are loaded from resources, from the file system otherwise
+   Requires: `name` exists and has valid theorems.
    Modifies; global atom `roths`."
-  [filename roths]
+  ([resource-name roths] (import-theorems resource-name roths :resource))
+  ([name roths mode]
   (let [map-fn (fn [theorem]
                  (hash-map (:id theorem)
                            {:type       :theorem
@@ -105,7 +120,8 @@
                             :forward    (roth-structure-f (:given theorem) (:extra theorem) (:conclusion theorem))
                             :backward   (roth-structure-b (:given theorem) (:extra theorem) (:conclusion theorem))
                             :logic-rel  (eval (gen-roth-relation nil (:given theorem) nil (:conclusion theorem)))}))]
-    (apply (partial swap! roths merge) (map map-fn (import-v filename valid-theorem?)))))
+    (apply (partial swap! roths merge) 
+           (map map-fn (if (= mode :resource) (import-v name valid-theorem?) (import-file-v name valid-theorem?)))))))
 
 
 (defn export-theorem
