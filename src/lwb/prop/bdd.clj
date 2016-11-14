@@ -16,12 +16,17 @@
 ;; Our library is just a rather thin wrapper for JavaBDD in Clojure.
 
 (ns lwb.prop.bdd
-  (:require [lwb.prop :refer :all]
+  (:require [lwb.prop :as prop]
             [clojure.string :as str]
             [clojure.math.combinatorics :refer (selections)]
             [clojure.java.shell :as shell]
-            [clojure.spec :as s])
+            [clojure.spec :as s]
+            [potemkin :as pot])
   (:import (net.sf.javabdd JFactory BDD)))
+
+;; We import the operators and so forth from propositional logic
+(pot/import-vars
+  [lwb.prop impl equiv xor ite])
 
 ;; All functions with binary decision diagrams have to be executed in the
 ;; context of an initialized BDDFactory, see the documentation of JavaBDD and BuDDy.     
@@ -60,7 +65,7 @@
    Since atoms-of-phi gives the atoms in alphabetic order, the index of the atom in the
    factory is according to the alphabetic position."
   [bddf phi]
-  (let [atoms (atoms-of-phi phi), c (count atoms)]
+  (let [atoms (prop/atoms-of-phi phi), c (count atoms)]
     (if (zero? c)
       {}
       (do
@@ -84,7 +89,7 @@
     (cond (= phi 'true) (.one ^JFactory bddf)
           (= phi 'false) (.zero ^JFactory bddf)
           :else (get atom-map phi))
-    (let [op (first phi) a (arity op)]
+    (let [op (first phi) a (prop/arity op)]
       (case a
         1 ((functions op) (build-bddi-recur bddf atom-map (second phi)))
         2 ((functions op) (build-bddi-recur bddf atom-map (second phi))
@@ -184,7 +189,7 @@
   "gives a JFactory based on the number of the variables in the
    formula `phi`."
   [phi]
-  (let [c (count (atoms-of-phi phi))]
+  (let [c (count (prop/atoms-of-phi phi))]
     (cond
       (< c 20) (init-bddf :small)
       (< c 50) (init-bddf :medsize)
@@ -195,7 +200,7 @@
    with the internal numbering of atoms where these are replaced by the symbols for
    the atoms."
   [phi bdd-vec]
-  (let [atom-vec (vec (atoms-of-phi phi))
+  (let [atom-vec (vec (prop/atoms-of-phi phi))
         tx (map (fn [node]
                   (if
                     (< (:no node) 2)
@@ -220,13 +225,13 @@
 (s/def ::bdd (s/coll-of #(instance? Node %)))
 
 (s/fdef bdd
-        :args (s/cat :phi wff?)
+        :args (s/cat :phi prop/wff?)
         :ret ::bdd)
 
 (defn- tf1-vec
   "Transforms byte vector result from AllSatIterator to get an assignment vector"
   [phi bvec]
-  (let [atom-vec (vec (atoms-of-phi phi))
+  (let [atom-vec (vec (prop/atoms-of-phi phi))
         tx (map-indexed (fn [idx a]
                           (if (zero? a)
                             [(nth atom-vec idx) 'false]
@@ -278,8 +283,8 @@
                     (tf1-vec phi (first (map vec iseq)))))))))
 
 (s/fdef sat
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:one :all}))
+        :args (s/alt :1-args (s/cat :phi prop/wff?)
+                     :2-args (s/cat :phi prop/wff? :mode #{:one :all}))
         :ret (s/nilable (s/or :verum true? :model :lwb.prop/model)))
 
 (defn sat?
@@ -288,7 +293,7 @@
   (if (nil? (sat phi)) false true))
 
 (s/fdef sat?
-        :args (s/cat :phi wff?)
+        :args (s/cat :phi prop/wff?)
         :ret boolean?)
 
 (defn valid?
@@ -297,7 +302,7 @@
   (not (sat? (list 'not phi))))
 
 (s/fdef valid?
-        :args (s/cat :phi wff?)
+        :args (s/cat :phi prop/wff?)
         :ret boolean?)
 
 ; helper functions for visualisation
