@@ -12,7 +12,8 @@
             [clojure.walk :refer (postwalk)]
             [clojure.set :refer (union intersection subset?)]
             [clojure.math.numeric-tower :refer (expt)]
-            [clojure.math.combinatorics :refer (selections)]))
+            [clojure.math.combinatorics :refer (selections)]
+            [lwb.vis :as vis]))
 
 ;; # Propositional logic
 
@@ -503,3 +504,14 @@
 (s/fdef dnf?
         :args (s/cat :phi wff?)
         :ret boolean?)
+
+;; ## Visualisation of a formula
+
+(defn texify
+  "Generates TeX code for TikZ or a pdf file if filename given.
+   Requires: TeX installation, commands texipdf and open"
+  ([phi]
+   (vis/texify phi))
+  ([phi filename]
+   (vis/texify phi filename)))
+

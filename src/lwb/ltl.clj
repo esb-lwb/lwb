@@ -10,7 +10,8 @@
   (:require [lwb.prop :as prop]
             [clojure.string :as str]
             [clojure.java.shell :as shell]
-            [potemkin :as pot]))
+            [potemkin :as pot]
+            [lwb.vis :as vis]))
 
 ;; # Representation of formulae of ltl
 
@@ -79,6 +80,16 @@
      (or (simple-expr? phi) (compound-expr? phi))
      (catch Exception e (if (= mode :msg) (.getMessage e) false)))))
 
+;; ## Visualisation of a formula
+
+(defn texify
+  "Generates TeX code for TikZ or a pdf file if filename given.
+   Requires: TeX installation, commands texipdf and open"
+  ([phi]
+   (vis/texify phi))
+  ([phi filename]
+   (vis/texify phi filename)))
+
 ; # Kripke structures
 
 ; The nodes of a Kripke structure are represented by a pair of a keyword and a set of the
@@ -143,7 +154,7 @@
   [[left right]]
   (str (name left)  " -> " (name right) (if (= left right) " [topath=\"loop above\"]" "") ";\n"))
 
-(defn vis-dot
+(defn dotify
   "Visualisation of the Kripke structure `ks`.
    mode :dot or :neato
    Generates code for graphviz (dot)."
@@ -170,38 +181,37 @@
   "\\end{tikzpicture}
    \\end{document}")
 
-(defn vis-tikz
+(defn tikzify
   "Uses `dot2tex` to get the code of a picture environment in `tikz`.
    Option :neato or :dot (default)
    Result sometimes has to be reworked."
   ([ks]
-   (vis-tikz ks :dot))
+   (tikzify ks :dot))
   ([ks mode]
-    (let [dot-code (vis-dot ks mode)
+    (let [dot-code (dotify ks mode)
           prog     (name mode)]
     (:out (shell/sh "dot2tex" (str "--prog=" prog) "-ftikz" "--styleonly" "--codeonly" :in dot-code)))))
 
-(defn vis-pdf
+(defn texify
   "Makes a pdf file with the visualisation of the a Kripke structure `ks`.
   `filename` is the name of the file to be generated, must have no extension.
   `mode` can be `:dot` (default) oder `:neato`, determing which renderer of
   graphviz is used. Further processing is done by `dot2tex` and `texi2pdf`.
   Finally the generated file is opened by the command `open`."
   ([ks filename]
-   (vis-pdf ks filename :dot))
+   (texify ks filename :dot))
   ([ks filename mode]
-     (let [tikz-body (vis-tikz ks mode)
+     (let [tikz-body (tikzify ks mode)
            tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
            tex-file (str filename ".tex")]
        (spit tex-file tex-code)
        (shell/sh "texi2pdf" tex-file))
        (shell/sh "open" (str filename ".pdf"))))
 
-
 (comment
-  (vis-dot ks1 :dot)
-  (vis-tikz ks1)
-  (vis-pdf ks1 "ks1" :dot)
-  (vis-pdf ks2 "ks2")
+  (dotify ks1 :dot)
+  (tikzify ks1)
+  (texify ks1 "ks1" :dot)
+  (texify ks2 "ks2")
   )
 

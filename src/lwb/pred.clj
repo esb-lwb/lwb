@@ -11,7 +11,8 @@
             [clojure.zip :as zip]
             [clojure.walk :as walk]
             [clojure.spec :as s]
-            [potemkin :as pot]))
+            [potemkin :as pot]
+            [lwb.vis :as vis]))
 
 
 ;; # The language of predicate logic
@@ -469,3 +470,12 @@
         :args (s/cat :fml ::fml :model ::model)
         :ret boolean?)
 
+;; ## Visualisation of a formula
+
+(defn texify
+  "Generates TeX code for TikZ or a pdf file if filename given.
+   Requires: TeX installation, commands texipdf and open"
+  ([phi]
+   (vis/texify phi))
+  ([phi filename]
+   (vis/texify phi filename)))

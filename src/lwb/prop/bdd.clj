@@ -21,7 +21,7 @@
             [clojure.math.combinatorics :refer (selections)]
             [clojure.java.shell :as shell]
             [clojure.spec :as s])
-  (:import  (net.sf.javabdd JFactory BDD)))
+  (:import (net.sf.javabdd JFactory BDD)))
 
 ;; All functions with binary decision diagrams have to be executed in the
 ;; context of an initialized BDDFactory, see the documentation of JavaBDD and BuDDy.     
@@ -36,8 +36,8 @@
   [binding & body]
   `(let ~binding
      (try ~@body
-     (catch Exception e# (str "caught: " (.getMessage e#)))
-     (finally (.done ^JFactory (~binding 0))))))
+          (catch Exception e# (str "caught: " (.getMessage e#)))
+          (finally (.done ^JFactory (~binding 0))))))
 
 ; Initializing the JFactory
 (defn init-bddf
@@ -49,7 +49,7 @@
    Typical values according to the documentation of bdd_init of BuDDy."
   ([type]
    (case type
-     :small   (init-bddf 10000 1000)
+     :small (init-bddf 10000 1000)
      :medsize (init-bddf 100000 10000)
      (init-bddf 1000000 100000)))
   ([nodesize cachesize]
@@ -69,19 +69,19 @@
 
 (def ^:private functions
   ^{:doc "Mapping of operators of prop to JavaBDD methods"}
-  {'not   #(.not   ^BDD %1)
-   'and   #(.and   ^BDD %1 ^BDD %2)
-   'or    #(.or    ^BDD %1 ^BDD %2)
-   'impl  #(.imp   ^BDD %1 ^BDD %2)
+  {'not   #(.not ^BDD %1)
+   'and   #(.and ^BDD %1 ^BDD %2)
+   'or    #(.or ^BDD %1 ^BDD %2)
+   'impl  #(.imp ^BDD %1 ^BDD %2)
    'equiv #(.biimp ^BDD %1 ^BDD %2)
-   'xor   #(.xor   ^BDD %1 ^BDD %2)
-   'ite   #(.ite   ^BDD %1 ^BDD %2 ^BDD %3)})
+   'xor   #(.xor ^BDD %1 ^BDD %2)
+   'ite   #(.ite ^BDD %1 ^BDD %2 ^BDD %3)})
 
 (defn- build-bddi-recur
   "Inner part of the function that builds a BDD object using the BDD Factory."
   [bddf atom-map phi]
   (if (s/valid? :lwb.prop/simple-expr phi)
-    (cond (= phi 'true)  (.one  ^JFactory bddf)
+    (cond (= phi 'true) (.one ^JFactory bddf)
           (= phi 'false) (.zero ^JFactory bddf)
           :else (get atom-map phi))
     (let [op (first phi) a (arity op)]
@@ -116,7 +116,7 @@
 
 ;; Nodes for verum and falsum
 (def ^:private false-node (Node. 0 'false 0 0))
-(def ^:private true-node  (Node. 1 'true 1 1))
+(def ^:private true-node (Node. 1 'true 1 1))
 
 ;; While building the vector of nodes for a bddi we use a map 
 
@@ -141,7 +141,7 @@
   [bddi]
   (cond
     (.isZero ^BDD bddi) 'false
-    (.isOne  ^BDD bddi) 'true
+    (.isOne ^BDD bddi) 'true
     :else bddi))
 
 (defn- process
@@ -150,23 +150,23 @@
   [bddi bdd-map]
   (let [map1 (init-node bddi bdd-map)]
     (if (visited? bddi map1)
-      map1                    ; already visited -> nothing to do
-      (let [lo-bddi (key-bddi (.low  ^BDD bddi))
+      map1                                                  ; already visited -> nothing to do
+      (let [lo-bddi (key-bddi (.low ^BDD bddi))
             map2 (init-node lo-bddi map1)
             hi-bddi (key-bddi (.high ^BDD bddi))
             map3 (init-node hi-bddi map2)
             lo-no (:no (get map3 lo-bddi))
             hi-no (:no (get map3 hi-bddi))
-            no    (:no (get map3 bddi))]
-          (conj! map3 [bddi (Node. no (.var ^BDD bddi) lo-no hi-no)])))))
+            no (:no (get map3 bddi))]
+        (conj! map3 [bddi (Node. no (.var ^BDD bddi) lo-no hi-no)])))))
 
 (defn- build-bdd-recur [bddi bdd-map]
   (cond
     (.isZero ^BDD bddi) bdd-map
-    (.isOne  ^BDD bddi) bdd-map
+    (.isOne ^BDD bddi) bdd-map
     :else (->> bdd-map
                (process bddi)
-               (build-bdd-recur (.low  ^BDD bddi))
+               (build-bdd-recur (.low ^BDD bddi))
                (build-bdd-recur (.high ^BDD bddi)))))
 
 (defn build-bdd
@@ -177,7 +177,7 @@
   [bddi]
   (cond
     (.isZero ^BDD bddi) [(Node. 0 'false 0 0)]
-    (.isOne  ^BDD bddi) [(Node. 1 'true  1 1)]
+    (.isOne ^BDD bddi) [(Node. 1 'true 1 1)]
     :else (vec (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))
 
 (defn reasonable-bddf
@@ -188,7 +188,7 @@
     (cond
       (< c 20) (init-bddf :small)
       (< c 50) (init-bddf :medsize)
-      :else    (init-bddf :large))))
+      :else (init-bddf :large))))
 
 (defn- syms-for-atoms
   "A vector of nodes for the formula `phi` and the corresponding vector of nodes
@@ -228,10 +228,10 @@
   [phi bvec]
   (let [atom-vec (vec (atoms-of-phi phi))
         tx (map-indexed (fn [idx a]
-        (if (zero? a)
-          [(nth atom-vec idx) 'false]
-          [(nth atom-vec idx) 'true])))]
-    (into[] (comp tx (mapcat identity)) bvec)))
+                          (if (zero? a)
+                            [(nth atom-vec idx) 'false]
+                            [(nth atom-vec idx) 'true])))]
+    (into [] (comp tx (mapcat identity)) bvec)))
 
 (defn- idx-in-vec
   "Returns seq of indexes of number -1 in vec"
@@ -254,7 +254,7 @@
   "Gives all possible assignment of truth values from a given
    vector."
   [bvec]
-  (let [c  (count (filter #(= -1 %) bvec))
+  (let [c (count (filter #(= -1 %) bvec))
         sels (selections [0 1] c)]
     (map #(tf2-vec bvec %) sels)))
 
@@ -266,19 +266,19 @@
    (sat phi :one))
   ([phi mode]
    (with-bddf [bddf (reasonable-bddf phi)]
-       (let [bddi (build-bddi bddf phi)
-             iseq (iterator-seq (.allsat bddi))]
-         (cond
-           ; border cases
-           (.isOne bddi) 'true
-           (.isZero bddi) 'nil
-           :else
-           (case mode
-             :all (map #(tf1-vec phi %) (mapcat tfa-vec (vec (map vec iseq))))
-             (tf1-vec phi (first (map vec iseq)))))))))
+              (let [bddi (build-bddi bddf phi)
+                    iseq (iterator-seq (.allsat bddi))]
+                (cond
+                  ; border cases
+                  (.isOne bddi) 'true
+                  (.isZero bddi) 'nil
+                  :else
+                  (case mode
+                    :all (map #(tf1-vec phi %) (mapcat tfa-vec (vec (map vec iseq))))
+                    (tf1-vec phi (first (map vec iseq)))))))))
 
 (s/fdef sat
-        :args (s/alt :1-args (s/cat :phi wff?) 
+        :args (s/alt :1-args (s/cat :phi wff?)
                      :2-args (s/cat :phi wff? :mode #{:one :all}))
         :ret (s/nilable (s/or :verum true? :model :lwb.prop/model)))
 
@@ -317,7 +317,7 @@
   [node]
   (cond
     (zero? (:no node)) "0 [shape=box label=\"\\bot\"];\n"
-    (= (:no node) 1)   "1 [shape=box label=\"\\top\"];\n"
+    (= (:no node) 1) "1 [shape=box label=\"\\top\"];\n"
     :else
     (str (:no node) " [label=\"" (process-atom node) "\", style=\"shape=rectangle,minimum size=6mm,rounded corners=3mm\"];\n"
          (:no node) " -> " (:lo-no node) " [style=dotted];\n"
@@ -325,7 +325,7 @@
 
 ;; ### Visualisation with graphviz
 
-(defn vis-dot
+(defn dotify
   "Visualisation of the bdd for the formula `phi`.
    Generates code for graphviz (dot)."
   [phi]
@@ -352,24 +352,21 @@
   "\\end{tikzpicture}
    \\end{document}")
 
-(defn vis-tikz
-  "Uses `dot2tex` to get the code of a picture environment in `tikz`.
-   Result sometimes has to be reworked."
-  [phi]
-  (let [dot-code (vis-dot phi)]
-    (:out (shell/sh "dot2tex" "-ftikz" "-tmath" "-s" "--codeonly" :in dot-code))))
-
-(defn vis-pdf
-  "Makes a pdf file with the visualisation of the bdd for `phi`.
-  `filename` is the name of the file to be generated, must have no extension.
-  Uses `dot2tex` and `texi2pdf`, finally the
-  generated file is opened by the command `open`."
-  [phi filename]
-  (let [tikz-body (vis-tikz phi)
-        tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
-        tex-file (str filename ".tex")]
-        (spit tex-file tex-code)
-        (shell/sh "texi2pdf" tex-file))
-        (shell/sh "open" (str filename ".pdf")))
-
-
+(defn texify
+  "Uses `dot2tex` to get the code of a picture environment in `tikz`.        
+   Result sometimes has to be reworked.        
+   With a filename given:        
+   Makes a pdf file with the visualisation of the bdd for `phi`.        
+   `filename` is the name of the file to be generated, must have no extension.        
+   Uses `dot2tex` and `texi2pdf`, finally the
+   generated file is opened by the command `open`."
+  ([phi]
+   (let [dot-code (dotify phi)]
+     (:out (shell/sh "dot2tex" "-ftikz" "-tmath" "-s" "--codeonly" :in dot-code))))
+  ([phi filename]
+   (let [tikz-body (texify phi)
+         tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
+         tex-file (str filename ".tex")]
+     (spit tex-file tex-code)
+     (shell/sh "texi2pdf" tex-file))
+   (shell/sh "open" (str filename ".pdf"))))

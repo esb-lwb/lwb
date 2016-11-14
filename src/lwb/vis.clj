@@ -130,45 +130,20 @@
                          (take-while (complement zip/end?)
                                      (iterate zip/next loc)))))))
 
-(defn vis
-  "Visualisation of the syntax tree of formula `phi`.
-   Generates code for tikz."
-  [phi]
-  (let [tikz-body (vis-tikz-body phi)]
-    (str tikz-header "\n" tikz-body "\n" tikz-footer)))
+(defn texify
+  "Visualisation of the syntax tree of formula `phi`.       
+   Generates code for tikz.       
+   With the filename given:      
+   Makes a pdf file with the visualisation of the syntax tree of `phi`.        
+   `filename` is the name of the file to be generated, must have no extension.       
+   The function uses the shell command `texi2pdf` that compiles tex code,
+   and `open` to show the generated file."
+  ([phi]
+   (let [tikz-body (vis-tikz-body phi)]
+     (str tikz-header "\n" tikz-body "\n" tikz-footer)))
+  ([phi filename]
+   (let [tex-code (texify phi)]
+     (spit (str filename ".tex") tex-code)
+     (shell/sh "texi2pdf" (str filename ".tex"))
+     (shell/sh "open" (str filename ".pdf")))))
 
-(defn vis-pdf
-  "Makes a pdf file with the visualisation of the syntax tree of `phi`.     
-  `filename` is the name of the file to be generated, must have no extension.      
-  The function uses the shell command `texi2pdf` that compiles tex code,
-  and `open` to show the generated file."
-  [phi filename]
-  (let [tex-code (vis phi)]
-    (spit (str filename ".tex") tex-code)
-    (shell/sh "texi2pdf" (str filename ".tex"))
-    (shell/sh "open" (str filename ".pdf"))))
-
-;; Examples
-(comment
-  (vis-pdf '(and (or p_<12> q) q) "simple")
-
-  (def grp-axioms-classic
-    '(and
-       (forall [x y z] (= (op x (op y z)) (op (op x y) z)))
-       (exists [unit] (and
-                        (forall [x] (= (op x unit) x))
-                        (forall [x] (exists [inv] (= (op x inv) unit)))))))
-
-  (vis-pdf grp-axioms-classic "group-axioms")
-
-  (vis-pdf '(or (and (or p q) q) r) "simple2")
-
-  (def ltl-phi
-    '(and
-       (always p)
-       (finally q)
-       (atnext r)
-       (until s t)))
-
-  (vis-pdf ltl-phi "ltl")
-  )

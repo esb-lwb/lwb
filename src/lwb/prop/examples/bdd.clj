@@ -26,12 +26,12 @@
     (list* 'and (min-kof k symbs))))
 
 (comment ; interactive part 
-  (vis-pdf (majority '(x_1 x_2)) "maj2")
-  (vis-pdf (majority '(x_1 x_2 x_3)) "maj3")
-  (vis-pdf (majority '(x_1 x_2 x_3 x_4)) "maj4")
-  (vis-pdf (majority '(x_1 x_2 x_3 x_4 x_5)) "maj5")
-  (vis-pdf (majority '(x_1 x_2 x_3 x_4 x_5 x_6 x_7 x_8 x_9 x_<10> x_<11> x_<12> x_<13> x_<14> x_<15>)) "maj15")
-  (vis-pdf (majority '(x_1 x_2 x_3 x_4 x_5 x_6 x_7 x_8 x_9 x_<10> x_<11> x_<12> x_<13> x_<14> x_<15> x_<16>)) "maj16")
+  (texify (majority '(x_1 x_2)) "maj2")
+  (texify (majority '(x_1 x_2 x_3)) "maj3")
+  (texify (majority '(x_1 x_2 x_3 x_4)) "maj4")
+  (texify (majority '(x_1 x_2 x_3 x_4 x_5)) "maj5")
+  (texify (majority '(x_1 x_2 x_3 x_4 x_5 x_6 x_7 x_8 x_9 x_<10> x_<11> x_<12> x_<13> x_<14> x_<15>)) "maj15")
+  (texify (majority '(x_1 x_2 x_3 x_4 x_5 x_6 x_7 x_8 x_9 x_<10> x_<11> x_<12> x_<13> x_<14> x_<15> x_<16>)) "maj16")
   )
 
 ; ----------------------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@
 (valid? phi1)
 
 (comment
-  (vis-pdf phi1 "phi1")
+  (texify phi1 "phi1")
   )
 
 ; ----------------------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@
 (def phi2 '(impl (or (impl S (or R L)) (and (not Q) R)) (impl (not (impl P S)) R)))
 
 (comment
-  (vis-pdf phi2 "phi2")
+  (texify phi2 "phi2")
   )
 
 (sat phi2 :all)
@@ -92,11 +92,11 @@
 (def mba1 '(or P (and Q R)))
 
 (comment
-  (vis-pdf mba1 "mba1")
+  (texify mba1 "mba1")
   )
 
 (def mba2 '(xor P (xor Q R)))
 
 (comment
-  (vis-pdf mba2 "mba2")
+  (texify mba2 "mba2")
   )
