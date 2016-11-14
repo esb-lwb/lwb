@@ -473,7 +473,7 @@
 ;; ## Visualisation of a formula
 
 (defn texify
-  "Generates TeX code for TikZ or a pdf file if filename given.
+  "Generates TeX code for TikZ or a pdf file if filename given.       
    Requires: TeX installation, commands texipdf and open"
   ([phi]
    (vis/texify phi))
