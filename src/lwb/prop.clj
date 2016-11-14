@@ -294,6 +294,13 @@
     (println prop)
 	  (print-table header table)))
 
+(defn ptt
+  "Pretty prints truth-table for `phi`."
+  [phi]
+  (->> phi
+       truth-table
+       print-truth-table))
+
 ;;## Transformation to conjunctive normal form
 
 ;;### (Standardized) conjunctive normal form

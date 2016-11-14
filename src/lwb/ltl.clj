@@ -154,7 +154,7 @@
   [[left right]]
   (str (name left)  " -> " (name right) (if (= left right) " [topath=\"loop above\"]" "") ";\n"))
 
-(defn dotify
+(defn ks-dotify
   "Visualisation of the Kripke structure `ks`.
    mode :dot or :neato
    Generates code for graphviz (dot)."
@@ -181,27 +181,27 @@
   "\\end{tikzpicture}
    \\end{document}")
 
-(defn tikzify
+(defn ks-tikzify
   "Uses `dot2tex` to get the code of a picture environment in `tikz`.
    Option :neato or :dot (default)
    Result sometimes has to be reworked."
   ([ks]
-   (tikzify ks :dot))
+   (ks-tikzify ks :dot))
   ([ks mode]
-    (let [dot-code (dotify ks mode)
+    (let [dot-code (ks-dotify ks mode)
           prog     (name mode)]
     (:out (shell/sh "dot2tex" (str "--prog=" prog) "-ftikz" "--styleonly" "--codeonly" :in dot-code)))))
 
-(defn texify
+(defn ks-texify
   "Makes a pdf file with the visualisation of the a Kripke structure `ks`.
   `filename` is the name of the file to be generated, must have no extension.
   `mode` can be `:dot` (default) oder `:neato`, determing which renderer of
   graphviz is used. Further processing is done by `dot2tex` and `texi2pdf`.
   Finally the generated file is opened by the command `open`."
   ([ks filename]
-   (texify ks filename :dot))
+   (ks-texify ks filename :dot))
   ([ks filename mode]
-     (let [tikz-body (tikzify ks mode)
+     (let [tikz-body (ks-tikzify ks mode)
            tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
            tex-file (str filename ".tex")]
        (spit tex-file tex-code)
@@ -209,9 +209,9 @@
        (shell/sh "open" (str filename ".pdf"))))
 
 (comment
-  (dotify ks1 :dot)
-  (tikzify ks1)
-  (texify ks1 "ks1" :dot)
-  (texify ks2 "ks2")
+  (ks-dotify ks1 :dot)
+  (ks-tikzify ks1)
+  (ks-texify ks1 "ks1" :dot)
+  (ks-texify ks2 "ks2")
   )
 
