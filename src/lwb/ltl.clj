@@ -10,6 +10,7 @@
   (:require [lwb.prop :as prop]
             [potemkin :as pot]
             [lwb.vis :as vis]
+            [lwb.ltl.kripke :as kripke]
             [clojure.spec :as s]
             [clojure.string :as str]))
 
@@ -26,7 +27,9 @@
                         "- (texify phi), (texify phi filename)"
                         "  generates pdf of phi"
                         "  e.g. (texify '(always P) \"myfile\")"])]
-    (println info)))
+    (println info)
+    (println)
+    (kripke/man)))
 
 ;; # Representation of formulas of ltl
 
