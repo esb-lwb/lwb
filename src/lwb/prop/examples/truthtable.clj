@@ -11,12 +11,6 @@
   (:require [lwb.prop :refer :all])
   (:require [lwb.prop.sat :refer [valid? sat?]]))
 
-(defn ptt
-  [phi]
-  (->> phi 
-      truth-table
-      print-truth-table))
-
 ;; Examples from Volker Halbach: The Logic Manual
 
 ;; p. 38
