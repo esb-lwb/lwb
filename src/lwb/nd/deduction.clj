@@ -304,6 +304,7 @@
           new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines)) ]
       (normalize new-proof))))
 
+
 (defn- new-var?
   "Is `s` a symbol for a new variable i.e. of the form `Vn` with an integer `n`?     
    Throws an exception, if n is not an integer."
@@ -316,7 +317,7 @@
   "Unifies all instances of symbol `old` inside the `proof` with `new`.     
    Requires: `old`  has the form `Vn` with an integer `n`.       
    Throws exception if `old` does not have that form."
-  [proof old new]
+  [proof logic old new]
   (if (new-var? old)
     (normalize
       (walk/postwalk
@@ -330,4 +331,4 @@
               :else node)
             node))
         proof))
-    (throw (Exception. (str "\"" old "\" is not a symbol. You can only unify symbols.")))))
+    (throw (Exception. (str "'" old "' is not a symbol of the form 'Vn'. You can only unify such symbols.")))))
