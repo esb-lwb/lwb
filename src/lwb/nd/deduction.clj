@@ -304,10 +304,20 @@
           new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines)) ]
       (normalize new-proof))))
 
+(defn- new-var?
+  "Is `s` a symbol for a new variable i.e. of the form `Vn` with an integer `n`?     
+   Throws an exception, if n is not an integer."
+  [s]
+  (if (symbol? s)
+    (let [name (name s)]
+      (and (= \V (first name)) (integer? (Integer/parseInt (subs name 1)))))))
+
 (defn unify
-  "Unifies all instances of symbol `old` inside the `proof` with `new`."
+  "Unifies all instances of symbol `old` inside the `proof` with `new`.     
+   Requires: `old`  has the form `Vn` with an integer `n`.       
+   Throws exception if `old` does not have that form."
   [proof old new]
-  (if (symbol? old)
+  (if (new-var? old)
     (normalize
       (walk/postwalk
         (fn [node]
