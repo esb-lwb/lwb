@@ -101,7 +101,7 @@
               (io/import-theorems (str rothpath "theorems-pred.edn") roths))
       :ltl (do
              (io/import-rules (str rothpath "rules-ltl.edn") roths)
-             #_(io/import-theorems (str rothpath "theorems-ltl.edn") roths)))
+             (io/import-theorems (str rothpath "theorems-ltl.edn") roths)))
     (println welcome)
     (println (str "Info: Rules and theorems loaded: " logic)))
 
@@ -271,3 +271,4 @@
       (io/import-theorems filename @roths :file)
       (catch Exception e
         (println (str "Error: " (.getMessage e))))))
+
