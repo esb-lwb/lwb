@@ -137,7 +137,7 @@
      (throw (Exception. "The proof is not completed yet.")))
    ;; if there is no such file we generate it
    (.createNewFile ^File (io/as-file filename))
-   (let [theorems-v (import-v filename valid-theorem?)
+   (let [theorems-v (import-file-v filename valid-theorem?)
          ids (set (map :id theorems-v))
          already-there? (contains? ids id)]
      (if (and (= mode :check) already-there?)
