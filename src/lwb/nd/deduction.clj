@@ -9,6 +9,9 @@
 (ns lwb.nd.deduction
   (:require [clojure.walk :as walk]
             [lwb.nd.proof :refer :all]
+            [lwb.nd.swap.prop :as sprop]
+            [lwb.nd.swap.pred :as spred]
+            [lwb.nd.swap.ltl :as sltl]
             [lwb.nd.rules :as rules]))
 
 ;; # Application of deduction steps to proofs
@@ -150,8 +153,8 @@
   [proof match-pattern]
   (let [plnos (filter number? (map second match-pattern))]
     (if (empty? plnos) true
-                       (empty? (filter todoline? 
-                               (map #(pline-at-plno proof %) plnos) ))))) 
+                       (empty? (filter todoline?
+                                       (map #(pline-at-plno proof %) plnos))))))
 
 (defn- check-user-input
   "Checks of user input to a proof step, independent of the direction of the step."
@@ -161,7 +164,7 @@
     (throw (Exception. (format "There's no such rule or theorem: %s" roth))))
   ; argsv is empty or has at least ref to a line number
   (if (and (not-empty argsv) (empty? (filter number? argsv)))
-    (throw (Exception. (format "There must be at least one ref to a proof line in your arguments: %s" (str argsv))))) 
+    (throw (Exception. (format "There must be at least one ref to a proof line in your arguments: %s" (str argsv)))))
   ; are the line numbers in argsv distinct?
   (if (and (not-empty argsv) (not (apply distinct? (filter number? argsv))))
     (throw (Exception. (format "There are duplicates in your arguments: %s" (str argsv)))))
@@ -301,34 +304,33 @@
           refs-pattern' (upgrade-refs-pattern refs-pattern new-plines)
           refs (mapv second (filter #(= \g (first (name (first %)))) refs-pattern'))
           proof' (upgrade-refs proof (mapv second (filter #(= :cm (first %)) refs-pattern')) roth refs)
-          new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines)) ]
+          new-proof (vec (reduce #(add-above-plid %1 todo-plid %2) proof' new-plines))]
       (normalize new-proof))))
 
-
-(defn- new-var?
-  "Is `s` a symbol for a new variable i.e. of the form `Vn` with an integer `n`?     
-   Throws an exception, if n is not an integer."
-  [s]
-  (if (symbol? s)
-    (let [name (name s)]
-      (and (= \V (first name)) (integer? (Integer/parseInt (subs name 1)))))))
-
-(defn unify
-  "Unifies all instances of symbol `old` inside the `proof` with `new`.     
-   Requires: `old`  has the form `Vn` with an integer `n`.       
-   Throws exception if `old` does not have that form."
+(defn swap
+  "Exchanges all instances of symbol `old` inside the `proof` with `new`.     
+   Requires: `old`  has the form `?n` with an integer `n`.       
+   Throws exception if `old` does not have that form.        
+   Throws exception if `new` is not allowed depending on current logic and proof."
   [proof logic old new]
-  (if (new-var? old)
-    (normalize
-      (walk/postwalk
-        (fn [node]
-          (if (map? node)
-            (cond
-              (symbol? (:body node)) (if (= (:body node) old)
-                                       (assoc node :body new)
-                                       node)
-              (list? (:body node)) (assoc node :body (walk/prewalk-replace {old new} (:body node)))
-              :else node)
-            node))
-        proof))
-    (throw (Exception. (str "'" old "' is not a symbol of the form 'Vn'. You can only unify such symbols.")))))
+  ; check old
+  (if-not (qmsymbol? old)
+    (throw (Exception. (format "'%s' is not a symbol of the form '?n'. You can only swap such symbols." old))))
+  ; check depending on logic and proof
+  (case logic
+    :prop (sprop/check-swap proof old new)
+    :pred (spred/check-swap proof old new)
+    :ltl  (sltl/check-swap proof old new))
+  ; no exception so far, hence replace old by new is now okay
+  (normalize
+    (walk/postwalk
+      (fn [node]
+        (if (map? node)
+          (cond
+            (symbol? (:body node)) (if (= (:body node) old)
+                                     (assoc node :body new)
+                                     node)
+            (list? (:body node)) (assoc node :body (walk/prewalk-replace {old new} (:body node)))
+            :else node)
+          node))
+      proof)))

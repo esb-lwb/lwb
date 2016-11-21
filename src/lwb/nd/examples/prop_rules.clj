@@ -9,7 +9,6 @@
 (ns lwb.nd.examples.prop-rules
   (:require [lwb.nd.repl :refer :all]))
 
-
 ; interactive checking in the repl for nd
 
 (load-logic :prop)
@@ -23,11 +22,11 @@
 
 (proof '[P1 P2] '(and P1 P2))
 (step-f :and-i 1)
-(unify 'V1 'P2)
+(swap '?1 'P2)
 
 (proof '[P1 P2] '(and P1 P2))
 (step-f :and-i :? 2)
-(unify 'V1 'P1)
+(swap '?1 'P1)
 ;
 ; --------------------------------------------------
 ; 1: P1                                      premise
@@ -71,7 +70,7 @@
 ; forward inventing the right side
 (proof 'P1 '(or P1 P2))
 (step-f :or-i1 1)
-(unify 'V1 'P2)
+(swap '?1 'P2)
 ;
 ; --------------------------------------------------
 ; 1: P1                                      premise
@@ -90,7 +89,7 @@
 ; forward inventing the left side
 (proof 'P2 '(or P1 P2))
 (step-f :or-i2 1)
-(unify 'V1 'P1)
+(swap '?1 'P1)
 ;
 ; --------------------------------------------------
 ; 1: P2                                      premise
@@ -204,7 +203,7 @@
 (proof '(or P (not P)))
 (step-b :raa 2)
 (step-f :tnd)
-(unify 'V1 'P)
+(swap '?1 'P)
 (step-f :not-e 1 2)
 
 ;
@@ -232,7 +231,7 @@
 (step-f :and-e2 1)
 (step-f :not-e 3 2)
 (step-f :efq 4)
-(unify 'V1 'Q)
+(swap '?1 'Q)
 
 ;
 ; --------------------------------------------------
@@ -326,7 +325,7 @@
 (step-b :or-i2 3)
 (step-b :not-i 3)
 (step-f :or-i1 2)
-(unify 'V1 '(not P))
+(swap '?1 '(not P))
 (step-f :not-e 1 3)
 
 ;

@@ -38,9 +38,9 @@
                         "- (step-b roth args)"
                         "  proof step backward using rule or theorem with args"
                         "  e.g. (step-b :not-i 5)"
-                        "- (unify symbol replacement"
-                        "  unifies symbol with replacement"
-                        "  e.g. (unify 'V1 'Q)"
+                        "- (swpa symbol replacement"
+                        "  swaps symbol and replacement"
+                        "  e.g. (swap '?1 'Q)"
                         "- (undo)"
                         "  reverse the last proofstep"
                         "- (show)"
@@ -172,18 +172,33 @@
     (catch Exception e
       (println (str "Error: " (.getMessage e))))))
 
-(defn unify
-  "Unifies symbols of the form `Vn` with a `new` expression.     
+(defn swap
+  "Exchanges question mark symbols of the form `?n` with a `new` expression.     
+   Requires: `old` has the form `?n`.     
+             `new` is allowed according to the current logic.     
    Modifies: atom `p`, the proof, and
              atom `p-history`, the history of the current proof."
   [old new]
   (try
-    (let [proof' (deduc/unify @p (:logic (meta #'roths)) old new)]
+    (let [proof' (deduc/swap @p (:logic (meta #'roths)) old new)]
       (swap! p-history conj @p)
       (reset! p proof')
       (show))
     (catch Exception e
       (println (str "Error: " (.getMessage e))))))
+
+;; ###Remark:         
+
+;; Some of the rules have constraints, e.g. the introduction of a actual element in the
+;; introduction of forall must be fresh.      
+;; Such constraints are not expressed in the rule, but checked be the functions in the
+;; namespace `lwb.nd.swap` for the logics we support.     
+;; It would be an interesting task to enhance the langugae of our rules to make a more
+;; generic solution possible.
+
+
+
+
 
 (defn undo
   "Undo the last change of the proof.     

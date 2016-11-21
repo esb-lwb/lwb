@@ -79,6 +79,10 @@
 (s/def ::fml (s/or :simple-expr ::simple-expr
                    :compl-expr ::compl-expr))
 
+;; For natural deduction in ltl we need a special form of an ltl formula at a certain state
+
+(s/def ::at-fml (s/cat :at #{'at} :state (s/coll-of symbol? :kind vector? :count 1) :fml ::fml))
+
 ;; ## Is a formula well-formed?
 
 (defn wff?

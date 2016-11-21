@@ -75,9 +75,16 @@
 {:id :finally-i
  :given      [(at [j] phi) (<= i j)]
  :conclusion [(at [i] (finally phi))]}
+;{:id :finally-e
+; :given      [(at [i] (finally phi))]
+; :conclusion [(<= i j) (at [j] phi)]}
+; folgende Regel entspricht dem Vorgehen bei exists-e
 {:id :finally-e
- :given      [(at [i] (finally phi))]
- :conclusion [(<= i j) (at [j] phi)]}
+ :given      [(at [i] (finally phi))
+              (infer [(<= i j)
+                      (at [j] phi)]
+                chi)]
+ :conclusion [chi]}
 
 ; UNTIL
 {:id :until-i
@@ -98,11 +105,18 @@
  :conclusion [(<= i i)]}
 {:id :serial
  :given      []
+ :conclusion [(<= i j)]}
+{:id :succ
+ :given      []
  :conclusion [(succ i j)]}
 {:id :</<=
  :given      [(< i j)]
  :conclusion [(<= i j)]}
-{:id :atnext/<=
+{:id :succ/<
+ :given      [(succ i j)]
+ :conclusion [(< i j)]}
+; The following rule follows from succ/< and </<=
+{:id :succ/<=
  :given      [(succ i j)]
  :conclusion [(<= i j)]}
 {:id :transitiv
@@ -110,4 +124,4 @@
  :conclusion [(<= i k)]}
 {:id :linear
  :given      [(<= i j) (<= i k)]
- :conclusion [(or (or (<= j k) (== j k)) (<= k j))]}
+ :conclusion [(or (< j k) (== j k) (< k j))]}

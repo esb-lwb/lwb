@@ -9,7 +9,6 @@
 (ns lwb.nd.examples.prop-classical
   (:require [lwb.nd.repl :refer :all]))
 
-
 (load-logic :prop)
 
 ; interactive checking in the repl for nd
@@ -82,23 +81,11 @@
 
 (proof '(or P (not P)))
 (step-b :raa 2)
-(step-b :not-e 3)
-(unify 'V1 '(or P (not P)))
-(step-b :or-i2 3)
-(step-b :not-i 3)
-(step-f :or-i1 2)
-(unify 'V2 '(not P))
-(step-f :not-e 1 3)
-
-;; or
-
-(proof '(or P (not P)))
-(step-b :raa 2)
 (step-b :not-e 3 1)
 (step-b :or-i2 3)
 (step-b :not-i 3)
 (step-f :or-i1 2)
-(unify 'V1 '(not P))
+(swap '?1 '(not P))
 (step-f :not-e 1 3)
 
 ;(export "resources/nd/theorems-prop.edn" :tnd)
@@ -154,9 +141,9 @@
 (step-b :impl-i 2)
 (step-b :raa 3)
 (step-b :not-e 4)
-(unify 'V1 'P)
+(swap '?1 'P)
 (step-b :impl-e 4)
-(unify 'V2 '(impl P Q))
+(swap '?2 '(impl P Q))
 (step-b :impl-i 4)
 (step-f :not-e 2 3)
 (step-b :efq 6)
@@ -190,15 +177,15 @@
 (proof '(not (and P Q)) '(or (not P) (not Q)))
 (step-b :raa 3)
 (step-b :not-e 4)
-(unify 'V1 '(and P Q))
+(swap '?1 '(and P Q))
 (step-b :and-i 4)
 (step-b :raa 6)
 (step-b :not-e 7)
-(unify 'V2 '(or (not P) (not Q)))
+(swap '?2 '(or (not P) (not Q)))
 (step-b :or-i2 7)
 (step-b :raa 4)
 (step-b :not-e 5)
-(unify 'V3 '(or (not P) (not Q)))
+(swap '?3 '(or (not P) (not Q)))
 (step-b :or-i1 5)
 
 ; (export "resources/nd/theorems-prop.edn" :not-and->or-not)
@@ -264,11 +251,11 @@
 (step-b :and-i 3)
 (step-b :not-i 3)
 (step-f :or-i1 2)
-(unify 'V1 'Q)
+(swap '?1 'Q)
 (step-f :not-e 1 3)
 (step-b :not-i 7)
 (step-f :or-i2 6)
-(unify 'V2 'P)
+(swap '?2 'P)
 (step-f :not-e 1 7)
 
 ;(export "resources/nd/theorems-prop.edn" :not-or->and-not)

@@ -72,3 +72,4 @@
              (if (and (= var (zip/node loc)) (not (bounded? (zip/path loc) var)))
                (recur (zip/next (zip/remove (zip/insert-left loc t)))) ; no recursion please
                (recur (zip/next loc)))))))
+
