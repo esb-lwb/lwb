@@ -9,7 +9,6 @@
 (ns lwb.nd.examples.pred-rules
   (:require [lwb.nd.repl :refer :all]))
 
-
 (load-logic :pred)
 
 ; interactive checking in the repl for nd
@@ -19,7 +18,7 @@
 
 (proof '(= :x :x))
 (step-f :equal-i)
-(unify 'V1 :x)
+(swap '?1 :x)
 
 ;
 ;   --------------------------------------------------
@@ -41,9 +40,9 @@
 
 (proof '(forall [x] (or (P x) (not (P x)))))
 (step-b :forall-i 2)
-(unify 'V1 :t)
+(swap '?1 :t)
 (step-f :tnd)
-(unify 'V2 '(P :t))
+(swap '?2 '(P :t))
 
 ;    --------------------------------------------------
 ;     ------------------------------------------------
@@ -84,9 +83,9 @@
 
 (proof '(exists [x] (P x)) '(or (P :t) (not (P :t))))
 (step-f :exists-e 1 3)
-(unify 'V1 :t)
+(swap '?1 :t)
 (step-f :or-i1 3)
-(unify 'V2 '(not (P :t)))
+(swap '?2 '(not (P :t)))
 
 ;
 ;    --------------------------------------------------

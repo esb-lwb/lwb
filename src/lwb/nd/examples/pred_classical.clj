@@ -22,7 +22,7 @@
 (step-b :raa 3)
 (step-b :not-e 4 1)
 (step-b :forall-i 4)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-b :raa 5)
 (step-b :not-e 6 2)
 (step-b :exists-i 6 3)
@@ -66,7 +66,7 @@
 (proof '(exists [x] (not (P x))) '(not (forall [x] (P x))))
 (step-b :not-i 3)
 (step-f :exists-e 1 4)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-f :forall-e 2 3)
 (step-f :not-e 4 5)
 
@@ -96,7 +96,7 @@
 
 (proof '(not (exists [x] (P x))) '(forall [x] (not (P x))))
 (step-b :forall-i 3)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-b :not-i 4)
 (step-b :not-e 5 1)
 (step-b :exists-i 5 2)
@@ -122,7 +122,7 @@
 (proof '(forall [x] (not (P x))) '(not (exists [x] (P x))))
 (step-b :not-i 3)
 (step-f :exists-e 2 4)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-f :forall-e 1 3)
 (step-f :not-e 5 4)
 
@@ -148,10 +148,10 @@
 
 ; equal-refl: equality is reflexiv
 
-(proof '(= t1 t2) '(= t2 t1))
+(proof '(= :t1 :t2) '(= :t2 :t1))
 (step-f :equal-i)
-(unify 'V1 't1)
-(step-f :equal-e 1 2 '(= x t1) 'x)
+(swap '?1 :t1)
+(step-f :equal-e 1 2 '(= x :t1) 'x)
 
 ;(export "resources/nd/theorems-pred.edn" :equals-refl)
 
@@ -164,10 +164,10 @@
 
 ; equal-trans: equality is transitiv
 
-(proof '[(= t1 t2) (= t2 t3)] '(= t1 t3))
-(step-f :equal-e 2 1 '(= t1 x) 'x)
+(proof '[(= :t1 :t2) (= :t2 :t3)] '(= :t1 :t3))
+(step-f :equal-e 2 1 '(= :t1 x) 'x)
 
-(export "resources/nd/theorems-pred.edn" :equal-refl)
+;(export "resources/nd/theorems-pred.edn" :equal-refl)
 
 ;
 ; --------------------------------------------------
@@ -188,7 +188,7 @@
 
 (proof '[(forall [x] (impl (P x) (Q x))) (forall [x] (impl (Q x) (R x)))] '(forall [x] (impl (P x) (R x))))
 (step-b :forall-i 4)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-f :forall-e 1 3)
 (step-f :forall-e 2 3)
 (step-b :impl-i 7)
@@ -219,7 +219,7 @@
 
 (proof '[(forall[x] (impl (P x) (not (Q x)))) (forall [x] (impl (R x) (P x)))] '(forall [x] (impl (R x) (not (Q x)))))
 (step-b :forall-i 4)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-f :forall-e 1 3)
 (step-f :forall-e 2 3)
 (step-b :impl-i 7)
@@ -250,7 +250,7 @@
 
 (proof '[(forall [x] (impl (P x) (Q x))) (exists [x] (and (R x) (P x)))] '(exists [x] (and (R x) (Q x))))
 (step-f :exists-e 2 4)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-f :forall-e 1 3)
 (step-f :and-e2 4)
 (step-f :impl-e 5 6)
@@ -281,7 +281,7 @@
 
 (proof '[(forall [x] (impl (P x) (not (Q x)))) (exists [x] (and (R x) (P x)))] '(exists [x] (and (R x) (not (Q x)))))
 (step-f :exists-e 2 4)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-f :forall-e 1 3)
 (step-f :and-e2 4)
 (step-f :impl-e 5 6)

@@ -189,9 +189,7 @@
 
 (proof '(or E F) '(not (and (not E) (not F))))
 (step-b :not-i 3)
-(step-b :or-e 4)
-(unify 'V1 'E)
-(unify 'V2 'F)
+(step-f :or-e 1 4)
 (step-f :and-e1 2)
 (step-f :not-e 4 3)
 (step-f :and-e2 2)
@@ -226,11 +224,11 @@
 (step-b :and-i 4)
 (step-b :not-i 6)
 (step-f :or-i2 5)
-(unify 'V1 'E)
+(swap '?1 'E)
 (step-f :not-e 2 6)
 (step-b :not-i 4)
 (step-f :or-i1 3)
-(unify 'V2 'F)
+(swap '?2 'F)
 (step-f :not-e 2 4)
 
 ;
@@ -264,7 +262,7 @@
 ; we can do the following
 (proof '(or E (not E)))
 (step-f :tnd)
-(unify 'V1 'E)
+(swap '?1 'E)
 
 ;
 ;    --------------------------------------------------
@@ -335,7 +333,7 @@
 (proof '[(actual :k) Dark (impl Dark (forall [x] (forall [y] (not (Saw x y)))))] '(not (exists [z] (Saw z, :k))))
 (step-b :not-i 5)
 (step-f :exists-e 4 6) 
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-f :impl-e 3 2)
 (step-f :forall-e 7 5)
 (step-f :forall-e 8 1)
@@ -365,7 +363,7 @@
 
 (proof '[(forall [x] (impl (R x) (S x))) (forall [y] (impl (S y) (T y)))] '(forall [z] (impl (R z) (T z))))
 (step-b :forall-i 4)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-f :forall-e 1 3)
 (step-f :forall-e 2 3)
 (step-b :impl-i 7)
@@ -408,7 +406,7 @@
 
 (proof '(forall [x] (Green x)) '(forall [y] (impl (Sheep y) (Green y))))
 (step-b :forall-i 3)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-b :impl-i 4)
 (step-f :forall-e 1 2)
 
@@ -430,7 +428,7 @@
 
 (proof '[(forall [x] (not (Green x))) (forall [y] (not (Sheep y)))] '(forall [z] (impl (Sheep z) (Green z))))
 (step-b :forall-i 4)
-(unify 'V1 :i)
+(swap '?1 :i)
 (step-b :impl-i 5)
 (step-f :forall-e 2 3)
 (step-f :not-e 5 4)
@@ -458,7 +456,7 @@
 ; That's my proof
 (proof '[(actual :j) (actual :k)] '(exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))))
 (step-f :tnd)
-(unify 'V1 '(and (Drunk :j) (Drunk :k)))
+(swap '?1 '(and (Drunk :j) (Drunk :k)))
 (step-f :or-e 3 5)
 (step-f :and-e1 4)
 (step-b :exists-i 7 1)
@@ -558,13 +556,13 @@
 
 (proof '(actual :i) '(exists [x] (impl (Drunk x) (forall [y] (Drunk y)))))
 (step-f :tnd)
-(unify 'V1 '(forall [y] (Drunk y)))
+(swap '?1 '(forall [y] (Drunk y)))
 (step-f :or-e 2 4)
 (step-b :exists-i 5 1)
 (step-b :impl-i 5)
 (step-f :not-forall->exists-not 8)
 (step-f :exists-e 9 11)
-(unify 'V2 :j)
+(swap '?2 :j)
 (step-b :exists-i 13 10)
 (step-b :impl-i 13)
 (step-f :not-e 11 12)
