@@ -170,6 +170,81 @@
 ; 10: (impl (impl (impl P Q) P) P)            "impl-i" ([1 9])
 ;    --------------------------------------------------
 
+; -----------------------------------------------------------------------------------------
+; impl-and->impl-impl
+
+(proof '(impl (and P Q) R) '(impl P (impl Q R)))
+(step-b :impl-i 3)
+(step-b :impl-i 4)
+(step-f :and-i 2 3)
+(step-f :impl-e 1 4)
+
+; (export "resources/nd/theorems-prop.edn" :impl-and->impl-impl)
+
+; -----------------------------------------------------------------------------------------
+; impl-impl->impl-and
+
+(proof '(impl P (impl Q R)) '(impl (and P Q) R))
+(step-b :impl-i 3)
+(step-f :and-e1 2)
+(step-f :impl-e 1 3)
+(step-f :and-e2 2)
+(step-f :impl-e 4 5)
+
+; (export "resources/nd/theorems-prop.edn" :impl-impl->impl-and)
+
+; -----------------------------------------------------------------------------------------
+; and-comm
+
+(proof '(and P Q) '(and Q P))
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-f :and-i 3 2)
+
+; (export "resources/nd/theorems-prop.edn" :and-comm)
+
+; -----------------------------------------------------------------------------------------
+; or-comm
+
+(proof '(or P Q) '(or Q P))
+(step-f :or-e 1 3)
+(step-f :or-i2 2)
+(swap '?1 'Q)
+(step-b :or-i1 6)
+
+; (export "resources/nd/theorems-prop.edn" :or-comm)
+
+; -----------------------------------------------------------------------------------------
+; and-dist
+
+(proof '(and P (and Q R)) '(and (and P Q) R))
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-f :and-e1 3)
+(step-f :and-e2 3)
+(step-f :and-i 2 4)
+(step-f :and-i 6 5)
+
+; (export "resources/nd/theorems-prop.edn" :and-dist)
+
+; -----------------------------------------------------------------------------------------
+; or-dist
+
+(proof '(or P (or Q R)) '(or (or P Q) R))
+(step-f :or-e 1 3)
+(step-f :or-i1 2)
+(swap '?1 'Q)
+(step-f :or-i1 3)
+(swap '?2 'R)
+(step-f :or-e 5 7)
+(step-f :or-i2 6)
+(swap '?3 'P)
+(step-f :or-i1 7)
+(swap '?4 'R)
+(step-f :or-i2 9)
+(swap '?5 '(or P Q))
+
+; (export "resources/nd/theorems-prop.edn" :or-dist)
 
 ; -----------------------------------------------------------------------------------------
 ; De Morgan

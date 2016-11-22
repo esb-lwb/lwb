@@ -13,10 +13,13 @@
             [lwb.nd.proof :as proof]
             [lwb.prop :as prop]))
 
+;; # Checking constraints of predicate logic
+
+;; ## Helper functions
 (defn- body-type
   "In pred we can have three possibilities:        
   (1) :actual the statement is like `(actual ?1)`     
-  (2) :fml    the statement is a formula
+  (2) :fml    the statement is a formula         
   (3) :equal  the statement is an equality
   Given a body returns the type."
   [body]
@@ -27,10 +30,10 @@
 
 (defn- swap-type
   "In pred we can have three possibilities:        
-  (1) :actual `old` occurs in an actual statement
-  (2) :fml    `old` occurs in a formula
-  (2) :equal  `old` occurs in an equality
-  Given a vector with indexed bodies, returns this type         
+  (1) :actual `old` occurs in an actual statement       
+  (2) :fml    `old` occurs in a formula       
+  (2) :equal  `old` occurs in an equality       
+  Given a vector with indexed bodies, returns this type                
   Requires the vector of indexed bodies is not empty."
   [proof old]
   (let [ib  (involved-bodies proof old)
@@ -40,14 +43,14 @@
       (contains? bts :fml)    :fml
       (contains? bts :equal)  :equal )))
       
-;; Checks depending on the type of replacement
+;; ## Checks depending on the type of replacement
 
 ;; Unfortunately the specs for terms and formula of the predicate logic
 ;; involve a given signature.     
 ;; In natural deduction, we don't want to do so. So we need new specs for
 ;; terms and formulas
 
-(s/def ::term keyword?)
+(s/def ::term (s/or :element keyword? :variable symbol?))
 
 (s/def ::predicate (s/and list? (s/cat :op symbol? :params (s/* ::term))))
 
@@ -74,6 +77,7 @@
 
 (s/def ::fml (s/or :simple-expr ::simple-expr
                    :compl-expr  ::compl-expr))
+
 (defn- check-fml
   "`new` must be a wellformed formula of predicate logic.        
    Exception otherwise."
@@ -98,30 +102,6 @@
         ib' (filter rel-fn ib)]
     (first (map first ib'))))
 
-(comment
-  
-  (def pr1
-  [{:plid 1, :roth :premise, :body '(exists [x] (P x))}
-   [{:plid 4, :body '(actual i), :roth :assumption, :refs nil}
-    {:plid 5, :body '(P ?1), :roth :assumption, :refs nil}
-    [{:plid 8, :body '(actual ?2), :roth :assumption, :refs nil}
-     {:plid 9, :body :todo, :roth nil, :refs nil}
-     {:plid 10, :body '(P ?2), :roth nil, :refs nil}]
-    {:plid 7, :body '(forall [x] (P x)), :roth :forall-i, :refs [[8 10]]}]
-   {:plid 2, :body '(forall [x] (P x)), :roth :exists-e, :refs [1 [4 7]]}] )
-  
-  (swap-type pr1 '?1)
-  (swap-type pr1 '?2)
-  
-  (find-actual-plno pr1 '?1)
-  (find-actual-plno pr1 '?2)
-  
-  (def s (proof/scope pr1 (proof/pline-at-plno pr1 4)))
-
-  (take-while #(not= 8 (:plid %)) s)
-  s
-  )
-
 (defn- fresh?
   "The element `new` is not already in scope."
   [proof plno new]
@@ -144,6 +124,8 @@
   (let [actual-plno (find-actual-plno proof old)]
     (if (not (fresh? proof actual-plno new))
         (throw (Exception. (format "'%s' must be a fresh state." new))))))
+
+;; ## Checking the constrains for pred in swap
 
 (defn check-swap
   "Check whether `old` and `new` can be swapped in `proof`.        

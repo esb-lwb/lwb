@@ -2870,6 +2870,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (:require [lwb.prop :as prop]
             [potemkin :as pot]
             [lwb.vis :as vis]
+            [lwb.ltl.kripke :as kripke]
             [clojure.spec :as s]
             [clojure.string :as str]))</pre></td></tr><tr><td class="docs"><p>Manual</p>
 </td><td class="codes"><pre class="brush: clojure">(defn man
@@ -2884,7 +2885,9 @@ net.brehaut.ClojureTools = (function (SH) {
                         &quot;- (texify phi), (texify phi filename)&quot;
                         &quot;  generates pdf of phi&quot;
                         &quot;  e.g. (texify '(always P) \&quot;myfile\&quot;)&quot;])]
-    (println info)))</pre></td></tr><tr><td class="docs"><h1>Representation of formulas of ltl</h1>
+    (println info)
+    (println)
+    (kripke/man)))</pre></td></tr><tr><td class="docs"><h1>Representation of formulas of ltl</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The representation is like in propositional logic</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We have 4 more operators in ltl:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ul>
@@ -2917,7 +2920,9 @@ several formulas as arguments whose number matches the arity of the operator.</p
                      (= arity (count params)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::compl-expr (s/and list? (s/&amp; (s/cat :op op? :params (s/* ::fml)) arity-ok?)))</pre></td></tr><tr><td class="docs"><p>A formula is a simple or a complex expression.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::fml (s/or :simple-expr ::simple-expr
-                   :compl-expr ::compl-expr))</pre></td></tr><tr><td class="docs"><h2>Is a formula well-formed?</h2>
+                   :compl-expr ::compl-expr))</pre></td></tr><tr><td class="docs"><p>For natural deduction in ltl we need a special form of an ltl formula at a certain state</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def ::at-fml (s/cat :at #{'at} :state (s/coll-of symbol? :kind vector? :count 1) :fml ::fml))</pre></td></tr><tr><td class="docs"><h2>Is a formula well-formed?</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Is the formula <code>phi</code> well-formed? <br />
    <code>(wff? phi)</code> returns true or false. <br />
    <code>(wff? phi :msg)</code> returns true or a message describing the error in <code>phi</code>.</p>

@@ -13,8 +13,12 @@
             [clojure.spec :as s]
             [lwb.nd.proof :as proof]))
 
+;; # Checking constraints of ltl
+
+;; ## Helper functions
+
 (defn- body-type
-  "In ltl we can have three possibilities:        
+  "In ltl we can have three possibilities for the type of a body:        
   (1) :state the statement is a proposition at a certain state, e.g. `(at [i] A)`        
   (2) :rel   a relational statement, e.g. `(<= i j)` or `(succ i j)`
   (3) :alone the statement is not relational and has no state e.g `V2`.     
@@ -27,7 +31,7 @@
 
 (defn- separate-state
   "Splits an non-relational proposition into the state and the proposition in that state.       
-   e.g. `(at [i] (and A B))` ->  `[i (and A B)]       
+   e.g. `(at [i] (and A B))` ->  `[i (and A B)]`              
    Requires: `body` is not a relational statement."
   [body]
   [(first (second body)) (nth body 2)])
@@ -48,66 +52,6 @@
       (contains? bts :rel) :rel
       (= #{:state} bts)    (let [[state prop] (separate-state (second (first ib)))]
                              (if (= old state) :state :prop)))))
-
-(comment
-  (def pr1 [{:plid 1, :roth :premise, :body '(at [i] (finally A))}
-            [{:plid 4, :body '(<= i j), :roth :assumption, :refs nil}
-             {:plid 5, :body '(at [j] A), :roth :assumption, :refs nil}
-             {:plid 6, :body :todo, :roth nil, :refs nil}
-             {:plid 7, :body 'V1, :roth nil, :refs nil}]
-            {:plid 8, :body 'V1, :roth :finally-e, :refs [1 [4 7]]}
-            {:plid 3, :body :todo, :roth nil}
-            {:plid 2, :body '(at [j] X), :roth nil}])
-
-  (def pr2 [{:plid 1, :roth :premise, :body '(at [i] (finally A))}
-            [{:plid 4, :body '(<= V1 j), :roth :assumption, :refs nil}
-             {:plid 5, :body '(at [j] A), :roth :assumption, :refs nil}
-             {:plid 6, :body :todo, :roth nil, :refs nil}
-             {:plid 7, :body :todo, :roth nil, :refs nil}]
-            {:plid 3, :body :todo, :roth nil}
-            {:plid 2, :body 'X, :roth nil}])
-
-  (def pr3 [{:plid 1, :roth :premise, :body '(at [i] (finally A))}
-            [{:plid 4, :body '(<= i V1), :roth :assumption, :refs nil}
-             {:plid 5, :body '(at [j] A), :roth :assumption, :refs nil}
-             {:plid 6, :body :todo, :roth nil, :refs nil}
-             {:plid 7, :body :todo, :roth nil, :refs nil}]
-            {:plid 3, :body :todo, :roth nil}
-            {:plid 2, :body 'X, :roth nil}])
-
-  (def pr4 [{:plid 1, :roth :premise, :body '(at [i] (finally A))}
-            [{:plid 4, :body '(<= i j), :roth :assumption, :refs nil}
-             {:plid 5, :body '(at [j] V1), :roth :assumption, :refs nil}
-             {:plid 6, :body :todo, :roth nil, :refs nil}
-             {:plid 7, :body :todo, :roth nil, :refs nil}]
-            {:plid 3, :body :todo, :roth nil}
-            {:plid 2, :body 'X, :roth nil}])
-
-  (def pr5 [{:plid 1, :roth :premise, :body '(at [V1] (finally A))}
-            [{:plid 4, :body '(<= i j), :roth :assumption, :refs nil}
-             {:plid 5, :body '(at [j] A), :roth :assumption, :refs nil}
-             {:plid 6, :body :todo, :roth nil, :refs nil}
-             {:plid 7, :body :todo, :roth nil, :refs nil}]
-            {:plid 3, :body :todo, :roth nil}
-            {:plid 2, :body 'X, :roth nil}])
-
-  (swap-type pr1 'V1)
-  (swap-type pr2 'V1)
-  (swap-type pr3 'V1)
-  (involved-bodies pr4 'V1)
-  (swap-type pr4 'V1)
-  (swap-type pr5 'V1)
-
-  (def pr6 [{:plid 1, :roth :premise, :body '(at [i] (finally A))}
-            [{:plid 4, :body '(<= i ?1), :roth :assumption, :refs nil}
-             {:plid 5, :body '(at [?1] A), :roth :assumption, :refs nil}
-             {:plid 6, :body :todo, :roth nil, :refs nil}
-             {:plid 7, :body '(at [j] A), :roth nil, :refs nil}]
-            {:plid 2, :body '(at [j] A), :roth :finally-e, :refs [1 [4 7]]}])
-  (swap-type pr6 '?1)
-  )
-
-; Checks depending of type of replacement
 
 (defn- check-alone
   [new]
@@ -168,8 +112,8 @@
 
 (defn- check-rel
   "We have to consider the follwing cases:       
-   expression `succ`: the `new` state must be different from the other one       
-   expression `<=` and `:roth` = `:assumption`: the `new` state must be fresh one"
+   - expression `succ`: the `new` state must be different from the other one       
+   - expression `<=` and `:roth` = `:assumption`: the `new` state must be fresh one"
   [proof old new]
   ; new is a symbol for a state
   (check-state new)
@@ -188,6 +132,8 @@
   [new]
   (if-not (s/valid? :lwb.ltl/fml new)
     (throw (Exception. (format "'%s' is not a valid ltl formula." new)))))
+
+;; ## Checking the constrains for ltl in swap
 
 (defn check-swap
   "Check whether `old` and `new` can be swapped in `proof`.        

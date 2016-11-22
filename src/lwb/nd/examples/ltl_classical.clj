@@ -27,6 +27,31 @@
 (step-b :or-i1 4)
 
 ; (export "resources/nd/theorems-ltl.edn" :tnd)
+
+; -----------------------------------------------------------------------------------------
+; always-tnd
+
+(proof '(at [i] (always (or P (not P)))))
+(step-b :always-i 2)
+(swap '?1 'j)
+(step-f :tnd)
+(swap '?2 'j)
+(swap '?3 'P)
+
+; (export "resources/nd/theorems-ltl.edn" :always-tnd)
+
+; -----------------------------------------------------------------------------------------
+; contrap
+
+(proof '(at [i] (impl A B)) '(at [i] (impl (not B) (not A))))
+(step-b :impl-i 3)
+(step-b :not-i 4)
+(swap '?1 'i)
+(step-f :impl-e 1 3)
+(step-b :not-e 6 2)
+
+; (export "resources/nd/theorems-ltl.edn" :contrap)
+
 ; -----------------------------------------------------------------------------------------
 ; always->finally
 
@@ -239,6 +264,24 @@
 ; (export "resources/nd/theorems-ltl.edn" :atnext-serial)
 
 ; -----------------------------------------------------------------------------------------
+; induction
+
+(proof '(at [i] (and A (always (impl A (atnext A))))) '(at [i] (always A)))
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-b :raa 5)
+(swap '?1 'i)
+(step-f :not-always->finally-not 4)
+(step-b :not-e 7 4)
+(step-b :always-i 7)
+(swap '?2 'j)
+(step-f :always-e 3 6)
+(step-f :contrap 7)
+; wie weiter?
+(step-f :impl-e 8)
+
+
+; -----------------------------------------------------------------------------------------
 ; until-finally
 
 ; TODO
@@ -291,3 +334,15 @@
 ; (export "resources/nd/theorems-ltl.edn" :and-atnext->atnext-and)
 
 
+; -----------------------------------------------------------------------------------------
+; always->always-always
+
+(proof '(at [i] (always A)) '(at [i] (always (always A))))
+(step-b :always-i 3)
+(swap '?1 'j)
+(step-b :always-i 4)
+(swap '?2 'k)
+(step-f :transitiv 2 3)
+(step-f :always-e 1 4)
+
+; (export "resources/nd/theorems-ltl.edn" :always->always-always)

@@ -9,7 +9,9 @@
 (ns lwb.nd.swap.prop
   (:require [lwb.prop :as prop]))
 
-;; we must check whether the new expression in unify is a well-formed formula of propositional logic
+;; # Checking constraints of propositional logic
+
+;; ## Checking the constraints for prop in swap
 
 (defn check-swap
   "Check whether `old` and `new` can be swapped in `proof`.        

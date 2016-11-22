@@ -8,9 +8,7 @@
 
 (ns lwb.prop.bdd-test
   (:require [clojure.test :refer :all]
-            [lwb.prop :refer :all]
-            [lwb.prop.bdd :refer :all]
-            [clojure.spec :as s]))
+            [lwb.prop.bdd :refer :all]))
 
 
 ; bdd ----------------------------------------------------------------
@@ -19,40 +17,40 @@
   (is (= (bdd 'false) [#lwb.prop.bdd.Node{:no 0, :atom false, :lo-no 0, :hi-no 0}]))
   (is (= (bdd 'p) [#lwb.prop.bdd.Node{:no 0, :atom false, :lo-no 0, :hi-no 0}
                    #lwb.prop.bdd.Node{:no 1, :atom true, :lo-no 1, :hi-no 1}
-                   #lwb.prop.bdd.Node{:no 2, :atom p, :lo-no 0, :hi-no 1}]))
+                   #lwb.prop.bdd.Node{:no 2, :atom 'p, :lo-no 0, :hi-no 1}]))
   (is (= (bdd '(not p)) [#lwb.prop.bdd.Node{:no 0, :atom false, :lo-no 0, :hi-no 0}
                          #lwb.prop.bdd.Node{:no 1, :atom true, :lo-no 1, :hi-no 1}
-                         #lwb.prop.bdd.Node{:no 2, :atom p, :lo-no 1, :hi-no 0}]))
+                         #lwb.prop.bdd.Node{:no 2, :atom 'p, :lo-no 1, :hi-no 0}]))
   (is (= (bdd '(and p q))[#lwb.prop.bdd.Node{:no 0, :atom false, :lo-no 0, :hi-no 0}
                           #lwb.prop.bdd.Node{:no 1, :atom true, :lo-no 1, :hi-no 1}
-                          #lwb.prop.bdd.Node{:no 2, :atom p, :lo-no 0, :hi-no 3}
-                          #lwb.prop.bdd.Node{:no 3, :atom q, :lo-no 0, :hi-no 1}]))
+                          #lwb.prop.bdd.Node{:no 2, :atom 'p, :lo-no 0, :hi-no 3}
+                          #lwb.prop.bdd.Node{:no 3, :atom 'q, :lo-no 0, :hi-no 1}]))
   (is (= (bdd '(or p q)) [#lwb.prop.bdd.Node{:no 0, :atom false, :lo-no 0, :hi-no 0}
                          #lwb.prop.bdd.Node{:no 1, :atom true, :lo-no 1, :hi-no 1}
-                         #lwb.prop.bdd.Node{:no 2, :atom p, :lo-no 3, :hi-no 1}
-                         #lwb.prop.bdd.Node{:no 3, :atom q, :lo-no 0, :hi-no 1}]))
+                         #lwb.prop.bdd.Node{:no 2, :atom 'p, :lo-no 3, :hi-no 1}
+                         #lwb.prop.bdd.Node{:no 3, :atom 'q, :lo-no 0, :hi-no 1}]))
   (is (= (bdd '(impl p q)) [#lwb.prop.bdd.Node{:no 0, :atom false, :lo-no 0, :hi-no 0}
                             #lwb.prop.bdd.Node{:no 1, :atom true, :lo-no 1, :hi-no 1}
-                            #lwb.prop.bdd.Node{:no 2, :atom p, :lo-no 1, :hi-no 3}
-                            #lwb.prop.bdd.Node{:no 3, :atom q, :lo-no 0, :hi-no 1}]))
+                            #lwb.prop.bdd.Node{:no 2, :atom 'p, :lo-no 1, :hi-no 3}
+                            #lwb.prop.bdd.Node{:no 3, :atom 'q, :lo-no 0, :hi-no 1}]))
   (is (= (bdd '(equiv p q)) [#lwb.prop.bdd.Node{:no 0, :atom false, :lo-no 0, :hi-no 0}
                              #lwb.prop.bdd.Node{:no 1, :atom true, :lo-no 1, :hi-no 1}
-                             #lwb.prop.bdd.Node{:no 2, :atom p, :lo-no 3, :hi-no 4}
-                             #lwb.prop.bdd.Node{:no 3, :atom q, :lo-no 1, :hi-no 0}
-                             #lwb.prop.bdd.Node{:no 4, :atom q, :lo-no 0, :hi-no 1}]))
+                             #lwb.prop.bdd.Node{:no 2, :atom 'p, :lo-no 3, :hi-no 4}
+                             #lwb.prop.bdd.Node{:no 3, :atom 'q, :lo-no 1, :hi-no 0}
+                             #lwb.prop.bdd.Node{:no 4, :atom 'q, :lo-no 0, :hi-no 1}]))
   (is (= (bdd '(ite p q r)) [#lwb.prop.bdd.Node{:no 0, :atom false, :lo-no 0, :hi-no 0}
                              #lwb.prop.bdd.Node{:no 1, :atom true, :lo-no 1, :hi-no 1}
-                             #lwb.prop.bdd.Node{:no 2, :atom p, :lo-no 3, :hi-no 4}
-                             #lwb.prop.bdd.Node{:no 3, :atom r, :lo-no 0, :hi-no 1}
-                             #lwb.prop.bdd.Node{:no 4, :atom q, :lo-no 0, :hi-no 1}]))
+                             #lwb.prop.bdd.Node{:no 2, :atom 'p, :lo-no 3, :hi-no 4}
+                             #lwb.prop.bdd.Node{:no 3, :atom 'r, :lo-no 0, :hi-no 1}
+                             #lwb.prop.bdd.Node{:no 4, :atom 'q, :lo-no 0, :hi-no 1}]))
   (is (= (bdd '(impl p q)) (bdd '(or (not p) q))))
   (is (= (bdd '(or (and a b) (and a c) (and b c))) ; Knuth Fig. 21
          [#lwb.prop.bdd.Node{:no 0, :atom false, :lo-no 0, :hi-no 0}
           #lwb.prop.bdd.Node{:no 1, :atom true, :lo-no 1, :hi-no 1}
-          #lwb.prop.bdd.Node{:no 2, :atom a, :lo-no 3, :hi-no 4}
-          #lwb.prop.bdd.Node{:no 3, :atom b, :lo-no 0, :hi-no 5}
-          #lwb.prop.bdd.Node{:no 4, :atom b, :lo-no 5, :hi-no 1}
-          #lwb.prop.bdd.Node{:no 5, :atom c, :lo-no 0, :hi-no 1}]))
+          #lwb.prop.bdd.Node{:no 2, :atom 'a, :lo-no 3, :hi-no 4}
+          #lwb.prop.bdd.Node{:no 3, :atom 'b, :lo-no 0, :hi-no 5}
+          #lwb.prop.bdd.Node{:no 4, :atom 'b, :lo-no 5, :hi-no 1}
+          #lwb.prop.bdd.Node{:no 5, :atom 'c, :lo-no 0, :hi-no 1}]))
 )
 
 

@@ -321,7 +321,7 @@
     :prop (sprop/check-swap proof old new)
     :pred (spred/check-swap proof old new)
     :ltl  (sltl/check-swap proof old new))
-  ; no exception so far, hence replace old by new is now okay
+  ; no exception so far, hence replacing old by new is now okay
   (normalize
     (walk/postwalk
       (fn [node]

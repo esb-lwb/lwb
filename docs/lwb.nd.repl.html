@@ -2896,9 +2896,9 @@ net.brehaut.ClojureTools = (function (SH) {
                         &quot;- (step-b roth args)&quot;
                         &quot;  proof step backward using rule or theorem with args&quot;
                         &quot;  e.g. (step-b :not-i 5)&quot;
-                        &quot;- (unify symbol replacement&quot;
-                        &quot;  unifies symbol with replacement&quot;
-                        &quot;  e.g. (unify 'V1 'Q)&quot;
+                        &quot;- (swpa symbol replacement&quot;
+                        &quot;  swaps symbol and replacement&quot;
+                        &quot;  e.g. (swap '?1 'Q)&quot;
                         &quot;- (undo)&quot;
                         &quot;  reverse the last proofstep&quot;
                         &quot;- (show)&quot;
@@ -2918,11 +2918,11 @@ net.brehaut.ClojureTools = (function (SH) {
                         &quot;  imports theorems from file&quot;
                         &quot;  e.g. (import-theorems \&quot;mytheorems.edn\&quot;)&quot;])]
     (println info)))</pre></td></tr><tr><td class="docs"><p>Path to the files for rules and theorems as resources</p>
-</td><td class="codes"><pre class="brush: clojure">  (def rothpath
-    &quot;nd/&quot;)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">  (pot/import-vars
-    [lwb.pred.substitution substitution]
-    [lwb.nd.prereqs substitution?])</pre></td></tr><tr><td class="docs"><h1>Functions for interactive use of natural deduction in the REPL</h1>
+</td><td class="codes"><pre class="brush: clojure">(def rothpath
+  &quot;nd/&quot;)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(pot/import-vars
+  [lwb.pred.substitution substitution]
+  [lwb.nd.prereqs substitution?])</pre></td></tr><tr><td class="docs"><h1>Functions for interactive use of natural deduction in the REPL</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>To use lwb for natural deduction, one proceeds as follows:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ul>
 <li>Load a logic with <code>(load-logic logic)</code></li>
@@ -2933,152 +2933,162 @@ net.brehaut.ClojureTools = (function (SH) {
 <li>unifying symbols <code>(unify ...)</code></li></ul></li>
 </ul>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Load rules and theorems of the logic to use. <br />
-     Logic can be <code>:prop</code>, <code>:pred</code>, <code>:ltl</code>. <br />
-     Requires: resource with rules and theorems <br />
-     Modifies: global <code>roths</code></p>
-</td><td class="codes"><pre class="brush: clojure">  (defn load-logic
-    [logic]
-    (reset-roths)
-    (case logic
-      :prop (do
-              (io/import-rules (str rothpath &quot;rules-prop.edn&quot;) roths)
-              (io/import-theorems (str rothpath &quot;theorems-prop.edn&quot;) roths))
-      :pred (do
-              (io/import-rules (str rothpath &quot;rules-prop.edn&quot;) roths)
-              (io/import-rules (str rothpath &quot;rules-pred.edn&quot;) roths)
-              (io/import-theorems (str rothpath &quot;theorems-prop.edn&quot;) roths)
-              (io/import-theorems (str rothpath &quot;theorems-pred.edn&quot;) roths))
-      :ltl (do
-             (io/import-rules (str rothpath &quot;rules-ltl.edn&quot;) roths)
-             #_(io/import-theorems (str rothpath &quot;theorems-ltl.edn&quot;) roths)))
-    (println welcome)
-    (println (str &quot;Info: Rules and theorems loaded: &quot; logic)))</pre></td></tr><tr><td class="docs"><p>Choose the logic for the session:</p>
+   Logic can be <code>:prop</code>, <code>:pred</code>, <code>:ltl</code>. <br />
+   Requires: resource with rules and theorems <br />
+   Modifies: global <code>roths</code></p>
+</td><td class="codes"><pre class="brush: clojure">(defn load-logic
+  [logic]
+  (reset-roths)
+  (case logic
+    :prop (do
+            (io/import-rules (str rothpath &quot;rules-prop.edn&quot;) roths)
+            (io/import-theorems (str rothpath &quot;theorems-prop.edn&quot;) roths))
+    :pred (do
+            (io/import-rules (str rothpath &quot;rules-prop.edn&quot;) roths)
+            (io/import-rules (str rothpath &quot;rules-pred.edn&quot;) roths)
+            (io/import-theorems (str rothpath &quot;theorems-prop.edn&quot;) roths)
+            (io/import-theorems (str rothpath &quot;theorems-pred.edn&quot;) roths))
+    :ltl (do
+           (io/import-rules (str rothpath &quot;rules-ltl.edn&quot;) roths)
+           (io/import-theorems (str rothpath &quot;theorems-ltl.edn&quot;) roths)))
+  (reset-meta! #'roths {:logic logic})
+  (println welcome)
+  (println (str &quot;Info: Rules and theorems loaded: &quot; logic)))</pre></td></tr><tr><td class="docs"><p>Choose the logic for the session:</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">  (comment
-    (load-logic :prop)
-    (load-logic :pred)
-    (load-logic :ltl)
-    )</pre></td></tr><tr><td class="docs"><h2>Atoms that hold the state of the proof session</h2>
+</td><td class="codes"><pre class="brush: clojure">(comment
+  (load-logic :prop)
+  (load-logic :pred)
+  (load-logic :ltl)
+  )</pre></td></tr><tr><td class="docs"><h2>Atoms that hold the state of the proof session</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Atom that holds the current proof.</p>
-</td><td class="codes"><pre class="brush: clojure">  (def p
-    (atom []))</pre></td></tr><tr><td class="docs"><p>Atom that holds the history of the proof as a vector, provided for undo steps.</p>
-</td><td class="codes"><pre class="brush: clojure">  (def p-history
-    (atom []))</pre></td></tr><tr><td class="docs"><h2>Showing the proof</h2>
+</td><td class="codes"><pre class="brush: clojure">(def p
+  (atom []))</pre></td></tr><tr><td class="docs"><p>Atom that holds the history of the proof as a vector, provided for undo steps.</p>
+</td><td class="codes"><pre class="brush: clojure">(def p-history
+  (atom []))</pre></td></tr><tr><td class="docs"><h2>Showing the proof</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Print the actual state of the proof.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn show
-    []
-    (printer/pprint @p))</pre></td></tr><tr><td class="docs"><h2>Creating a new proof</h2>
+</td><td class="codes"><pre class="brush: clojure">(defn show
+  []
+  (printer/pprint @p))</pre></td></tr><tr><td class="docs"><h2>Creating a new proof</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Starts a new proof. <br />
-     Modifies: atom <code>p</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn proof
-    ([conclusion] (proof [] conclusion))
-    ([premises conclusion]
-     (reset! p-history [])
-     (reset! p (proof/proof premises conclusion))
-     (show)
-     (if (empty? @roths)
-       (println &quot;Info: There are no rules available, please load a logic with load-logic.&quot;))))</pre></td></tr><tr><td class="docs"><h2>Functions that perform steps in proving a conclusion</h2>
+   Modifies: atom <code>p</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn proof
+  ([conclusion] (proof [] conclusion))
+  ([premises conclusion]
+   (reset! p-history [])
+   (reset! p (proof/proof premises conclusion))
+   (show)
+   (if (empty? @roths)
+     (println &quot;Info: There are no rules available, please load a logic with load-logic.&quot;))))</pre></td></tr><tr><td class="docs"><h2>Functions that perform steps in proving a conclusion</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Execute a forward step. <br />
-     Modifies: atom <code>p</code>, the proof, and <br />
-               atom <code>p-history</code>, the history of the current proof.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn step-f
-    [roth &amp; args]
-    (try
-      (let [proof' (deduc/step-f @p roth (vec args))]
-        (swap! p-history conj @p)
-        (reset! p proof')
-        (show))
-      (catch Exception e
-        (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs"><p>Execute a backward step. <br />
-     Modifies: atom <code>p</code>, the proof, and
-               atom <code>p-history</code>, the history of the current proof.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn step-b
-    [roth &amp; args]
-    (try
-      (let [proof' (deduc/step-b @p roth (vec args))]
-        (swap! p-history conj @p)
-        (reset! p proof')
-        (show))
-      (catch Exception e
-        (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs"><p>Unifies symbols. <br />
-     Modifies: atom <code>p</code>, the proof, and
-               atom <code>p-history</code>, the history of the current proof.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn unify
-    [old new]
-    (try
-      (let [proof' (deduc/unify @p old new)]
-        (swap! p-history conj @p)
-        (reset! p proof')
-        (show))
-      (catch Exception e
-        (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs"><p>Undo the last change of the proof. <br />
-     Modifies: atom <code>p</code>, the proof, and
-               atom <code>p-history</code>, the history of the current proof.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn undo
-    []
-    (if (empty? @p-history)
-      (println &quot;Info: You reached the starting point of the proof, there is nothing more to undo&quot;)
-      (do
-        (reset! p (last @p-history))
-        (swap! p-history #(vec (drop-last %)))
-        (show))))</pre></td></tr><tr><td class="docs"><h2>Functions that print rules and theorems</h2>
+   Modifies: atom <code>p</code>, the proof, and <br />
+             atom <code>p-history</code>, the history of the current proof.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn step-f
+  [roth &amp; args]
+  (try
+    (let [proof' (deduc/step-f @p roth (vec args))]
+      (swap! p-history conj @p)
+      (reset! p proof')
+      (show))
+    (catch Exception e
+      (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs"><p>Execute a backward step. <br />
+   Modifies: atom <code>p</code>, the proof, and
+             atom <code>p-history</code>, the history of the current proof.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn step-b
+  [roth &amp; args]
+  (try
+    (let [proof' (deduc/step-b @p roth (vec args))]
+      (swap! p-history conj @p)
+      (reset! p proof')
+      (show))
+    (catch Exception e
+      (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs"><p>Exchanges question mark symbols of the form <code>?n</code> with a <code>new</code> expression. <br />
+   Requires: <code>old</code> has the form <code>?n</code>. <br />
+             <code>new</code> is allowed according to the current logic. <br />
+   Modifies: atom <code>p</code>, the proof, and
+             atom <code>p-history</code>, the history of the current proof.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn swap
+  [old new]
+  (try
+    (let [proof' (deduc/swap @p (:logic (meta #'roths)) old new)]
+      (swap! p-history conj @p)
+      (reset! p proof')
+      (show))
+    (catch Exception e
+      (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs"><h3>Remark:</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Some of the rules have constraints, e.g. the introduction of a actual element in the
+introduction of forall must be fresh. <br />
+Such constraints are not expressed in the rule, but checked be the functions in the
+namespace <code>lwb.nd.swap</code> for the logics we support. <br />
+It would be an interesting task to enhance the langugae of our rules to make a more
+generic solution possible.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Undo the last change of the proof. <br />
+   Modifies: atom <code>p</code>, the proof, and
+             atom <code>p-history</code>, the history of the current proof.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn undo
+  []
+  (if (empty? @p-history)
+    (println &quot;Info: You reached the starting point of the proof, there is nothing more to undo&quot;)
+    (do
+      (reset! p (last @p-history))
+      (swap! p-history #(vec (drop-last %)))
+      (show))))</pre></td></tr><tr><td class="docs"><h2>Functions that print rules and theorems</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Prints rule or theorem of the current logic.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn show-roth
-    [id]
-    (if (contains? @roths id)
-      (let [roth (id @roths)
-            extra (:extra roth)
-            extras (if extra (str &quot; + extra input &quot; extra))]
-        (println (str id &quot;: \t&quot; (:given roth) extras &quot; -&gt; &quot; (:conclusion roth))))
-      (println &quot;No such rule or theorem found for the current logic.&quot;)))</pre></td></tr><tr><td class="docs"><p>Prints rules and/or theorems of the current logic. <br />
-    <code>:all</code> rules and theorems <br />
-    <code>:rules</code> just the rules <br />
-    <code>:theorems</code> just the theorems</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn show-roths
-    ([] (show-roths :all))
-    ([mode]
-     (let [filter-fn (condp = mode
-                       :all (constantly true)
-                       :rules #(= :rule (:type (val %)))
-                       :theorems #(= :theorem (:type (val %))))]
-       (for [roth (sort (filter filter-fn @roths))]
-         (let [id (key roth)]
-           (show-roth id))))))</pre></td></tr><tr><td class="docs"><p>Print the rules of the current logic.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn show-rules
-    []
-    (show-roths :rules))</pre></td></tr><tr><td class="docs"><p>Print the theorems of the current logic.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn show-theorems
-    []
-    (show-roths :theorems))</pre></td></tr><tr><td class="docs"><h2>TeX-Code for typesetting the current proof</h2>
+</td><td class="codes"><pre class="brush: clojure">(defn show-roth
+  [id]
+  (if (contains? @roths id)
+    (let [roth (id @roths)
+          extra (:extra roth)
+          extras (if extra (str &quot; + extra input &quot; extra))]
+      (println (str id &quot;: \t&quot; (:given roth) extras &quot; -&gt; &quot; (:conclusion roth))))
+    (println &quot;No such rule or theorem found for the current logic.&quot;)))</pre></td></tr><tr><td class="docs"><p>Prints rules and/or theorems of the current logic. <br />
+  <code>:all</code> rules and theorems <br />
+  <code>:rules</code> just the rules <br />
+  <code>:theorems</code> just the theorems</p>
+</td><td class="codes"><pre class="brush: clojure">(defn show-roths
+  ([] (show-roths :all))
+  ([mode]
+   (let [filter-fn (condp = mode
+                     :all (constantly true)
+                     :rules #(= :rule (:type (val %)))
+                     :theorems #(= :theorem (:type (val %))))]
+     (for [roth (sort (filter filter-fn @roths))]
+       (let [id (key roth)]
+         (show-roth id))))))</pre></td></tr><tr><td class="docs"><p>Print the rules of the current logic.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn show-rules
+  []
+  (show-roths :rules))</pre></td></tr><tr><td class="docs"><p>Print the theorems of the current logic.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn show-theorems
+  []
+  (show-roths :theorems))</pre></td></tr><tr><td class="docs"><h2>TeX-Code for typesetting the current proof</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX-Code from the current proof. <br />
-     The generated code uses the packages <code>MnSymbol</code> and <code>logicproof</code>. <br />
-     If a filename is given as argument, a pdf file will be generated. <br />
-     In this case the function uses the shell command <code>texi2pdf</code> that compiles tex code,
-     and <code>open</code> to show the generated file.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn texify
-    ([] (printer/texify @p))
-    ([filename] (printer/texify @p filename)))</pre></td></tr><tr><td class="docs"><h2>Function that exports the current proof as a reusable theorem</h2>
+   The generated code uses the packages <code>MnSymbol</code> and <code>logicproof</code>. <br />
+   If a filename is given as argument, a pdf file will be generated. <br />
+   In this case the function uses the shell command <code>texi2pdf</code> that compiles tex code,
+   and <code>open</code> to show the generated file.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn texify
+  ([] (printer/texify @p))
+  ([filename] (printer/texify @p filename)))</pre></td></tr><tr><td class="docs"><h2>Function that exports the current proof as a reusable theorem</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Saves the current proof with <code>id</code> in the file with <code>filename</code>. <br />
-     Requires: Proof is completed. <br />
-     If there is already a theorem with that <code>id</code>, the replacement can be forced 
-     by a mode of <code>:force</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">  (defn export
-    ([filename id] (export filename id :check))
-    ([filename id mode]
-     (try
-       (io/export-theorem @p filename id mode)
-       (catch Exception e
-         (println (str &quot;Error: &quot; (.getMessage e)))))))</pre></td></tr><tr><td class="docs"><h2>Function that imports theorems</h2>
+   Requires: Proof is completed. <br />
+   If there is already a theorem with that <code>id</code>, the replacement can be forced 
+   by a mode of <code>:force</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn export
+  ([filename id] (export filename id :check))
+  ([filename id mode]
+   (try
+     (io/export-theorem @p filename id mode)
+     (catch Exception e
+       (println (str &quot;Error: &quot; (.getMessage e)))))))</pre></td></tr><tr><td class="docs"><h2>Function that imports theorems</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Reads the file with <code>filename</code> and imports theorems from it to the current logic.
-     Caveat: If there's already a theorem with a name from the new ones, it's overwritten.
-     Requires: Theorems are proved.
-     Modifies: global <code>roths</code></p>
-</td><td class="codes"><pre class="brush: clojure">  (defn import-theorems
-    [filename]
-    (try
-      (io/import-theorems filename @roths :file)
-      (catch Exception e
-        (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+   Caveat: If there's already a theorem with a name from the new ones, it's overwritten.
+   Requires: Theorems are proved.
+   Modifies: global <code>roths</code></p>
+</td><td class="codes"><pre class="brush: clojure">(defn import-theorems
+  [filename]
+  (try
+    (io/import-theorems filename @roths :file)
+    (catch Exception e
+      (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

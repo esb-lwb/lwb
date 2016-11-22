@@ -8,6 +8,8 @@
 
 (ns lwb.nd.swap.common)
 
+;; # Shared functions for checking constraints
+
 (defn flat 
   "Like clojure.core/flatten but works with symbols too."
   [s]
@@ -16,7 +18,7 @@
     (list s)))
 
 (defn involved-bodies
-  "Vector of pairs of plno and body of plines in the `proof` that contain `old`.
+  "Vector of pairs of plno and body of plines in the `proof` that contain `old`.       
    Requires: `old` is a symbol, not a list."
   [proof old]
   (let [bodies (map :body (flatten proof))

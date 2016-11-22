@@ -60,9 +60,9 @@
 
 (defn kripke-ok?
   [{:keys [nodes initial edges]}]
-  (let [nodeset    (into #{} (keys nodes))
-        nodeset'   (into #{} (flatten (seq edges)))
-        nodeset''  (into #{} (map first (seq edges)))]
+  (let [nodeset   (set (keys nodes))
+        nodeset'  (set (flatten (seq edges)))
+        nodeset'' (set (map first (seq edges)))]
     (and (contains? nodeset initial)
          (= nodeset nodeset')
          (= nodeset nodeset''))))
