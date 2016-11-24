@@ -2868,7 +2868,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.nd.printer" name="lwb.nd.printer"><h1 class="project-name">lwb.nd.printer</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.nd.printer
   (:require [lwb.consts :refer [rev]]
-            [lwb.nd.proof :refer [plid-&gt;plno]]
+            [lwb.nd.proof :refer [plid-&gt;plno plid-plno-map]]
             [clojure.walk :as walk]
             [clojure.pprint :as pp]
             [clojure.zip :as zip]
@@ -2878,14 +2878,10 @@ net.brehaut.ClojureTools = (function (SH) {
            (java.time LocalDate)))</pre></td></tr><tr><td class="docs"><h1>Printing the proof</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><h2>Printing to the REPL's stdout</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Distance between left and right edge.</p>
-</td><td class="codes"><pre class="brush: clojure">(def distance
+</td><td class="codes"><pre class="brush: clojure">(def ^:const distance
   40)</pre></td></tr><tr><td class="docs"><p>Length of the divider for subproofs.</p>
-</td><td class="codes"><pre class="brush: clojure">(def divider-length
-  25)</pre></td></tr><tr><td class="docs"><p>Mapping of ids of pline to line numbers.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- plid-plno-map
-  [proof]
-  (let [fp (flatten proof)]
-    (into {} (map-indexed #(vector (:plid %2) (inc %1)) fp))))</pre></td></tr><tr><td class="docs"><p>Prints a proof line.</p>
+</td><td class="codes"><pre class="brush: clojure">(def ^:const divider-length
+  25)</pre></td></tr><tr><td class="docs"><p>Prints a proof line.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- pprint-line
   [proof depth pline plid-plno-map]
   (let [line (plid-&gt;plno proof (:plid pline))

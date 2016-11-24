@@ -8,7 +8,7 @@
 
 (ns lwb.nd.printer
   (:require [lwb.consts :refer [rev]]
-            [lwb.nd.proof :refer [plid->plno]]
+            [lwb.nd.proof :refer [plid->plno plid-plno-map]]
             [clojure.walk :as walk]
             [clojure.pprint :as pp]
             [clojure.zip :as zip]
@@ -21,19 +21,13 @@
 
 ;; ## Printing to the REPL's stdout
 
-(def distance
+(def ^:const distance
   "Distance between left and right edge."
   40)
 
-(def divider-length
+(def ^:const divider-length
   "Length of the divider for subproofs."
   25)
-
-(defn- plid-plno-map
-  "Mapping of ids of pline to line numbers."
-  [proof]
-  (let [fp (flatten proof)]
-    (into {} (map-indexed #(vector (:plid %2) (inc %1)) fp))))
 
 (defn- pprint-line
   "Prints a proof line."

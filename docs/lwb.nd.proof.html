@@ -2930,7 +2930,11 @@ They get new names beginning with the letter <code>V</code> and follwed by a uni
    requires: <code>plid</code> valid.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn pline-at-plid
   [proof plid]
-  (pline-at-plno proof (plid-&gt;plno proof plid)))</pre></td></tr><tr><td class="docs"><p>Returns the scope for an item inside a proof
+  (pline-at-plno proof (plid-&gt;plno proof plid)))</pre></td></tr><tr><td class="docs"><p>Mapping of ids of pline to line numbers.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn plid-plno-map
+  [proof]
+  (let [fp (flatten proof)]
+    (into {} (map-indexed #(vector (:plid %2) (inc %1)) fp))))</pre></td></tr><tr><td class="docs"><p>Returns the scope for an item inside a proof
    e.g. proof = <code>[1 2 [3 4] [5 6 7] 8]</code> &amp; item = <code>5</code>
    => scope = <code>[1 2 [3 4] 5 6 7]</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn scope
@@ -3056,7 +3060,15 @@ They get new names beginning with the letter <code>V</code> and follwed by a uni
   [proof plid-map]
   (let [old-plines (vec (filter #(not-empty (set/intersection (set (keys plid-map)) (set (flatten (:refs %))))) (flatten proof)))
         upg-plines (mapv #(assoc % :roth (:roth %) :refs (clojure.walk/prewalk-replace plid-map (:refs %))) old-plines)]
-    (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))</pre></td></tr><tr><td class="docs"><p>Removes all duplicate bodies from proof and adjusts the changed ids of proof lines.</p>
+    (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))</pre></td></tr><tr><td class="docs"><p>Checks the refs of a proof: The references must always refer to plines above!</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- check-refs
+  [proof]
+  (let [pm (plid-plno-map proof)
+        fn (fn [pline] (let [curr-plno (get pm (:plid pline))
+                             refs-plnos (mapv #(get pm %) (flatten (:refs pline)))
+                             max-ref-plno (if (empty? refs-plnos) 0 (apply max refs-plnos))]
+                         (&lt; max-ref-plno curr-plno)))]
+    (every? true? (map fn (flatten proof)))))</pre></td></tr><tr><td class="docs"><p>Removes all duplicate bodies from proof and adjusts the changed ids of proof lines.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- remove-duplicates
   [proof]
   (let [duplicates (find-duplicates proof)
@@ -3080,8 +3092,9 @@ They get new names beginning with the letter <code>V</code> and follwed by a uni
         new-proof1 (reduce fn-replace proof proved-results)
         deletions (reduce dissoc duplicates (map key proved-results))
         delete-plids (keys deletions)
-        new-proof2 (reduce remove-plid new-proof1 delete-plids)]
-    (adjust-refs new-proof2 deletions)))</pre></td></tr><tr><td class="docs"><h3>The interface for the user of this namespace: Normalizing a proof</h3>
+        new-proof2 (reduce remove-plid new-proof1 delete-plids)
+        new-proof3 (adjust-refs new-proof2 deletions)]
+    (if (check-refs new-proof3) new-proof3 proof)))</pre></td></tr><tr><td class="docs"><h3>The interface for the user of this namespace: Normalizing a proof</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Removes duplicate lines, adjust leftover plids and removes todo lines if possible</p>
 </td><td class="codes"><pre class="brush: clojure">(defn normalize
   [proof]
@@ -3097,8 +3110,8 @@ They get new names beginning with the letter <code>V</code> and follwed by a uni
   (let [lvars (set (filter #(.startsWith (str %) &quot;_&quot;) (flatten bodies)))
         smap (reduce #(assoc %1 %2 (new-qmsymbol)) {} lvars)]
     (mapv #(if (symbol? %)
-            (if (contains? lvars %) (get smap %) %)
-            (clojure.walk/prewalk-replace smap %)) bodies)))</pre></td></tr><tr><td class="docs"><p>Performs the substitution of <code>var</code> by <code>t</code> in <code>phi</code>.</p>
+             (if (contains? lvars %) (get smap %) %)
+             (clojure.walk/prewalk-replace smap %)) bodies)))</pre></td></tr><tr><td class="docs"><p>Performs the substitution of <code>var</code> by <code>t</code> in <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- eval-subs
   [[_ phi var t]]
   (substitution phi var t))</pre></td></tr><tr><td class="docs"><p>Creates a new proof line or subproof from body and [optional] rule and refs.</p>

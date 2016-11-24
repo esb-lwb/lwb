@@ -105,6 +105,12 @@
   [proof plid]
   (pline-at-plno proof (plid->plno proof plid)))
 
+(defn plid-plno-map
+  "Mapping of ids of pline to line numbers."
+  [proof]
+  (let [fp (flatten proof)]
+    (into {} (map-indexed #(vector (:plid %2) (inc %1)) fp))))
+
 (defn scope
   "Returns the scope for an item inside a proof
    e.g. proof = `[1 2 [3 4] [5 6 7] 8]` & item = `5`
@@ -262,6 +268,16 @@
         upg-plines (mapv #(assoc % :roth (:roth %) :refs (clojure.walk/prewalk-replace plid-map (:refs %))) old-plines)]
     (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))
 
+(defn- check-refs
+  "Checks the refs of a proof: The references must always refer to plines above!"
+  [proof]
+  (let [pm (plid-plno-map proof)
+        fn (fn [pline] (let [curr-plno (get pm (:plid pline))
+                             refs-plnos (mapv #(get pm %) (flatten (:refs pline)))
+                             max-ref-plno (if (empty? refs-plnos) 0 (apply max refs-plnos))]
+                         (< max-ref-plno curr-plno)))]
+    (every? true? (map fn (flatten proof)))))
+
 (defn- remove-duplicates
   "Removes all duplicate bodies from proof and adjusts the changed ids of proof lines."
   [proof]
@@ -286,8 +302,9 @@
         new-proof1 (reduce fn-replace proof proved-results)
         deletions (reduce dissoc duplicates (map key proved-results))
         delete-plids (keys deletions)
-        new-proof2 (reduce remove-plid new-proof1 delete-plids)]
-    (adjust-refs new-proof2 deletions)))
+        new-proof2 (reduce remove-plid new-proof1 delete-plids)
+        new-proof3 (adjust-refs new-proof2 deletions)]
+    (if (check-refs new-proof3) new-proof3 proof)))
 
 ;; ### The interface for the user of this namespace: Normalizing a proof
 
@@ -310,8 +327,8 @@
   (let [lvars (set (filter #(.startsWith (str %) "_") (flatten bodies)))
         smap (reduce #(assoc %1 %2 (new-qmsymbol)) {} lvars)]
     (mapv #(if (symbol? %)
-            (if (contains? lvars %) (get smap %) %)
-            (clojure.walk/prewalk-replace smap %)) bodies)))
+             (if (contains? lvars %) (get smap %) %)
+             (clojure.walk/prewalk-replace smap %)) bodies)))
 
 (defn- eval-subs
   "Performs the substitution of `var` by `t` in `phi`."

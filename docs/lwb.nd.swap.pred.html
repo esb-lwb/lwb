@@ -2903,7 +2903,7 @@ involve a given signature. <br />
 In natural deduction, we don't want to do so. So we need new specs for
 terms and formulas</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::term keyword?)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def ::term (s/or :element keyword? :variable symbol?))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::predicate (s/and list? (s/cat :op symbol? :params (s/* ::term))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::equality (s/and list? (s/cat :op #(= '= %) :param1 ::term :param2 ::term)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::simple-expr (s/or :bool boolean?

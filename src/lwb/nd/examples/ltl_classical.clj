@@ -229,9 +229,10 @@
 ; (export "resources/nd/theorems-ltl.edn" :always-serial)
 
 ; -----------------------------------------------------------------------------------------
-; atnext-serial
+; atnext-serial = induction principle
 
-; TODO 
+; TODO induction stucks!!
+
 (proof '(at [i] (always (impl A (atnext A)))) '(at [i] (impl A (always A))))
 (step-b :impl-i 3)
 (step-b :always-i 4)
@@ -243,28 +244,7 @@
 (step-b :atnext-e 7 :? 4)
 (step-b :atnext-i 7 :? 4)
 
-; Warum aber ist der Beweis bei Bolotov von (13) so viel komplizierter?
-; eine andere Aussage bei Bolotov??
-
-; Ein Problem mit diesem Beweis:
-; wir führen einen Vorgänger von j ein
-; wir wissen aber nur, dass (<= i j), d.h. j könnte auch i sein, aber i hat genau genommen keinen
-; Vorgänger.
-; Also müssten wir eigentlich so argumentieren:
-; (<= i j) => (or (= i j) (< i j))
-; Im ersten Fall gilt natürlich (at [j A) weil ja (= i j) und (at [i] A) in [2] gilt
-; Im zweiten Fall können wir dann so argumentieren wie oben. Denn dann wissen wir, dass es ein k mit
-; (succ k j) tatsächlich gibt.
-;
-; Damit das geht, brauchen wir Regeln:
-; (<= i j) => (or (= i j) (< i j))
-; (or r1 r2) Fallunterscheidung
-; (= i j) (at [i] A) => (at [j] A) 
-
-; (export "resources/nd/theorems-ltl.edn" :atnext-serial)
-
-; -----------------------------------------------------------------------------------------
-; induction
+; induction 
 
 (proof '(at [i] (and A (always (impl A (atnext A))))) '(at [i] (always A)))
 (step-f :and-e1 1)
@@ -275,8 +255,12 @@
 (step-b :not-e 7 4)
 (step-b :always-i 7)
 (swap '?2 'j)
+(step-f :succ)
+(swap '?3 'k)
+(swap '?4 'j) 
 (step-f :always-e 3 6)
-(step-f :contrap 7)
+(step-b :atnext-e 10 :? 7)
+(step-b :atnext-i 10 :? 7)
 ; wie weiter?
 (step-f :impl-e 8)
 
