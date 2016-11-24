@@ -85,6 +85,31 @@
         content (reduce println-str theorems-v)]
     (spit filename (str header content))))
 
+(defn- rule-fn
+  "Generates rule entry from definition."
+  [rule]
+  (hash-map (:id rule)
+            {:type       :rule
+             :prereq     (:prereq rule)
+             :given      (:given rule)
+             :extra      (:extra rule)
+             :conclusion (:conclusion rule)
+             :forward    (roth-structure-f (:given rule) (:extra rule) (:conclusion rule))
+             :backward   (roth-structure-b (:given rule) (:extra rule) (:conclusion rule))
+             :logic-rel  (eval (gen-roth-relation (:prereq rule) (:given rule) (:extra rule)
+                                                  (:conclusion rule)))}))
+
+(defn- theorem-fn
+  "Generates rule entry from definition."
+  [theorem]
+  (hash-map (:id theorem)
+            {:type       :theorem
+             :given      (:given theorem)
+             :conclusion (:conclusion theorem)
+             :forward    (roth-structure-f (:given theorem) (:extra theorem) (:conclusion theorem))
+             :backward   (roth-structure-b (:given theorem) (:extra theorem) (:conclusion theorem))
+             :logic-rel  (eval (gen-roth-relation nil (:given theorem) nil (:conclusion theorem)))}))
+  
 ;; ## User Interface for lwb.nd.repl
 
 (defn import-rules
@@ -92,18 +117,7 @@
    Requires: `resource-name` exists and has valid rules.     
    Modifies; global atom `roths`."
   [resource-name roths]
-  (let [map-fn (fn [rule]
-                 (hash-map (:id rule)
-                           {:type       :rule
-                            :prereq     (:prereq rule)
-                            :given      (:given rule)
-                            :extra      (:extra rule)
-                            :conclusion (:conclusion rule)
-                            :forward    (roth-structure-f (:given rule) (:extra rule) (:conclusion rule))
-                            :backward   (roth-structure-b (:given rule) (:extra rule) (:conclusion rule))
-                            :logic-rel  (eval (gen-roth-relation (:prereq rule) (:given rule) (:extra rule)
-                                                                 (:conclusion rule)))}))]
-    (apply (partial swap! roths merge) (map map-fn (import-v resource-name valid-rule?)))))
+    (apply (partial swap! roths merge) (map rule-fn (import-v resource-name valid-rule?))))
 
 (defn import-theorems
   "Imports all theorems from `name` into global atom `roths`.        
@@ -112,17 +126,18 @@
    Modifies; global atom `roths`."
   ([resource-name roths] (import-theorems resource-name roths :resource))
   ([name roths mode]
-  (let [map-fn (fn [theorem]
-                 (hash-map (:id theorem)
-                           {:type       :theorem
-                            :given      (:given theorem)
-                            :conclusion (:conclusion theorem)
-                            :forward    (roth-structure-f (:given theorem) (:extra theorem) (:conclusion theorem))
-                            :backward   (roth-structure-b (:given theorem) (:extra theorem) (:conclusion theorem))
-                            :logic-rel  (eval (gen-roth-relation nil (:given theorem) nil (:conclusion theorem)))}))]
     (apply (partial swap! roths merge) 
-           (map map-fn (if (= mode :resource) (import-v name valid-theorem?) (import-file-v name valid-theorem?)))))))
+           (map theorem-fn (if (= mode :resource) (import-v name valid-theorem?) (import-file-v name valid-theorem?))))))
 
+(defn import-theorem
+  "Import theorems from `proof` under `id` into `roths`.      
+   Modifies; global atom `roths`."
+  [proof id roths]
+  (if-not (proved? proof)
+    (throw (Exception. "The proof is not completed yet.")))
+  (if (id @roths)
+    (throw (Exception. (format "There is already a theorem or rule with id '%s'." id))))
+  (swap! roths conj [id (id (theorem-fn (theorem proof id)))]))
 
 (defn export-theorem
     "Exports `proof` as a theorem with the `id` to `filename`.        

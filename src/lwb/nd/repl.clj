@@ -114,6 +114,13 @@
   (load-logic :ltl)
   )
 
+(defn load-theorem
+  "Load proved theorem from a proof into the theorem storage.      
+   Requires: theorem is proved and the `id` is fresh."
+  [proof id]
+  (io/import-theorem proof id roths)
+  )
+
 ;; ## Atoms that hold the state of the proof session
 
 (def p
@@ -123,6 +130,11 @@
 (def p-history
   "Atom that holds the history of the proof as a vector, provided for undo steps."
   (atom []))
+
+(defn current-proof
+  "Current proof."
+  []
+  @p)
 
 ;; ## Showing the proof
 
@@ -195,10 +207,6 @@
 ;; namespace `lwb.nd.swap` for the logics we support.     
 ;; It would be an interesting task to enhance the langugae of our rules to make a more
 ;; generic solution possible.
-
-
-
-
 
 (defn undo
   "Undo the last change of the proof.     
