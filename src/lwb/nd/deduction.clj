@@ -334,3 +334,11 @@
             :else node)
           node))
       proof)))
+
+(defn subclaim
+  "Introduces the subclaim `fml` into `proof` at the first todo line."
+  [proof fml]
+  (let [todo-line (find-next-todo-plno proof 1)
+        new-line  (new-pline fml)
+        new-proof (add-above-plid proof (plno->plid proof todo-line) new-line)]
+    (normalize new-proof)))

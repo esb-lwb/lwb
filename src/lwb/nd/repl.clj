@@ -193,6 +193,16 @@
     (catch Exception e
       (println (str "Error: " (.getMessage e))))))
 
+(defn subclaim
+  [fml]
+  (try
+    (let [proof' (deduc/subclaim @p fml)]
+      (swap! p-history conj @p)
+      (reset! p proof')
+      (show))
+    (catch Exception e
+      (println (str "Error: " (.getMessage e))))))
+
 ;; ###Remark:         
 
 ;; Some of the rules have constraints, e.g. the introduction of a actual element in the
@@ -269,7 +279,7 @@
   "Load proved theorem from the current proof into the theorem storage.      
    Requires: theorem is proved and the `id` is fresh."
   [id]
-  (io/import-theorem current-proof id roths))
+  (io/import-theorem (current-proof) id roths))
 
 ;; ## Function that exports the current proof as a reusable theorem
 

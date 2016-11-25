@@ -106,6 +106,13 @@
 ; 8: (or P (not P))                          "raa" ([1 7])
 ;    --------------------------------------------------
 
+(proof '(not (or P Q)) '(not P))
+(step-b :not-i 3)
+(step-f :or-i1 2)
+(swap '?1 'Q)
+(step-f :not-e 1 3)
+
+
 ; Constants
 
 ; -----------------------------------------------------------------------------------------
@@ -306,6 +313,66 @@
 (step-f :impl-e 4 5)
 
 ; (export "resources/nd/theorems-prop.edn" :impl-impl->impl-and)
+
+; -----------------------------------------------------------------------------------------
+; impl
+
+(proof '(impl P Q) '(or (not P) Q))
+(step-b :raa 3)
+(step-f :not-or->and-not 2)
+(step-f :and-e1 3)
+(step-f :notnot-e 4)
+(step-f :impl-e 1 5)
+(step-f :and-e2 3)
+(step-f :not-e 7 6)
+
+(proof '(or (not P) Q) '(impl P Q))
+(step-f :or-e 1 3)
+(step-b :impl-i 4)
+(step-f :not-e 2 3)
+(step-b :efq 6)
+(step-b :impl-i 9)
+
+; -----------------------------------------------------------------------------------------
+; not-impl
+
+(proof '(not (impl P Q)) '(and P (not Q)))
+(subclaim '(not (or (not P) Q)))
+(step-b :not-i 3)
+(step-f :or-e 2)
+(swap '?1 '(impl P Q))
+(step-b :impl-i 5)
+(step-f :not-e 3 4)
+(step-b :efq 7)
+(step-b :impl-i 10)
+(step-f :not-e 1 12)
+(subclaim 'P)
+(step-b :raa 16)
+(step-f :or-i1 15)
+(swap '?2 'Q)
+(step-f :not-e 14 16)
+(subclaim '(not Q))
+(step-b :not-i 20)
+(step-f :or-i2 19)
+(swap '?3 '(not P))
+(step-f :not-e 14 20)
+(step-f :and-i 18 22)
+; Steps [1] and [2]
+
+; This example shows, that's not always possible to prove
+; a claim without making subproofs,
+; because it's not possible to put freely subclaims into a deduction with lwb!
+; On a sheet of paper, that would be no problem
+
+; Do we need a command that introduces intermediate claims??
+
+(proof '(and P (not Q)) '(not (impl P Q)))
+(step-b :not-i 3)
+(step-f :and-e1 1)
+(step-f :impl-e 2 3)
+(step-f :and-e2 1)
+(step-f :not-e 5 4)
+
 
 ; -----------------------------------------------------------------------------------------
 ; and-comm

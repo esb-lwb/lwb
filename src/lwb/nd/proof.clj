@@ -336,7 +336,7 @@
   (substitution phi var t))
 
 (declare new-subproof)
-(defn- new-pline
+(defn new-pline
   "Creates a new proof line or subproof from body and [optional] rule and refs."
   ([body] (new-pline body nil nil))
   ([body roth refs]
