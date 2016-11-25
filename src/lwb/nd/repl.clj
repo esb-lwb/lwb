@@ -114,12 +114,6 @@
   (load-logic :ltl)
   )
 
-(defn load-theorem
-  "Load proved theorem from a proof into the theorem storage.      
-   Requires: theorem is proved and the `id` is fresh."
-  [proof id]
-  (io/import-theorem proof id roths)
-  )
 
 ;; ## Atoms that hold the state of the proof session
 
@@ -267,7 +261,15 @@
    In this case the function uses the shell command `texi2pdf` that compiles tex code,
    and `open` to show the generated file."
   ([] (printer/texify @p))
-  ([filename] (printer/texify @p filename)))
+   ([filename] (printer/texify @p filename)))
+
+;; ## Function that loads the current proof into the storage of rohts for the current session
+
+(defn load-theorem
+  "Load proved theorem from the current proof into the theorem storage.      
+   Requires: theorem is proved and the `id` is fresh."
+  [id]
+  (io/import-theorem current-proof id roths))
 
 ;; ## Function that exports the current proof as a reusable theorem
 

@@ -54,3 +54,12 @@
 {:id :efq
  :given      [contradiction]
  :conclusion [phi]}
+
+; for constants truth and contradiction
+{:id :truth
+ :given [(or phi (not phi))]
+ :conclusion [truth]}
+
+{:id :contradiction
+ :given [(not truth)]
+ :conclusion [contradiction]}

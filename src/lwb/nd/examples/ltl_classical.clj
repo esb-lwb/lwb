@@ -228,8 +228,91 @@
 
 ; (export "resources/nd/theorems-ltl.edn" :always-serial)
 
+; Bolotov 4
+(proof '(at [i] (impl (and true A) A)))
+(step-b :impl-i 2)
+(step-f :and-e2 1)
+
+
+; Bolotov 5
+(proof '(at [i] (impl (atnext (not A)) (not (atnext A)))))
+(step-b :impl-i 2)
+(step-f :atnext-not->not-atnext 1)
+
+; Bolotov 6
+(proof '(at [i] (impl (not (finally A)) (always (not A)))))
+(step-b :impl-i 2)
+(step-f :not-finally->always-not 1)
+
+; Bolotov 7
+(proof '(at [i] (impl (not (always A)) (finally (not A)))))
+(step-b :impl-i 2)
+(step-f :not-always->finally-not 1)
+
+; Bolotov 8
+(proof '(at [i] (impl (and A (atnext contradiction)) contradiction)))
+(step-b :impl-i 2)
+(step-f :and-e2 1)
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'j)
+(step-f :succ/<= 3)
+(step-f :atnext-e 2 3)
+(step-b :not-e 7)
+(swap '?3 'j)
+(swap '?4 'contradiction)
+(step-b :not-i 7)
+(swap '?5 'j)
+
+(load-theorem :b-8.1)
+
+(proof '(at [i] (always (impl (and A (atnext contradiction)) contradiction))))
+(step-b :always-i 2)
+(swap '?1 'j)
+(step-f :b-8.1)
+(swap '?2 'j)
+(swap '?3 'A)
+
+(load-theorem :b-8.2)
+
+(proof '(at [i] (always (impl contradiction contradiction))))
+(step-b :always-i 2)
+(swap '?1 'j)
+(step-b :impl-i 3)
+
+(load-theorem  :b-8.3)
+
+(proof '(at [i] (impl (until A contradiction) contradiction)))
+(step-f :b-8.2)
+(swap '?1 'i)
+(swap '?2 'A)
+(step-f :b-8.3)
+(swap '?3 'i)
+(step-f :until-e 2 1)
+
+; Bolotov 9
+
+;; wie geht das????
+(proof '(at [i] (until (not A) (and (not A) contradiction))) '(at [i] (until (not A) contradiction)))
+;; braucht man hier step-i (step-inside??)
+
+(proof '(at [i] (impl (finally A) (until true A))))
+(step-b :impl-i 2)
+(step-f :finally-e 1)
+(swap '?1 'j)
+(swap '?2 '(at [j] A))
+(step-b :raa 7)
+(step-f :not-until 6)
+(swap '?3 'i)
+(step-f :or-e 7 9)
+(step-f :always-e 8)
+(swap '?4 'j)
+
+
 ; -----------------------------------------------------------------------------------------
 ; atnext-serial = induction principle
+; Bolotov 13 
+; Das induktionsprinzip steckt in der Regel :until-e
 
 ; TODO induction stucks!!
 

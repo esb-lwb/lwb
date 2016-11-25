@@ -106,6 +106,120 @@
 ; 8: (or P (not P))                          "raa" ([1 7])
 ;    --------------------------------------------------
 
+; Constants
+
+; -----------------------------------------------------------------------------------------
+; Definition
+
+(proof 'truth '(or P (not P)))
+(step-f :tnd)
+(swap '?1 'P)
+
+(proof '(or P (not P)) 'truth)
+(step-f :truth 1)
+
+(proof 'contradiction '(and P (not P)))
+(step-b :efq 3)
+
+(proof '(and P (not P)) 'contradiction)
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-f :not-e 3 2)
+
+; -----------------------------------------------------------------------------------------
+; Absorption 
+
+(proof '(or P truth) 'truth)
+(step-f :or-e 1 3)
+(step-f :or-i1 2)
+(swap '?1 '(not P))
+(step-f :truth 3)
+
+(proof 'truth '(or P truth))
+(step-b :or-i2 3)
+
+(proof '(or P contradiction) 'P)
+(step-f :or-e 1 3)
+(step-b :efq 6)
+
+(proof 'P '(or P contradiction))
+(step-b :or-i1 3)
+
+(proof '(impl P truth) 'truth)
+(step-f :tnd)
+(swap '?1 'P)
+(step-f :or-e 2 4)
+(step-f :impl-e 1 3)
+(step-b :raa 7)
+(step-f :contradiction 6)
+
+(proof 'truth '(impl P truth))
+(step-b :impl-i 3)
+
+(proof '(impl P contradiction) '(not P))
+(step-b :raa 3)
+(step-f :notnot-e 2)
+(step-f :impl-e 1 3)
+
+(proof '(not P) '(impl P contradiction))
+(step-b :impl-i 3)
+(step-f :not-e 1 2)
+
+(proof '(and P truth) 'P)
+(step-f :and-e1 1)
+
+(proof 'P '(and P truth))
+(step-b :and-i 3)
+(step-f :tnd)
+(swap '?1 'X)
+(step-f :truth 2)
+
+(proof '(and P contradiction) 'contradiction)
+(step-f :and-e2 1)
+
+(proof 'contradiction '(and P contradiction))
+(step-b :efq 3)
+
+(proof '(impl truth P) 'P)
+(step-f :tnd)
+(swap '?1 'X)
+(step-f :truth 2)
+(step-f :impl-e 1 3)
+
+(proof 'P '(impl truth P))
+(step-b :impl-i 3)
+
+(proof '(impl contradiction P) 'truth)
+(step-f :tnd)
+(swap '?1 'X)
+(step-f :truth 2)
+
+(proof 'truth '(impl contradiction P))
+(step-b :impl-i 3)
+(step-b :efq 4)
+
+; -----------------------------------------------------------------------------------------
+; Collapsing of idnentical operands
+
+(proof '(and P P) 'P)
+(step-f :and-e1 1)
+
+(proof 'P '(and P P))
+(step-b :and-i 3)
+
+(proof '(or P P) 'P)
+(step-f :or-e 1 3)
+
+(proof 'P '(or P P))
+(step-b :or-i1 3)
+
+(proof '(impl P P) 'truth)
+(step-b :raa 3)
+(step-f :contradiction 2)
+
+(proof 'truth '(impl P P))
+(step-b :impl-i 3)
+
 ; Classical theorems
 
 ; -----------------------------------------------------------------------------------------
@@ -215,7 +329,7 @@
 ; (export "resources/nd/theorems-prop.edn" :or-comm)
 
 ; -----------------------------------------------------------------------------------------
-; and-dist
+; and-assocr
 
 (proof '(and P (and Q R)) '(and (and P Q) R))
 (step-f :and-e1 1)
@@ -225,10 +339,23 @@
 (step-f :and-i 2 4)
 (step-f :and-i 6 5)
 
-; (export "resources/nd/theorems-prop.edn" :and-dist)
+; (export "resources/nd/theorems-prop.edn" :and-assocr)
 
 ; -----------------------------------------------------------------------------------------
-; or-dist
+; and-assocl
+
+(proof '(and (and P Q) R) '(and P (and Q R)))
+(step-f :and-e1 1)
+(step-f :and-e1 2)
+(step-f :and-e2 2)
+(step-f :and-e2 1)
+(step-f :and-i 4 5)
+(step-f :and-i 3 6)
+
+; (export "resources/nd/theorems-prop.edn" :and-assocl)
+
+; -----------------------------------------------------------------------------------------
+; or-assocl
 
 (proof '(or P (or Q R)) '(or (or P Q) R))
 (step-f :or-e 1 3)
@@ -244,7 +371,92 @@
 (step-f :or-i2 9)
 (swap '?5 '(or P Q))
 
-; (export "resources/nd/theorems-prop.edn" :or-dist)
+; (export "resources/nd/theorems-prop.edn" :or-assocl)
+
+; -----------------------------------------------------------------------------------------
+; or-assocr
+
+(proof '(or (or P Q) R) '(or P (or Q R)))
+(step-f :or-e 1 3)
+(step-f :or-e 2 4)
+(step-b :or-i1 5)
+(step-f :or-i1 5)
+(swap '?1 'R)
+(step-b :or-i2 8)
+(step-f :or-i2 9)
+(swap '?2 'Q)
+(step-b :or-i2 12)
+
+; (export "resources/nd/theorems-prop.edn" :or-assocr)
+
+; -----------------------------------------------------------------------------------------
+; or-and-dist1
+
+(proof '(or P (and Q R)) '(and (or P Q) (or P R)))
+(step-f :or-e 1 3)
+(step-b :and-i 4)
+(step-b :or-i1 4)
+(step-b :or-i1 5)
+(step-f :and-e1 6)
+(step-f :and-e2 6)
+(step-b :and-i 10)
+(step-b :or-i2 10)
+(step-b :or-i2 11)
+
+; (export "resources/nd/theorems-prop.edn" :or-and-dist1)
+
+; -----------------------------------------------------------------------------------------
+; or-and-dist2
+
+(proof '(and (or P Q) (or P R)) '(or P (and Q R)))
+(step-f :tnd)
+(swap '?1 'P)
+(step-f :or-e 2 4)
+(step-b :or-i1 5)
+(step-f :and-e1 1)
+(step-f :or-e 6)
+(swap '?2 'Q)
+(step-f :not-e 5 7)
+(step-b :efq 10)
+(step-f :and-e2 1)
+(step-f :or-e 13)
+(swap '?3 'R)
+(step-f :not-e 5 14)
+(step-b :efq 17)
+(step-f :and-i 12 19)
+(step-b :or-i2 22)
+
+; (export "resources/nd/theorems-prop.edn" :or-and-dist2)
+
+; -----------------------------------------------------------------------------------------
+; and-or-dist1
+
+(proof '(and P (or Q R)) '(or (and P Q) (and P R)))
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-f :or-e 3 5)
+(step-f :and-i 2 4)
+(step-b :or-i1 7)
+(step-f :and-i 2 7)
+(step-b :or-i2 10)
+
+; (export "resources/nd/theorems-prop.edn" :and-or-dist1)
+
+; -----------------------------------------------------------------------------------------
+; and-or-dist2
+
+(proof '(or (and P Q) (and P R)) '(and P (or Q R)))
+(step-f :or-e 1 3)
+(step-f :and-e1 2)
+(step-f :and-e2 2)
+(step-b :and-i 6)
+(step-b :or-i1 6)
+(step-f :and-e1 7)
+(step-f :and-e2 7)
+(step-b :and-i 11)
+(step-b :or-i2 11)
+
+; (export "resources/nd/theorems-prop.edn" :and-or-dist2)
 
 ; -----------------------------------------------------------------------------------------
 ; De Morgan
