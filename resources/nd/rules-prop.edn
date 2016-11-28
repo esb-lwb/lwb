@@ -59,7 +59,6 @@
 {:id :truth
  :given [(or phi (not phi))]
  :conclusion [truth]}
-
 {:id :contradiction
  :given [(not truth)]
  :conclusion [contradiction]}

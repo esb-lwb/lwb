@@ -22,9 +22,8 @@
 (step-b :not-i 3)
 (step-f :not-e 2 1)
 
-; (export "resources/nd/theorems-prop.edn" :notnot-i)
+;(export "resources/nd/theorems-prop.edn" :notnot-i)
 
-;
 ;    --------------------------------------------------
 ; 1: P                                       premise
 ;     ------------------------------------------------
@@ -34,7 +33,6 @@
 ; 4: (not (not P))                           "not-i" ([2 3])
 ;    ---------------------------------------------------------------------------------------------------
 
-
 ; -----------------------------------------------------------------------------------------
 ; notnot-elimination
 
@@ -42,7 +40,7 @@
 (step-b :raa 3)
 (step-f :not-e 1 2)
 
-; (export "resources/nd/theorems-prop.edn" :notnot-e)
+;(export "resources/nd/theorems-prop.edn" :notnot-e)
  
 ;
 ;   --------------------------------------------------
@@ -90,7 +88,6 @@
 
 ;(export "resources/nd/theorems-prop.edn" :tnd)
 
-;
 ;    --------------------------------------------------
 ;     ------------------------------------------------
 ; 1:  | (not (or P (not P)))                 assumption
@@ -106,11 +103,31 @@
 ; 8: (or P (not P))                          "raa" ([1 7])
 ;    --------------------------------------------------
 
+
+; We want to use the derived rules
+;(load-logic :prop)
+
+; -----------------------------------------------------------------------------------------
+; not-or-e1
+
 (proof '(not (or P Q)) '(not P))
 (step-b :not-i 3)
 (step-f :or-i1 2)
 (swap '?1 'Q)
 (step-f :not-e 1 3)
+
+;(export "resources/nd/theorems-prop.edn" :not-or-e1)
+
+; -----------------------------------------------------------------------------------------
+; not-or-e2
+
+(proof '(not (or P Q)) '(not Q))
+(step-b :not-i 3)
+(step-f :or-i2 2)
+(swap '?1 'P)
+(step-f :not-e 1 3)
+
+;(export "resources/nd/theorems-prop.edn" :not-or-e2)
 
 
 ; Constants
@@ -133,6 +150,9 @@
 (step-f :and-e2 1)
 (step-f :not-e 3 2)
 
+(proof 'contradiction '(and P (not P)))
+(step-b :efq 3)
+
 ; -----------------------------------------------------------------------------------------
 ; Absorption 
 
@@ -142,15 +162,23 @@
 (swap '?1 '(not P))
 (step-f :truth 3)
 
+;(export "resources/nd/theorems-prop.edn" :or-truth->truth)
+
 (proof 'truth '(or P truth))
 (step-b :or-i2 3)
+
+;(export "resources/nd/theorems-prop.edn" :truth->or-truth)
 
 (proof '(or P contradiction) 'P)
 (step-f :or-e 1 3)
 (step-b :efq 6)
 
+;(export "resources/nd/theorems-prop.edn" :or-contra-e)
+
 (proof 'P '(or P contradiction))
 (step-b :or-i1 3)
+
+;(export "resources/nd/theorems-prop.edn" :or-contra-i)
 
 (proof '(impl P truth) 'truth)
 (step-f :tnd)
@@ -160,20 +188,30 @@
 (step-b :raa 7)
 (step-f :contradiction 6)
 
+;(export "resources/nd/theorems-prop.edn" :impl-truth->truth)
+
 (proof 'truth '(impl P truth))
 (step-b :impl-i 3)
+
+;(export "resources/nd/theorems-prop.edn" :truth->impl-truth)
 
 (proof '(impl P contradiction) '(not P))
 (step-b :raa 3)
 (step-f :notnot-e 2)
 (step-f :impl-e 1 3)
 
+;(export "resources/nd/theorems-prop.edn" :impl-contra->not)
+
 (proof '(not P) '(impl P contradiction))
 (step-b :impl-i 3)
 (step-f :not-e 1 2)
 
+;(export "resources/nd/theorems-prop.edn" :not->impl-contra)
+
 (proof '(and P truth) 'P)
 (step-f :and-e1 1)
+
+;(export "resources/nd/theorems-prop.edn" :and-truth-e)
 
 (proof 'P '(and P truth))
 (step-b :and-i 3)
@@ -181,11 +219,17 @@
 (swap '?1 'X)
 (step-f :truth 2)
 
+;(export "resources/nd/theorems-prop.edn" :and-truth-i)
+
 (proof '(and P contradiction) 'contradiction)
 (step-f :and-e2 1)
 
+;(export "resources/nd/theorems-prop.edn" :and-contra->contra)
+
 (proof 'contradiction '(and P contradiction))
 (step-b :efq 3)
+
+;(export "resources/nd/theorems-prop.edn" :contra->and-contra)
 
 (proof '(impl truth P) 'P)
 (step-f :tnd)
@@ -193,20 +237,28 @@
 (step-f :truth 2)
 (step-f :impl-e 1 3)
 
+;(export "resources/nd/theorems-prop.edn" :impl-truth-e)
+
 (proof 'P '(impl truth P))
 (step-b :impl-i 3)
+
+;(export "resources/nd/theorems-prop.edn" :impl-truth-i)
 
 (proof '(impl contradiction P) 'truth)
 (step-f :tnd)
 (swap '?1 'X)
 (step-f :truth 2)
 
+;(export "resources/nd/theorems-prop.edn" :impl-contra->truth)
+
 (proof 'truth '(impl contradiction P))
 (step-b :impl-i 3)
 (step-b :efq 4)
 
+;(export "resources/nd/theorems-prop.edn" :truth->impl-contra)
+
 ; -----------------------------------------------------------------------------------------
-; Collapsing of idnentical operands
+; Collapsing of identical operands
 
 (proof '(and P P) 'P)
 (step-f :and-e1 1)
@@ -238,9 +290,8 @@
 (step-f :impl-e 1 3)
 (step-b :not-e 6 2)
 
-; (export "resources/nd/theorems-prop.edn" :contrap)
+;(export "resources/nd/theorems-prop.edn" :contrap)
 
-;
 ;     --------------------------------------------------
 ; 1: (impl P Q)                              premise
 ;     ------------------------------------------------
@@ -269,9 +320,8 @@
 (step-f :not-e 2 3)
 (step-b :efq 6)
 
-; (export "resources/nd/theorems-prop.edn" :pierce)
+;(export "resources/nd/theorems-prop.edn" :pierce)
 
-;
 ;    --------------------------------------------------
 ;     ------------------------------------------------
 ; 1:  | (impl (impl P Q) P)                  assumption
@@ -300,7 +350,7 @@
 (step-f :and-i 2 3)
 (step-f :impl-e 1 4)
 
-; (export "resources/nd/theorems-prop.edn" :impl-and->impl-impl)
+;(export "resources/nd/theorems-prop.edn" :impl-and->impl-impl)
 
 ; -----------------------------------------------------------------------------------------
 ; impl-impl->impl-and
@@ -312,67 +362,7 @@
 (step-f :and-e2 2)
 (step-f :impl-e 4 5)
 
-; (export "resources/nd/theorems-prop.edn" :impl-impl->impl-and)
-
-; -----------------------------------------------------------------------------------------
-; impl
-
-(proof '(impl P Q) '(or (not P) Q))
-(step-b :raa 3)
-(step-f :not-or->and-not 2)
-(step-f :and-e1 3)
-(step-f :notnot-e 4)
-(step-f :impl-e 1 5)
-(step-f :and-e2 3)
-(step-f :not-e 7 6)
-
-(proof '(or (not P) Q) '(impl P Q))
-(step-f :or-e 1 3)
-(step-b :impl-i 4)
-(step-f :not-e 2 3)
-(step-b :efq 6)
-(step-b :impl-i 9)
-
-; -----------------------------------------------------------------------------------------
-; not-impl
-
-(proof '(not (impl P Q)) '(and P (not Q)))
-(subclaim '(not (or (not P) Q)))
-(step-b :not-i 3)
-(step-f :or-e 2)
-(swap '?1 '(impl P Q))
-(step-b :impl-i 5)
-(step-f :not-e 3 4)
-(step-b :efq 7)
-(step-b :impl-i 10)
-(step-f :not-e 1 12)
-(subclaim 'P)
-(step-b :raa 16)
-(step-f :or-i1 15)
-(swap '?2 'Q)
-(step-f :not-e 14 16)
-(subclaim '(not Q))
-(step-b :not-i 20)
-(step-f :or-i2 19)
-(swap '?3 '(not P))
-(step-f :not-e 14 20)
-(step-f :and-i 18 22)
-; Steps [1] and [2]
-
-; This example shows, that's not always possible to prove
-; a claim without making subproofs,
-; because it's not possible to put freely subclaims into a deduction with lwb!
-; On a sheet of paper, that would be no problem
-
-; Do we need a command that introduces intermediate claims??
-
-(proof '(and P (not Q)) '(not (impl P Q)))
-(step-b :not-i 3)
-(step-f :and-e1 1)
-(step-f :impl-e 2 3)
-(step-f :and-e2 1)
-(step-f :not-e 5 4)
-
+;(export "resources/nd/theorems-prop.edn" :impl-impl->impl-and)
 
 ; -----------------------------------------------------------------------------------------
 ; and-comm
@@ -382,7 +372,7 @@
 (step-f :and-e2 1)
 (step-f :and-i 3 2)
 
-; (export "resources/nd/theorems-prop.edn" :and-comm)
+;(export "resources/nd/theorems-prop.edn" :and-comm)
 
 ; -----------------------------------------------------------------------------------------
 ; or-comm
@@ -393,7 +383,7 @@
 (swap '?1 'Q)
 (step-b :or-i1 6)
 
-; (export "resources/nd/theorems-prop.edn" :or-comm)
+;(export "resources/nd/theorems-prop.edn" :or-comm)
 
 ; -----------------------------------------------------------------------------------------
 ; and-assocr
@@ -406,7 +396,7 @@
 (step-f :and-i 2 4)
 (step-f :and-i 6 5)
 
-; (export "resources/nd/theorems-prop.edn" :and-assocr)
+;(export "resources/nd/theorems-prop.edn" :and-assocr)
 
 ; -----------------------------------------------------------------------------------------
 ; and-assocl
@@ -419,7 +409,7 @@
 (step-f :and-i 4 5)
 (step-f :and-i 3 6)
 
-; (export "resources/nd/theorems-prop.edn" :and-assocl)
+;(export "resources/nd/theorems-prop.edn" :and-assocl)
 
 ; -----------------------------------------------------------------------------------------
 ; or-assocl
@@ -438,7 +428,7 @@
 (step-f :or-i2 9)
 (swap '?5 '(or P Q))
 
-; (export "resources/nd/theorems-prop.edn" :or-assocl)
+;(export "resources/nd/theorems-prop.edn" :or-assocl)
 
 ; -----------------------------------------------------------------------------------------
 ; or-assocr
@@ -454,7 +444,7 @@
 (swap '?2 'Q)
 (step-b :or-i2 12)
 
-; (export "resources/nd/theorems-prop.edn" :or-assocr)
+;(export "resources/nd/theorems-prop.edn" :or-assocr)
 
 ; -----------------------------------------------------------------------------------------
 ; or-and-dist1
@@ -470,7 +460,7 @@
 (step-b :or-i2 10)
 (step-b :or-i2 11)
 
-; (export "resources/nd/theorems-prop.edn" :or-and-dist1)
+;(export "resources/nd/theorems-prop.edn" :or-and-dist1)
 
 ; -----------------------------------------------------------------------------------------
 ; or-and-dist2
@@ -493,7 +483,7 @@
 (step-f :and-i 12 19)
 (step-b :or-i2 22)
 
-; (export "resources/nd/theorems-prop.edn" :or-and-dist2)
+;(export "resources/nd/theorems-prop.edn" :or-and-dist2)
 
 ; -----------------------------------------------------------------------------------------
 ; and-or-dist1
@@ -507,7 +497,7 @@
 (step-f :and-i 2 7)
 (step-b :or-i2 10)
 
-; (export "resources/nd/theorems-prop.edn" :and-or-dist1)
+;(export "resources/nd/theorems-prop.edn" :and-or-dist1)
 
 ; -----------------------------------------------------------------------------------------
 ; and-or-dist2
@@ -523,7 +513,7 @@
 (step-b :and-i 11)
 (step-b :or-i2 11)
 
-; (export "resources/nd/theorems-prop.edn" :and-or-dist2)
+;(export "resources/nd/theorems-prop.edn" :and-or-dist2)
 
 ; -----------------------------------------------------------------------------------------
 ; De Morgan
@@ -542,7 +532,7 @@
 (swap '?3 '(or (not P) (not Q)))
 (step-b :or-i1 5)
 
-; (export "resources/nd/theorems-prop.edn" :not-and->or-not)
+;(export "resources/nd/theorems-prop.edn" :not-and->or-not)
 
 ; --------------------------------------------------
 ; 1: (not (and P Q))                         :premise
@@ -577,7 +567,6 @@
 
 ;(export "resources/nd/theorems-prop.edn" :or-not->not-and)
 
-;
 ;     --------------------------------------------------
 ;  1: (or (not P) (not Q))                    premise
 ;      ------------------------------------------------
@@ -614,7 +603,6 @@
 
 ;(export "resources/nd/theorems-prop.edn" :not-or->and-not)
 
-;
 ; --------------------------------------------------
 ; 1: (not (or P Q))                          :premise
 ; ------------------------------------------------
@@ -640,7 +628,7 @@
 (step-f :not-e 2 5)
 (step-f :not-e 3 7)
 
-; (export "resources/nd/theorems-prop.edn" :and-not->not-or)
+;(export "resources/nd/theorems-prop.edn" :and-not->not-or)
 
 ;
 ; --------------------------------------------------
@@ -661,3 +649,58 @@
 ; ------------------------------------------------
 ; 10: (not (or P Q))                          :not-i [[4 9]]
 ; --------------------------------------------------
+ 
+; We want to use  DeMorgan's laws
+;(load-logic :prop)
+; -----------------------------------------------------------------------------------------
+; impl
+
+(proof '(impl P Q) '(or (not P) Q))
+(step-b :raa 3)
+(step-f :not-or->and-not 2)
+(step-f :and-e1 3)
+(step-f :notnot-e 4)
+(step-f :impl-e 1 5)
+(step-f :and-e2 3)
+(step-f :not-e 7 6)
+
+;(export "resources/nd/theorems-prop.edn" :impl->or-not)
+
+(proof '(or (not P) Q) '(impl P Q))
+(step-f :or-e 1 3)
+(step-b :impl-i 4)
+(step-f :not-e 2 3)
+(step-b :efq 6)
+(step-b :impl-i 9)
+
+;(export "resources/nd/theorems-prop.edn" :or-not->impl)
+
+; -----------------------------------------------------------------------------------------
+; not-impl
+
+(proof '(not (impl P Q)) '(and P (not Q)))
+(subclaim '(not (or (not P) Q)))
+(step-b :not-i 3)
+(step-f :or-e 2)
+(swap '?1 '(impl P Q))
+(step-b :impl-i 5)
+(step-f :not-e 3 4)
+(step-b :efq 7)
+(step-b :impl-i 10)
+(step-f :not-e 1 12)
+(step-f :not-or-e1 14)
+(step-f :notnot-e 15)
+(step-f :not-or-e2 14)
+(step-f :and-i 16 17)
+
+;(export "resources/nd/theorems-prop.edn" :not-impl-e)
+
+(proof '(and P (not Q)) '(not (impl P Q)))
+(step-b :not-i 3)
+(step-f :and-e1 1)
+(step-f :impl-e 2 3)
+(step-f :and-e2 1)
+(step-f :not-e 5 4)
+
+;(export "resources/nd/theorems-prop.edn" :not-impl-i)
+
