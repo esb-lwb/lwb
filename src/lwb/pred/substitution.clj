@@ -40,7 +40,7 @@
                   (zip/end? loc) result
                   (= (first loc) var) (recur (zip/next loc) (conj result (zip/path loc)))
                   :else (recur (zip/next loc) result)))]
-    (vec (filter #(not (bounded? % var)) paths))))
+    (filterv #(not (bounded? % var)) paths)))
 
 (defn in-scope?
   "Is `var1` in the scope of a quantor for `var2` in vector `pathv`?"

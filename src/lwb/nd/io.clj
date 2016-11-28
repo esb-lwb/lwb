@@ -59,7 +59,7 @@
    Throws: Exceptions if the resource can't be opened.    
            Exception if content of the resource is not valid."
   [name validation-fn]
-  (vec (filter validation-fn (read-roths-from-resource name))))
+  (filterv validation-fn (read-roths-from-resource name)))
 
 (defn- import-file-v
   "Validated vector of roths from the import file.      
@@ -67,7 +67,7 @@
    Throws: Exceptions if the file can't be opened.    
            Exception if content of the file is not valid."
   [filename validation-fn]
-  (vec (filter validation-fn (read-roths-from-file filename))))
+  (filter validation-fn (read-roths-from-file filename)))
 
 (defn- theorem
   "Returns: Map with the theorem from the `proof` with the given `id`.     

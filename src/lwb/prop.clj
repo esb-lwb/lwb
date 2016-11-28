@@ -255,8 +255,8 @@
   ([phi mode]
     (let [tt (truth-table phi)]
     (condp = mode
-      :true-only (assoc tt :table (vec (filter #(true? (last %)) (:table tt))))
-      :false-only (assoc tt :table (vec (filter #(false? (last %)) (:table tt))))
+      :true-only (assoc tt :table (filterv #(true? (last %)) (:table tt)))
+      :false-only (assoc tt :table (filterv #(false? (last %)) (:table tt)))
       tt))))
 
 (s/fdef truth-table

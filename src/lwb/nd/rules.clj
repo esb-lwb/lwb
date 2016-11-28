@@ -314,6 +314,6 @@
    Returns:  a vector of formulas which size is equal to the number of `:?`s in the args."
   [roth-id args]
   (let [rel-args (gen-relargs args)
-        run-args (vec (filter symbol? rel-args))
+        run-args (filterv symbol? rel-args)
         result (first (eval (list `run* run-args (list* (:logic-rel (roth-id @roths)) rel-args))))]
     (if-not (vector? result) [result] result)))

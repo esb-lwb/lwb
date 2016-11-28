@@ -252,7 +252,7 @@
          ;; duplicate-plines grouped into a vactor of vector of plines with equal body
          equals (vec (map val (group-by :body duplicate-plines)))
          ;; equals must have at least one :roth that's not nil
-         equals' (vec (filter (fn [x] (not-every? nil? (map :roth x))) equals))
+         equals' (filterv (fn [x] (not-every? nil? (map :roth x))) equals)
          fn-smap (fn [equals]
                    (let [remain (map :plid (filter :roth equals))
                          delete (map :plid (filter (set sub) (remove :roth equals)))] ; just plines from the actual sub can be deleted
@@ -264,7 +264,7 @@
 (defn- adjust-refs
   "Upgrades the refs in the given proof according to the plid-map."
   [proof plid-map]
-  (let [old-plines (vec (filter #(not-empty (set/intersection (set (keys plid-map)) (set (flatten (:refs %))))) (flatten proof)))
+  (let [old-plines (filterv #(not-empty (set/intersection (set (keys plid-map)) (set (flatten (:refs %))))) (flatten proof))
         upg-plines (mapv #(assoc % :roth (:roth %) :refs (clojure.walk/prewalk-replace plid-map (:refs %))) old-plines)]
     (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))
 

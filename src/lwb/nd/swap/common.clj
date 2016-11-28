@@ -23,4 +23,4 @@
   [proof old]
   (let [bodies (map :body (flatten proof))
         involved?  (fn [idx-pline] (contains? (set (flat (second idx-pline))) old))]
-    (vec (filter involved? (map-indexed (fn [idx pline][(inc idx) pline]) bodies)))))
+    (filterv involved? (map-indexed (fn [idx pline][(inc idx) pline]) bodies))))
