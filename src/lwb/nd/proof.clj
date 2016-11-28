@@ -273,6 +273,7 @@
   [proof]
   (let [pm (plid-plno-map proof)
         fn (fn [pline] (let [curr-plno (get pm (:plid pline))
+                             ; just consider the refs to other line numbers, not extra refs
                              refs-plnos (mapv #(get pm %) (filter number? (flatten (:refs pline))))
                              max-ref-plno (if (empty? refs-plnos) 0 (apply max refs-plnos))]
                          (< max-ref-plno curr-plno)))]
