@@ -38,3 +38,8 @@
  :given  [(= t1 t2) phi-subst]
  :extra  [phi var]
  :conclusion [(substitution phi var t2)]}
+
+; non-empty univers
+{:id :actual
+ :given      []
+ :conclusion [(actual t)]}
