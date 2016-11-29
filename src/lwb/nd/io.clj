@@ -110,7 +110,7 @@
              :forward    (roth-structure-f (:given theorem) (:extra theorem) (:conclusion theorem))
              :backward   (roth-structure-b (:given theorem) (:extra theorem) (:conclusion theorem))
              :logic-rel  (eval (gen-roth-relation nil (:given theorem) nil (:conclusion theorem)))}))
-  
+
 ;; ## User Interface for lwb.nd.repl
 
 (defn import-rules

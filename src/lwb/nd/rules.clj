@@ -172,6 +172,7 @@
   (cond
     (contains? keywords arg) (list `quote arg)
     (symbol? arg) arg
+    (keyword? arg) (symbol (name arg))
     (vector? arg) (mapv gen-term arg)
     (and (list? arg) (contains? reserved (first arg))) (let [op (list `quote (first arg))
                                                              params (mapv gen-term (rest arg))]
@@ -202,6 +203,7 @@
     (contains? keywords arg) []
     (contains? reserved arg) []
     (symbol? arg) [arg]
+    (keyword? arg) [(symbol (name arg))]
     (list? arg) (vec (flatten (map gen-fresh-arg arg)))
     (vector? arg) (vec (flatten (map gen-fresh-arg arg)))))
 
