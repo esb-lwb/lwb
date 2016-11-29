@@ -231,7 +231,6 @@
 (swap '?2 'F)
 (step-f :not-e 2 4)
 
-;
 ;     --------------------------------------------------
 ; 1:  (not (and (not E) (not F)))             :premise
 ;      ------------------------------------------------
@@ -254,6 +253,14 @@
 ; 13: (or E F)                                :raa [[2 12]]
 ;     --------------------------------------------------
 
+; or
+(proof '(not (and (not E) (not F))) '(or E F))
+(step-f :not-and->or-not 1)
+(step-f :or-e 2 4)
+(step-f :notnot-e 3)
+(step-b :or-i1 6)
+(step-f :notnot-e 6)
+(step-b :or-i2 9)
 
 ; -----------------------------------------------------------------------------------------
 ; p.79
@@ -400,6 +407,13 @@
 ; 3: (R :j)                                  :forall-e [2 1]
 ; 4: (exists [y] (R y))                      :exists-i [1 3]
 ; --------------------------------------------------
+
+; with the additional rule :actual
+(proof '(forall [x] (R x)) '(exists [y] (R y)))
+(step-f :actual)
+(swap '?1 :j)
+(step-f :forall-e 1 2)
+(step-b :exists-i 5 2)
 
 ; -----------------------------------------------------------------------------------------
 ; p.114
@@ -554,22 +568,24 @@
 
 ; That's the proof for the more general theorem
 
-(proof '(actual :i) '(exists [x] (impl (Drunk x) (forall [y] (Drunk y)))))
+(proof '(exists [x] (impl (Drunk x) (forall [y] (Drunk y)))))
+(step-f :actual)
+(swap '?1 :i)
 (step-f :tnd)
-(swap '?1 '(forall [y] (Drunk y)))
+(swap '?2 '(forall [y] (Drunk y)))
 (step-f :or-e 2 4)
 (step-b :exists-i 5 1)
 (step-b :impl-i 5)
 (step-f :not-forall->exists-not 8)
 (step-f :exists-e 9 11)
-(swap '?2 :j)
+(swap '?3 :j)
 (step-b :exists-i 13 10)
 (step-b :impl-i 13)
 (step-f :not-e 11 12)
 (step-b :efq 15)
 
 ;     --------------------------------------------------
-;  1: (actual :i)                             :premise
+;  1: (actual :i)                             :actual []
 ;  2: (or (forall [y] (Drunk y)) (not (forall [y] (Drunk y)))):tnd []
 ;      ------------------------------------------------
 ;  3:  | (forall [y] (Drunk y))               :assumption
