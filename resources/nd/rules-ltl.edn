@@ -88,9 +88,12 @@
 
 ; UNTIL
 {:id :until-i
- :given      [(at [i] psi)]
- :conclusion [(at [i] (until phi psi))]}
+ :given      [(at [i] (finally psi))]
+ :conclusion [(at [i] (until truth psi))]}
 {:id :until-e
+ :given      [(at [i] (until truth psi))]
+ :conclusion [(at [i] (finally psi))]}
+{:id :until-ind
  :given      [(at [i] (always (impl psi chi)))
               (at [i] (always (impl (and phi (atnext chi)) chi)))]
  :conclusion [(at [i] (impl (until phi psi) chi))]}
