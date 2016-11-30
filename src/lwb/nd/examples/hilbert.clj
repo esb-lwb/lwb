@@ -9,7 +9,9 @@
 ;; # Examples: Hilbert's axioms for the propositional logic
 
 (ns lwb.nd.examples.hilbert
-  (:require [lwb.nd.repl :refer :all]))
+  (:require [lwb.nd.repl :refer :all]
+            [lwb.nd.rules :refer [roths reset-roths]]
+            [lwb.nd.io :as io]))
 
 (load-logic :prop)
 
@@ -55,4 +57,22 @@
 (step-b :raa 3)
 (step-f :impl-e 1 2)
 (step-f :not-e 2 3)
+
+; -----------------------------------------------------------------------------------------
+; Hilbert calculus
+(reset-roths)
+(io/import-rules (str rothpath "rules-hilbert.edn") roths)
+
+; just one example as proof of concepts
+(proof '[(impl A B) (impl B C)] '(impl A C))
+(step-f :axiom1)
+(swap '?1 '(impl B C))
+(swap '?2 'A)
+(step-f :mp 3 2)
+(step-f :axiom2)
+(swap '?3 'A)
+(swap '?4 'B)
+(swap '?5 'C)
+(step-f :mp 5 4)
+(step-f :mp 6 1)
 
