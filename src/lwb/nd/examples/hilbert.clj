@@ -62,8 +62,10 @@
 ; Hilbert calculus
 (reset-roths)
 (io/import-rules (str rothpath "rules-hilbert.edn") roths)
+(reset-meta! #'roths {:logic :prop})  ; so that swap knows what to do
 
-; just one example as proof of concepts
+; just some examples as proof of concepts
+
 (proof '[(impl A B) (impl B C)] '(impl A C))
 (step-f :axiom1)
 (swap '?1 '(impl B C))
@@ -75,4 +77,19 @@
 (swap '?5 'C)
 (step-f :mp 5 4)
 (step-f :mp 6 1)
+
+(proof '(impl A A))
+(step-f :axiom2)
+(swap '?1 'A)
+(swap '?2 '(impl A A))
+(swap '?3 'A)
+(step-f :axiom1)
+(swap '?4 'A)
+(swap '?5 '(impl A A))
+(step-f :mp 1 2)
+(step-f :axiom1)
+(swap '?6 'A)
+(swap '?7 'A)
+(step-f :mp 3 4)
+
 
