@@ -124,7 +124,7 @@
         (throw (Exception. (format "'%s' must differ from the other argument in a succ expression." new))))
       (assumption? proof rel-plno)
       (if (not (fresh? proof rel-plno new))
-        (throw (Exception. (format "'%s' must be a fresh state." new)))))))
+        (throw (Exception. (format "'%s' must be a fresh state, '%s' is not." old new)))))))
 
 (defn- check-prop
   "`new` must be a wellformed ltl formula.       
