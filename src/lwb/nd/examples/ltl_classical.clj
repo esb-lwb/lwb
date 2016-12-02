@@ -268,8 +268,27 @@
 ; -----------------------------------------------------------------------------------------
 ; finally-always->always-finally  Kröger/Merz T9
 
-; TODO
 (proof '(at[i] (finally (always A))) '(at [i] (always (finally A))))
+(step-b :always-i 3)
+(swap '?1 'j)
+(step-f :finally-e 1 4)
+(swap '?2 'k)
+(step-f :linear 2 3)
+(step-f :rel-cases 5 7)
+(step-f :</<= 6)
+(step-f :reflexiv)
+(swap '?3 'k)
+(step-f :always-e 4 8)
+(step-b :finally-i 11 9)
+(step-f :=/<= 11)
+(step-f :always->current 4)
+(step-b :finally-i 15 13)
+(step-f :</<= 15)
+(step-f :always-e 4 16)
+(step-f :reflexiv)
+(swap '?4 'j)
+(step-b :finally-i 20 17)
+
 
 ;(export "resources/nd/theorems-ltl.edn" :finally-always->always-finally)
 ; -----------------------------------------------------------------------------------------

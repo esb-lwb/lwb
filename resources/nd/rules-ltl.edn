@@ -115,6 +115,9 @@
 {:id :</<=
  :given      [(< i j)]
  :conclusion [(<= i j)]}
+{:id :=/<=
+ :given      [(= i j)]
+ :conclusion [(<= i j)]}
 {:id :succ/<
  :given      [(succ i j)]
  :conclusion [(< i j)]}
@@ -127,4 +130,7 @@
  :conclusion [(<= i k)]}
 {:id :linear
  :given      [(<= i j) (<= i k)]
- :conclusion [(or (< j k) (== j k) (< k j))]}
+ :conclusion [(or (< j k) (= j k) (< k j))]}
+{:id :rel-cases
+ :given      [(or r1 r2 r3) (infer r1 chi) (infer r2 chi) (infer r3 chi)]
+ :conclusion [chi]}

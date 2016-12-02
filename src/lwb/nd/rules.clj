@@ -51,7 +51,7 @@
   "Reserved terms in construction the logic relation."
   '#{not and or impl infer
      forall exists actual = substitution
-     at succ atnext always finally until <=})
+     at succ atnext always finally until <= <})
 
 (def keywords
   "Reserved terms in rules."
