@@ -562,8 +562,21 @@
 
 ; TODO
 (proof '(at [i] (or (atnext A) (atnext B))) '(at [i] (atnext (or A B))))
+(step-f :or-e 1 3)
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'i')
+(step-f :atnext-e 2 3)
+(step-b :atnext-i 6 :? 3)
+(step-b :or-i1 6)
+(step-f :succ)
+(swap '?3 'i)
+(swap '?4 'i')
+(step-f :atnext-e 7 8)
+(step-b :atnext-i 11 :? 8)
+(step-b :or-i2 11)
 
-; (export "resources/nd/theorems-ltl.edn" :atnext-or-dist2)
+;(export "resources/nd/theorems-ltl.edn" :atnext-or-dist2)
 
 ; -----------------------------------------------------------------------------------------
 ; always-and-dist1 Kröger/Merz T18
