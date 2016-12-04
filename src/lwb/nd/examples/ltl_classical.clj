@@ -134,7 +134,7 @@
 (swap '?9 '(or (not P) (not Q)))
 (step-b :or-i1 5)
 
-;(export "resources/nd/theorems-ltl.edn" :not-and->or-not)
+;(export "resources/nd/theorems-ltl.edn" :not-and->or-not :force)
 
 (proof '(at [i] (or (not P) (not Q))) '(at [i] (not (and P Q))))
 (step-b :or-e 3 1)
@@ -149,7 +149,7 @@
 (step-f :not-e 7 9)
 (swap '?4 'i)
 
-;(export "resources/nd/theorems-ltl.edn" :or-not->not-and)
+;(export "resources/nd/theorems-ltl.edn" :or-not->not-and :force)
 
 (proof '(at [i] (not (or P Q))) '(at [i] (and (not P) (not Q))))
 (step-b :and-i 3)
@@ -166,7 +166,7 @@
 (step-f :not-e 1 7)
 (swap '?6 'i)
 
-;(export "resources/nd/theorems-ltl.edn" :not-or->and-not)
+;(export "resources/nd/theorems-ltl.edn" :not-or->and-not :force)
 
 (proof '(at [i] (and (not P) (not Q))) '(at [i] (not (or P Q))))
 (step-f :and-e1 1)
@@ -179,7 +179,7 @@
 (step-f :not-e 3 7)
 (swap '?3 'i)
 
-;(export "resources/nd/theorems-ltl.edn" :and-not->not-or)
+;(export "resources/nd/theorems-ltl.edn" :and-not->not-or :force )
 
 ; -----------------------------------------------------------------------------------------
 ; not-atnext->atnext-not  Kröger/Merz T1
@@ -531,19 +531,31 @@
 (step-f :and-i 5 6)
 (step-b :atnext-i 9 7)
 
-; (export "resources/nd/theorems-ltl.edn" :atnext-and-dist2)
+;(export "resources/nd/theorems-ltl.edn" :atnext-and-dist2)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-or-dist1  Kröger/Merz T16
 
-; TODO
 (proof '(at [i] (atnext (or A B))) '(at [i] (or (atnext A) (atnext B))))
-(step-b :raa 3)
-(subclaim '(at [i] (and (not (atnext A)) (not (atnext B)))))
-(step-f :and-e1 4)
-(step-f :and-e2 4)
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'i')
+(step-f :atnext-e 1 2)
+(step-b :raa 5)
+(step-f :not-or->and-not 4)
+(step-f :and-e1 5)
+(step-f :and-e2 5)
+(step-f :not-atnext->atnext-not 6)
+(step-f :not-atnext->atnext-not 7)
+(step-f :atnext-e 8 2)
+(step-f :atnext-e 9 2)
+(step-f :and-i 10 11)
+(step-f :and-not->not-or 12)
+(swap '?3 'i')
+(step-f :not-e 13 3)
+(swap '?4 'i')
 
-; (export "resources/nd/theorems-ltl.edn" :atnext-or-dist1)
+;(export "resources/nd/theorems-ltl.edn" :atnext-or-dist1)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-or-dist2  Kröger/Merz T16
