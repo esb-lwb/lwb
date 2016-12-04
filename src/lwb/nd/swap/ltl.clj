@@ -62,9 +62,9 @@
 
 (defn- check-state
   [new]
-  "`new` must be a symbol named with a single small character.       
+  "`new` must be a symbol named with a single small character or a small character followed by `'`.       
    Exception otherwise."
-  (if-not (and (symbol? new) (= 1 (count (name new))) (let [ch (first (name new))] (<= (int \a) (int ch) (int \z))))
+  (if-not (and (symbol? new) (re-matches #"[a-z]'*" (name new)))
     (throw (Exception. (format "'%s' is not a valid state symbol." new)))))
 
 (defn- find-rel-plno
