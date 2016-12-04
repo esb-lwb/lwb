@@ -112,6 +112,76 @@
 ;(export "resources/nd/theorems-ltl.edn" :contrap)
 
 ; -----------------------------------------------------------------------------------------
+; De Morgan
+
+(proof '(at [i] (not (and P Q))) '(at [i] (or (not P) (not Q))))
+(step-b :raa 3)
+(swap '?1 'i)
+(step-b :not-e 4)
+(swap '?2 'i)
+(swap '?3 '(and P Q))
+(step-b :and-i 4)
+(step-b :raa 6)
+(swap '?4 'i)
+(step-b :not-e 7)
+(swap '?5 'i)
+(swap '?6 '(or (not P) (not Q)))
+(step-b :or-i2 7)
+(step-b :raa 4)
+(swap '?7 'i)
+(step-b :not-e 5)
+(swap '?8 'i)
+(swap '?9 '(or (not P) (not Q)))
+(step-b :or-i1 5)
+
+;(export "resources/nd/theorems-ltl.edn" :not-and->or-not)
+
+(proof '(at [i] (or (not P) (not Q))) '(at [i] (not (and P Q))))
+(step-b :or-e 3 1)
+(step-b :not-i 4)
+(swap '?1 'i)
+(step-f :and-e1 3)
+(step-f :not-e 2 4)
+(swap '?2 'i)
+(step-b :not-i 9)
+(swap '?3 'i)
+(step-f :and-e2 8)
+(step-f :not-e 7 9)
+(swap '?4 'i)
+
+;(export "resources/nd/theorems-ltl.edn" :or-not->not-and)
+
+(proof '(at [i] (not (or P Q))) '(at [i] (and (not P) (not Q))))
+(step-b :and-i 3)
+(step-b :not-i 3)
+(swap '?1 'i)
+(step-f :or-i1 2)
+(swap '?2 'Q)
+(step-f :not-e 1 3)
+(swap '?3 'i)
+(step-b :not-i 7)
+(swap '?4 'i)
+(step-f :or-i2 6)
+(swap '?5 'P)
+(step-f :not-e 1 7)
+(swap '?6 'i)
+
+;(export "resources/nd/theorems-ltl.edn" :not-or->and-not)
+
+(proof '(at [i] (and (not P) (not Q))) '(at [i] (not (or P Q))))
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-b :not-i 5)
+(swap '?1 'i)
+(step-f :or-e 4 6)
+(step-f :not-e 2 5)
+(swap '?2 'i)
+(step-f :not-e 3 7)
+(swap '?3 'i)
+
+;(export "resources/nd/theorems-ltl.edn" :and-not->not-or)
+
+; -----------------------------------------------------------------------------------------
 ; not-atnext->atnext-not  Kröger/Merz T1
 
 (proof '(at [i] (not (atnext A))) '(at [i] (atnext (not A))))
@@ -343,16 +413,44 @@
 ; -----------------------------------------------------------------------------------------
 ; always-atnext->atnext-always  Kröger/Merz T12
 
-; TODO
+; TODO  hier braucht man etwas induktives!!
 (proof '(at [i] (always (atnext A))) '(at [i] (atnext (always A))))
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'i')
+(step-b :atnext-i 3)
+(step-b :atnext-i 4 :? 2)
+(step-f :succ/<= 2)
+(step-f :always-e 1 3)
 
 ;(export "resources/nd/theorems-ltl.edn" :always-atnext->atnext-always)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-always->always-atnext  Kröger/Merz T12
 
-; TODO
 (proof '(at [i] (atnext (always A))) '(at [i] (always (atnext A))))
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'i')
+(step-f :atnext-e 1 2)
+(step-b :always-i 5)
+(swap '?3 'j)
+(step-f :succ/<= 2)
+(step-f :linear 4 5)
+(step-f :rel-cases 6 8)
+(step-f :linear-succ 4 2 7)
+(step-f :equal-state 8 3)
+(step-f :always->atnext 9)
+(step-f :equal-state 11 3)
+(step-f :always->atnext 12)
+(step-f :succ)
+(swap '?4 'j)
+(swap '?5 'j')
+(step-b :atnext-i 17 :? 15)
+(step-f :</<= 14)
+(step-f :succ/<= 15)
+(step-f :transitiv 16 17)
+(step-f :always-e 3 18)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-always->always-atnext)
 
@@ -440,6 +538,10 @@
 
 ; TODO
 (proof '(at [i] (atnext (or A B))) '(at [i] (or (atnext A) (atnext B))))
+(step-b :raa 3)
+(subclaim '(at [i] (and (not (atnext A)) (not (atnext B)))))
+(step-f :and-e1 4)
+(step-f :and-e2 4)
 
 ; (export "resources/nd/theorems-ltl.edn" :atnext-or-dist1)
 
