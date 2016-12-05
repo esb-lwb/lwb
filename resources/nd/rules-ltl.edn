@@ -91,7 +91,7 @@
  :given      [(at [i] (finally psi))]
  :conclusion [(at [i] (until truth psi))]}
 {:id :until-e
- :given      [(at [i] (until truth psi))]
+ :given      [(at [i] (until phi psi))]
  :conclusion [(at [i] (finally psi))]}
 {:id :until-ind
  :given      [(at [i] (always (impl psi chi)))
