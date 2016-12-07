@@ -279,7 +279,8 @@
   "Load proved theorem from the current proof into the theorem storage.      
    Requires: theorem is proved and the `id` is fresh."
   [id]
-  (io/import-theorem (current-proof) id roths))
+  (io/import-theorem (current-proof) id roths)
+  (println (format "Current proof as theorem '%s' loaded." id)))
 
 ;; ## Function that exports the current proof as a reusable theorem
 

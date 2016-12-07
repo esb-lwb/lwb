@@ -103,45 +103,73 @@
                           (until (not psi) (and (not phi) (not psi)))))]}
 
 ; RELATIONAL JUDGEMENTS
-{:id :reflexiv
+; concerning the model of time in LTL
+; relation =
+{:id :=refl
  :given      []
- :conclusion [(<= i i)]}
-{:id :serial
- :given      []
- :conclusion [(<= i j)]}
-{:id :succ
- :given      []
- :conclusion [(succ i j)]}
-{:id :</<=
- :given      [(< i j)]
- :conclusion [(<= i j)]}
+ :conclusion [(= i i)]}
+{:id :=sym
+ :given      [(= i j)]
+ :conclusion [(= j i)]}
+{:id :=trans
+ :given      [(= i j) (= j k)]
+ :conclusion [(= i k)]}
+{:id :=fml
+ :given      [(= i j) (at [i] phi)]
+ :conclusion [(at [j] phi)]}
+; weakening = to <=
 {:id :=/<=
  :given      [(= i j)]
  :conclusion [(<= i j)]}
-{:id :succ/<
- :given      [(succ i j)]
- :conclusion [(< i j)]}
-; The following rule follows from succ/< and </<=
-{:id :succ/<=
- :given      [(succ i j)]
+
+; relation <=
+{:id :<=refl
+ :given      []
+ :conclusion [(<= i i)]}
+{:id :<=serial
+ :given      []
  :conclusion [(<= i j)]}
-{:id :transitiv
+{:id :<=trans
  :given      [(<= i j) (<= j k)]
  :conclusion [(<= i k)]}
+
+; relation <
+{:id :<trans
+ :given      [(< i j) (< j k)]
+ :conclusion [(< i k)]}
 {:id :linear
  :given      [(<= i j) (<= i k)]
  :conclusion [(or (< j k) (= j k) (< k j))]}
+; weakening < <=
+{:id :</<=
+ :given      [(< i j)]
+ :conclusion [(<= i j)]}
 
+; relation succ
+{:id :succ
+ :given      []
+ :conclusion [(succ i i')]}
+; weakening succ to <
+{:id :succ/<
+ :given      [(succ i j)]
+ :conclusion [(< i j)]}
+; weakening succ to <= follows from succ/< and </<=
+{:id :succ/<=
+ :given      [(succ i j)]
+ :conclusion [(<= i j)]}
+; succ of two points in time
+{:id :succ-succ-</<
+ :given      [(succ i i') (succ j j') (< i j)]
+ :conclusion [(< i' j')]}
+{:id :succ-succ-<=/<=
+ :given      [(succ i i') (succ j j') (<= i j)]
+ :conclusion [(<= i' j')]}
+{:id :succ-succ-=/=
+ :given      [(succ i i') (succ j j') (= i j)]
+ :conclusion [(= i' j')]}
+
+; Elimination of or in relational judgments
 {:id :rel-cases
  :given      [(or r1 r2 r3) (infer r1 chi) (infer r2 chi) (infer r3 chi)]
  :conclusion [chi]}
 
-{:id :linear-succ
- :given      [(<= i j) (succ i i') (< j i')]
- :conclusion [(= j i')]}
-
-; FORMULAS AT STATES
-
-{:id :equal-state
- :given      [(= j i) (at [i] phi)]
- :conclusion [(at [j] phi)]}
