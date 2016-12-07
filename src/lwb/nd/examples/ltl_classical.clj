@@ -693,7 +693,7 @@
 ; finally-impl-dist  Kröger/Merz T24 
 
 ; TODO
-(proof '(at [i] (finally A) (finally B))) '(at [i] (finally (impl A B))))
+(proof '(at [i] (finally A) (finally B)) '(at [i] (finally (impl A B))))
 
 ;(export "resources/nd/theorems-ltl.edn" :finally-impl-dist)
 
