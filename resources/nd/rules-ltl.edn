@@ -55,6 +55,14 @@
  :given      [(at [i] contradiction)]
  :conclusion [(at [j] phi)]}
 
+; for constants truth and contradiction
+{:id :truth
+ :given [(at [i] (or phi (not phi)))]
+ :conclusion [(at [i] truth)]}
+{:id :contradiction
+ :given [(at [i] (not truth))]
+ :conclusion [(at [i] contradiction)]}
+
 ; ATNEXT
 {:id :atnext-i
  :given      [(at [j] phi) (succ i j)]
@@ -75,10 +83,6 @@
 {:id :finally-i
  :given      [(at [j] phi) (<= i j)]
  :conclusion [(at [i] (finally phi))]}
-;{:id :finally-e
-; :given      [(at [i] (finally phi))]
-; :conclusion [(<= i j) (at [j] phi)]}
-; folgende Regel entspricht dem Vorgehen bei exists-e
 {:id :finally-e
  :given      [(at [i] (finally phi))
               (infer [(<= i j)
