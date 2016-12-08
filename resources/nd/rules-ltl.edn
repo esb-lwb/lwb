@@ -168,6 +168,9 @@
 {:id :succ-succ-<=/<=
  :given      [(succ i i') (succ j j') (<= i j)]
  :conclusion [(<= i' j')]}
+{:id :succ-succ-<=/<=-b
+ :given      [(succ i i') (succ j j') (<= i' j')]
+ :conclusion [(<= i j)]}
 {:id :succ-succ-=/=
  :given      [(succ i i') (succ j j') (= i j)]
  :conclusion [(= i' j')]}

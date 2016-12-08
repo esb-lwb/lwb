@@ -539,18 +539,42 @@
 ; -----------------------------------------------------------------------------------------
 ; finally-atnext->atnext-finally  Kröger/Merz T13
 
-; TODO
 (proof '(at [i] (finally (atnext A))) '(at [i] (atnext (finally A))))
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'i')
+(step-b :atnext-i 4 :? 2)
+(step-f :finally-e 1 4)
+(swap '?3 'j)
+(step-f :succ)
+(swap '?4 'j)
+(swap '?5 'j')
+(step-f :atnext-e 4 5)
+(step-f :succ-succ-<=/<= 2 5 3)
+(step-f :finally-i 6 7)
 
 ;(export "resources/nd/theorems-ltl.edn" :finally-atnext->atnext-finally)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-finally->finally-atnext  Kröger/Merz T13
 
-; TODO
 (proof '(at [i] (atnext (finally A))) '(at [i] (finally (atnext A))))
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'i')
+(step-f :atnext-e 1 2)
+(step-f :finally-e 3 5)
+(swap '?3 'j')
+(step-f :succ)
+(swap '?4 'j)
+(swap '?5 'j')  ; okay since j' is after i'
+(step-f :atnext-i 5 6)
+(step-f :succ-succ-<=/<=-b 2 6 4)
+(step-f :finally-i 7 8)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-finally->finally-atnext)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-impl-dist1  Kröger/Merz T14 Ben-Ari Axiom 2 
@@ -558,7 +582,7 @@
 (proof '(at [i] (atnext (impl A B))) '(at [i] (impl (atnext A) (atnext B))))
 (step-f :succ)
 (swap '?1 'i)
-(swap '?2 'j)
+(swap '?2 'i')
 (step-b :impl-i 4)
 (step-f :atnext-e 1 2)
 (step-b :atnext-i 6 :? 2)
@@ -566,6 +590,7 @@
 (step-f :impl-e 4 5)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-impl-dist1)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-impl-dist2  Kröger/Merz T14
@@ -573,15 +598,15 @@
 (proof '(at [i] (impl (atnext A) (atnext B))) '(at [i] (atnext (impl A B))))
 (step-f :succ)
 (swap '?1 'i)
-(swap '?2 'j)
+(swap '?2 'i')
 (step-b :atnext-i 4 :? 2)
 (step-b :impl-i 4)
 (step-f :atnext-i 3 2)
 (step-b :atnext-e 6 :? 2)
 (step-f :impl-e 1 4)
-(step-b :atnext-i 4 :? 2)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-impl-dist2)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-and-dist1  Kröger/Merz T15
@@ -589,7 +614,7 @@
 (proof '(at [i] (atnext (and A B))) '(at [i] (and (atnext A) (atnext B))))
 (step-f :succ)
 (swap '?1 'i)
-(swap '?2 'j)
+(swap '?2 'i')
 (step-f :atnext-e 1 2)
 (step-f :and-e1 3)
 (step-f :and-e2 3)
@@ -597,7 +622,8 @@
 (step-f :atnext-i 5 2)
 (step-b :and-i 9)
 
-; (export "resources/nd/theorems-ltl.edn" :atnext-and-dist1)
+;(export "resources/nd/theorems-ltl.edn" :atnext-and-dist1)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-and-dist2  Kröger/Merz T15
@@ -607,13 +633,14 @@
 (step-f :and-e2 1)
 (step-f :succ)
 (swap '?1 'i)
-(swap '?2 'j)
+(swap '?2 'i')
 (step-f :atnext-e 2 4)
 (step-f :atnext-e 3 4)
 (step-f :and-i 5 6)
 (step-b :atnext-i 9 7)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-and-dist2)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-or-dist1  Kröger/Merz T16
@@ -638,6 +665,7 @@
 (swap '?4 'i')
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-or-dist1)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-or-dist2  Kröger/Merz T16
@@ -658,6 +686,10 @@
 (step-b :or-i2 11)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-or-dist2)
+;(load-logic :ltl)
+
+; -----------------------------------------------------------------------------------------
+; Kröger/Merz T17 uses biconditional <-> which we do not support in the rules
 
 ; -----------------------------------------------------------------------------------------
 ; always-and-dist1 Kröger/Merz T18
@@ -673,7 +705,8 @@
 (step-f :always-e 1 6)
 (step-f :and-e2 7)
 
-; (export "resources/nd/theorems-ltl.edn" :always-and-dist1)
+;(export "resources/nd/theorems-ltl.edn" :always-and-dist1)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; always-and-dist2 Kröger/Merz T18
@@ -687,7 +720,8 @@
 (step-f :always-e 3 4)
 (step-b :and-i 8)
 
-; (export "resources/nd/theorems-ltl.edn" :always-and-dist2)
+;(export "resources/nd/theorems-ltl.edn" :always-and-dist2)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-or-dist1  Kröger/Merz T19
@@ -710,6 +744,7 @@
 (step-b :not-e 16 14)
 
 ;(export "resources/nd/theorems-ltl.edn" :finally-or-dist1)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-or-dist2  Kröger/Merz T19
@@ -727,7 +762,8 @@
 (swap '?4 'A)
 (step-b :finally-i 13 11)
 
-; (export "resources/nd/theorems-ltl.edn" :finally-or-dist2)
+;(export "resources/nd/theorems-ltl.edn" :finally-or-dist2)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; always-finally-or-dist1  Kröger/Merz T20
@@ -740,24 +776,78 @@
 ; -----------------------------------------------------------------------------------------
 ; always-finally-or-dist2  Kröger/Merz T20
 
-; TODO
 (proof '(at [i] (or (always (finally A)) (always (finally B)))) '(at [i] (always (finally (or A B)))))
+(step-f :or-e 1 3)
+(step-b :always-i 4)
+(swap '?1 'j)
+(step-f :always-e 2 3)
+(step-f :finally-e 4 6)
+(swap '?2 'k)
+(step-f :or-i1 6)
+(swap '?3 'B)
+(step-f :finally-i 7 5)
+(step-b :always-i 13)
+(swap '?4 'j)
+(step-f :always-e 11 12)
+(step-f :finally-e 13 15)
+(swap '?5 'k)
+(step-f :or-i2 15)
+(swap '?6 'A)
+(step-f :finally-i 16 14)
 
 ; (export "resources/nd/theorems-ltl.edn" :always-finally-or-dist2)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-always-and-dist1  Kröger/Merz T21
 
-; TODO
 (proof '(at [i] (finally (always (and A B)))) '(at [i] (and (finally (always A)) (finally (always B)))))
+(step-f :finally-e 1 3)
+(swap '?1 'j)
+(step-f :always-and-dist1 3)
+(step-f :and-e1 4)
+(step-f :and-e2 4)
+(step-b :and-i 8)
+(step-f :always->always-always 5)
+(step-f :always->current 7)
+(step-f :finally-i 8 2)
+(step-f :always->always-always 6)
+(step-f :always->current 10)
+(step-f :finally-i 11 2)
 
 ; (export "resources/nd/theorems-ltl.edn" :finally-always-and-dist1)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-always-and-dist2  Kröger/Merz T21
 
-; TODO
 (proof '(at [i] (and (finally (always A)) (finally (always B)))) '(at [i] (finally (always (and A B)))))
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-f :finally-e 2 5)
+(swap '?1 'j)
+(step-f :always->always-always 5)
+(step-f :finally-e 3 8)
+(swap '?2 'k)
+(step-f :always->always-always 8)
+(step-f :linear 4 7)
+(step-f :rel-cases 10 12)
+(step-f :</<= 11)
+(step-f :always-e 6 12)
+(step-f :and-i 13 8)
+(step-f :always-and-dist2 14)
+(step-f :<=trans 4 12)
+(step-f :finally-i 15 16)
+(step-f :=fml 18 5)
+(step-f :and-i 19 8)
+(step-f :always-and-dist2 20)
+(step-f :=/<= 18)
+(step-f :<=trans 4 22)
+(step-f :finally-i 21 23)
+(step-f :</<= 25)
+(step-f :always-e 9 26)
+(step-f :and-i 5 27)
+(step-f :always-and-dist2 28)
+(step-f :<=trans 7 26)
+(step-f :finally-i 29 30)
 
 ; (export "resources/nd/theorems-ltl.edn" :finally-always-and-dist2)
 
