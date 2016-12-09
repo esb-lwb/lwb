@@ -140,7 +140,7 @@
 (swap '?1 'P)
 
 (proof '(or P (not P)) 'truth)
-(step-f :truth 1)
+(step-f :truth)
 
 (proof 'contradiction '(and P (not P)))
 (step-b :efq 3)
@@ -150,17 +150,12 @@
 (step-f :and-e2 1)
 (step-f :not-e 3 2)
 
-(proof 'contradiction '(and P (not P)))
-(step-b :efq 3)
-
 ; -----------------------------------------------------------------------------------------
 ; Absorption 
 
 (proof '(or P truth) 'truth)
 (step-f :or-e 1 3)
-(step-f :or-i1 2)
-(swap '?1 '(not P))
-(step-f :truth 3)
+(step-f :truth)
 
 ;(export "resources/nd/theorems-prop.edn" :or-truth->truth)
 
@@ -181,12 +176,7 @@
 ;(export "resources/nd/theorems-prop.edn" :or-contra-i)
 
 (proof '(impl P truth) 'truth)
-(step-f :tnd)
-(swap '?1 'P)
-(step-f :or-e 2 4)
-(step-f :impl-e 1 3)
-(step-b :raa 7)
-(step-f :contradiction 6)
+(step-f :truth)
 
 ;(export "resources/nd/theorems-prop.edn" :impl-truth->truth)
 
@@ -215,9 +205,7 @@
 
 (proof 'P '(and P truth))
 (step-b :and-i 3)
-(step-f :tnd)
-(swap '?1 'X)
-(step-f :truth 2)
+(step-f :truth)
 
 ;(export "resources/nd/theorems-prop.edn" :and-truth-i)
 
@@ -232,10 +220,8 @@
 ;(export "resources/nd/theorems-prop.edn" :contra->and-contra)
 
 (proof '(impl truth P) 'P)
-(step-f :tnd)
-(swap '?1 'X)
-(step-f :truth 2)
-(step-f :impl-e 1 3)
+(step-f :truth)
+(step-f :impl-e 1 2)
 
 ;(export "resources/nd/theorems-prop.edn" :impl-truth-e)
 
@@ -245,9 +231,7 @@
 ;(export "resources/nd/theorems-prop.edn" :impl-truth-i)
 
 (proof '(impl contradiction P) 'truth)
-(step-f :tnd)
-(swap '?1 'X)
-(step-f :truth 2)
+(step-f :truth)
 
 ;(export "resources/nd/theorems-prop.edn" :impl-contra->truth)
 

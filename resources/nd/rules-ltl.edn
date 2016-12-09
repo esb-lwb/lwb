@@ -57,7 +57,7 @@
 
 ; for constants truth and contradiction
 {:id :truth
- :given [(at [i] (or phi (not phi)))]
+ :given []
  :conclusion [(at [i] truth)]}
 {:id :contradiction
  :given [(at [i] (not truth))]
