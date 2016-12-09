@@ -126,7 +126,7 @@
  :given      [(= i j)]
  :conclusion [(<= i j)]}
 
-; relation <=
+; relation <=  i.e. he reflexive transitive closure of succ
 {:id :<=refl
  :given      []
  :conclusion [(<= i i)]}
@@ -136,42 +136,29 @@
 {:id :<=trans
  :given      [(<= i j) (<= j k)]
  :conclusion [(<= i k)]}
-
-; relation <
-{:id :<trans
- :given      [(< i j) (< j k)]
- :conclusion [(< i k)]}
-{:id :linear
+{:id :<=linear
  :given      [(<= i j) (<= i k)]
- :conclusion [(or (< j k) (= j k) (< k j))]}
-; weakening < <=
-{:id :</<=
- :given      [(< i j)]
- :conclusion [(<= i j)]}
+ :conclusion [(or (<= j k) (= j k) (<= k j))]}
 
 ; relation succ
 {:id :succ
  :given      []
  :conclusion [(succ i i')]}
-; weakening succ to <
-{:id :succ/<
- :given      [(succ i j)]
- :conclusion [(< i j)]}
-; weakening succ to <= follows from succ/< and </<=
+{:id :succ-fn
+ :given      [(succ i i') (succ i i'')]
+ :conclusion [(= i' i'')]}
+; weakening succ to <= 
 {:id :succ/<=
  :given      [(succ i j)]
  :conclusion [(<= i j)]}
 ; succ of two points in time
-{:id :succ-succ-</<
- :given      [(succ i i') (succ j j') (< i j)]
- :conclusion [(< i' j')]}
-{:id :succ-succ-<=/<=
- :given      [(succ i i') (succ j j') (<= i j)]
+{:id :<=succsucc/<=
+ :given      [(<= i j) (succ i i') (succ j j')]
  :conclusion [(<= i' j')]}
-{:id :succ-succ-<=/<=-b
+{:id :succsucc<=/<=
  :given      [(succ i i') (succ j j') (<= i' j')]
  :conclusion [(<= i j)]}
-{:id :succ-succ-=/=
+{:id :=succsucc/=
  :given      [(succ i i') (succ j j') (= i j)]
  :conclusion [(= i' j')]}
 
