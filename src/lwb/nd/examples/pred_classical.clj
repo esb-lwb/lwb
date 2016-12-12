@@ -91,7 +91,6 @@
 (proof '(exists [y] (not (Q y))) '(not (forall [y] (Q y))))
 (step-f :exists-not->not-forall 1)
 
-
 ; not-exists->forall-not
 
 (proof '(not (exists [x] (P x))) '(forall [x] (not (P x))))

@@ -114,6 +114,10 @@
 ; 7: (and (and E F) G)                       :and-i [6 5]
 ;    --------------------------------------------------
 
+; is a theorem in lwb
+(proof '(and E (and F G)) '(and (and E F) G))
+(step-f :and-assocr 1)
+
 
 ; -----------------------------------------------------------------------------------------
 ; p.70
@@ -489,7 +493,7 @@
 ;     --------------------------------------------------
 ;  1: (actual :j)                             :premise
 ;  2: (actual :k)                             :premise
-;  3: (or (and (Drunk :j) (Drunk :k)) (not (and (Drunk :j) (Drunk :k)))):tnd []
+;  3: (or (and (Drunk :j) (Drunk :k)) (not (and (Drunk :j) (Drunk :k)))) :tnd []
 ;      ------------------------------------------------
 ;  4:  | (and (Drunk :j) (Drunk :k))          :assumption
 ;  5:  | (Drunk :j)                           :and-e1 [4]
@@ -497,8 +501,8 @@
 ;  6:  | | (Drunk :j)                         :assumption
 ;  7:  | | (and (Drunk :j) (Drunk :k))        :repeat [4]
 ;      | ----------------------------------------------
-;  8:  | (impl (Drunk :j) (and (Drunk :j) (Drunk :k))):impl-i [[6 7]]
-;  9:  | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [1 8]
+;  8:  | (impl (Drunk :j) (and (Drunk :j) (Drunk :k))) :impl-i [[6 7]]
+;  9:  | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))) :exists-i [1 8]
 ;      ------------------------------------------------
 ;      ------------------------------------------------
 ; 10:  | (not (and (Drunk :j) (Drunk :k)))    :assumption
@@ -510,8 +514,8 @@
 ; 14:  | | | contradiction                    :not-e [12 13]
 ; 15:  | | | (and (Drunk :j) (Drunk :k))      :efq [14]
 ;      | | --------------------------------------------
-; 16:  | | (impl (Drunk :j) (and (Drunk :j) (Drunk :k))):impl-i [[13 15]]
-; 17:  | | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [1 16]
+; 16:  | | (impl (Drunk :j) (and (Drunk :j) (Drunk :k))) :impl-i [[13 15]]
+; 17:  | | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))) :exists-i [1 16]
 ;      | ----------------------------------------------
 ;      | ----------------------------------------------
 ; 18:  | | (not (Drunk :k))                   :assumption
@@ -520,12 +524,12 @@
 ; 20:  | | | contradiction                    :not-e [18 19]
 ; 21:  | | | (and (Drunk :j) (Drunk :k))      :efq [20]
 ;      | | --------------------------------------------
-; 22:  | | (impl (Drunk :k) (and (Drunk :j) (Drunk :k))):impl-i [[19 21]]
-; 23:  | | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [2 22]
+; 22:  | | (impl (Drunk :k) (and (Drunk :j) (Drunk :k))) :impl-i [[19 21]]
+; 23:  | | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))) :exists-i [2 22]
 ;      | ----------------------------------------------
-; 24:  | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):or-e [11 [12 17] [18 23]]
+; 24:  | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))) :or-e [11 [12 17] [18 23]]
 ;      ------------------------------------------------
-; 25: (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):or-e [3 [4 9] [10 24]]
+; 25: (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))) :or-e [3 [4 9] [10 24]]
 ;     --------------------------------------------------
 
 
@@ -546,24 +550,24 @@
 ;  1: (actual :j)                             :premise
 ;  2: (actual :k)                             :premise
 ;      ------------------------------------------------
-;  3:  | (not (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k))))):assumption
+;  3:  | (not (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k))))) :assumption
 ;      | ----------------------------------------------
 ;  4:  | | (Drunk :j)                         :assumption
 ;      | | --------------------------------------------
 ;  5:  | | | (Drunk :k)                       :assumption
 ;  6:  | | | (and (Drunk :j) (Drunk :k))      :and-i [4 5]
 ;      | | --------------------------------------------
-;  7:  | | (impl (Drunk :k) (and (Drunk :j) (Drunk :k))):impl-i [[5 6]]
-;  8:  | | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [2 7]
+;  7:  | | (impl (Drunk :k) (and (Drunk :j) (Drunk :k))) :impl-i [[5 6]]
+;  8:  | | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))) :exists-i [2 7]
 ;  9:  | | contradiction                      :not-e [3 8]
 ; 10:  | | (Drunk :k)                         :efq [9]
 ; 11:  | | (and (Drunk :j) (Drunk :k))        :and-i [4 10]
 ;      | ----------------------------------------------
-; 12:  | (impl (Drunk :j) (and (Drunk :j) (Drunk :k))):impl-i [[4 11]]
-; 13:  | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):exists-i [1 12]
+; 12:  | (impl (Drunk :j) (and (Drunk :j) (Drunk :k))) :impl-i [[4 11]]
+; 13:  | (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))) :exists-i [1 12]
 ; 14:  | contradiction                        :not-e [3 13]
 ;      ------------------------------------------------
-; 15: (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))):raa [[3 14]]
+; 15: (exists [x] (impl (Drunk x) (and (Drunk :j) (Drunk :k)))) :raa [[3 14]]
 ;     --------------------------------------------------
 
 ; That's the proof for the more general theorem
