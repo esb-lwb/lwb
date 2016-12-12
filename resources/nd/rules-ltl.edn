@@ -7,7 +7,8 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-;; all data regarding forward/backward of the rules are without engagement
+; The definition of the rules for ltl is based on the PhD Thesis
+; "Natural Deduction Systems for Temporal Logics" by Davide Marchignoli
 
 ; AND
 {:id :and-i
@@ -90,21 +91,25 @@
                 chi)]
  :conclusion [chi]}
 
+; INDUCTION
+{:id :induction
+ :given      [(<= i j) 
+              (at [i] phi) 
+              (infer [(<= i k) (succ k k') (at [k] phi)] (at [k'] phi))]
+ :conclusion [(at [j] phi)]}
+
 ; UNTIL
-{:id :until-i
- :given      [(at [i] (finally psi))]
- :conclusion [(at [i] (until truth psi))]}
+{:id :until-i1
+ :given      [(at [i] psi)]
+ :conclusion [(at [i] (until phi psi))]}
+{:id :until-i2
+ :given      [(at [i] phi) (at [i] (atnext (until phi psi)))]
+ :conclusion [(at [i] (until phi psi))]}
 {:id :until-e
- :given      [(at [i] (until phi psi))]
- :conclusion [(at [i] (finally psi))]}
-{:id :until-ind
- :given      [(at [i] (always (impl psi chi)))
-              (at [i] (always (impl (and phi (atnext chi)) chi)))]
- :conclusion [(at [i] (impl (until phi psi) chi))]}
-{:id :not-until
- :given      [(at [i] (not (until phi psi)))]
- :conclusion [(at [i] (or (always (not psi))
-                          (until (not psi) (and (not phi) (not psi)))))]}
+ :given      [(at [i] (until phi psi))
+              (infer [(<= i j) (at [j] psi)] (at [j] chi))
+              (infer [(<= i j) (at [j] (and phi (atnext chi)))] (at [j] chi))]
+ :conclusion [(at [i] chi)]}
 
 ; RELATIONAL JUDGEMENTS
 ; concerning the model of time in LTL
