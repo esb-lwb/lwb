@@ -91,5 +91,3 @@
 (swap '?6 'A)
 (swap '?7 'A)
 (step-f :mp 3 4)
-
-
