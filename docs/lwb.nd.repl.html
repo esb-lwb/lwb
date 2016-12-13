@@ -2964,7 +2964,10 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(def p
   (atom []))</pre></td></tr><tr><td class="docs"><p>Atom that holds the history of the proof as a vector, provided for undo steps.</p>
 </td><td class="codes"><pre class="brush: clojure">(def p-history
-  (atom []))</pre></td></tr><tr><td class="docs"><h2>Showing the proof</h2>
+  (atom []))</pre></td></tr><tr><td class="docs"><p>Current proof.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn current-proof
+  []
+  @p)</pre></td></tr><tr><td class="docs"><h2>Showing the proof</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Print the actual state of the proof.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn show
   []
@@ -3010,6 +3013,15 @@ net.brehaut.ClojureTools = (function (SH) {
   [old new]
   (try
     (let [proof' (deduc/swap @p (:logic (meta #'roths)) old new)]
+      (swap! p-history conj @p)
+      (reset! p proof')
+      (show))
+    (catch Exception e
+      (println (str &quot;Error: &quot; (.getMessage e))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn subclaim
+  [fml]
+  (try
+    (let [proof' (deduc/subclaim @p fml)]
       (swap! p-history conj @p)
       (reset! p proof')
       (show))
@@ -3067,7 +3079,13 @@ generic solution possible.</p>
    and <code>open</code> to show the generated file.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify
   ([] (printer/texify @p))
-  ([filename] (printer/texify @p filename)))</pre></td></tr><tr><td class="docs"><h2>Function that exports the current proof as a reusable theorem</h2>
+   ([filename] (printer/texify @p filename)))</pre></td></tr><tr><td class="docs"><h2>Function that loads the current proof into the storage of rohts for the current session</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Load proved theorem from the current proof into the theorem storage. <br />
+   Requires: theorem is proved and the <code>id</code> is fresh.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn load-theorem
+  [id]
+  (io/import-theorem (current-proof) id roths)
+  (println (format &quot;Current proof as theorem '%s' loaded.&quot; id)))</pre></td></tr><tr><td class="docs"><h2>Function that exports the current proof as a reusable theorem</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Saves the current proof with <code>id</code> in the file with <code>filename</code>. <br />
    Requires: Proof is completed. <br />
    If there is already a theorem with that <code>id</code>, the replacement can be forced 

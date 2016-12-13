@@ -3048,7 +3048,7 @@ They get new names beginning with the letter <code>V</code> and follwed by a uni
          ;; duplicate-plines grouped into a vactor of vector of plines with equal body
          equals (vec (map val (group-by :body duplicate-plines)))
          ;; equals must have at least one :roth that's not nil
-         equals' (vec (filter (fn [x] (not-every? nil? (map :roth x))) equals))
+         equals' (filterv (fn [x] (not-every? nil? (map :roth x))) equals)
          fn-smap (fn [equals]
                    (let [remain (map :plid (filter :roth equals))
                          delete (map :plid (filter (set sub) (remove :roth equals)))] ; just plines from the actual sub can be deleted
@@ -3058,14 +3058,15 @@ They get new names beginning with the letter <code>V</code> and follwed by a uni
      (reduce #(if (vector? %2) (merge %1 (find-duplicates proof %2)) %1) plid-map sub))))</pre></td></tr><tr><td class="docs"><p>Upgrades the refs in the given proof according to the plid-map.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- adjust-refs
   [proof plid-map]
-  (let [old-plines (vec (filter #(not-empty (set/intersection (set (keys plid-map)) (set (flatten (:refs %))))) (flatten proof)))
+  (let [old-plines (filterv #(not-empty (set/intersection (set (keys plid-map)) (set (flatten (:refs %))))) (flatten proof))
         upg-plines (mapv #(assoc % :roth (:roth %) :refs (clojure.walk/prewalk-replace plid-map (:refs %))) old-plines)]
     (vec (reduce #(replace-plid %1 (:plid %2) %2) proof upg-plines))))</pre></td></tr><tr><td class="docs"><p>Checks the refs of a proof: The references must always refer to plines above!</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- check-refs
   [proof]
   (let [pm (plid-plno-map proof)
         fn (fn [pline] (let [curr-plno (get pm (:plid pline))
-                             refs-plnos (mapv #(get pm %) (flatten (:refs pline)))
+                             ; just consider the refs to other line numbers, not extra refs
+                             refs-plnos (mapv #(get pm %) (filter number? (flatten (:refs pline))))
                              max-ref-plno (if (empty? refs-plnos) 0 (apply max refs-plnos))]
                          (&lt; max-ref-plno curr-plno)))]
     (every? true? (map fn (flatten proof)))))</pre></td></tr><tr><td class="docs"><p>Removes all duplicate bodies from proof and adjusts the changed ids of proof lines.</p>
@@ -3116,7 +3117,7 @@ They get new names beginning with the letter <code>V</code> and follwed by a uni
   [[_ phi var t]]
   (substitution phi var t))</pre></td></tr><tr><td class="docs"><p>Creates a new proof line or subproof from body and [optional] rule and refs.</p>
 </td><td class="codes"><pre class="brush: clojure">(declare new-subproof)
-(defn- new-pline
+(defn new-pline
   ([body] (new-pline body nil nil))
   ([body roth refs]
     ; handle special case that body = (infer ...) or body = (substitution ...)

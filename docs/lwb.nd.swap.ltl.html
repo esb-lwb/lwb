@@ -2902,7 +2902,7 @@ net.brehaut.ClojureTools = (function (SH) {
     (cond
       (= #{:alone} bts)    :alone
       (contains? bts :rel) :rel
-      (= #{:state} bts)    (let [[state prop] (separate-state (second (first ib)))]
+      (= #{:state} bts)    (let [[state _] (separate-state (second (first ib)))]
                              (if (= old state) :state :prop)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- check-alone
   [new]
@@ -2912,9 +2912,9 @@ net.brehaut.ClojureTools = (function (SH) {
     (throw (Exception. (format &quot;'%s' is not a valid ltl formula at a certain state.&quot; new)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- check-state
   [new]
-  &quot;`new` must be a symbol named with a single small character.       
+  &quot;`new` must be a symbol named with a single small character or a small character followed by `'`.       
    Exception otherwise.&quot;
-  (if-not (and (symbol? new) (= 1 (count (name new))) (let [ch (first (name new))] (&lt;= (int \a) (int ch) (int \z))))
+  (if-not (and (symbol? new) (re-matches #&quot;[a-z]'*&quot; (name new)))
     (throw (Exception. (format &quot;'%s' is not a valid state symbol.&quot; new)))))</pre></td></tr><tr><td class="docs"><p>Find the pline in <code>proof</code>with a relational expression containing <code>old</code>. <br />
    Require: the swap-type is <code>:rel</code>. <br />
    We expect that there is exactly one such <code>plno</code>.</p>
@@ -2948,7 +2948,7 @@ net.brehaut.ClojureTools = (function (SH) {
   [body old new]
   (let [arg1 (second body)
         arg2 (nth body 2)]
-    (if (= arg1 old) (not= arg2 new) (not= arg1 new))))</pre></td></tr><tr><td class="docs"><p>We have to consider the follwing cases: <br />
+    (if (= arg1 old) (not= arg2 new) (not= arg1 new))))</pre></td></tr><tr><td class="docs"><p>We have to consider the following cases: <br />
    - expression <code>succ</code>: the <code>new</code> state must be different from the other one <br />
    - expression <code>&lt;=</code> and <code>:roth</code> = <code>:assumption</code>: the <code>new</code> state must be fresh one</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- check-rel
@@ -2962,7 +2962,7 @@ net.brehaut.ClojureTools = (function (SH) {
         (throw (Exception. (format &quot;'%s' must differ from the other argument in a succ expression.&quot; new))))
       (assumption? proof rel-plno)
       (if (not (fresh? proof rel-plno new))
-        (throw (Exception. (format &quot;'%s' must be a fresh state.&quot; new)))))))</pre></td></tr><tr><td class="docs"><p><code>new</code> must be a wellformed ltl formula. <br />
+        (throw (Exception. (format &quot;'%s' must be a fresh state, '%s' is not.&quot; old new)))))))</pre></td></tr><tr><td class="docs"><p><code>new</code> must be a wellformed ltl formula. <br />
   Exception otherwise.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- check-prop
   [new]
