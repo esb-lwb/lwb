@@ -194,6 +194,35 @@
 ;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
+; impl
+
+(proof '(at [i] (impl P Q)) '(at [i] (or (not P) Q)))
+(step-b :raa 3)
+(swap '?1 'i)
+(step-f :not-or->and-not 2)
+(step-f :and-e1 3)
+(step-f :notnot-e 4)
+(step-f :impl-e 1 5)
+(step-f :and-e2 3)
+(step-f :not-e 7 6)
+(swap '?2 'i)
+
+;(export "resources/nd/theorems-ltl.edn" :impl->or-not)
+;(load-logic :ltl)
+
+(proof '(at [i] (or (not P) Q)) '(at [i] (impl P Q)))
+(step-f :or-e 1 3)
+(step-b :impl-i 4)
+(step-f :not-e 2 3)
+(swap '?1 'i)
+(step-b :efq 6)
+(swap '?2 'i)
+(step-b :impl-i 9)
+
+;(export "resources/nd/theorems-ltl.edn" :or-not->impl)
+;(load-logic :ltl)
+
+; -----------------------------------------------------------------------------------------
 ; not-atnext->atnext-not  Kröger/Merz T1
 
 (proof '(at [i] (not (atnext A))) '(at [i] (atnext (not A))))
@@ -209,16 +238,6 @@
 
 ;(export "resources/nd/theorems-ltl.edn" :not-atnext->atnext-not)
 ;(load-logic :ltl)
-
-; Corollary
-(proof '(at [i] (atnext A)) '(at [i] (not (atnext (not A)))))
-(step-f :succ)
-(swap '?1 'i)
-(swap '?2 'i')
-(step-f :atnext-e 1 2)
-(step-f :notnot-i 3)
-(step-f :atnext-i 4 2)
-(step-b :atnext-not->not-atnext 7)
 
 ; -----------------------------------------------------------------------------------------
 ; atnext-not->not-atnext  Kröger/Merz T1
@@ -236,6 +255,16 @@
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-not->not-atnext)
 ;(load-logic :ltl)
+
+; Corollary
+(proof '(at [i] (atnext A)) '(at [i] (not (atnext (not A)))))
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'i')
+(step-f :atnext-e 1 2)
+(step-f :notnot-i 3)
+(step-f :atnext-i 4 2)
+(step-b :atnext-not->not-atnext 7)
 
 ; -----------------------------------------------------------------------------------------
 ; not-finally->always-not  Kröger/Merz T3
@@ -468,7 +497,6 @@
 
 ;(export "resources/nd/theorems-ltl.edn" :always-inductive)
 ;(load-logic :ltl)
-
 
 ; -----------------------------------------------------------------------------------------
 ; always-atnext->atnext-always  Kröger/Merz T12
@@ -743,38 +771,6 @@
 ;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
-; always-finally-or-dist1  Kröger/Merz T20
-
-; TODO
-(proof '(at [i] (always (finally (or A B)))) '(at [i] (or (always (finally A)) (always (finally B)))))
-
-; (export "resources/nd/theorems-ltl.edn" :always-finally-or-dist1)
- 
-; -----------------------------------------------------------------------------------------
-; always-finally-or-dist2  Kröger/Merz T20
-
-(proof '(at [i] (or (always (finally A)) (always (finally B)))) '(at [i] (always (finally (or A B)))))
-(step-f :or-e 1 3)
-(step-b :always-i 4)
-(swap '?1 'j)
-(step-f :always-e 2 3)
-(step-f :finally-e 4 6)
-(swap '?2 'k)
-(step-f :or-i1 6)
-(swap '?3 'B)
-(step-f :finally-i 7 5)
-(step-b :always-i 13)
-(swap '?4 'j)
-(step-f :always-e 11 12)
-(step-f :finally-e 13 15)
-(swap '?5 'k)
-(step-f :or-i2 15)
-(swap '?6 'A)
-(step-f :finally-i 16 14)
-
-; (export "resources/nd/theorems-ltl.edn" :always-finally-or-dist2)
-
-; -----------------------------------------------------------------------------------------
 ; finally-always-and-dist1  Kröger/Merz T21
 
 (proof '(at [i] (finally (always (and A B)))) '(at [i] (and (finally (always A)) (finally (always B)))))
@@ -791,7 +787,8 @@
 (step-f :always->current 10)
 (step-f :finally-i 11 2)
 
-; (export "resources/nd/theorems-ltl.edn" :finally-always-and-dist1)
+;(export "resources/nd/theorems-ltl.edn" :finally-always-and-dist1)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-always-and-dist2  Kröger/Merz T21
@@ -824,7 +821,77 @@
 (step-f :<=trans 7 24)
 (step-f :finally-i 27 28)
 
-; (export "resources/nd/theorems-ltl.edn" :finally-always-and-dist2)
+;(export "resources/nd/theorems-ltl.edn" :finally-always-and-dist2)
+;(load-logic :ltl)
+
+; -----------------------------------------------------------------------------------------
+; always-finally-or-dist1  Kröger/Merz T20
+
+(proof '(at [i] (finally (not (finally A)))) '(at [i] (finally (always (not A)))))
+(step-f :finally-e 1 3)
+(swap '?1 'j)
+(step-f :not-finally->always-not 3)
+(step-f :finally-i 4 2)
+
+(load-theorem :finally-not-finally->finally-always-not)
+
+(proof '(at [i] (always (and (not A) (not B)))) '(at [i] (always (not (or A B)))))
+(step-b :always-i 3)
+(swap '?1 'j)
+(step-f :always-e 1 2)
+(step-f :and-not->not-or 3)
+
+(load-theorem :always-and-not->always-not-or)
+
+(proof '(at [i] (always (finally (or A B)))) '(at [i] (or (always (finally A)) (always (finally B)))))
+(step-b :raa 3)
+(swap '?1 'k)
+(step-f :not-or->and-not 2)
+(step-f :and-e1 3)
+(step-f :and-e2 3)
+(step-f :not-always->finally-not 4)
+(step-f :not-always->finally-not 5)
+(step-f :finally-not-finally->finally-always-not 6)
+(step-f :finally-not-finally->finally-always-not 7)
+(step-f :and-i 8 9)
+(step-f :finally-always-and-dist2 10)
+(step-f :finally-e 11 13)
+(swap '?2 'j)
+(step-f :always-and-not->always-not-or 13)
+(step-f :always-e 1 12)
+(step-f :finally-e 15 17)
+(swap '?3 'k)
+(step-f :always-e 14 16)
+(step-f :not-e 18 17)
+(swap '?4 'k)
+
+;(export "resources/nd/theorems-ltl.edn" :always-finally-or-dist1)
+;(load-logic :ltl)
+
+; -----------------------------------------------------------------------------------------
+; always-finally-or-dist2  Kröger/Merz T20
+
+(proof '(at [i] (or (always (finally A)) (always (finally B)))) '(at [i] (always (finally (or A B)))))
+(step-f :or-e 1 3)
+(step-b :always-i 4)
+(swap '?1 'j)
+(step-f :always-e 2 3)
+(step-f :finally-e 4 6)
+(swap '?2 'k)
+(step-f :or-i1 6)
+(swap '?3 'B)
+(step-f :finally-i 7 5)
+(step-b :always-i 13)
+(swap '?4 'j)
+(step-f :always-e 11 12)
+(step-f :finally-e 13 15)
+(swap '?5 'k)
+(step-f :or-i2 15)
+(swap '?6 'A)
+(step-f :finally-i 16 14)
+
+;(export "resources/nd/theorems-ltl.edn" :always-finally-or-dist2)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; always-impl-dist Kröger/Merz T22  Ben-Ari Axiom 1
@@ -838,22 +905,49 @@
 (step-f :impl-e 4 5)
 
 ;(export "resources/nd/theorems-ltl.edn" :always-impl-dist)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; always-or-dist  Kröger/Merz T23
 
-; TODO
 (proof '(at [i] (or (always A) (always B))) '(at [i] (always (or A B))))
+(step-f :or-e 1 3)
+(step-b :always-i 4)
+(swap '?1 'j)
+(step-f :always-e 2 3)
+(step-f :or-i1 4)
+(swap '?2 'B)
+(step-b :always-i 9)
+(swap '?3 'j)
+(step-f :always-e 7 8)
+(step-b :or-i2 11)
 
-; (export "resources/nd/theorems-ltl.edn" :always-or-dist)
+;(export "resources/nd/theorems-ltl.edn" :always-or-dist)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-impl-dist  Kröger/Merz T24 
 
-; TODO
 (proof '(at [i] (impl (finally A) (finally B))) '(at [i] (finally (impl A B))))
+(step-f :impl->or-not 1)
+(step-f :or-e 2 4)
+(step-f :not-finally->always-not 3)
+(step-f :<=refl)
+(swap '?1 'i)
+(step-f :always-e 4 5)
+(step-f :or-i1 6)
+(swap '?2 'B)
+(step-f :or-not->impl 7)
+(step-f :finally-i 8 5)
+(step-f :finally-e 10 12)
+(swap '?3 'j)
+(step-f :or-i2 12)
+(swap '?4 '(not A))
+(step-f :or-not->impl 13)
+(step-f :finally-i 14 11)
 
 ;(export "resources/nd/theorems-ltl.edn" :finally-impl-dist)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-and-dist  Kröger/Merz T25
@@ -867,7 +961,8 @@
 (step-f :finally-i 5 2)
 (step-f :and-i 6 7)
 
-; (export "resources/nd/theorems-ltl.edn" :finally-and-dist)
+;(export "resources/nd/theorems-ltl.edn" :finally-and-dist)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; always-finally-and-dist  Kröger/Merz T26
@@ -889,32 +984,75 @@
 (step-f :and-e2 13)
 (step-f :finally-i 14 12)
 
-; (export "resources/nd/theorems-ltl.edn" :always-finally-and-dist)
+;(export "resources/nd/theorems-ltl.edn" :always-finally-and-dist)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-always-or-dist  Kröger/Merz T27
 
-; TODO
 (proof '(at [i] (or (finally (always A)) (finally (always B)))) '(at[i] (finally (always (or A B)))))
+(step-f :or-e 1 3)
+(step-f :finally-e 2 4)
+(swap '?1 'j)
+(subclaim '(at [j] (always (or A B))))
+(step-b :always-i 6)
+(swap '?2 'k)
+(step-f :always-e 4 5)
+(step-b :or-i1 8)
+(step-f :finally-i 8 3)
+(step-f :finally-e 11 13)
+(swap '?3 'j)
+(subclaim '(at [j] (always (or A B))))
+(step-b :always-i 15)
+(swap '?4 'k)
+(step-f :always-e 13 14)
+(step-b :or-i2 17)
+(step-f :finally-i 17 12)
 
-; (export "resources/nd/theorems-ltl.edn" :finally-always-or-dist)
-
+;(export "resources/nd/theorems-ltl.edn" :finally-always-or-dist)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-serial  Kröger/Merz T29
 
-; TODO
-(proof '(at [i] (finally A)) '(at [i] (and A (atnext (finally A)))))
+(proof '(at [i] (finally A)) '(at [i] (or A (atnext (finally A)))))
+(step-f :finally-e 1 3)
+(swap '?1 'j)
+(step-f :succ)
+(swap '?2 'i)
+(swap '?3 'i')
+(step-f :succ/<=linear 4 2)
+(step-f :rel-or 5 7)
+(step-f :=sym 6)
+(step-f :=fml 7 3)
+(step-b :or-i1 10)
+(step-b :or-i2 12)
+(step-b :atnext-i 12 :? 4)
+(step-f :finally-i 3 10)
 
-; (export "resources/nd/theorems-ltl.edn" :finally-serial)
+;(export "resources/nd/theorems-ltl.edn" :finally-serial)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; finally-inductive  Kröger/Merz T29
 
-; TODO
-(proof '(at [i] (and A (atnext (finally A)))) '(at[i] (finally A)))
+(proof '(at [i] (or A (atnext (finally A)))) '(at[i] (finally A)))
+(step-f :or-e 1 3)
+(step-f :<=refl)
+(swap '?1 'i)
+(step-f :finally-i 2 3)
+(step-f :succ)
+(swap '?2 'i)
+(swap '?3 'i')
+(step-f :atnext-e 5 6)
+(step-f :succ/<= 6)
+(step-f :finally-e 7 10)
+(swap '?4 'j)
+(step-f :<=trans 8 9)
+(step-f :finally-i 10 11)
 
-; (export "resources/nd/theorems-ltl.edn" :finally-inductive)
+;(export "resources/nd/theorems-ltl.edn" :finally-inductive)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; always-impl->impl-atnext  Kröger/Merz T30
@@ -930,7 +1068,8 @@
 (step-f :impl-e 6 4)
 (step-f :atnext-i 7 3)
 
-; (export "resources/nd/theorems-ltl.edn" :always-impl->impl-atnext)
+;(export "resources/nd/theorems-ltl.edn" :always-impl->impl-atnext)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; always-impl->impl-finally  Kröger/Merz T31
@@ -943,7 +1082,8 @@
 (step-f :impl-e 5 4)
 (step-f :finally-i 6 3)
 
-; (export "resources/nd/theorems-ltl.edn" :always-impl->impl-finally)
+;(export "resources/nd/theorems-ltl.edn" :always-impl->impl-finally)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; always-expansion  Ben-Ari Axiom 3
@@ -964,7 +1104,8 @@
 (step-f :<=trans 6 5)
 (step-f :always-e 1 7)
 
-; (export "resources/nd/theorems-ltl.edn" :always-expansion)
+;(export "resources/nd/theorems-ltl.edn" :always-expansion)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; linearity1  Ben-Ari Axiom 5
@@ -975,6 +1116,9 @@
 (swap '?1 'i)
 (step-f :not-e 3 1)
 (swap '?2 'i)
+
+;(export "resources/nd/theorems-ltl.edn" :linearity1)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; linearity2  Ben-Ari Axiom 5
@@ -987,6 +1131,9 @@
 (step-f :atnext-e 2 3)
 (step-f :notnot-e 4)
 (step-b :atnext-i 7 :? 3)
+
+;(export "resources/nd/theorems-ltl.edn" :linearity2)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; until->finally  Ben-Ari Axiom 6
@@ -1008,7 +1155,8 @@
 (step-f :<=trans 13 11)
 (step-f :finally-i 12 14)
 
-; (export "resources/nd/theorems-ltl.edn" :until->finally)
+;(export "resources/nd/theorems-ltl.edn" :until->finally)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; until-expansion1  Ben-Ari Axiom 7
@@ -1022,6 +1170,7 @@
 (step-f :until-i2 5 6)
 
 ;(export "resources/nd/theorems-ltl.edn" :until-expansion1)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
 ; until-expansion2  Ben-Ari Axiom 7
@@ -1042,5 +1191,6 @@
 (step-b :or-i2 15)
 
 ;(export "resources/nd/theorems-ltl.edn" :until-expansion2)
+;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------

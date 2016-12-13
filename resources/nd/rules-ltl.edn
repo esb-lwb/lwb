@@ -154,8 +154,8 @@
  :conclusion [(= i' i'')]}
 ; weakening succ to <= 
 {:id :succ/<=
- :given      [(succ i j)]
- :conclusion [(<= i j)]}
+ :given      [(succ i i')]
+ :conclusion [(<= i i')]}
 ; succ of two points in time
 {:id :<=succsucc/<=
  :given      [(<= i j) (succ i i') (succ j j')]
@@ -166,9 +166,14 @@
 {:id :=succsucc/=
  :given      [(succ i i') (succ j j') (= i j)]
  :conclusion [(= i' j')]}
+{:id :succ/<=linear
+ :given      [(succ i i') (<= i j)]
+ :conclusion [(or (= i j) (<= i' j))]}
 
 ; Elimination of or in relational judgments
 {:id :rel-cases
  :given      [(or r1 r2 r3) (infer r1 chi) (infer r2 chi) (infer r3 chi)]
  :conclusion [chi]}
-
+{:id :rel-or
+ :given      [(or r1 r2) (infer r1 chi) (infer r2 chi)]
+ :conclusion [chi]}
