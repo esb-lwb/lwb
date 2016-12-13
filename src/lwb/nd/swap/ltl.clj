@@ -50,7 +50,7 @@
     (cond
       (= #{:alone} bts)    :alone
       (contains? bts :rel) :rel
-      (= #{:state} bts)    (let [[state prop] (separate-state (second (first ib)))]
+      (= #{:state} bts)    (let [[state _] (separate-state (second (first ib)))]
                              (if (= old state) :state :prop)))))
 
 (defn- check-alone
@@ -111,7 +111,7 @@
     (if (= arg1 old) (not= arg2 new) (not= arg1 new))))
 
 (defn- check-rel
-  "We have to consider the follwing cases:       
+  "We have to consider the following cases:       
    - expression `succ`: the `new` state must be different from the other one       
    - expression `<=` and `:roth` = `:assumption`: the `new` state must be fresh one"
   [proof old new]
