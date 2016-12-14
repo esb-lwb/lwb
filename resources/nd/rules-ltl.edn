@@ -132,7 +132,7 @@
  :given      [(= i j)]
  :conclusion [(<= i j)]}
 
-; relation <=  i.e. he reflexive transitive closure of succ
+; relation <=  i.e. the reflexive transitive closure of succ
 {:id :<=refl
  :given      []
  :conclusion [(<= i i)]}
