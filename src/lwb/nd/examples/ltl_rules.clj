@@ -25,11 +25,10 @@
 ; -----------------------------------------------------------------------------------------
 ; atnext-elimination
 
-(proof '[(at [i] (atnext A)) (succ i j)] '(at [j] A))
-(step-f :atnext-e 1 2)
-
-(proof '[(at [i] (atnext A)) (succ i j)] '(at [j] A))
-(step-b :atnext-e 4 1)
+(proof '[(at [i] (atnext A)) (at [i'] B)] '(at [i'] (and A B)))
+(step-f :atnext-e 1 4)
+(swap '?1 'i')
+(step-b :and-i 6)
 
 ; -----------------------------------------------------------------------------------------
 ; always-introduction
