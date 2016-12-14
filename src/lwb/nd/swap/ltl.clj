@@ -110,18 +110,30 @@
         arg2 (nth body 2)]
     (if (= arg1 old) (not= arg2 new) (not= arg1 new))))
 
+(defn- fresh-in-succ2?
+  "The new state `new` at the second argument of `succ` is fresh in the proof.     
+   Requires: `plno` is a `succ` expression."
+  [proof plno old new]
+  (let [arg2 (nth (:body (proof/pline-at-plno proof plno)) 2)]
+    (if (= arg2 old) (fresh? proof plno new) true)))
+    
 (defn- check-rel
   "We have to consider the following cases:       
    - expression `succ`: the `new` state must be different from the other one       
+   - expression `succ`: the `new` state at the second argument of `succ` must be fresh 
+     unless the mode is :checked, which means that the user has checked the validity of the swap.
    - expression `<=` and `:roth` = `:assumption`: the `new` state must be fresh one"
-  [proof old new]
+  [proof old new mode]
   ; new is a symbol for a state
   (check-state new)
   (let [rel-plno (find-rel-plno proof old)]
     (cond
       (succ? proof rel-plno)
-      (if (not (fresh-in-succ? (:body (proof/pline-at-plno proof rel-plno)) old new))
-        (throw (Exception. (format "'%s' must differ from the other argument in a succ expression." new))))
+      (cond 
+        (not (fresh-in-succ? (:body (proof/pline-at-plno proof rel-plno)) old new))
+        (throw (Exception. (format "'%s' must differ from the other argument in a succ expression." new)))
+        (and (not (fresh-in-succ2? proof rel-plno old new)) (= mode :unchecked))
+        (throw (Exception. (format "State '%s' is already in scope; if you are sure use swap with :checked." new))))
       (assumption? proof rel-plno)
       (if (not (fresh? proof rel-plno new))
         (throw (Exception. (format "'%s' must be a fresh state, '%s' is not." old new)))))))
@@ -138,13 +150,13 @@
 (defn check-swap
   "Check whether `old` and `new` can be swapped in `proof`.        
    Throws exception if not."
-  [proof old new]
+  [proof old new mode]
   (let [st (swap-type proof old)]
     (try 
     (case st
       :alone (check-alone new)
       :state (check-state new)
-      :rel   (check-rel proof old new)
+      :rel   (check-rel proof old new mode)
       :prop  (check-prop new))
     (catch IllegalArgumentException e
       (throw (Exception. (format "There is no '%s' in the proof." old))))

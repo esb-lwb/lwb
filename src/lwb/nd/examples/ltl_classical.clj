@@ -248,7 +248,7 @@
 (step-b :not-i 5)
 (swap '?2 'i')
 (step-f :atnext-e 4 6)
-(swap '?3 'i')
+(swap '?3 'i' :checked)
 (step-f :not-e 3 6)
 (swap '?4 'i')
 
@@ -560,7 +560,7 @@
 (swap '?2 'j')
 (step-f :succ)
 (swap '?3 'j)
-(swap '?4 'j')  ; okay since j' is after i'
+(swap '?4 'j' :checked)  ; okay since j' is after i'
 (step-f :atnext-i 5 6)
 (step-f :succsucc<=/<= 2 6 4)
 (step-f :finally-i 7 8)
@@ -576,7 +576,7 @@
 (step-f :atnext-e 1 4)
 (swap '?1 'i')
 (step-f :atnext-e 2 6)
-(swap '?2 'i')
+(swap '?2 'i' :checked)
 (step-f :impl-e 4 6)
 (step-b :atnext-i 9 7)
 
@@ -595,7 +595,7 @@
 (step-f :atnext-i 3 2)
 (step-f :impl-e 1 4)
 (step-f :atnext-e 5 7)
-(swap '?3 'i')
+(swap '?3 'i' :checked)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-impl-dist2)
 ;(load-logic :ltl)
@@ -624,7 +624,7 @@
 (swap '?1 'i')
 (step-f :and-e2 1)
 (step-f :atnext-e 5 7)
-(swap '?2 'i')
+(swap '?2 'i' :checked)
 (step-f :and-i 4 7)
 (step-b :atnext-i 10 8)
 
@@ -645,9 +645,9 @@
 (step-f :not-atnext->atnext-not 6)
 (step-f :not-atnext->atnext-not 7)
 (step-f :atnext-e 8 11)
-(swap '?3 'i')
+(swap '?3 'i' :checked)
 (step-f :atnext-e 9 13)
-(swap '?4 'i')
+(swap '?4 'i' :checked)
 (step-f :and-i 11 13)
 (step-f :and-not->not-or 14)
 (step-f :not-e 15 3)

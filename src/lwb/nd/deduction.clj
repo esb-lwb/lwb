@@ -312,7 +312,7 @@
    Requires: `old`  has the form `?n` with an integer `n`.       
    Throws exception if `old` does not have that form.        
    Throws exception if `new` is not allowed depending on current logic and proof."
-  [proof logic old new]
+  [proof logic old new mode]
   ; check old
   (if-not (qmsymbol? old)
     (throw (Exception. (format "'%s' is not a symbol of the form '?n'. You can only swap such symbols." old))))
@@ -320,7 +320,7 @@
   (case logic
     :prop (sprop/check-swap proof old new)
     :pred (spred/check-swap proof old new)
-    :ltl  (sltl/check-swap proof old new))
+    :ltl  (sltl/check-swap proof old new mode))
   ; no exception so far, hence replacing old by new is now okay
   (normalize
     (walk/postwalk

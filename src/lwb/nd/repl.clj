@@ -184,14 +184,16 @@
              `new` is allowed according to the current logic.     
    Modifies: atom `p`, the proof, and
              atom `p-history`, the history of the current proof."
-  [old new]
+  ([old new]
+   (swap old new :unchecked))
+  ([old new mode]
   (try
-    (let [proof' (deduc/swap @p (:logic (meta #'roths)) old new)]
+    (let [proof' (deduc/swap @p (:logic (meta #'roths)) old new mode)]
       (swap! p-history conj @p)
       (reset! p proof')
       (show))
     (catch Exception e
-      (println (str "Error: " (.getMessage e))))))
+      (println (str "Error: " (.getMessage e)))))))
 
 (defn subclaim
   [fml]
