@@ -15,7 +15,8 @@
             [lwb.nd.rules :refer [roths reset-roths]]
             [lwb.nd.io :as io]
             [lwb.nd.printer :as printer]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:import (clojure.lang ExceptionInfo)))
 
 (defn man
   "Manual"
@@ -104,7 +105,7 @@
            (io/import-theorems (str rothpath "theorems-ltl.edn") roths)))
   (reset-meta! #'roths {:logic logic})
   (println welcome)
-  (println (str "Info: Rules and theorems loaded: " logic)))
+  (println (str "[lwb] Info: Rules and theorems loaded: " logic)))
 
 ;; Choose the logic for the session:
 
@@ -148,9 +149,19 @@
    (reset! p (proof/proof premises conclusion))
    (show)
    (if (empty? @roths)
-     (println "Info: There are no rules available, please load a logic with load-logic."))))
+     (println "[lwb] Info: There are no rules available, please load a logic with load-logic."))))
 
 ;; ## Functions that perform steps in proving a conclusion
+
+(defn- handle-exception
+  "Prints message according to type of exception.      
+   Requires: throwing `ex-info`s in lwb."
+  [e]
+  (if
+    (instance? ExceptionInfo e)
+    (let [type (if (= (-> e ex-data :type) :error) "Error: " "Warning: ")]
+      (println (str "[lwb] " type (.getMessage e))))
+    (println (str "Exception: " (.getMessage e)))))
 
 (defn step-f
   "Execute a forward step.      
@@ -163,7 +174,7 @@
       (reset! p proof')
       (show))
     (catch Exception e
-      (println (str "Error: " (.getMessage e))))))
+      (handle-exception e))))
 
 (defn step-b
   "Execute a backward step.      
@@ -176,7 +187,7 @@
       (reset! p proof')
       (show))
     (catch Exception e
-      (println (str "Error: " (.getMessage e))))))
+      (handle-exception e))))
 
 (defn swap
   "Exchanges question mark symbols of the form `?n` with a `new` expression.     
@@ -193,7 +204,7 @@
       (reset! p proof')
       (show))
     (catch Exception e
-      (println (str "Error: " (.getMessage e)))))))
+      (handle-exception e)))))
 
 (defn subclaim
   [fml]
@@ -203,7 +214,7 @@
       (reset! p proof')
       (show))
     (catch Exception e
-      (println (str "Error: " (.getMessage e))))))
+      (handle-exception e))))
 
 ;; ###Remark:         
 
@@ -220,7 +231,7 @@
              atom `p-history`, the history of the current proof."
   []
   (if (empty? @p-history)
-    (println "Info: You reached the starting point of the proof, there is nothing more to undo")
+    (println "[lwb] Info: You reached the starting point of the proof, there is nothing more to undo")
     (do
       (reset! p (last @p-history))
       (swap! p-history #(vec (drop-last %)))
@@ -236,7 +247,7 @@
           extra (:extra roth)
           extras (if extra (str " + extra input " extra))]
       (println (str id ": \t" (:given roth) extras " -> " (:conclusion roth))))
-    (println "No such rule or theorem found for the current logic.")))
+    (println "[lwb] Info: No such rule or theorem found for the current logic.")))
 
 (defn show-roths
   "Prints rules and/or theorems of the current logic.       
@@ -248,8 +259,7 @@
    (let [filter-fn (condp = mode
                      :all (constantly true)
                      :rules #(= :rule (:type (val %)))
-                     :theorems #(= :theorem (:type (val %)))
-                     )]
+                     :theorems #(= :theorem (:type (val %))))]
      (for [roth (sort (filter filter-fn @roths))]
        (let [id (key roth)]
          (show-roth id))))))
@@ -282,7 +292,7 @@
    Requires: theorem is proved and the `id` is fresh."
   [id]
   (io/import-theorem (current-proof) id roths)
-  (println (format "Current proof as theorem '%s' loaded." id)))
+  (println (format "[lwb] Info: Current proof as theorem '%s' loaded." id)))
 
 ;; ## Function that exports the current proof as a reusable theorem
 
@@ -296,7 +306,7 @@
    (try
      (io/export-theorem @p filename id mode)
      (catch Exception e
-       (println (str "Error: " (.getMessage e)))))))
+       (handle-exception e)))))
 
 ;; ## Function that imports theorems
 
@@ -309,5 +319,4 @@
   (try
     (io/import-theorems filename @roths :file)
     (catch Exception e
-      (println (str "Error: " (.getMessage e))))))
-
+      (handle-exception e))))

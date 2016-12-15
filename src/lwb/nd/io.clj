@@ -10,6 +10,7 @@
   (:require [clojure.java.io :as io]
             [clojure.edn :as edn]
             [lwb.consts :refer [rev]]
+            [lwb.nd.error :refer :all]
             [lwb.nd.rules :refer [gen-roth-relation roth-structure-f roth-structure-b]]
             [lwb.nd.proof :refer [proved?]]
             [lwb.nd.specs :refer :all]
@@ -44,7 +45,7 @@
   [rule-map]
   (if (s/valid? :lwb.nd.specs/rule rule-map)
     true
-    (throw (Exception. ^String (s/explain-str :lwb.nd.specs/rule rule-map)))))
+    (throw (ex-error ^String (s/explain-str :lwb.nd.specs/rule rule-map)))))
 
 (defn- valid-theorem?
   "Does the given map fulfill the spec of a theorem?      
@@ -52,7 +53,7 @@
   [theorem-map]
   (if (s/valid? :lwb.nd.specs/theorem theorem-map)
     true
-    (throw (Exception. ^String (s/explain-str :lwb.nd.specs/theorem theorem-map)))))
+    (throw (ex-error ^String (s/explain-str :lwb.nd.specs/theorem theorem-map)))))
 
 (defn- import-v
   "Validated vector of roths from the import resource.      
@@ -135,9 +136,9 @@
    Modifies; global atom `roths`."
   [proof id roths]
   (if-not (proved? proof)
-    (throw (Exception. "The proof is not completed yet.")))
+    (throw (ex-error "The proof is not completed yet.")))
   (if (id @roths)
-    (throw (Exception. (format "There is already a theorem or rule with id '%s'." id))))
+    (throw (ex-error (format "There is already a theorem or rule with id '%s'." id))))
   (swap! roths conj [id (id (theorem-fn (theorem proof id)))]))
 
 (defn export-theorem
@@ -150,14 +151,14 @@
   ([proof filename id] (export-theorem proof filename id :check))
   ([proof filename id mode]
    (if-not (proved? proof)
-     (throw (Exception. "The proof is not completed yet.")))
+     (throw (ex-error "The proof is not completed yet.")))
    ;; if there is no such file we generate it
    (.createNewFile ^File (io/as-file filename))
    (let [theorems-v (import-file-v filename valid-theorem?)
          ids (set (map :id theorems-v))
          already-there? (contains? ids id)]
      (if (and (= mode :check) already-there?)
-       (throw (Exception. (format "There's already a theorem with the id %s. You may use the mode :force to overwrite it." id))))
+       (throw (ex-warning (format "There's already a theorem with the id %s. You may use the mode :force to overwrite it." id))))
      ;; insert in theorems-v
      (let [theorem (theorem proof id) 
            idx (first (keep-indexed #(when (= (:id %2) id) %1) theorems-v))

@@ -9,6 +9,7 @@
 (ns lwb.nd.proof
   (:require [clojure.set :as set]
             [clojure.zip :as zip]
+            [lwb.nd.error :refer :all]
             [lwb.pred.substitution :refer [substitution]])
   (:import (clojure.lang LazySeq)))
 
@@ -377,6 +378,6 @@
    Throws: Exception, if the proof is empty."
   [proof]
   (if (empty? proof)
-    (throw (Exception. "The proof is empty")))
+    (throw (ex-error "The proof is empty")))
   (let [plines (flatten proof)]
     (empty? (filter #(= :todo (:body %)) plines))))

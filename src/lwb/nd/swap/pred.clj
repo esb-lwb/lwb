@@ -9,6 +9,7 @@
 (ns lwb.nd.swap.pred
   (:require [lwb.nd.swap.common :refer :all]
             [lwb.pred :refer :all]
+            [lwb.nd.error :refer :all]
             [clojure.spec :as s]
             [lwb.nd.proof :as proof]
             [lwb.prop :as prop]))
@@ -83,14 +84,14 @@
    Exception otherwise."
   [new]
   (if-not (s/valid? ::fml new)
-    (throw (Exception. (format "'%s' is not a valid formula of predicate logic." new)))))
+    (throw (ex-error (format "'%s' is not a valid formula of predicate logic." new)))))
 
 (defn- check-equal
   "`new` must be an expression for a term.   
    Exception otherwise."
   [new]
   (if-not (s/valid? ::term new)
-    (throw (Exception. (format "'%s' is not a term." new)))))
+    (throw (ex-error (format "'%s' is not a term." new)))))
 
 (defn- find-actual-plno
   "Find the pline in `proof `with an actual statzement containing `old`.        
@@ -120,10 +121,10 @@
    (2) that's a fresh one."
   [proof old new]
   (if (not (keyword? new))
-    (throw (Exception. (format "'%s' must be a keyword indicating an element of the universe ." new))))
+    (throw (ex-error (format "'%s' must be a keyword indicating an element of the universe ." new))))
   (let [actual-plno (find-actual-plno proof old)]
     (if (not (fresh? proof actual-plno new))
-        (throw (Exception. (format "'%s' must be a fresh state." new))))))
+        (throw (ex-error (format "'%s' must be a fresh element." new))))))
 
 ;; ## Checking the constrains for pred in swap
 
@@ -140,4 +141,4 @@
       (catch IllegalArgumentException e
         (throw (Exception. (format "There is no '%s' in the proof." old))))
       (catch Exception e
-        (throw (Exception. (.getMessage e)))))))
+        (throw (ex-error (.getMessage e)))))))

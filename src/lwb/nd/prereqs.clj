@@ -7,7 +7,8 @@
 ; the terms of this license.
 
 (ns lwb.nd.prereqs
-  (:require [lwb.pred.substitution :refer [substitution]]))
+  (:require [lwb.nd.error :refer :all]
+            [lwb.pred.substitution :refer [substitution]]))
 
 ;; # Functions used in prerequisites of rules
 
@@ -17,6 +18,6 @@
   [phi' phi var term]
   (if (= phi' (substitution phi var term))
     true
-    (throw (Exception. (format "%s should be the substitution of %s in %s by %s" phi' var phi term)))))
+    (throw (ex-error (format "%s should be the substitution of %s in %s by %s" phi' var phi term)))))
 
 

@@ -8,7 +8,8 @@
 
 (ns lwb.nd.rules
   (:refer-clojure :exclude [==])
-  (:require [clojure.core.logic :refer :all]))
+  (:require [lwb.nd.error :refer :all]
+            [clojure.core.logic :refer :all]))
 
 ;; # Management of rules and theorems
 
@@ -156,7 +157,7 @@
   (cond
     (symbol? expr) expr
     (list? expr) (symbol (str (first expr) n))
-    :else (throw (Exception. (str "Can't generate argument for the logic relation from \"" expr "\"")))))
+    :else (throw (ex-error (str "Can't generate argument for the logic relation from \"" expr "\"")))))
 
 (defn- gen-args
   "Generates the top level arguments for the logic relation from the given premises and potentially extra arguments..     
@@ -189,7 +190,7 @@
     (contains? keywords g) `(== ~arg ~(list `quote arg))
     (symbol? g) ()
     (list? g) `(== ~arg ~(gen-term g))
-    :else (throw (Exception. (str "Can't create unify constraint from " arg " " g)))))
+    :else (throw (ex-error (str "Can't create unify constraint from " arg " " g)))))
 
 (defn- gen-body
   "Generates all rows for the body of the function, removes empty ones"
@@ -270,7 +271,7 @@
   (if (contains? @roths roth-id)
     (let [r (roth-id @roths)]
       (gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r)))
-    (throw (Exception. (str roth-id " not found in @roths.")))))
+    (throw (ex-error (str roth-id " not found in @roths.")))))
 
 (defn roth-exists?
   "Does a certain rule/theorem exist?"

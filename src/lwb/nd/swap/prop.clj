@@ -7,7 +7,8 @@
 ; the terms of this license.
 
 (ns lwb.nd.swap.prop
-  (:require [lwb.prop :as prop]))
+  (:require [lwb.prop :as prop]
+            [lwb.nd.error :refer :all]))
 
 ;; # Checking constraints of propositional logic
 
@@ -19,4 +20,4 @@
    In the case of propositional logic we just assure that `new` is well-formed."
   [_ _ new]
   (if-not (prop/wff? new)
-    (throw (Exception. (format "'%s' must be a well-formed formula of propositional logic." new)))))
+    (throw (ex-error (format "'%s' must be a well-formed formula of propositional logic." new)))))

@@ -9,6 +9,7 @@
 (ns lwb.nd.swap.ltl
   (:require [lwb.nd.swap.common :refer :all]
             [lwb.ltl :refer :all]
+            [lwb.nd.error :refer :all]
             [lwb.nd.proof :as proof]
             [clojure.spec :as s]
             [lwb.nd.proof :as proof]))
@@ -58,14 +59,14 @@
   "`new` must be a wellformed ltl formula at a certain state.       
    Exception otherwise."
   (if-not (s/valid? :lwb.ltl/at-fml new)
-    (throw (Exception. (format "'%s' is not a valid ltl formula at a certain state." new)))))
+    (throw (ex-error (format "'%s' is not a valid ltl formula at a certain state." new)))))
 
 (defn- check-state
   [new]
   "`new` must be a symbol named with a single small character or a small character followed by `'`.       
    Exception otherwise."
   (if-not (and (symbol? new) (re-matches #"[a-z]'*" (name new)))
-    (throw (Exception. (format "'%s' is not a valid state symbol." new)))))
+    (throw (ex-error (format "'%s' is not a valid state symbol." new)))))
 
 (defn- find-rel-plno
   "Find the pline in `proof `with a relational expression containing `old`.        
@@ -131,19 +132,19 @@
       (succ? proof rel-plno)
       (cond 
         (not (fresh-in-succ? (:body (proof/pline-at-plno proof rel-plno)) old new))
-        (throw (Exception. (format "'%s' must differ from the other argument in a succ expression." new)))
+        (throw (ex-error (format "'%s' must differ from the other argument in a succ expression." new)))
         (and (not (fresh-in-succ2? proof rel-plno old new)) (= mode :unchecked))
-        (throw (Exception. (format "State '%s' is already in scope; if you are sure use swap with :checked." new))))
+        (throw (ex-warning (format "State '%s' is already in scope - if you are sure use swap with :checked." new))))
       (assumption? proof rel-plno)
       (if (not (fresh? proof rel-plno new))
-        (throw (Exception. (format "'%s' must be a fresh state, '%s' is not." old new)))))))
+        (throw (ex-error (format "'%s' must be a fresh state, '%s' is not." old new)))))))
 
 (defn- check-prop
   "`new` must be a wellformed ltl formula.       
   Exception otherwise."
   [new]
   (if-not (s/valid? :lwb.ltl/fml new)
-    (throw (Exception. (format "'%s' is not a valid ltl formula." new)))))
+    (throw (ex-error (format "'%s' is not a valid ltl formula." new)))))
 
 ;; ## Checking the constrains for ltl in swap
 
@@ -159,6 +160,6 @@
       :rel   (check-rel proof old new mode)
       :prop  (check-prop new))
     (catch IllegalArgumentException e
-      (throw (Exception. (format "There is no '%s' in the proof." old))))
+      (throw (ex-error (format "There is no '%s' in the proof." old))))
     (catch Exception e 
-      (throw (Exception. (.getMessage e)))))))
+      (throw (ex-error (.getMessage e)))))))
