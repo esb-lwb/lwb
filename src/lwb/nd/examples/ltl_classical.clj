@@ -1174,3 +1174,91 @@
 ;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
+
+; Kröger/Merz T32
+(proof '(at [i] (always A)) '(at [i] (impl (atnext B) (atnext (and A B)))))
+(step-b :impl-i 3)
+(step-f :atnext-e 2 4)
+(swap '?1 'i')
+(step-f :succ/<= 3)
+(step-f :always-e 1 5)
+(step-f :and-i 6 4)
+(step-f :atnext-i 7 3)
+
+; Kröger/Merz T33
+(proof '(at [i] (always A)) '(at [i] (impl (always B) (always (and A B)))))
+(step-b :impl-i 3)
+(step-b :always-i 4)
+(swap '?1 'j)
+(step-f :always-e 1 3)
+(step-f :always-e 2 3)
+(step-f :and-i 4 5)
+ 
+; Kröger/Merz T34
+(proof '(at [i] (always A)) '(at [i] (impl (finally B) (finally (and A B)))))
+(step-b :impl-i 3)
+(step-f :finally-e 2 4)
+(swap '?1 'j)
+(step-f :always-e 1 3)
+(step-f :and-i 5 4)
+(step-f :finally-i 6 3)
+
+; Kröger/Merz T35
+(proof '(at [i] (always (impl (always A) B))) '(at [i] (impl (always A) (always B))))
+(step-b :impl-i 3)
+(step-b :always-i 4)
+(swap '?1 'j)
+(step-f :always->always-always 2)
+(step-f :always-e 4 3)
+(step-f :always-e 1 3)
+(step-f :impl-e 6 5)
+
+; Kröger/Merz T36
+(proof '(at [i] (always (impl A (finally B)))) '(at [i] (impl (finally A) (finally B))))
+(step-b :impl-i 3)
+(step-f :finally-e 2 4)
+(swap '?1 'j)
+(step-f :always-e 1 3)
+(step-f :impl-e 5 4)
+(step-f :finally-e 6 8)
+(swap '?2 'k)
+(step-f :<=trans 3 7)
+(step-f :finally-i 8 9)
+
+; Kröger/Merz T37 ->
+(proof '(at [i] (finally (always (finally A)))) '(at [i] (always (finally A))))
+(step-f :finally-always->always-finally 1)
+(step-b :always-i 4)
+(swap '?1 'j)
+(step-f :always-e 2 3)
+(step-f :finally-finally->finally 4)
+
+; Kröger/Merz T37 <-
+(proof '(at [i] (always (finally A))) '(at [i] (finally (always (finally A)))))
+(step-f :<=serial)
+(swap '?1 'i)
+(swap '?2 'j)
+(step-b :finally-i 4 :? 2)
+(step-b :always-i 4)
+(swap '?3 'k)
+(step-f :<=trans 2 3)
+(step-f :always-e 1 4)
+
+; Kröger/Merz T38 ->
+(proof '(at [i] (always (finally (always A)))) '(at [i] (finally (always A))))
+(step-f :<=serial)
+(swap '?1 'i)
+(swap '?2 'j)
+(step-f :always-e 1 2)
+(step-f :finally-e 3 5)
+(swap '?3 'k)
+(step-f :<=trans 2 4)
+(step-f :finally-i 5 6)
+
+; Kröger/Merz T38 <-
+(proof '(at [i] (finally (always A))) '(at [i] (always (finally (always A)))))
+(step-b :finally-always->always-finally 3)
+(step-f :finally-e 1 3)
+(swap '?1 'j)
+(step-f :always->always-always 3)
+(step-f :finally-i 4 2)
