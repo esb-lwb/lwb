@@ -162,4 +162,4 @@
     (catch IllegalArgumentException e
       (throw (ex-error (format "There is no '%s' in the proof." old))))
     (catch Exception e 
-      (throw (ex-error (.getMessage e)))))))
+      (throw e)))))

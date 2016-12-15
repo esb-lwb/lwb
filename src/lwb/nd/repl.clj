@@ -166,7 +166,7 @@
   (if
     (instance? ExceptionInfo e)
     (let [type (if (= (-> e ex-data :type) :error) "Error: " "Warning: ")]
-      (println (str "[lwb] " type (.getMessage e))))
+        (println (str "[lwb] " type (.getMessage e))))
     (println (str "Exception: " (.getMessage e)))))
 
 (defn step-f

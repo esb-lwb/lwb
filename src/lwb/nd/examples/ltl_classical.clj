@@ -255,6 +255,16 @@
 ;(export "resources/nd/theorems-ltl.edn" :atnext-not->not-atnext)
 ;(load-logic :ltl)
 
+; or
+(proof '(at [i] (atnext (not A))) '(at [i] (not (atnext A))))
+(step-b :not-i 3)
+(swap '?1 'i')
+(step-f :atnext-e 1 4)
+(swap '?2 'i')
+(step-f :atnext-e 2 6)
+(swap '?3 'i' :checked)
+(step-b :not-e 8 4)
+
 ; Corollary
 (proof '(at [i] (atnext A)) '(at [i] (not (atnext (not A)))))
 (step-f :atnext-e 1 3)
