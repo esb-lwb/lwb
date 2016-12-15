@@ -2869,6 +2869,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.nd.deduction
   (:require [clojure.walk :as walk]
             [lwb.nd.proof :refer :all]
+            [lwb.nd.error :refer :all]
             [lwb.nd.swap.prop :as sprop]
             [lwb.nd.swap.pred :as spred]
             [lwb.nd.swap.ltl :as sltl]
@@ -2994,13 +2995,13 @@ the result of the application of a rule or a theorem to the proof.</li>
   [proof roth argsv]
   ; does the rule or theorem exist?
   (if (not (rules/roth-exists? roth))
-    (throw (Exception. (format &quot;There's no such rule or theorem: %s&quot; roth))))
+    (throw (ex-error (format &quot;There's no such rule or theorem: %s&quot; roth))))
   ; argsv is empty or has at least ref to a line number
   (if (and (not-empty argsv) (empty? (filter number? argsv)))
-    (throw (Exception. (format &quot;There must be at least one ref to a proof line in your arguments: %s&quot; (str argsv)))))
+    (throw (ex-error (format &quot;There must be at least one ref to a proof line in your arguments: %s&quot; (str argsv)))))
   ; are the line numbers in argsv distinct?
   (if (and (not-empty argsv) (not (apply distinct? (filter number? argsv))))
-    (throw (Exception. (format &quot;There are duplicates in your arguments: %s&quot; (str argsv)))))
+    (throw (ex-error (format &quot;There are duplicates in your arguments: %s&quot; (str argsv)))))
   ; are the line numbers in argvs in the range of the proof?
   (if (and (not-empty argsv) (not-empty (filter number? argsv)))
     (let [pl-cnt (count (flatten proof))
@@ -3008,7 +3009,7 @@ the result of the application of a rule or a theorem to the proof.</li>
           low (apply min nos)
           high (apply max nos)]
       (if (not (and (pos? low) (&lt;= high pl-cnt)))
-        (throw (Exception. (format &quot;Line numbers must refer to lines in the proof: %s&quot; (str argsv))))))))</pre></td></tr><tr><td class="docs"><p>Checks the user input for a forward proof step, given as a roth and a vector. <br />
+        (throw (ex-error (format &quot;Line numbers must refer to lines in the proof: %s&quot; (str argsv))))))))</pre></td></tr><tr><td class="docs"><p>Checks the user input for a forward proof step, given as a roth and a vector. <br />
    Throws exceptions if input not valid, and <br />
    analyzes how to proceed the step. </p>
 </td><td class="codes"><pre class="brush: clojure">(defn- check-user-input-f
@@ -3016,27 +3017,27 @@ the result of the application of a rule or a theorem to the proof.</li>
   (check-user-input proof roth argsv)                       ; may throw exceptions
   ; can the roth be used in a forward step?
   (if (not (rules/roth-forward? roth))
-    (throw (Exception. (format &quot;This rule can't be used in a forward step: %s&quot; roth))))
+    (throw (ex-error (format &quot;This rule can't be used in a forward step: %s&quot; roth))))
   (let [pattern (rules/roth-pattern roth :forward)
         range (range-args-f pattern)]
     ; size of argsv okay?
     (if (not (and (&gt;= (count argsv) (first range)) (&lt;= (count argsv) (second range))))
-      (throw (Exception. (format &quot;The number of arguments following the rule or theorem must be in the range: %s&quot; range))))
+      (throw (ex-error (format &quot;The number of arguments following the rule or theorem must be in the range: %s&quot; range))))
     ; kind of args okay?
     (if (not (type-args-ok? pattern argsv))
-      (throw (Exception. (format &quot;Type of arguments doesn't match the call pattern: %s&quot; pattern))))
+      (throw (ex-error (format &quot;Type of arguments doesn't match the call pattern: %s&quot; pattern))))
     (let [match-pattern (match-argsv-f roth argsv)
           todo-plid (plid-to-manip proof match-pattern)]
       (if (zero? todo-plid)
-        (throw (Exception. &quot;Arguments refering givens must be above a todo line&quot;)))
+        (throw (ex-error &quot;Arguments refering givens must be above a todo line&quot;)))
       (if-not (no-ref-to-todoline? proof match-pattern)
-        (throw (Exception. &quot;Arguments may not refer todo lines&quot;)))
+        (throw (ex-error &quot;Arguments may not refer todo lines&quot;)))
       (if-not (empty? (filter #(and (= :gm (first %)) (not (number? (second %)))) match-pattern))
-        (throw (Exception. (format &quot;Argument to a :gm must be a line number: %s&quot; pattern))))
+        (throw (ex-error (format &quot;Argument to a :gm must be a line number: %s&quot; pattern))))
       (if (not (concl-okay? match-pattern (plid-&gt;plno proof todo-plid)))
-        (throw (Exception. &quot;Arguments refering conclusions must be below a todo line&quot;)))
+        (throw (ex-error &quot;Arguments refering conclusions must be below a todo line&quot;)))
       (if (not (scope-okay? proof match-pattern))
-        (throw (Exception. &quot;Arguments must all be in the same scope.&quot;)))
+        (throw (ex-error &quot;Arguments must all be in the same scope.&quot;)))
       {:match-pattern match-pattern
        :todo-plid     todo-plid
        :refs-pattern  (map #(if (number? (second %)) [(first %) (plno-&gt;plid proof (second %))] %) match-pattern)})))</pre></td></tr><tr><td class="docs"><p>Checks the user input for a backward proof step, given as a roth and a vector. <br />
@@ -3047,24 +3048,24 @@ the result of the application of a rule or a theorem to the proof.</li>
   (check-user-input proof roth argsv)                       ; may throw exceptions
   ; can the roth be used in a backward step?
   (if (not (rules/roth-backward? roth))
-    (throw (Exception. (format &quot;This rule can't be used in a backward step: %s&quot; roth))))
+    (throw (ex-error (format &quot;This rule can't be used in a backward step: %s&quot; roth))))
   (let [pattern (rules/roth-pattern roth :backward)
         range (range-args-b pattern)
         no-args (count (filter #(not= :? %) argsv))]
     ; size of argsv okay?
     (if (not (and (&gt;= no-args (first range)) (&lt;= no-args (second range))))
-      (throw (Exception. (format &quot;The number of arguments following the rule or theorem must be in the range: %s&quot; range))))
+      (throw (ex-error (format &quot;The number of arguments following the rule or theorem must be in the range: %s&quot; range))))
     ; kind of args okay?
     (if (not (type-args-ok? pattern argsv))
-      (throw (Exception. (format &quot;Type of arguments doesn't match the call pattern: %s&quot; pattern))))
+      (throw (ex-error (format &quot;Type of arguments doesn't match the call pattern: %s&quot; pattern))))
     (let [match-pattern (match-argsv-b roth argsv)
           concl-plid (plno-&gt;plid proof (first argsv))]
       (if-not (nil? (:roth (pline-at-plid proof concl-plid)))
-        (throw (Exception. &quot;The first argument must not refer an unsolved proof line&quot;)))
+        (throw (ex-error &quot;The first argument must not refer an unsolved proof line&quot;)))
       (if-not (no-ref-to-todoline? proof match-pattern)
-        (throw (Exception. &quot;Arguments may not refer todo lines&quot;)))
+        (throw (ex-error &quot;Arguments may not refer todo lines&quot;)))
       (if (not (scope-okay? proof match-pattern))
-        (throw (Exception. &quot;Arguments must all be in the same scope.&quot;)))
+        (throw (ex-error &quot;Arguments must all be in the same scope.&quot;)))
       {:match-pattern match-pattern
        :concl-plid    concl-plid
        :refs-pattern  (map #(if (number? (second %)) [(first %) (plno-&gt;plid proof (second %))] %) match-pattern)})))</pre></td></tr><tr><td class="docs"><p>Upgrades <code>refs-pattern</code> with the refs to new proof line in <code>new-plines.</code> <br />
@@ -3098,7 +3099,7 @@ the result of the application of a rule or a theorem to the proof.</li>
         todo-plid (:todo-plid infos)]
     ;; no result
     (if (nil? (first result))
-      (throw (Exception. (format &quot;Rule or theorem not applicable, check id and arguments: %s&quot; (into (vector roth) argsv)))))
+      (throw (ex-error (format &quot;Rule or theorem not applicable, check id and arguments: %s&quot; (into (vector roth) argsv)))))
     ;; new proof lines
     (let [new-plines (new-plines result)
           refs-pattern (:refs-pattern infos)
@@ -3117,7 +3118,7 @@ the result of the application of a rule or a theorem to the proof.</li>
         todo-plid (:concl-plid infos)]
     ;; no result
     (if (nil? (first result))
-      (throw (Exception. (format &quot;Rule or theorem not applicable, check id and arguments: %s&quot; (into (vector roth) argsv)))))
+      (throw (ex-error (format &quot;Rule or theorem not applicable, check id and arguments: %s&quot; (into (vector roth) argsv)))))
     ;; new proof lines
     (let [new-plines (new-plines result)
           refs-pattern (:refs-pattern infos)
@@ -3130,15 +3131,15 @@ the result of the application of a rule or a theorem to the proof.</li>
    Throws exception if <code>old</code> does not have that form. <br />
    Throws exception if <code>new</code> is not allowed depending on current logic and proof.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn swap
-  [proof logic old new]
+  [proof logic old new mode]
   ; check old
   (if-not (qmsymbol? old)
-    (throw (Exception. (format &quot;'%s' is not a symbol of the form '?n'. You can only swap such symbols.&quot; old))))
+    (throw (ex-error (format &quot;'%s' is not a symbol of the form '?n'. You can only swap such symbols.&quot; old))))
   ; check depending on logic and proof
   (case logic
     :prop (sprop/check-swap proof old new)
     :pred (spred/check-swap proof old new)
-    :ltl  (sltl/check-swap proof old new))
+    :ltl  (sltl/check-swap proof old new mode))
   ; no exception so far, hence replacing old by new is now okay
   (normalize
     (walk/postwalk

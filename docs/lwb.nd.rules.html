@@ -2868,7 +2868,8 @@ net.brehaut.ClojureTools = (function (SH) {
 </script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.nd.rules" name="lwb.nd.rules"><h1 class="project-name">lwb.nd.rules</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.nd.rules
   (:refer-clojure :exclude [==])
-  (:require [clojure.core.logic :refer :all]))</pre></td></tr><tr><td class="docs"><h1>Management of rules and theorems</h1>
+  (:require [lwb.nd.error :refer :all]
+            [clojure.core.logic :refer :all]))</pre></td></tr><tr><td class="docs"><h1>Management of rules and theorems</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Naming convention: we call rules and theorems short roths.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>This namespace provides functionality for</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ul>
@@ -2980,7 +2981,7 @@ and which steps are okay</p>
   (cond
     (symbol? expr) expr
     (list? expr) (symbol (str (first expr) n))
-    :else (throw (Exception. (str &quot;Can't generate argument for the logic relation from \&quot;&quot; expr &quot;\&quot;&quot;)))))</pre></td></tr><tr><td class="docs"><p>Generates the top level arguments for the logic relation from the given premises and potentially extra arguments.. <br />
+    :else (throw (ex-error (str &quot;Can't generate argument for the logic relation from \&quot;&quot; expr &quot;\&quot;&quot;)))))</pre></td></tr><tr><td class="docs"><p>Generates the top level arguments for the logic relation from the given premises and potentially extra arguments.. <br />
    e.g. <code>[a (and a b) (not b)] =&gt; [a and2 not3]</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-args
   [given]
@@ -3007,7 +3008,7 @@ and which steps are okay</p>
     (contains? keywords g) `(== ~arg ~(list `quote arg))
     (symbol? g) ()
     (list? g) `(== ~arg ~(gen-term g))
-    :else (throw (Exception. (str &quot;Can't create unify constraint from &quot; arg &quot; &quot; g)))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the body of the function, removes empty ones</p>
+    :else (throw (ex-error (str &quot;Can't create unify constraint from &quot; arg &quot; &quot; g)))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the body of the function, removes empty ones</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-body
   [args given]
   (remove empty? (map gen-body-row args given)))</pre></td></tr><tr><td class="docs"><p>Extracts symbols in arg</p>
@@ -3067,7 +3068,7 @@ and which steps are okay</p>
   (if (contains? @roths roth-id)
     (let [r (roth-id @roths)]
       (gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r)))
-    (throw (Exception. (str roth-id &quot; not found in @roths.&quot;)))))</pre></td></tr><tr><td class="docs"><p>Does a certain rule/theorem exist?</p>
+    (throw (ex-error (str roth-id &quot; not found in @roths.&quot;)))))</pre></td></tr><tr><td class="docs"><p>Does a certain rule/theorem exist?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn roth-exists?
   [roth-id]
   (contains? @roths roth-id))</pre></td></tr><tr><td class="docs"><p>Returns true if the rule/theorem can be used forwards</p>

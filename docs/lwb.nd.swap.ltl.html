@@ -2869,6 +2869,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.nd.swap.ltl
   (:require [lwb.nd.swap.common :refer :all]
             [lwb.ltl :refer :all]
+            [lwb.nd.error :refer :all]
             [lwb.nd.proof :as proof]
             [clojure.spec :as s]
             [lwb.nd.proof :as proof]))</pre></td></tr><tr><td class="docs"><h1>Checking constraints of ltl</h1>
@@ -2909,13 +2910,13 @@ net.brehaut.ClojureTools = (function (SH) {
   &quot;`new` must be a wellformed ltl formula at a certain state.       
    Exception otherwise.&quot;
   (if-not (s/valid? :lwb.ltl/at-fml new)
-    (throw (Exception. (format &quot;'%s' is not a valid ltl formula at a certain state.&quot; new)))))</pre></td></tr><tr><td class="docs">
+    (throw (ex-error (format &quot;'%s' is not a valid ltl formula at a certain state.&quot; new)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- check-state
   [new]
   &quot;`new` must be a symbol named with a single small character or a small character followed by `'`.       
    Exception otherwise.&quot;
   (if-not (and (symbol? new) (re-matches #&quot;[a-z]'*&quot; (name new)))
-    (throw (Exception. (format &quot;'%s' is not a valid state symbol.&quot; new)))))</pre></td></tr><tr><td class="docs"><p>Find the pline in <code>proof</code>with a relational expression containing <code>old</code>. <br />
+    (throw (ex-error (format &quot;'%s' is not a valid state symbol.&quot; new)))))</pre></td></tr><tr><td class="docs"><p>Find the pline in <code>proof</code>with a relational expression containing <code>old</code>. <br />
    Require: the swap-type is <code>:rel</code>. <br />
    We expect that there is exactly one such <code>plno</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- find-rel-plno
@@ -2948,41 +2949,51 @@ net.brehaut.ClojureTools = (function (SH) {
   [body old new]
   (let [arg1 (second body)
         arg2 (nth body 2)]
-    (if (= arg1 old) (not= arg2 new) (not= arg1 new))))</pre></td></tr><tr><td class="docs"><p>We have to consider the following cases: <br />
+    (if (= arg1 old) (not= arg2 new) (not= arg1 new))))</pre></td></tr><tr><td class="docs"><p>The new state <code>new</code> at the second argument of <code>succ</code> is fresh in the proof. <br />
+   Requires: <code>plno</code> is a <code>succ</code> expression.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- fresh-in-succ2?
+  [proof plno old new]
+  (let [arg2 (nth (:body (proof/pline-at-plno proof plno)) 2)]
+    (if (= arg2 old) (fresh? proof plno new) true)))</pre></td></tr><tr><td class="docs"><p>We have to consider the following cases: <br />
    - expression <code>succ</code>: the <code>new</code> state must be different from the other one <br />
+   - expression <code>succ</code>: the <code>new</code> state at the second argument of <code>succ</code> must be fresh 
+     unless the mode is :checked, which means that the user has checked the validity of the swap.
    - expression <code>&lt;=</code> and <code>:roth</code> = <code>:assumption</code>: the <code>new</code> state must be fresh one</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- check-rel
-  [proof old new]
+  [proof old new mode]
   ; new is a symbol for a state
   (check-state new)
   (let [rel-plno (find-rel-plno proof old)]
     (cond
       (succ? proof rel-plno)
-      (if (not (fresh-in-succ? (:body (proof/pline-at-plno proof rel-plno)) old new))
-        (throw (Exception. (format &quot;'%s' must differ from the other argument in a succ expression.&quot; new))))
+      (cond 
+        (not (fresh-in-succ? (:body (proof/pline-at-plno proof rel-plno)) old new))
+        (throw (ex-error (format &quot;'%s' must differ from the other argument in a succ expression.&quot; new)))
+        (and (not (fresh-in-succ2? proof rel-plno old new)) (= mode :unchecked))
+        (throw (ex-warning (format &quot;State '%s' is already in scope - if you are sure use swap with :checked.&quot; new))))
       (assumption? proof rel-plno)
       (if (not (fresh? proof rel-plno new))
-        (throw (Exception. (format &quot;'%s' must be a fresh state, '%s' is not.&quot; old new)))))))</pre></td></tr><tr><td class="docs"><p><code>new</code> must be a wellformed ltl formula. <br />
+        (throw (ex-error (format &quot;'%s' must be a fresh state, '%s' is not.&quot; old new)))))))</pre></td></tr><tr><td class="docs"><p><code>new</code> must be a wellformed ltl formula. <br />
   Exception otherwise.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- check-prop
   [new]
   (if-not (s/valid? :lwb.ltl/fml new)
-    (throw (Exception. (format &quot;'%s' is not a valid ltl formula.&quot; new)))))</pre></td></tr><tr><td class="docs"><h2>Checking the constrains for ltl in swap</h2>
+    (throw (ex-error (format &quot;'%s' is not a valid ltl formula.&quot; new)))))</pre></td></tr><tr><td class="docs"><h2>Checking the constrains for ltl in swap</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Check whether <code>old</code> and <code>new</code> can be swapped in <code>proof</code>. <br />
    Throws exception if not.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn check-swap
-  [proof old new]
+  [proof old new mode]
   (let [st (swap-type proof old)]
     (try 
     (case st
       :alone (check-alone new)
       :state (check-state new)
-      :rel   (check-rel proof old new)
+      :rel   (check-rel proof old new mode)
       :prop  (check-prop new))
     (catch IllegalArgumentException e
-      (throw (Exception. (format &quot;There is no '%s' in the proof.&quot; old))))
+      (throw (ex-error (format &quot;There is no '%s' in the proof.&quot; old))))
     (catch Exception e 
-      (throw (Exception. (.getMessage e)))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+      (throw (ex-error (.getMessage e)))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

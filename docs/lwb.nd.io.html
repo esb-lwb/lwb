@@ -2870,6 +2870,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (:require [clojure.java.io :as io]
             [clojure.edn :as edn]
             [lwb.consts :refer [rev]]
+            [lwb.nd.error :refer :all]
             [lwb.nd.rules :refer [gen-roth-relation roth-structure-f roth-structure-b]]
             [lwb.nd.proof :refer [proved?]]
             [lwb.nd.specs :refer :all]
@@ -2895,13 +2896,13 @@ to files.</p>
   [rule-map]
   (if (s/valid? :lwb.nd.specs/rule rule-map)
     true
-    (throw (Exception. ^String (s/explain-str :lwb.nd.specs/rule rule-map)))))</pre></td></tr><tr><td class="docs"><p>Does the given map fulfill the spec of a theorem? <br />
+    (throw (ex-error ^String (s/explain-str :lwb.nd.specs/rule rule-map)))))</pre></td></tr><tr><td class="docs"><p>Does the given map fulfill the spec of a theorem? <br />
    Throws: Exception if not.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- valid-theorem?
   [theorem-map]
   (if (s/valid? :lwb.nd.specs/theorem theorem-map)
     true
-    (throw (Exception. ^String (s/explain-str :lwb.nd.specs/theorem theorem-map)))))</pre></td></tr><tr><td class="docs"><p>Validated vector of roths from the import resource. <br />
+    (throw (ex-error ^String (s/explain-str :lwb.nd.specs/theorem theorem-map)))))</pre></td></tr><tr><td class="docs"><p>Validated vector of roths from the import resource. <br />
    Returns: validated vector of rules or theorems respectively. <br />
    Throws: Exceptions if the resource can't be opened. <br />
            Exception if content of the resource is not valid.</p>
@@ -2965,9 +2966,9 @@ to files.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn import-theorem
   [proof id roths]
   (if-not (proved? proof)
-    (throw (Exception. &quot;The proof is not completed yet.&quot;)))
+    (throw (ex-error &quot;The proof is not completed yet.&quot;)))
   (if (id @roths)
-    (throw (Exception. (format &quot;There is already a theorem or rule with id '%s'.&quot; id))))
+    (throw (ex-error (format &quot;There is already a theorem or rule with id '%s'.&quot; id))))
   (swap! roths conj [id (id (theorem-fn (theorem proof id)))]))</pre></td></tr><tr><td class="docs"><p>Exports <code>proof</code> as a theorem with the <code>id</code> to <code>filename</code>. <br />
      If <code>mode</code> is not given it is <code>:check</code> and the function checks whether there is already a theorem
      with the given id in the file. <br />
@@ -2978,14 +2979,14 @@ to files.</p>
   ([proof filename id] (export-theorem proof filename id :check))
   ([proof filename id mode]
    (if-not (proved? proof)
-     (throw (Exception. &quot;The proof is not completed yet.&quot;)))
+     (throw (ex-error &quot;The proof is not completed yet.&quot;)))
    ;; if there is no such file we generate it
    (.createNewFile ^File (io/as-file filename))
    (let [theorems-v (import-file-v filename valid-theorem?)
          ids (set (map :id theorems-v))
          already-there? (contains? ids id)]
      (if (and (= mode :check) already-there?)
-       (throw (Exception. (format &quot;There's already a theorem with the id %s. You may use the mode :force to overwrite it.&quot; id))))
+       (throw (ex-warning (format &quot;There's already a theorem with the id %s. You may use the mode :force to overwrite it.&quot; id))))
      ;; insert in theorems-v
      (let [theorem (theorem proof id) 
            idx (first (keep-indexed #(when (= (:id %2) id) %1) theorems-v))
