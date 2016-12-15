@@ -85,6 +85,7 @@
    'contradiction "\\bot\\ "
    'forall        "\\forall "
    'exists        "\\exists "
+   'at            "\\rightslice "
    'atnext        "\\medcircle\\,\\ "
    'always        "\\medsquare\\,\\ "
    'finally       "\\lozenge\\,\\ "
@@ -133,7 +134,7 @@
                   (let [node (zip/node loc)]
                     (cond
                       (contains? lsymbols node) (recur (zip/replace loc (node lsymbols)))
-                      (vector? node) (recur (zip/replace loc (str "\\text{" (first node) "}")))
+                      (vector? node) (recur (zip/replace loc (str "\\text{\\," (first node) "\\ }")))
                       (and (symbol? node) (= loc (zip/rightmost loc))) (recur (zip/replace loc (str "\\text{" node "}")))
                       (symbol? node) (recur (zip/replace loc (str "\\text{" node "}\\ ")))
                       :else (recur (zip/next loc))))))))
