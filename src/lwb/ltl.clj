@@ -41,16 +41,22 @@
 ;; * atnext -- unary
 ;; * finally -- unary
 ;; * until -- binary
+;; * release -- binary
 
 ;; We import the operators and so forth from propositional logic
 (pot/import-vars
-  [lwb.prop impl equiv xor ite atom?])
+  [lwb.prop impl equiv xor ite])
 
 (defn op?
   "Is `symb` an operator of ltl?"
   [symb]
-  (let [operators '#{always atnext finally until}]
+  (let [operators '#{always atnext finally until release}]
     (or (prop/op? symb) (contains? operators symb))))
+
+(defn atom?
+   "Is `symb` an atomar proposition?"
+   [symb]
+   (and (symbol? symb) (not (op? symb))))
 
 (defn arity
   "Arity of operator `op`.      
@@ -59,7 +65,7 @@
   [op]
   (if
     (prop/op? op) (prop/arity op)
-                  (if (= 'until op) 2
+                  (if (contains?  '#{until release} op) 2
                                     1)))
 
 ;; A simple expression is an atom or a boolean constant.
@@ -100,6 +106,49 @@
                      :2-args (s/cat :phi any? :mode #{:bool :msg}))
         :ret (s/alt :bool boolean? :msg string?))
 
+;; ## Negation normal form
+
+;; Specification of a literal
+
+(s/def ::literal (s/or :simple-expr ::simple-expr
+                       :neg (s/and list? (s/cat :not #{'not} :simple-expr ::simple-expr))))
+
+(defn literal?
+  "Checks whether `phi` is a literal, i.e. a propositional atom or its negation."
+  [phi]
+  (s/valid? ::literal phi))
+
+;; reduction to the set of operators for nnf
+
+(defn- impl-free
+  "Normalize formula `phi` such that just the operators `not`, `and`, `or`, `atnext`, `until`, `release` are used."
+  [phi]
+  (if (literal? phi)
+    phi
+    (let [op (first phi)]
+      (cond (contains? #{'and 'or 'not 'atnext 'until 'release} op) (apply list op (map impl-free (rest phi)))
+            (= op 'finally) (apply list 'until true (map impl-free (rest phi)))
+            (= op 'always) (apply list 'release false (map impl-free (rest phi)))
+            :else (let [exp-phi (macroexpand-1 phi)] (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))
+
+(defn nnf
+  "Transforms `phi` into negation normal form."
+  [phi]
+  (let [phi' (impl-free phi)]
+    (if (literal? phi')
+      phi'
+      (let [[op & more] phi']
+        (if (= op 'not)
+          (let [[inner-op & inner-more] (second phi')]
+            (cond
+              (= inner-op 'and) (nnf (apply list 'or (map #(list 'not %) inner-more)))
+              (= inner-op 'or) (nnf (apply list 'and (map #(list 'not %) inner-more)))
+              (= inner-op 'atnext) (nnf (apply list 'atnext (map #(list 'not %) inner-more)))
+              (= inner-op 'until) (nnf (apply list 'release (map #(list 'not %) inner-more)))
+              (= inner-op 'release) (nnf (apply list 'until (map #(list 'not %) inner-more)))
+              :else (nnf (first inner-more))))
+          (apply list op (map nnf more)))))))
+    
 ;; ## Visualisation of a formula
 
 (defn texify

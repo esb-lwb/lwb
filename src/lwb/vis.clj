@@ -79,7 +79,8 @@
                  :always  "\\medsquare"
                  :finally "\\lozenge"
                  :atnext  "\\medcircle"
-                 :until   "\\mathcal{U}"}
+                 :until   "\\mathcal{U}"
+                 :release "\\mathcal{R}"}
         nkey (keyword (name node))]
     (if (contains? symbols nkey)
       (str " [.\\node{$" (nkey symbols) "$};")
