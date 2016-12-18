@@ -56,7 +56,7 @@
 
 (def keywords
   "Reserved terms in rules."
-  #{'truth 'contradiction 'true 'false})
+  #{'truth 'contradiction})
 
 ;; ## Functions for the structure of the rule or theorem
 

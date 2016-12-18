@@ -130,6 +130,7 @@
 ;(export "resources/nd/theorems-prop.edn" :not-or-e2)
 
 
+; -----------------------------------------------------------------------------------------
 ; Constants
 
 (proof 'contradiction '(and P (not P)))
@@ -139,6 +140,20 @@
 (step-f :and-e1 1)
 (step-f :and-e2 1)
 (step-f :not-e 3 2)
+
+(proof '(not truth) 'contradiction)
+(step-f :truth)
+(step-f :not-e 1 2)
+
+(proof 'contradiction '(not truth))
+(step-f :efq 1)
+(swap '?1 '(not truth))
+
+(proof 'truth '(not contradiction))
+(step-b :not-i 3)
+
+(proof '(not contradiction) 'truth)
+(step-f :truth)
 
 ; -----------------------------------------------------------------------------------------
 ; Absorption 
