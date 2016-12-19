@@ -2869,7 +2869,10 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.vis
   (:require [clojure.zip :as zip]
             [clojure.string :as str]
-            [clojure.java.shell :as shell]))</pre></td></tr><tr><td class="docs"><h1>Visualisation of formulas</h1>
+            [clojure.java.shell :as shell]))</pre></td></tr><tr><td class="docs"><p>Manual</p>
+</td><td class="codes"><pre class="brush: clojure">(defn man
+  []
+  (clojure.java.browse/browse-url &quot;https://github.com/esb-dev/lwb/wiki/vis&quot;))</pre></td></tr><tr><td class="docs"><h1>Visualisation of formulas</h1>
 
 <p>The syntax tree of a formula of propositional logic, predicate logic or
 linear temporal logic is transformed into code for tikz and the package
@@ -2924,7 +2927,8 @@ linear temporal logic is transformed into code for tikz and the package
                  :always  &quot;\\medsquare&quot;
                  :finally &quot;\\lozenge&quot;
                  :atnext  &quot;\\medcircle&quot;
-                 :until   &quot;\\mathcal{U}&quot;}
+                 :until   &quot;\\mathcal{U}&quot;
+                 :release &quot;\\mathcal{R}&quot;}
         nkey (keyword (name node))]
     (if (contains? symbols nkey)
       (str &quot; [.\\node{$&quot; (nkey symbols) &quot;$};&quot;)

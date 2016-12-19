@@ -2930,6 +2930,7 @@ net.brehaut.ClojureTools = (function (SH) {
    'contradiction &quot;\\bot\\ &quot;
    'forall        &quot;\\forall &quot;
    'exists        &quot;\\exists &quot;
+   'at            &quot;\\rightslice &quot;
    'atnext        &quot;\\medcircle\\,\\ &quot;
    'always        &quot;\\medsquare\\,\\ &quot;
    'finally       &quot;\\lozenge\\,\\ &quot;
@@ -2974,7 +2975,7 @@ net.brehaut.ClojureTools = (function (SH) {
                   (let [node (zip/node loc)]
                     (cond
                       (contains? lsymbols node) (recur (zip/replace loc (node lsymbols)))
-                      (vector? node) (recur (zip/replace loc (str &quot;\\text{&quot; (first node) &quot;}&quot;)))
+                      (vector? node) (recur (zip/replace loc (str &quot;\\text{\\,&quot; (first node) &quot;\\ }&quot;)))
                       (and (symbol? node) (= loc (zip/rightmost loc))) (recur (zip/replace loc (str &quot;\\text{&quot; node &quot;}&quot;)))
                       (symbol? node) (recur (zip/replace loc (str &quot;\\text{&quot; node &quot;}\\ &quot;)))
                       :else (recur (zip/next loc))))))))</pre></td></tr><tr><td class="docs"><p>Formats roth for TeX output</p>

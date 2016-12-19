@@ -15,6 +15,11 @@
             [clojure.math.combinatorics :refer (selections)]
             [lwb.vis :as vis]))
 
+(defn man
+  "Manual"
+  []
+  (clojure.java.browse/browse-url "https://github.com/esb-dev/lwb/wiki/prop"))
+
 ;; # Propositional logic
 
 ;; The namespace `lwb.prop` provides

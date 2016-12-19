@@ -17,19 +17,7 @@
 (defn man
   "Manual"
   []
-  (let [info (str/join \newline
-                       ["lwb - Linear Temporal Logic"
-                        "Namespace lwb.ltl"
-                        "Functions:"
-                        "- (wff? phi), (wff? phi :msg)"
-                        "  Is the formul phi of linear temporal logic well-formed?"
-                        "  e.g. (wff? '(always P))"
-                        "- (texify phi), (texify phi filename)"
-                        "  generates pdf of phi"
-                        "  e.g. (texify '(always P) \"myfile\")"])]
-    (println info)
-    (println)
-    (kripke/man)))
+  (clojure.java.browse/browse-url "https://github.com/esb-dev/lwb/wiki/ltl"))
 
 ;; # Representation of formulas of ltl
 

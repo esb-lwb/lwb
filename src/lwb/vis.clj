@@ -12,6 +12,11 @@
             [clojure.string :as str]
             [clojure.java.shell :as shell]))
 
+(defn man
+  "Manual"
+  []
+  (clojure.java.browse/browse-url "https://github.com/esb-dev/lwb/wiki/vis"))
+
 ;; # Visualisation of formulas
 ;;
 ;; The syntax tree of a formula of propositional logic, predicate logic or

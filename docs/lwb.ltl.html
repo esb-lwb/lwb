@@ -2875,19 +2875,7 @@ net.brehaut.ClojureTools = (function (SH) {
             [clojure.string :as str]))</pre></td></tr><tr><td class="docs"><p>Manual</p>
 </td><td class="codes"><pre class="brush: clojure">(defn man
   []
-  (let [info (str/join \newline
-                       [&quot;lwb - Linear Temporal Logic&quot;
-                        &quot;Namespace lwb.ltl&quot;
-                        &quot;Functions:&quot;
-                        &quot;- (wff? phi), (wff? phi :msg)&quot;
-                        &quot;  Is the formul phi of linear temporal logic well-formed?&quot;
-                        &quot;  e.g. (wff? '(always P))&quot;
-                        &quot;- (texify phi), (texify phi filename)&quot;
-                        &quot;  generates pdf of phi&quot;
-                        &quot;  e.g. (texify '(always P) \&quot;myfile\&quot;)&quot;])]
-    (println info)
-    (println)
-    (kripke/man)))</pre></td></tr><tr><td class="docs"><h1>Representation of formulas of ltl</h1>
+  (clojure.java.browse/browse-url &quot;https://github.com/esb-dev/lwb/wiki/ltl&quot;))</pre></td></tr><tr><td class="docs"><h1>Representation of formulas of ltl</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The representation is like in propositional logic</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We have 4 more operators in ltl:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ul>
@@ -2895,21 +2883,25 @@ net.brehaut.ClojureTools = (function (SH) {
 <li>atnext -- unary</li>
 <li>finally -- unary</li>
 <li>until -- binary</li>
+<li>release -- binary</li>
 </ul>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We import the operators and so forth from propositional logic</p>
 </td><td class="codes"><pre class="brush: clojure">(pot/import-vars
-  [lwb.prop impl equiv xor ite atom?])</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> an operator of ltl?</p>
+  [lwb.prop impl equiv xor ite])</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> an operator of ltl?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn op?
   [symb]
-  (let [operators '#{always atnext finally until}]
-    (or (prop/op? symb) (contains? operators symb))))</pre></td></tr><tr><td class="docs"><p>Arity of operator <code>op</code>. <br />
+  (let [operators '#{always atnext finally until release}]
+    (or (prop/op? symb) (contains? operators symb))))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> an atomar proposition?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn atom?
+   [symb]
+   (and (symbol? symb) (not (op? symb))))</pre></td></tr><tr><td class="docs"><p>Arity of operator <code>op</code>. <br />
    -1 means n-ary. <br />
    requires: <code>op</code> an operator.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn arity
   [op]
   (if
     (prop/op? op) (prop/arity op)
-                  (if (= 'until op) 2
+                  (if (contains?  '#{until release} op) 2
                                     1)))</pre></td></tr><tr><td class="docs"><p>A simple expression is an atom or a boolean constant.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::simple-expr (s/or :bool boolean?
                            :atom atom?))</pre></td></tr><tr><td class="docs"><p>A compound expression is a list of an operator together with
@@ -2935,7 +2927,40 @@ several formulas as arguments whose number matches the arity of the operator.</p
 </td><td class="codes"><pre class="brush: clojure">(s/fdef wff?
         :args (s/alt :1-args (s/cat :phi any?)
                      :2-args (s/cat :phi any? :mode #{:bool :msg}))
-        :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
+        :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><h2>Negation normal form</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Specification of a literal</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def ::literal (s/or :simple-expr ::simple-expr
+                       :neg (s/and list? (s/cat :not #{'not} :simple-expr ::simple-expr))))</pre></td></tr><tr><td class="docs"><p>Checks whether <code>phi</code> is a literal, i.e. a propositional atom or its negation.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn literal?
+  [phi]
+  (s/valid? ::literal phi))</pre></td></tr><tr><td class="docs"><p>reduction to the set of operators for nnf</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that just the operators <code>not</code>, <code>and</code>, <code>or</code>, <code>atnext</code>, <code>until</code>, <code>release</code> are used.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- impl-free
+  [phi]
+  (if (literal? phi)
+    phi
+    (let [op (first phi)]
+      (cond (contains? #{'and 'or 'not 'atnext 'until 'release} op) (apply list op (map impl-free (rest phi)))
+            (= op 'finally) (apply list 'until true (map impl-free (rest phi)))
+            (= op 'always) (apply list 'release false (map impl-free (rest phi)))
+            :else (let [exp-phi (macroexpand-1 phi)] (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> into negation normal form.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn nnf
+  [phi]
+  (let [phi' (impl-free phi)]
+    (if (literal? phi')
+      phi'
+      (let [[op &amp; more] phi']
+        (if (= op 'not)
+          (let [[inner-op &amp; inner-more] (second phi')]
+            (cond
+              (= inner-op 'and) (nnf (apply list 'or (map #(list 'not %) inner-more)))
+              (= inner-op 'or) (nnf (apply list 'and (map #(list 'not %) inner-more)))
+              (= inner-op 'atnext) (nnf (apply list 'atnext (map #(list 'not %) inner-more)))
+              (= inner-op 'until) (nnf (apply list 'release (map #(list 'not %) inner-more)))
+              (= inner-op 'release) (nnf (apply list 'until (map #(list 'not %) inner-more)))
+              :else (nnf (first inner-more))))
+          (apply list op (map nnf more)))))))</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX code for TikZ or a pdf file if filename given. <br />
    Requires: TeX installation, commands <code>texipdf</code> and <code>open</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify

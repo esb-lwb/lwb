@@ -99,7 +99,7 @@
 
 (defn roth-structure-f
   "Structure of the logic relation of the rule or theorem.
-   Result e.g.: `[:gm :gm :g? :g? :co]`      "
+   Result e.g.: `[:gm :gm :g? :g? :co]`"
   [given extra conclusion]
   (let [has-actual (some #(and (list? %) (= 'actual (first %))) given)
         has-subst (some #(and (list? %) (= 'substitution (first %))) given)
@@ -157,18 +157,18 @@
   (cond
     (symbol? expr) expr
     (list? expr) (symbol (str (first expr) n))
-    :else (throw (ex-error (str "Can't generate argument for the logic relation from \"" expr "\"")))))
+    :else (throw (ex-error (format "Can't generate argument for the logic relation from %s" expr)))))
 
 (defn- gen-args
-  "Generates the top level arguments for the logic relation from the given premises and potentially extra arguments..     
+  "Generates the top level arguments for the logic relation from the given premises and potentially extra arguments.      
    e.g. `[a (and a b) (not b)] => [a and2 not3]`"
   [given]
   (let [numbers (take (count given) (iterate inc 1))]
     (mapv gen-arg given numbers)))
 
 (defn- gen-term
-  "Converts a given list into a quoted sequence      
-   '(and a b) => (list (quote and) a b)"
+  "Converts a given list into a quoted sequence.      
+   `(and a b) => (list (quote and) a b)`"
   [arg]
   (cond
     (contains? keywords arg) (list `quote arg)
@@ -183,22 +183,22 @@
                                                                (list* `list op params))))
 
 (defn- gen-body-row
-  "Converts an argument and an given input into a unify row for the logic relation     
+  "Converts an argument and an given input into a unify row for the logic relation.     
    `[and1 (and a b)] -> (== and1 ``(~'and ~a ~b))`"
   [arg g]
   (cond
     (contains? keywords g) `(== ~arg ~(list `quote arg))
     (symbol? g) ()
     (list? g) `(== ~arg ~(gen-term g))
-    :else (throw (ex-error (str "Can't create unify constraint from " arg " " g)))))
+    :else (throw (ex-error (format "Can't create unify constraint from [%s %s]" arg g)))))
 
 (defn- gen-body
-  "Generates all rows for the body of the function, removes empty ones"
+  "Generates all rows for the body of the function, removes empty ones."
   [args given]
   (remove empty? (map gen-body-row args given)))
 
 (defn- gen-fresh-arg
-  "Extracts symbols in arg"
+  "Extracts symbols in arg."
   [arg]
   (cond
     (contains? keywords arg) []
@@ -209,14 +209,14 @@
     (vector? arg) (vec (flatten (map gen-fresh-arg arg)))))
 
 (defn- gen-fresh-args
-  "Generates the arguments for the fresh function in the logic relation"
+  "Generates the arguments for the fresh function in the logic relation."
   [given conclusion]
   (let [gvars (flatten (map gen-fresh-arg given))
         cvars (flatten (map gen-fresh-arg conclusion))]
     (vec (distinct (concat gvars cvars)))))
 
 (defn- gen-conclusion-row
-  "Converts a conclusion variable and an input into a unify row for the logic relation
+  "Converts a conclusion variable and an input into a unify row for the logic relation.        
    `q1 (and a b) => (== q1 ``(~'and ~a ~b))`"
   [q c]
   `(== ~q ~(cond
@@ -225,12 +225,12 @@
              (list? c) (gen-term c))))
 
 (defn- gen-conclusions
-  "Generates all rows for the conclusions"
+  "Generates all rows for the conclusions."
   [conclusion qs]
   (map gen-conclusion-row qs conclusion))
 
 (defn- gen-prereq-row
-  "Converts a function call from the prerequisites into a valid core.logic restriction"
+  "Converts a function call from the prerequisites into a valid core.logic restriction."
   [prereq]
   `(== ~prereq true))
 
@@ -244,11 +244,11 @@
 ;; ### Function for users of this namespace
 
 (defn gen-roth-relation
-  "Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth     
-   e.g. \"and-i\" `[a b] => [(and a b)]`     
+  "Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth.        
+   e.g.  `:and-i` `[a b] => [(and a b)]`     
    `(fn [a b q1]`     
     `(fresh []`      
-    `(== q1 `(~'and ~a ~b))))`"
+    `(== q1 ``(~'and ~a ~b))))`"
   [prereq given extra conclusion]
   (let [qs (mapv #(symbol (str %1 %2)) (take (count conclusion) (cycle ['q])) (take (count conclusion) (iterate inc conclusion-number)))
         allargs (vec (concat given extra))
@@ -271,7 +271,7 @@
   (if (contains? @roths roth-id)
     (let [r (roth-id @roths)]
       (gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r)))
-    (throw (ex-error (str roth-id " not found in @roths.")))))
+    (throw (ex-error (format  "%s not found in @roths." roth-id)))))
 
 (defn roth-exists?
   "Does a certain rule/theorem exist?"

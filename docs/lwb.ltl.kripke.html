@@ -2870,26 +2870,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (:require [lwb.prop :refer [atom?]]
             [clojure.string :as str]
             [clojure.java.shell :as shell]
-            [clojure.spec :as s]))</pre></td></tr><tr><td class="docs"><p>Manual</p>
-</td><td class="codes"><pre class="brush: clojure">(defn man
-  []
-  (let [info (str/join \newline
-                       [&quot;lwb - Linear Temporal Logic - Kripke Structures&quot;
-                        &quot;Namespace lwb.ltl.kripke&quot;
-                        &quot;Specs:&quot;
-                        &quot;- ::model&quot;
-                        &quot;  Structure of a model for ltl, aka Kripke structure&quot;
-                        &quot;Functions:&quot;
-                        &quot;- (dotify ks {:dot|:neato})&quot;
-                        &quot;  generates code for graphviz of the Kripke structure ks&quot;
-                        &quot;  e.g. (dotify ks :dot)&quot;
-                        &quot;- (tikzify ks {:dot|:neato})&quot;
-                        &quot;  generates code for tikz of the Kripke structure ks&quot;
-                        &quot;  e.g. (tikzify ks :dot)&quot;
-                        &quot;- (texify ks filename), (texify ks filename {:dot|:neato})&quot;
-                        &quot;  generates pdf of the Kripke structure ks&quot;
-                        &quot;  e.g. (texify ks \&quot;myfile\&quot;)&quot;])]
-    (println info)))</pre></td></tr><tr><td class="docs"><h1>Kripke structures</h1>
+            [clojure.spec :as s]))</pre></td></tr><tr><td class="docs"><h1>Kripke structures</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Kripke structures are models for formulas of the linear temporal logic.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The nodes of a Kripke structure are represented by a pair of a keyword and a set of the
 atoms of the structure that are true at that node.</p>

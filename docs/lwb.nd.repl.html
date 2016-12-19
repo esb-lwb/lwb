@@ -2879,46 +2879,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (:import (clojure.lang ExceptionInfo)))</pre></td></tr><tr><td class="docs"><p>Manual</p>
 </td><td class="codes"><pre class="brush: clojure">(defn man
   []
-  (let [info (str/join \newline
-                       [&quot;lwb - Natural Deduction&quot;
-                        &quot;Namespace lwb.nd.repl&quot;
-                        &quot;- (load \&quot;lwb/nd/repl\&quot;)&quot;
-                        &quot;- (ns lwb.nd.repl)&quot;
-                        &quot;Functions:&quot;
-                        &quot;- (load-logic {:prop|:pred|:ltl})&quot;
-                        &quot;  load rules and theorems of one of the three logics&quot;
-                        &quot;  e.g. (load-logic :prop)&quot;
-                        &quot;- (proof givens conclusion)&quot;
-                        &quot;  new claim to be proved&quot;
-                        &quot;  e.g. (proof '(not (or P Q)) '(and (not P) (not Q)))&quot;
-                        &quot;- (step-f roth args)&quot;
-                        &quot;  proof step forward using rule or theorem with args&quot;
-                        &quot;  e.g. (step-f :and-e1 1)&quot;
-                        &quot;- (step-b roth args)&quot;
-                        &quot;  proof step backward using rule or theorem with args&quot;
-                        &quot;  e.g. (step-b :not-i 5)&quot;
-                        &quot;- (swpa symbol replacement&quot;
-                        &quot;  swaps symbol and replacement&quot;
-                        &quot;  e.g. (swap '?1 'Q)&quot;
-                        &quot;- (undo)&quot;
-                        &quot;  reverse the last proofstep&quot;
-                        &quot;- (show)&quot;
-                        &quot;  show current proof&quot;
-                        &quot;- (show-roth id)&quot;
-                        &quot;  prints the rule or theorem with that id&quot;
-                        &quot;  eg. (show-roth :and-i)&quot;
-                        &quot;- (show-roths), (show-rules), (show-theorems)&quot;
-                        &quot;  prints all roths, just the rules, just the theorems resp.&quot;
-                        &quot;- (texify) (texify filename)&quot;
-                        &quot;  prints TeX code of the proof, generates pdf with the proof&quot;
-                        &quot;  e.g. (texify \&quot;myproof\&quot;)&quot;
-                        &quot;- (export filename id) (export filename id :force)&quot;
-                        &quot;  exports proof to file under id, forced if already in the file&quot;
-                        &quot;  e.g. (export \&quot;mytheorems.edn\&quot; :and-comm)&quot;
-                        &quot;- (import-theorems filename)&quot;
-                        &quot;  imports theorems from file&quot;
-                        &quot;  e.g. (import-theorems \&quot;mytheorems.edn\&quot;)&quot;])]
-    (println info)))</pre></td></tr><tr><td class="docs"><p>Path to the files for rules and theorems as resources</p>
+  (clojure.java.browse/browse-url &quot;https://github.com/esb-dev/lwb/wiki/nd&quot;))</pre></td></tr><tr><td class="docs"><p>Path to the files for rules and theorems as resources</p>
 </td><td class="codes"><pre class="brush: clojure">(def rothpath
   &quot;nd/&quot;)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(pot/import-vars
@@ -2990,7 +2951,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (if
     (instance? ExceptionInfo e)
     (let [type (if (= (-&gt; e ex-data :type) :error) &quot;Error: &quot; &quot;Warning: &quot;)]
-      (println (str &quot;[lwb] &quot; type (.getMessage e))))
+        (println (str &quot;[lwb] &quot; type (.getMessage e))))
     (println (str &quot;Exception: &quot; (.getMessage e)))))</pre></td></tr><tr><td class="docs"><p>Execute a forward step. <br />
    Modifies: atom <code>p</code>, the proof, and <br />
              atom <code>p-history</code>, the history of the current proof.</p>

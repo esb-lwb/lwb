@@ -14,6 +14,10 @@
             [potemkin :as pot]
             [lwb.vis :as vis]))
 
+(defn man
+  "Manual"
+  []
+  (clojure.java.browse/browse-url "https://github.com/esb-dev/lwb/wiki/pred"))
 
 ;; # The language of predicate logic
 

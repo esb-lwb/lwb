@@ -12,27 +12,6 @@
             [clojure.java.shell :as shell]
             [clojure.spec :as s]))
 
-(defn man
-  "Manual"
-  []
-  (let [info (str/join \newline
-                       ["lwb - Linear Temporal Logic - Kripke Structures"
-                        "Namespace lwb.ltl.kripke"
-                        "Specs:"
-                        "- ::model"
-                        "  Structure of a model for ltl, aka Kripke structure"
-                        "Functions:"
-                        "- (dotify ks {:dot|:neato})"
-                        "  generates code for graphviz of the Kripke structure ks"
-                        "  e.g. (dotify ks :dot)"
-                        "- (tikzify ks {:dot|:neato})"
-                        "  generates code for tikz of the Kripke structure ks"
-                        "  e.g. (tikzify ks :dot)"
-                        "- (texify ks filename), (texify ks filename {:dot|:neato})"
-                        "  generates pdf of the Kripke structure ks"
-                        "  e.g. (texify ks \"myfile\")"])]
-    (println info)))
-
 ;; # Kripke structures
 
 ;; Kripke structures are models for formulas of the linear temporal logic.

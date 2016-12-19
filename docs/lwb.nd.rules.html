@@ -2903,7 +2903,7 @@ This symbol should not be used as the name of a proposition in rules and theorem
      forall exists actual = substitution
      at succ atnext always finally until &lt;= &lt;})</pre></td></tr><tr><td class="docs"><p>Reserved terms in rules.</p>
 </td><td class="codes"><pre class="brush: clojure">(def keywords
-  #{'truth 'contradiction 'true 'false})</pre></td></tr><tr><td class="docs"><h2>Functions for the structure of the rule or theorem</h2>
+  #{'truth 'contradiction})</pre></td></tr><tr><td class="docs"><h2>Functions for the structure of the rule or theorem</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>the structure of the roth determines how to use the rule or theorem
 and which steps are okay</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Naming conventions for the structure of a rule or theorem</p>
@@ -2933,7 +2933,7 @@ and which steps are okay</p>
     (zero? idx) :go
     :else :gb))</pre></td></tr><tr><td class="docs"><h3>Functions determing the structure of a roth</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Structure of the logic relation of the rule or theorem.
-   Result e.g.: <code>[:gm :gm :g? :g? :co]</code>      </p>
+   Result e.g.: <code>[:gm :gm :g? :g? :co]</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn roth-structure-f
   [given extra conclusion]
   (let [has-actual (some #(and (list? %) (= 'actual (first %))) given)
@@ -2981,13 +2981,13 @@ and which steps are okay</p>
   (cond
     (symbol? expr) expr
     (list? expr) (symbol (str (first expr) n))
-    :else (throw (ex-error (str &quot;Can't generate argument for the logic relation from \&quot;&quot; expr &quot;\&quot;&quot;)))))</pre></td></tr><tr><td class="docs"><p>Generates the top level arguments for the logic relation from the given premises and potentially extra arguments.. <br />
+    :else (throw (ex-error (format &quot;Can't generate argument for the logic relation from %s&quot; expr)))))</pre></td></tr><tr><td class="docs"><p>Generates the top level arguments for the logic relation from the given premises and potentially extra arguments. <br />
    e.g. <code>[a (and a b) (not b)] =&gt; [a and2 not3]</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-args
   [given]
   (let [numbers (take (count given) (iterate inc 1))]
-    (mapv gen-arg given numbers)))</pre></td></tr><tr><td class="docs"><p>Converts a given list into a quoted sequence <br />
-   '(and a b) => (list (quote and) a b)</p>
+    (mapv gen-arg given numbers)))</pre></td></tr><tr><td class="docs"><p>Converts a given list into a quoted sequence. <br />
+   <code>(and a b) =&gt; (list (quote and) a b)</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-term
   [arg]
   (cond
@@ -3000,7 +3000,7 @@ and which steps are okay</p>
                                                          (list* `list op params))
     (and (list? arg) (not (contains? reserved (first arg)))) (let [op (first arg)
                                                                    params (mapv gen-term (rest arg))]
-                                                               (list* `list op params))))</pre></td></tr><tr><td class="docs"><p>Converts an argument and an given input into a unify row for the logic relation <br />
+                                                               (list* `list op params))))</pre></td></tr><tr><td class="docs"><p>Converts an argument and an given input into a unify row for the logic relation. <br />
    <code>[and1 (and a b)] -&gt; (== and1 ``(~'and ~a ~b))</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-body-row
   [arg g]
@@ -3008,10 +3008,10 @@ and which steps are okay</p>
     (contains? keywords g) `(== ~arg ~(list `quote arg))
     (symbol? g) ()
     (list? g) `(== ~arg ~(gen-term g))
-    :else (throw (ex-error (str &quot;Can't create unify constraint from &quot; arg &quot; &quot; g)))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the body of the function, removes empty ones</p>
+    :else (throw (ex-error (format &quot;Can't create unify constraint from [%s %s]&quot; arg g)))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the body of the function, removes empty ones.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-body
   [args given]
-  (remove empty? (map gen-body-row args given)))</pre></td></tr><tr><td class="docs"><p>Extracts symbols in arg</p>
+  (remove empty? (map gen-body-row args given)))</pre></td></tr><tr><td class="docs"><p>Extracts symbols in arg.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-fresh-arg
   [arg]
   (cond
@@ -3020,22 +3020,22 @@ and which steps are okay</p>
     (symbol? arg) [arg]
     (keyword? arg) [(symbol (name arg))]
     (list? arg) (vec (flatten (map gen-fresh-arg arg)))
-    (vector? arg) (vec (flatten (map gen-fresh-arg arg)))))</pre></td></tr><tr><td class="docs"><p>Generates the arguments for the fresh function in the logic relation</p>
+    (vector? arg) (vec (flatten (map gen-fresh-arg arg)))))</pre></td></tr><tr><td class="docs"><p>Generates the arguments for the fresh function in the logic relation.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-fresh-args
   [given conclusion]
   (let [gvars (flatten (map gen-fresh-arg given))
         cvars (flatten (map gen-fresh-arg conclusion))]
-    (vec (distinct (concat gvars cvars)))))</pre></td></tr><tr><td class="docs"><p>Converts a conclusion variable and an input into a unify row for the logic relation
+    (vec (distinct (concat gvars cvars)))))</pre></td></tr><tr><td class="docs"><p>Converts a conclusion variable and an input into a unify row for the logic relation. <br />
    <code>q1 (and a b) =&gt; (== q1 ``(~'and ~a ~b))</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-conclusion-row
   [q c]
   `(== ~q ~(cond
              (contains? keywords c) (list `quote c)
              (symbol? c) c
-             (list? c) (gen-term c))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the conclusions</p>
+             (list? c) (gen-term c))))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the conclusions.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-conclusions
   [conclusion qs]
-  (map gen-conclusion-row qs conclusion))</pre></td></tr><tr><td class="docs"><p>Converts a function call from the prerequisites into a valid core.logic restriction</p>
+  (map gen-conclusion-row qs conclusion))</pre></td></tr><tr><td class="docs"><p>Converts a function call from the prerequisites into a valid core.logic restriction.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- gen-prereq-row
   [prereq]
   `(== ~prereq true))</pre></td></tr><tr><td class="docs"><p>Generates all rows for the prerequisites for the project in core.logic, <br />
@@ -3044,11 +3044,11 @@ and which steps are okay</p>
   [prereqs fresh-args qs]
   (list (conj (map gen-prereq-row prereqs)
               (conj fresh-args qs) `project)))</pre></td></tr><tr><td class="docs"><h3>Function for users of this namespace</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth <br />
-   e.g. "and-i" <code>[a b] =&gt; [(and a b)]</code> <br />
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth. <br />
+   e.g.  <code>:and-i</code> <code>[a b] =&gt; [(and a b)]</code> <br />
    <code>(fn [a b q1]</code> <br />
     <code>(fresh []</code> <br />
-    <code>(== q1</code>(~'and ~a ~b))))`</p>
+    <code>(== q1 ``(~'and ~a ~b))))</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn gen-roth-relation
   [prereq given extra conclusion]
   (let [qs (mapv #(symbol (str %1 %2)) (take (count conclusion) (cycle ['q])) (take (count conclusion) (iterate inc conclusion-number)))
@@ -3068,7 +3068,7 @@ and which steps are okay</p>
   (if (contains? @roths roth-id)
     (let [r (roth-id @roths)]
       (gen-roth-relation (:prereq r) (:given r) (:extra r) (:conclusion r)))
-    (throw (ex-error (str roth-id &quot; not found in @roths.&quot;)))))</pre></td></tr><tr><td class="docs"><p>Does a certain rule/theorem exist?</p>
+    (throw (ex-error (format  &quot;%s not found in @roths.&quot; roth-id)))))</pre></td></tr><tr><td class="docs"><p>Does a certain rule/theorem exist?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn roth-exists?
   [roth-id]
   (contains? @roths roth-id))</pre></td></tr><tr><td class="docs"><p>Returns true if the rule/theorem can be used forwards</p>
