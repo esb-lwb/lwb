@@ -10,12 +10,13 @@
 (ns lwb.vis
   (:require [clojure.zip :as zip]
             [clojure.string :as str]
-            [clojure.java.shell :as shell]))
+            [clojure.java.shell :as shell]
+            [clojure.java.browse :as browse]))
 
 (defn man
   "Manual"
   []
-  (clojure.java.browse/browse-url "https://github.com/esb-dev/lwb/wiki/vis"))
+  (browse/browse-url "https://github.com/esb-dev/lwb/wiki/vis"))
 
 ;; # Visualisation of formulas
 ;;

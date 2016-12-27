@@ -12,12 +12,13 @@
             [lwb.vis :as vis]
             [lwb.ltl.kripke :as kripke]
             [clojure.spec :as s]
+            [clojure.java.browse :as browse]
             [clojure.string :as str]))
 
 (defn man
   "Manual"
   []
-  (clojure.java.browse/browse-url "https://github.com/esb-dev/lwb/wiki/ltl"))
+  (browse/browse-url "https://github.com/esb-dev/lwb/wiki/ltl"))
 
 ;; # Representation of formulas of ltl
 
@@ -96,7 +97,7 @@
 
 ;; ## Negation normal form
 
-;; Specification of a literal
+;; ### Specification of a literal
 
 (s/def ::literal (s/or :simple-expr ::simple-expr
                        :neg (s/and list? (s/cat :not #{'not} :simple-expr ::simple-expr))))
@@ -106,7 +107,16 @@
   [phi]
   (s/valid? ::literal phi))
 
-;; reduction to the set of operators for nnf
+;; ### Specification of negation normal form nnf
+
+(s/def :nnf/op '#{and or atnext until release})
+                   
+(s/def :nnf/compl-expr (s/and list? (s/& (s/cat :op :nnf/op :params (s/* :nnf/fml)) arity-ok?)))
+
+(s/def :nnf/fml (s/or :literal ::literal
+                      :compl-expr  :nnf/compl-expr))
+
+;; ### Reduction to the set of operators for nnf
 
 (defn- impl-free
   "Normalize formula `phi` such that just the operators `not`, `and`, `or`, `atnext`, `until`, `release` are used."
@@ -118,6 +128,8 @@
             (= op 'finally) (apply list 'until true (map impl-free (rest phi)))
             (= op 'always) (apply list 'release false (map impl-free (rest phi)))
             :else (let [exp-phi (macroexpand-1 phi)] (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))
+
+;; ### Transformation to nnf
 
 (defn nnf
   "Transforms `phi` into negation normal form."
@@ -136,7 +148,22 @@
               (= inner-op 'release) (nnf (apply list 'until (map #(list 'not %) inner-more)))
               :else (nnf (first inner-more))))
           (apply list op (map nnf more)))))))
-    
+
+(s/fdef nnf
+        :args (s/cat :phi wff?)
+        :ret (s/alt :nnf :nnf/fml :bool boolean?))
+
+;; ### Check for nnf
+
+(defn nnf?
+  "Is `phi` in  negation normal form?"
+  [phi]
+  (s/valid? :nnf/fml phi))
+
+(s/fdef nnf?
+        :args (s/cat :phi wff?)
+        :ret boolean?)
+
 ;; ## Visualisation of a formula
 
 (defn texify

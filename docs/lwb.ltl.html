@@ -2872,10 +2872,11 @@ net.brehaut.ClojureTools = (function (SH) {
             [lwb.vis :as vis]
             [lwb.ltl.kripke :as kripke]
             [clojure.spec :as s]
+            [clojure.java.browse :as browse]
             [clojure.string :as str]))</pre></td></tr><tr><td class="docs"><p>Manual</p>
 </td><td class="codes"><pre class="brush: clojure">(defn man
   []
-  (clojure.java.browse/browse-url &quot;https://github.com/esb-dev/lwb/wiki/ltl&quot;))</pre></td></tr><tr><td class="docs"><h1>Representation of formulas of ltl</h1>
+  (browse/browse-url &quot;https://github.com/esb-dev/lwb/wiki/ltl&quot;))</pre></td></tr><tr><td class="docs"><h1>Representation of formulas of ltl</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The representation is like in propositional logic</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We have 4 more operators in ltl:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ul>
@@ -2928,13 +2929,18 @@ several formulas as arguments whose number matches the arity of the operator.</p
         :args (s/alt :1-args (s/cat :phi any?)
                      :2-args (s/cat :phi any? :mode #{:bool :msg}))
         :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><h2>Negation normal form</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Specification of a literal</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><h3>Specification of a literal</h3>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::literal (s/or :simple-expr ::simple-expr
                        :neg (s/and list? (s/cat :not #{'not} :simple-expr ::simple-expr))))</pre></td></tr><tr><td class="docs"><p>Checks whether <code>phi</code> is a literal, i.e. a propositional atom or its negation.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn literal?
   [phi]
-  (s/valid? ::literal phi))</pre></td></tr><tr><td class="docs"><p>reduction to the set of operators for nnf</p>
+  (s/valid? ::literal phi))</pre></td></tr><tr><td class="docs"><h3>Specification of negation normal form nnf</h3>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def :nnf/op '#{and or atnext until release})</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def :nnf/compl-expr (s/and list? (s/&amp; (s/cat :op :nnf/op :params (s/* :nnf/fml)) arity-ok?)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def :nnf/fml (s/or :literal ::literal
+                      :compl-expr  :nnf/compl-expr))</pre></td></tr><tr><td class="docs"><h3>Reduction to the set of operators for nnf</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that just the operators <code>not</code>, <code>and</code>, <code>or</code>, <code>atnext</code>, <code>until</code>, <code>release</code> are used.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- impl-free
   [phi]
@@ -2944,7 +2950,8 @@ several formulas as arguments whose number matches the arity of the operator.</p
       (cond (contains? #{'and 'or 'not 'atnext 'until 'release} op) (apply list op (map impl-free (rest phi)))
             (= op 'finally) (apply list 'until true (map impl-free (rest phi)))
             (= op 'always) (apply list 'release false (map impl-free (rest phi)))
-            :else (let [exp-phi (macroexpand-1 phi)] (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> into negation normal form.</p>
+            :else (let [exp-phi (macroexpand-1 phi)] (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs"><h3>Transformation to nnf</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> into negation normal form.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn nnf
   [phi]
   (let [phi' (impl-free phi)]
@@ -2960,7 +2967,17 @@ several formulas as arguments whose number matches the arity of the operator.</p
               (= inner-op 'until) (nnf (apply list 'release (map #(list 'not %) inner-more)))
               (= inner-op 'release) (nnf (apply list 'until (map #(list 'not %) inner-more)))
               :else (nnf (first inner-more))))
-          (apply list op (map nnf more)))))))</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
+          (apply list op (map nnf more)))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef nnf
+        :args (s/cat :phi wff?)
+        :ret (s/alt :nnf :nnf/fml :bool boolean?))</pre></td></tr><tr><td class="docs"><h3>Check for nnf</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>phi</code> in  negation normal form?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn nnf?
+  [phi]
+  (s/valid? :nnf/fml phi))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef nnf?
+        :args (s/cat :phi wff?)
+        :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX code for TikZ or a pdf file if filename given. <br />
    Requires: TeX installation, commands <code>texipdf</code> and <code>open</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify

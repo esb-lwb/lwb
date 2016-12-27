@@ -9,6 +9,7 @@
 (ns lwb.prop
   (:require [clojure.spec :as s]
             [clojure.string :as str]
+            [clojure.java.browse :as browse]
             [clojure.walk :refer (postwalk)]
             [clojure.set :refer (union intersection subset?)]
             [clojure.math.numeric-tower :refer (expt)]
@@ -18,7 +19,7 @@
 (defn man
   "Manual"
   []
-  (clojure.java.browse/browse-url "https://github.com/esb-dev/lwb/wiki/prop"))
+  (browse/browse-url "https://github.com/esb-dev/lwb/wiki/prop"))
 
 ;; # Propositional logic
 
