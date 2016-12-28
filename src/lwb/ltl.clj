@@ -109,12 +109,12 @@
 
 ;; ### Specification of negation normal form nnf
 
-(s/def :nnf/op '#{and or atnext until release})
+(s/def ::nnf-op '#{and or atnext until release})
                    
-(s/def :nnf/compl-expr (s/and list? (s/& (s/cat :op :nnf/op :params (s/* :nnf/fml)) arity-ok?)))
+(s/def ::nnf-compl-expr (s/and list? (s/& (s/cat :op ::nnf-op :params (s/* ::nnf-fml)) arity-ok?)))
 
-(s/def :nnf/fml (s/or :literal ::literal
-                      :compl-expr  :nnf/compl-expr))
+(s/def ::nnf-fml (s/or :literal ::literal
+                       :compl-expr ::nnf-compl-expr))
 
 ;; ### Reduction to the set of operators for nnf
 
@@ -151,14 +151,14 @@
 
 (s/fdef nnf
         :args (s/cat :phi wff?)
-        :ret (s/alt :nnf :nnf/fml :bool boolean?))
+        :ret (s/alt :nnf ::nnf-fml :bool boolean?))
 
 ;; ### Check for nnf
 
 (defn nnf?
   "Is `phi` in  negation normal form?"
   [phi]
-  (s/valid? :nnf/fml phi))
+  (s/valid? ::nnf-fml phi))
 
 (s/fdef nnf?
         :args (s/cat :phi wff?)
