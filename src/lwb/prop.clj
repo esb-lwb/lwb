@@ -462,13 +462,19 @@
   )
 
 (defn cnf?
-  "Is `phi` in (standardized) conjunctive normal form?"
-  [phi]
-  (s/valid? ::cnf phi))
+  "Is `phi` in (standardized) conjunctive normal form?
+   `(cnf? phi)` returns true or false.       
+   `(cnf? phi :msg)` returns true or a message describing the error in `phi`."
+  ([phi]
+   (cnf? phi :bool))
+  ([phi mode]
+   (let [result (s/valid? ::cnf phi)]
+     (or result (if (= mode :msg) (s/explain-str ::cnf phi) result)))))
 
 (s/fdef cnf?
-        :args (s/cat :phi wff?)
-        :ret boolean?)
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :mode #{:bool :msg}))
+        :ret (s/alt :bool boolean? :msg string?))
 
 ;;## Transformation to disjunctive normal form
 
@@ -510,13 +516,19 @@
         :ret (s/or :dnf ::dnf :bool boolean?))
 
 (defn dnf?
-  "Is `phi` in (standardized) disjunctive normal form?"
-  [phi]
-  (s/valid? ::dnf phi))
+  "Is `phi` in (standardized) disjunctive normal form?
+   `(dnf? phi)` returns true or false.       
+   `(dnf? phi :msg)` returns true or a message describing the error in `phi`."
+  ([phi]
+   (dnf? phi :bool))
+  ([phi mode]
+   (let [result (s/valid? ::dnf phi)]
+     (or result (if (= mode :msg) (s/explain-str ::dnf phi) result)))))
 
 (s/fdef dnf?
-        :args (s/cat :phi wff?)
-        :ret boolean?)
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :mode #{:bool :msg}))
+        :ret (s/alt :bool boolean? :msg string?))
 
 ;; ## Visualisation of a formula
 

@@ -156,13 +156,19 @@
 ;; ### Check for nnf
 
 (defn nnf?
-  "Is `phi` in  negation normal form?"
-  [phi]
-  (s/valid? ::nnf-fml phi))
+  "Is `phi` in negation normal form?
+   `(nnf? phi)` returns true or false.       
+   `(nnf? phi :msg)` returns true or a message describing the error in `phi`."
+  ([phi]
+   (nnf? phi :bool))
+  ([phi mode]
+   (let [result (s/valid? ::nnf-fml phi)]
+     (or result (if (= mode :msg) (s/explain-str ::nnf-fml phi) result)))))
 
 (s/fdef nnf?
-        :args (s/cat :phi wff?)
-        :ret boolean?)
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :mode #{:bool :msg}))
+        :ret (s/alt :bool boolean? :msg string?))
 
 ;; ## Visualisation of a formula
 
