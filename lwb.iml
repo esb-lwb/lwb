@@ -36,6 +36,7 @@
     <orderEntry type="library" name="Leiningen: clj-tuple:0.2.2" level="project" />
     <orderEntry type="library" name="Leiningen: clojure-complete:0.2.4" level="project" />
     <orderEntry type="library" name="Leiningen: de.fosd.typechef/javabdd_repackaged_2.10:0.1" level="project" />
+    <orderEntry type="library" name="Leiningen: ltl2buchi:1.0.0" level="project" />
     <orderEntry type="library" name="Leiningen: net.mikera/core.matrix:0.57.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.9.0-alpha14" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/core.logic:0.8.11" level="project" />
