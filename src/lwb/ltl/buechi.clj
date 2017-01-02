@@ -10,8 +10,7 @@
   (:require [lwb.ltl :refer :all])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
            (gov.nasa.ltl.graph Graph Node Edge)
-           (gov.nasa.ltl.graphio Writer Writer$Format)
-           (java.io PrintStream ByteArrayOutputStream)))
+           (gov.nasa.ltl.graphio Writer)))
 
 ;; # Generating the Büchi automata for a LTL formula
 
@@ -146,4 +145,31 @@
   (ba (translate '(and A (not A))))
   
   (ba (translate '(and (and A B) (not A) (not B))))
+  )
+
+(comment
+  (-> '(always A)
+      translate
+      ba)
+
+  (-> '(always (impl A (finally B)))
+      translate
+      ba)
+
+  (-> '(impl (always (finally A)) (always (finally B)))
+      translate
+      ba)
+
+  (-> '(always (and A B))
+      translate
+      ba)
+
+  (-> '(finally (always (not A)))
+      translate
+      ba)
+
+  (-> '(not (always (impl A (finally B))))
+      translate
+      ba)
+
   )
