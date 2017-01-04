@@ -129,7 +129,7 @@
         :args #(instance? Literal %)
         :ret :lwb.ltl/literal)
 
-(s/def ::guard (s/or :bool boolean? 
+(s/def ::guard (s/or :true true? 
                      :literals (s/coll-of :lwb.ltl/literal :kind set?)))
 
 (defn- guard
