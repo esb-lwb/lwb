@@ -7,9 +7,10 @@
 ; the terms of this license.
 
 (ns lwb.ltl.buechi
-  (:require [lwb.ltl :refer :all])
+  (:require [lwb.ltl :refer :all]
+            [clojure.spec :as s])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
-           (gov.nasa.ltl.graph Graph Node Edge)
+           (gov.nasa.ltl.graph Graph Node Edge Guard Literal)
            (gov.nasa.ltl.graphio Writer)))
 
 ;; # Generating the Büchi automata for a LTL formula
@@ -88,7 +89,7 @@
 (defn translate
   [phi]
   (let [fml (fml phi)]
-    (LTL2Buchi/translate ^Formula fml, true, true, true)
+    (LTL2Buchi/translate ^Formula fml)
     ))
 
 (comment
@@ -97,40 +98,90 @@
   (translate '(always (finally A)))
   )
 
-; Cllojure datastructure for ba
+;; Clojure datastructure for ba
+
+(s/def ::id        int?)
+(s/def ::init      boolean?)
+(s/def ::accepting boolean?)
+
+(s/def ::node (s/keys :req-un [::id]
+                         :opt-un [::init ::accepting]))
+
 (defn- node
+  "A node from a Büchi automaton as a Clojure map `::ba-node`."
   [^Node n]
   (let [g (.getGraph n)
         init? (= n (.getInit g))
         accepting? (.getBooleanAttribute n "accepting")]
     (into {:id (.getId n)} [(if init? {:init true}) (if accepting? {:accepting true})])))
 
+(s/fdef node
+        :args #(instance? Node %)
+        :ret ::node)
+
+(defn- literal 
+  "A literal from a guard of a Büchi automaton"
+  [^Literal l]
+  (let [atom (symbol (.getAtom l))]
+    (if (.isNegated l) (list 'not atom) atom)))
+
+(s/fdef literal
+        :args #(instance? Literal %)
+        :ret :lwb.ltl/literal)
+
+(s/def ::guard (s/or :bool boolean? 
+                     :literals (s/coll-of :lwb.ltl/literal :kind set?)))
+
+(defn- guard
+  "A guard from a Büchi automata as a Clojure set of literals."
+  [^Guard g]
+  (if (.isTrue g) true
+                  (into #{} (map literal g))))
+
+(s/fdef guard
+        :args #(instance? Guard %)
+        :ret ::guard)
+
+(s/def ::from int?)
+(s/def ::to int?)
+(s/def ::edge (s/keys :req-un [::from ::to ::guard]))
+
 (defn- edge
   [^Edge e]
   {:from (.getId (.getSource e))
    :to   (.getId (.getNext e))
-   :guard (Writer/formatSMGuard (.getGuard e))}
-  )
+   :guard (guard (.getGuard e))})
 
+(s/fdef edge
+        :args #(instance? Edge %)
+        :ret ::edge)
+
+(s/def ::nodes (s/coll-of ::node :kind vector?))
+(s/def ::edges (s/coll-of ::edge :kind vector?))
+(s/def ::ba (s/keys :req-un [::nodes ::edges]))
 
 (defn ba
-  "Clojure datastructure from Graph of LTL2Buchi."
+  "Clojure datastructure from a Büchi automaton given as a Graph of LTL2Buchi."
   [^Graph g]
   (let [nodes (into [] (map node (.getNodes g)))
         edges (mapcat #(.getOutgoingEdges %) (.getNodes g))
         edges (vec (map edge edges))]
-    {:nodes nodes, :edges edges}
-    )
-  )
+    {:nodes nodes, :edges edges}))
+
+(s/fdef ba
+        :args #(instance? Graph %)
+        :ret ::ba)
 
 (comment
-  (ba (translate '(always A)))
+  (def ba1 (ba (translate '(always A))))
+  (s/valid? ::ba ba1)
 
   (ba (translate '(always (finally A))))
 
   (ba (translate '(and A B)))
 
-  (ba (translate '(and A B C)))
+  (def ba4 (ba (translate '(and A (not BX) C))))
+  (s/valid? ::ba ba4)
   
   (ba (translate '(impl A B)))
   
@@ -148,7 +199,11 @@
   )
 
 (comment
-  (-> '(always A)
+  (-> '(always AX)
+      translate
+      ba)
+
+  (-> '(always (not AX))
       translate
       ba)
 
