@@ -56,7 +56,7 @@
   (nary->binary '(until (or) (and c d e f)))
   )
 
-(defn fml
+(defn- fml
   "Makes a Formula<String> object from a Clojure LTL formula."
   [phi]
   (let [phi (nary->binary phi)]
@@ -86,7 +86,7 @@
   )
 
 ; erzeugt Graph
-(defn translate
+(defn- translate
   [phi]
   (let [fml (fml phi)]
     (LTL2Buchi/translate ^Formula fml)
@@ -116,7 +116,7 @@
     (into {:id (.getId n)} [(if init? {:init true}) (if accepting? {:accepting true})])))
 
 (s/fdef node
-        :args #(instance? Node %)
+        :args (s/cat :node #(instance? Node %))
         :ret ::node)
 
 (defn- literal 
@@ -126,7 +126,7 @@
     (if (.isNegated l) (list 'not atom) atom)))
 
 (s/fdef literal
-        :args #(instance? Literal %)
+        :args (s/cat :literal #(instance? Literal %))
         :ret :lwb.ltl/literal)
 
 (s/def ::guard (s/or :true true? 
@@ -136,10 +136,10 @@
   "A guard from a Büchi automata as a Clojure set of literals."
   [^Guard g]
   (if (.isTrue g) true
-                  (into #{} (map literal g))))
+                  (set (map literal g))))
 
 (s/fdef guard
-        :args #(instance? Guard %)
+        :args (s/cat :guard #(instance? Guard %))
         :ret ::guard)
 
 (s/def ::from int?)
@@ -153,27 +153,39 @@
    :guard (guard (.getGuard e))})
 
 (s/fdef edge
-        :args #(instance? Edge %)
+        :args (s/cat :edge #(instance? Edge %))
         :ret ::edge)
 
 (s/def ::nodes (s/coll-of ::node :kind vector?))
 (s/def ::edges (s/coll-of ::edge :kind vector?))
 (s/def ::ba (s/keys :req-un [::nodes ::edges]))
 
-(defn ba
+(defn- ba'
   "Clojure datastructure from a Büchi automaton given as a Graph of LTL2Buchi."
   [^Graph g]
-  (let [nodes (into [] (map node (.getNodes g)))
+  (let [nodes (mapv node (.getNodes g))
         edges (mapcat #(.getOutgoingEdges %) (.getNodes g))
-        edges (vec (map edge edges))]
+        edges (mapv edge edges)]
     {:nodes nodes, :edges edges}))
 
+(s/fdef ba'
+        :args (s/cat :ba #(instance? Graph %))
+        :ret ::ba)
+
+(defn ba
+  "Büchi automaton from LTL formula `phi`,
+   with a little help from LTL2Buchi."
+  [ba]
+  (-> ba
+      translate
+      ba'))
+
 (s/fdef ba
-        :args #(instance? Graph %)
+        :args (s/cat :phi wff?)
         :ret ::ba)
 
 (comment
-  (def ba1 (ba (translate '(always A))))
+  (def ba1 (ba '(always A)))
   (s/valid? ::ba ba1)
 
   (ba (translate '(always (finally A))))
