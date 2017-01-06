@@ -84,8 +84,8 @@
   (str (name left)  " -> " (name right) (if (= left right) " [topath=\"loop above\"]" "") ";\n"))
 
 (defn dotify
-  "Visualisation of the Kripke structure `ks`.
-   mode :dot or :neato
+  "Visualisation of the Kripke structure `ks`.       
+   `mode`  `:dot` or `:neato`        
    Generates code for graphviz (dot)."
   [ks mode]
   (let [dot-head (str "digraph G {\n "(if (= mode :dot) "rankdir=LR;\n" ""))
@@ -112,7 +112,7 @@
 
 (defn tikzify
   "Uses `dot2tex` to get the code of a picture environment in `tikz`.      
-   Option :neato or :dot (default)       
+   `mode` `:neato` or `:dot` (default)       
    Result sometimes has to be reworked."
   ([ks]
    (tikzify ks :dot))

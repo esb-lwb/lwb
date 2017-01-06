@@ -23,6 +23,8 @@
 ;; 2. If the Büchi automaton is not empty, the formula is satisfiable, and we
 ;;    construct a model, i.e. a Kripke structure for the formula.
 
+;; #### Helper functions
+
 (defn- node-label
   "Label for a node with `id` in the Kripke structure for the automaton `ba`."
   [ba id]
@@ -34,8 +36,8 @@
   [id]
   (keyword (str "s_" id)))
 
-;; is there always just one successor to the init node in the Büchi automaton?
-;; depends on the reduction that LTL2Bucxhi performs
+; is there always just one successor to the init node in the Büchi automaton?
+; depends on the reduction that LTL2Buchi performs
 
 (defn- succ-init
   "Successor of init node in the automaton."
@@ -46,6 +48,8 @@
       init-id
       (let [succ-ids (distinct (mapv :to (filter #(= (:from %) init-id) (:edges ba))))]
         (first succ-ids)))))
+
+;; #### Transformation of Büchi automaton into a corresponding Kripke structure
 
 (defn ba->ks 
   "A Kripke structure is generated from a Büchi automaton as a model       
@@ -58,24 +62,18 @@
         edges (map #(vector (:from %) (:to %)) (:edges ba))
         node-id-set (set nodes)
         edges' (distinct (filter #(and (contains? node-id-set (first %)) (contains? node-id-set (second %))) edges))
-        edges'' (set (map #(vector (node-key (first %)) (node-key (second %))) edges'))
-        ]
+        edges'' (set (map #(vector (node-key (first %)) (node-key (second %))) edges'))]
     (hash-map :nodes nodes'' :initial initial :edges edges'')))
 
+;; ## Satisfiability and Validity for LTL formulas
+
 (defn sat
-  "Gives a model for `phi` if the formula is satisfiable, nil if not."
+  "Gives a model for `phi` if the formula is satisfiable, nil otherwise."
   [phi]
   (let [ba (ba/ba phi)]
     (if (empty? (:nodes ba)) 
       nil
       (ba->ks ba))))
-
-(sat '(and P (not P)))
-(sat '(or P (not P)))
-(sat '(always P))
-(sat '(always (and P Q)))
-(sat '(always (or P Q)))
-(sat '(always (impl P Q)))
 
 (s/fdef sat
         :args (s/cat :phi wff?)
@@ -90,10 +88,6 @@
         :args (s/cat :phi wff?)
         :ret boolean?)
 
-(sat? '(and P (not P)))
-(sat? '(or P (not P)))
-(sat? '(always P))
-
 (defn valid?
   "Is `phi` valid?"
   [phi]
@@ -102,8 +96,3 @@
 (s/fdef valid?
         :args (s/cat :phi wff?)
         :ret boolean?)
-
-(valid? '(and P (not P)))
-(valid? '(or P (not P)))
-(valid? '(always (or P (not P))))
-(valid? '(always P))

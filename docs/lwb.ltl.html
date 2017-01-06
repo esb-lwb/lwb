@@ -2937,10 +2937,10 @@ several formulas as arguments whose number matches the arity of the operator.</p
   [phi]
   (s/valid? ::literal phi))</pre></td></tr><tr><td class="docs"><h3>Specification of negation normal form nnf</h3>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def :nnf/op '#{and or atnext until release})</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def :nnf/compl-expr (s/and list? (s/&amp; (s/cat :op :nnf/op :params (s/* :nnf/fml)) arity-ok?)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def :nnf/fml (s/or :literal ::literal
-                      :compl-expr  :nnf/compl-expr))</pre></td></tr><tr><td class="docs"><h3>Reduction to the set of operators for nnf</h3>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::nnf-op '#{and or atnext until release})</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def ::nnf-compl-expr (s/and list? (s/&amp; (s/cat :op ::nnf-op :params (s/* ::nnf-fml)) arity-ok?)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def ::nnf-fml (s/or :literal ::literal
+                       :compl-expr ::nnf-compl-expr))</pre></td></tr><tr><td class="docs"><h3>Reduction to the set of operators for nnf</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that just the operators <code>not</code>, <code>and</code>, <code>or</code>, <code>atnext</code>, <code>until</code>, <code>release</code> are used.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- impl-free
   [phi]
@@ -2970,14 +2970,20 @@ several formulas as arguments whose number matches the arity of the operator.</p
           (apply list op (map nnf more)))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef nnf
         :args (s/cat :phi wff?)
-        :ret (s/alt :nnf :nnf/fml :bool boolean?))</pre></td></tr><tr><td class="docs"><h3>Check for nnf</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>phi</code> in  negation normal form?</p>
+        :ret (s/alt :nnf ::nnf-fml :bool boolean?))</pre></td></tr><tr><td class="docs"><h3>Check for nnf</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>phi</code> in negation normal form?
+   <code>(nnf? phi)</code> returns true or false. <br />
+   <code>(nnf? phi :msg)</code> returns true or a message describing the error in <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn nnf?
-  [phi]
-  (s/valid? :nnf/fml phi))</pre></td></tr><tr><td class="docs">
+  ([phi]
+   (nnf? phi :bool))
+  ([phi mode]
+   (let [result (s/valid? ::nnf-fml phi)]
+     (or result (if (= mode :msg) (s/explain-str ::nnf-fml phi) result)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef nnf?
-        :args (s/cat :phi wff?)
-        :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :mode #{:bool :msg}))
+        :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX code for TikZ or a pdf file if filename given. <br />
    Requires: TeX installation, commands <code>texipdf</code> and <code>open</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify

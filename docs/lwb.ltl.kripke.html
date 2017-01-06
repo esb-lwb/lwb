@@ -2920,8 +2920,8 @@ For improving the results:</p>
       texlbl=\&quot;$&quot; (process-name (name key)) &quot;$\\\\$&quot; str-atoms &quot;$\&quot;];\n&quot;)))</pre></td></tr><tr><td class="docs"><p>Gives code for an edge <code>[left right]</code> on the dot language.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- dot-edge
   [[left right]]
-  (str (name left)  &quot; -&gt; &quot; (name right) (if (= left right) &quot; [topath=\&quot;loop above\&quot;]&quot; &quot;&quot;) &quot;;\n&quot;))</pre></td></tr><tr><td class="docs"><p>Visualisation of the Kripke structure <code>ks</code>.
-   mode :dot or :neato
+  (str (name left)  &quot; -&gt; &quot; (name right) (if (= left right) &quot; [topath=\&quot;loop above\&quot;]&quot; &quot;&quot;) &quot;;\n&quot;))</pre></td></tr><tr><td class="docs"><p>Visualisation of the Kripke structure <code>ks</code>. <br />
+   <code>mode</code>  <code>:dot</code> or <code>:neato</code> <br />
    Generates code for graphviz (dot).</p>
 </td><td class="codes"><pre class="brush: clojure">(defn dotify
   [ks mode]
@@ -2944,7 +2944,7 @@ For improving the results:</p>
 </td><td class="codes"><pre class="brush: clojure">(def ^:private tikz-footer
   &quot;\\end{tikzpicture}
    \\end{document}&quot;)</pre></td></tr><tr><td class="docs"><p>Uses <code>dot2tex</code> to get the code of a picture environment in <code>tikz</code>. <br />
-   Option :neato or :dot (default) <br />
+   <code>mode</code> <code>:neato</code> or <code>:dot</code> (default) <br />
    Result sometimes has to be reworked.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn tikzify
   ([ks]

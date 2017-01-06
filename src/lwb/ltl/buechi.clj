@@ -18,13 +18,10 @@
 ;; We use the library `ltl2buchi`, the LTL2Buchi translator, 
 ;; implemented at NASA Ames research Center, by Dimitra Giannakopoulou and Flavio Lerda.
 
-;; and an or must be binary here!!
-;; only some of the operators are allowed
-
-;; we use nnf with binary and and or
+;; For `ltl2buchi` the operators `and` and `or` have to be binary.
 
 (defn- nary->binary
-  "Makes nary `and` and `or` binary"
+  "Makes nary `and` and `or` binary."
   [phi]
   (cond (or (atom? phi) (boolean? phi)) phi
         :else (let [[op & args] phi]
@@ -38,25 +35,7 @@
                       ; implies until release
                       :else (list op (nary->binary (first args)) (nary->binary (second args)))))))
 
-(comment
-  (nary->binary 'a)
-  (nary->binary true)
-  (nary->binary false)
-  (nary->binary '(not a))
-  (nary->binary '(finally a))
-  (nary->binary '(always a))
-  (nary->binary '(and))
-  (nary->binary '(and a))
-  (nary->binary '(and a b))
-  (nary->binary '(and a b c))
-  (nary->binary '(and a b (and c d e f)))
-  (nary->binary '(until false (and a b (and c d e f))))
-  (nary->binary '(until (and a b c) (and c d e f)))
-  (nary->binary '(until (or a b c) (and c d e f)))
-  (nary->binary '(until (or) (and c d e f)))
-  )
-
-(defn- fml
+(defn fml
   "Makes a Formula<String> object from a Clojure LTL formula."
   [phi]
   (let [phi (nary->binary phi)]
@@ -74,31 +53,16 @@
                       (= op 'always) (Formula/Always (fml (first args)))
                       (= op 'finally) (Formula/Eventually (fml (first args))))))))
 
-(comment
-  (fml 'A)
-  (fml '(not A))
-  (fml '(and (not A) B))
-  (fml '(release false A))
-  (fml '(until true A))
-  (fml '(until false (and a b (and c d e f))))
-  (fml '(always A))
-  (fml '(always (finally A)))
-  )
-
-; erzeugt Graph
 (defn- translate
+  "Translates the formula `phi` into a Büchi automaton.      
+   Here we use the algorithm developed by Dimitra Giannakopoulou and Flavio Lerda."
   [phi]
   (let [fml (fml phi)]
-    (LTL2Buchi/translate ^Formula fml)
-    ))
+    (LTL2Buchi/translate ^Formula fml)))
 
-(comment
-  (translate '(release false A))
-  (translate '(always A))
-  (translate '(always (finally A)))
-  )
+;; ## Clojure datastructure for Büchi automata
 
-;; Clojure datastructure for ba
+;; #### A node of the automaton
 
 (s/def ::id        int?)
 (s/def ::init      boolean?)
@@ -118,6 +82,8 @@
 (s/fdef node
         :args (s/cat :node #(instance? Node %))
         :ret ::node)
+
+;; #### A guard, i.e. a label of the transitions in the Büchi automaton
 
 (defn- literal 
   "A literal from a guard of a Büchi automaton"
@@ -142,6 +108,8 @@
         :args (s/cat :guard #(instance? Guard %))
         :ret ::guard)
 
+;; #### An edge i.e. transition of the automaton
+
 (s/def ::from int?)
 (s/def ::to int?)
 (s/def ::edge (s/keys :req-un [::from ::to ::guard]))
@@ -160,6 +128,11 @@
 (s/def ::edges (s/coll-of ::edge :kind vector?))
 (s/def ::ba (s/keys :req-un [::nodes ::edges]))
 
+;; #### Transformation into a Clojure data structure
+
+;; Using the helper functions for the transformation of a Grahph of LTL2Buchi
+;; represneting a Büchi automaton into a Clojure data structure
+
 (defn- ba'
   "Clojure datastructure from a Büchi automaton given as a Graph of LTL2Buchi."
   [^Graph g]
@@ -173,7 +146,7 @@
         :ret ::ba)
 
 (defn ba
-  "Büchi automaton from LTL formula `phi`,
+  "Büchi automaton from LTL formula `phi`,      
    with a little help from LTL2Buchi."
   [ba]
   (-> ba
@@ -184,59 +157,3 @@
         :args (s/cat :phi wff?)
         :ret ::ba)
 
-(comment
-  (def ba1 (ba '(always A)))
-  (s/valid? ::ba ba1)
-
-  (ba (translate '(always (finally A))))
-
-  (ba (translate '(and A B)))
-
-  (def ba4 (ba (translate '(and A (not BX) C))))
-  (s/valid? ::ba ba4)
-  
-  (ba (translate '(impl A B)))
-  
-  (ba (translate '(or A B)))
-  
-  (ba (translate '(finally A)))
-  
-  (ba (translate '(until A B)))
-  
-  (ba (translate '(and (finally A) (always (not A )))))
-
-  (ba (translate '(and A (not A))))
-  
-  (ba (translate '(and (and A B) (not A) (not B))))
-  )
-
-(comment
-  (-> '(always AX)
-      translate
-      ba)
-
-  (-> '(always (not AX))
-      translate
-      ba)
-
-  (-> '(always (impl A (finally B)))
-      translate
-      ba)
-
-  (-> '(impl (always (finally A)) (always (finally B)))
-      translate
-      ba)
-
-  (-> '(always (and A B))
-      translate
-      ba)
-
-  (-> '(finally (always (not A)))
-      translate
-      ba)
-
-  (-> '(not (always (impl A (finally B))))
-      translate
-      ba)
-
-  )
