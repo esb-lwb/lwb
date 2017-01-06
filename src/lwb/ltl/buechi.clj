@@ -53,7 +53,7 @@
                       (= op 'always) (Formula/Always (fml (first args)))
                       (= op 'finally) (Formula/Eventually (fml (first args))))))))
 
-(defn- translate
+(defn translate
   "Translates the formula `phi` into a Büchi automaton.      
    Here we use the algorithm developed by Dimitra Giannakopoulou and Flavio Lerda."
   [phi]
@@ -148,8 +148,8 @@
 (defn ba
   "Büchi automaton from LTL formula `phi`,      
    with a little help from LTL2Buchi."
-  [ba]
-  (-> ba
+  [phi]
+  (-> phi
       translate
       ba'))
 
