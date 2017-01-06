@@ -14,8 +14,7 @@
             [lwb.nd.prereqs :as prereqs]                    ; unused alias, but needed for potemkin
             [lwb.nd.rules :refer [roths reset-roths]]
             [lwb.nd.io :as io]
-            [lwb.nd.printer :as printer]
-            [clojure.string :as str])
+            [lwb.nd.printer :as printer])
   (:import (clojure.lang ExceptionInfo)))
 
 (defn man

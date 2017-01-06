@@ -10,10 +10,8 @@
   (:require [lwb.prop :as prop]
             [potemkin :as pot]
             [lwb.vis :as vis]
-            [lwb.ltl.kripke :as kripke]
             [clojure.spec :as s]
-            [clojure.java.browse :as browse]
-            [clojure.string :as str]))
+            [clojure.java.browse :as browse]))
 
 (defn man
   "Manual"

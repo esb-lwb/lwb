@@ -10,8 +10,7 @@
   (:require [lwb.ltl :refer :all]
             [clojure.spec :as s])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
-           (gov.nasa.ltl.graph Graph Node Edge Guard Literal)
-           (gov.nasa.ltl.graphio Writer)))
+           (gov.nasa.ltl.graph Graph Node Edge Guard Literal)))
 
 ;; # Generating the Büchi automata for a LTL formula
 

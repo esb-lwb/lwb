@@ -8,7 +8,6 @@
 
 (ns lwb.ltl.sat
   (:require [lwb.ltl :refer :all]
-            [lwb.ltl.kripke :as ks]
             [lwb.ltl.buechi :as ba]
             [clojure.spec :as s]
             [clojure.set :as set]))
