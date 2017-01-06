@@ -27,7 +27,7 @@
 
 (proof '[(at [i] (atnext A)) (at [i'] B)] '(at [i'] (and A B)))
 (step-f :atnext-e 1 4)
-(swap '?1 'i')
+(swap '?1 'i' :checked)
 (step-b :and-i 6)
 
 ; -----------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@
 (proof '[(at [i] (always A)) (<= i j)] '(at [j] (always A)))
 (step-b :always-i 4)
 (swap '?1 'k)
-(step-f :transitiv 2 3)
+(step-f :<=trans 2 3)
 (step-f :always-e 1 4)
 
 ; -----------------------------------------------------------------------------------------
