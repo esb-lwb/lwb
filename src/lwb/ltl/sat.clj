@@ -58,7 +58,7 @@
   (let [nodes (mapv :id (filter #(or (not (:init %)) (:accepting %)) (:nodes ba)))
         nodes' (mapv #(hash-map (node-key %) (node-label ba %)) nodes)
         nodes'' (apply merge nodes')
-        initial (succ-init ba)
+        initial (node-key (succ-init ba))
         edges (map #(vector (:from %) (:to %)) (:edges ba))
         node-id-set (set nodes)
         edges' (distinct (filter #(and (contains? node-id-set (first %)) (contains? node-id-set (second %))) edges))

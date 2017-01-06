@@ -56,3 +56,9 @@ ba-trivial
 (def ba-empty (ba '(always (and P (not P)))))
 
 ba-empty
+
+; Theorems
+
+(def ba-1 (ba '(impl (always P) (finally P))))
+
+ba-1
