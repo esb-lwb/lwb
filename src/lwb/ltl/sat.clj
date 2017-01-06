@@ -65,15 +65,13 @@
         edges'' (set (map #(vector (node-key (first %)) (node-key (second %))) edges'))]
     (hash-map :nodes nodes'' :initial initial :edges edges'')))
 
-;; ## Satisfiability and Validity for LTL formulas
+;; ## Satisfiability and validity for LTL formulas
 
 (defn sat
   "Gives a model for `phi` if the formula is satisfiable, nil otherwise."
   [phi]
   (let [ba (ba/ba phi)]
-    (if (empty? (:nodes ba)) 
-      nil
-      (ba->ks ba))))
+    (when-not (empty? (:nodes ba)) (ba->ks ba))))
 
 (s/fdef sat
         :args (s/cat :phi wff?)
