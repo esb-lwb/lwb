@@ -22,7 +22,7 @@
 
 ;; The representation is like in propositional logic
 
-;; We have 4 more operators in ltl:
+;; We have 5 more operators in ltl:
 
 ;; * always -- unary
 ;; * atnext -- unary

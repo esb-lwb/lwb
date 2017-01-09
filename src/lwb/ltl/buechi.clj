@@ -17,22 +17,37 @@
 ;; We use the library `ltl2buchi`, the LTL2Buchi translator, 
 ;; implemented at NASA Ames research Center, by Dimitra Giannakopoulou and Flavio Lerda.
 
+;; Caveat: strange behaviour of Clojure!     
+;; this can only be used if not only lwb.ltl.buechi is required    
+;; but also lwb.ltl
+(defn- norm-ltl
+  "Normalize formula `phi` such that the operator `ite` , `equiv`, and `xor` are not used."
+  [phi]
+  (if (literal? phi)
+    phi
+    (let [op (first phi)]
+      (if (contains? #{'ite 'equiv 'xor} op)
+        (let [exp-phi (macroexpand-1 phi)]
+          (apply list (first exp-phi) (map norm-ltl (rest exp-phi))))
+        (apply list op (map norm-ltl (rest phi)))))))
+
 ;; For `ltl2buchi` the operators `and` and `or` have to be binary.
 
 (defn- nary->binary
   "Makes nary `and` and `or` binary."
   [phi]
-  (cond (or (atom? phi) (boolean? phi)) phi
-        :else (let [[op & args] phi]
-                (cond (= 1 (arity op)) (list op (nary->binary (first args)))
-                      ; and or
-                      (contains? '#{and or} op) (cond (empty? args) (if (= op 'and) true false)
-                                                      (= 1 (count args)) (first args)
-                                                      (= 2 (count args)) (list op (nary->binary (first args))
-                                                                               (nary->binary (second args)))
-                                                      :else (nary->binary (reduce #(list op %1 %2) args)))
-                      ; implies until release
-                      :else (list op (nary->binary (first args)) (nary->binary (second args)))))))
+  (let [phi (norm-ltl phi)]
+    (cond (or (atom? phi) (boolean? phi)) phi
+          :else (let [[op & args] phi]
+                  (cond (= 1 (arity op)) (list op (nary->binary (first args)))
+                        ; and or
+                        (contains? '#{and or} op) (cond (empty? args) (if (= op 'and) true false)
+                                                        (= 1 (count args)) (first args)
+                                                        (= 2 (count args)) (list op (nary->binary (first args))
+                                                                                 (nary->binary (second args)))
+                                                        :else (nary->binary (reduce #(list op %1 %2) args)))
+                        ; implies until release
+                        :else (list op (nary->binary (first args)) (nary->binary (second args))))))))
 
 (defn fml
   "Makes a Formula<String> object from a Clojure LTL formula."

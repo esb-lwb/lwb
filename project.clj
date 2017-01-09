@@ -15,7 +15,7 @@
                  [org.clojure/core.logic "0.8.11"]
                  [net.mikera/core.matrix "0.57.0"]
                  [org.clojure/tools.macro "0.1.5"]
-                 [org.clojure/math.combinatorics "0.1.3"]
+                 [org.clojure/math.combinatorics "0.1.4"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [potemkin "0.4.3"]
                  [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]
