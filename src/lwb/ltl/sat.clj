@@ -48,6 +48,15 @@
       (let [succ-ids (distinct (mapv :to (filter #(and (= (:from %) init-id) (not= (:to %) init-id)) (:edges ba))))]
         (first succ-ids)))))
 
+(defn- edge-check
+  "Loops are only taken into account for accepting nodes."
+  [[from to] nodes]
+  (if (= from to)
+    (let [node (first (filter #(= from (:id %)) nodes))]
+      (if (:accepting node)
+        [from to]))
+    [from to]))
+
 ;; #### Transformation of Büchi automaton into a corresponding Kripke structure
 
 (defn ba->ks 
@@ -58,7 +67,8 @@
         nodes' (mapv #(hash-map (node-key %) (node-label ba %)) nodes)
         nodes'' (apply merge nodes')
         initial (node-key (succ-init ba))
-        edges (map #(vector (:from %) (:to %)) (:edges ba))
+        ;edges (map #(vector (:from %) (:to %)) (:edges ba))
+        edges (filter #(edge-check % (:nodes ba)) (map #(vector (:from %) (:to %)) (:edges ba)))
         node-id-set (set nodes)
         edges' (distinct (filter #(and (contains? node-id-set (first %)) (contains? node-id-set (second %))) edges))
         edges'' (set (map #(vector (node-key (first %)) (node-key (second %))) edges'))]
