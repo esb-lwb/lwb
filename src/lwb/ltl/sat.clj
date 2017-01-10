@@ -24,11 +24,11 @@
 
 ;; #### Helper functions
 
-(defn- node-label
+(defn node-label
   "Label for a node with `id` in the Kripke structure for the automaton `ba`."
   [ba id]
   (let [incoming (filter #(and (set? (:guard %)) (= id (:to %))) (:edges ba))]
-    (set/select symbol? (apply set/union (map :guard incoming)))))
+    (set/select symbol? (:guard (first incoming)))))
 
 (defn- node-key
   "Keyword for a node with `id`"
@@ -38,14 +38,14 @@
 ; is there always just one successor to the init node in the Büchi automaton?
 ; depends on the reduction that LTL2Buchi performs
 
-(defn- succ-init
+(defn succ-init
   "Successor of init node in the automaton."
   [ba]
   (let [init-node (first (filter :init (:nodes ba)))
         init-id (:id init-node)]
     (if (:accepting init-node)
       init-id
-      (let [succ-ids (distinct (mapv :to (filter #(= (:from %) init-id) (:edges ba))))]
+      (let [succ-ids (distinct (mapv :to (filter #(and (= (:from %) init-id) (not= (:to %) init-id)) (:edges ba))))]
         (first succ-ids)))))
 
 ;; #### Transformation of Büchi automaton into a corresponding Kripke structure
