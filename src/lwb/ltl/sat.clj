@@ -25,55 +25,36 @@
 ;; #### Helper functions
 
 (defn node-label
-  "Label for a node with `id` in the Kripke structure for the automaton `ba`."
-  [ba id]
-  (let [incoming (filter #(and (set? (:guard %)) (= id (:to %))) (:edges ba))]
-    (set/select symbol? (:guard (first incoming)))))
+  "Label for a node with `id` with edge from `from` in the Kripke structure for the automaton `ba`."
+  [ba from id]
+  (let [edge (ba/ids->edge ba from id)
+        guard (:guard edge)]
+    (if (set? guard)
+      (set/select symbol? guard)
+      #{})))
 
 (defn- node-key
   "Keyword for a node with `id`"
   [id]
   (keyword (str "s_" id)))
 
-; is there always just one successor to the init node in the Büchi automaton?
-; depends on the reduction that LTL2Buchi performs
-
-(defn succ-init
-  "Successor of init node in the automaton."
-  [ba]
-  (let [init-node (first (filter :init (:nodes ba)))
-        init-id (:id init-node)]
-    (if (:accepting init-node)
-      init-id
-      (let [succ-ids (distinct (mapv :to (filter #(and (= (:from %) init-id) (not= (:to %) init-id)) (:edges ba))))]
-        (first succ-ids)))))
-
-(defn- edge-check
-  "Loops are only taken into account for accepting nodes."
-  [[from to] nodes]
-  (if (= from to)
-    (let [node (first (filter #(= from (:id %)) nodes))]
-      (if (:accepting node)
-        [from to]))
-    [from to]))
-
 ;; #### Transformation of Büchi automaton into a corresponding Kripke structure
 
-(defn ba->ks 
+(defn ba->ks
   "A Kripke structure is generated from a Büchi automaton as a model       
    for the formula the automaton accepts."
   [ba]
-  (let [nodes (mapv :id (filter #(or (not (:init %)) (:accepting %)) (:nodes ba)))
-        nodes' (mapv #(hash-map (node-key %) (node-label ba %)) nodes)
-        nodes'' (apply merge nodes')
-        initial (node-key (succ-init ba))
-        ;edges (map #(vector (:from %) (:to %)) (:edges ba))
-        edges (filter #(edge-check % (:nodes ba)) (map #(vector (:from %) (:to %)) (:edges ba)))
-        node-id-set (set nodes)
-        edges' (distinct (filter #(and (contains? node-id-set (first %)) (contains? node-id-set (second %))) edges))
-        edges'' (set (map #(vector (node-key (first %)) (node-key (second %))) edges'))]
-    (hash-map :nodes nodes'' :initial initial :edges edges'')))
-
+  (let [pathv (ba/path ba)
+        nodes (mapv #(hash-map (node-key %2) (node-label ba %1 %2)) pathv (rest pathv))
+        nodes' (apply merge-with set/union nodes)
+        initial (node-key (second pathv))
+        pathv' (if (ba/accepting? ba (second pathv)) (conj pathv (second pathv)) pathv)
+        edges (set (map #(vector (node-key %1) (node-key %2)) (rest pathv') (rest (rest pathv'))))                  
+        acc-nodes (distinct (filter #(ba/accepting? ba %) pathv))
+        acc-loops  (set (map #(vector (node-key %) (node-key %)) (filter #(ba/loop? ba %) acc-nodes)))
+        edges' (set/union edges acc-loops)]
+    (hash-map :nodes nodes' :initial initial :edges edges')))
+  
 ;; ## Satisfiability and validity for LTL formulas
 
 (defn sat
