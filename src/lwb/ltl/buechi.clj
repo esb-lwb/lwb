@@ -20,6 +20,7 @@
 ;; Caveat: strange behaviour of Clojure!     
 ;; this can only be used if not only lwb.ltl.buechi is required    
 ;; but also lwb.ltl
+
 (defn- norm-ltl
   "Normalize formula `phi` such that the operator `ite` , `equiv`, and `xor` are not used."
   [phi]
@@ -171,3 +172,58 @@
         :args (s/cat :phi wff?)
         :ret ::ba)
 
+;; ### Functions that analyzes Büchi automaton 
+
+(defn id->node
+  "Node of the automaton `ba` with the given `id`."
+  [ba id]
+  (first (filter #(= id (:id %)) (:nodes ba)) ))
+
+(defn accepting?
+  "Is the node in `ba` with the `id` accepting?     
+   Returns: `nil` if not or no node with such `id`."
+  [ba id]
+  (:accepting (id->node ba id)))
+
+(defn init-id
+  "Id of the initial node of the automaton `ba`."
+  [ba]
+  (:id (first (filter :init (:nodes ba)))))
+
+(defn succs
+  "Successors of node with `id` in automaton `ba`.     
+   Loops are taken into account at accepting nodes."
+  [ba id]
+  (let [to (map :to (filter #(= id (:from %)) (:edges ba)))]
+    (if (accepting? ba id)
+      (if (contains? (set to) id)
+        [id]
+      (vec to))
+      (vec (filter #(not= id %) to)))))
+
+; TODO: check whether there is an accepting node in the cycle
+(defn cycle?
+  "Has the given vector of node id's a cyle?"
+  [pathv]
+  (not (apply distinct? pathv)))
+
+(defn ids->edge
+  "Edge of the automaton `ba` from `from` to `to`."
+  [ba from to]
+  (first (filter #(and (= from (:from %)) (= to (:to %))) (:edges ba))))
+
+(defn loop?
+  "Does `id` in `ba` have a loop?"
+  [ba id]
+  (not (empty? (ids->edge ba id id))))
+
+(defn path 
+  "Path in `ba` starting from init node or given `id` resp."
+  ([ba]
+   (path ba [(init-id ba)]))
+  ([ba pathv]
+    (if (cycle? pathv)
+      pathv
+      (let [successors (succs ba (last pathv))]
+        (first (map #(path ba (conj pathv %)) successors))))))
+    

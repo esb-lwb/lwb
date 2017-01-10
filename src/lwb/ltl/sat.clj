@@ -50,10 +50,11 @@
         initial (node-key (second pathv))
         pathv' (if (ba/accepting? ba (second pathv)) (conj pathv (second pathv)) pathv)
         edges (set (map #(vector (node-key %1) (node-key %2)) (rest pathv') (rest (rest pathv'))))                  
-        acc-nodes (distinct (filter #(ba/accepting? ba %) pathv))
-        acc-loops  (set (map #(vector (node-key %) (node-key %)) (filter #(ba/loop? ba %) acc-nodes)))
-        edges' (set/union edges acc-loops)]
-    (hash-map :nodes nodes' :initial initial :edges edges')))
+        ;acc-nodes (distinct (filter #(ba/accepting? ba %) pathv))
+        ;acc-loops  (set (map #(vector (node-key %) (node-key %)) (filter #(ba/loop? ba %) acc-nodes)))
+        ;edges' (set/union edges acc-loops)]
+        ]
+    (hash-map :nodes nodes' :initial initial :edges edges)))
   
 ;; ## Satisfiability and validity for LTL formulas
 
