@@ -18,6 +18,7 @@
 
 ;; The nodes of a Kripke structure are represented by a pair of a keyword and a set of the
 ;; atoms of the structure that are true at that node.
+;; By convention the keywords have the form `:s_n` with a numbering `n` beginning at 1.
 
 ;; The edges of a Kripke structure are vectors of the keywords of the nodes that are
 ;; connected by that edge.

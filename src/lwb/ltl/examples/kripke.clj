@@ -12,23 +12,23 @@
 
 ;;Two simple examples
 
-(def ks1 {:nodes   {:s_0 '#{P Q}
-                    :s_1 '#{P Q}
-                    :s_2 '#{P}}
-          :initial :s_0
-          :edges   #{[:s_0 :s_1]
-                     [:s_1 :s_0]
-                     [:s_1 :s_2]
-                     [:s_2 :s_2]}})
+(def ks1 {:nodes   {:s_1 '#{P Q}
+                    :s_2 '#{P Q}
+                    :s_3 '#{P}}
+          :initial :s_1
+          :edges   #{[:s_1 :s_2]
+                     [:s_2 :s_1]
+                     [:s_2 :s_3]
+                     [:s_3 :s_3]}})
 
-(def ks2 {:nodes   {:s_0 '#{}
-                    :s_1 '#{P}
-                    :s_2 '#{}}
-          :initial :s_0
-          :edges   #{[:s_0 :s_1]
-                     [:s_0 :s_2]
-                     [:s_1 :s_1]
-                     [:s_2 :s_2]}})
+(def ks2 {:nodes   {:s_1 '#{}
+                    :s_2 '#{P}
+                    :s_3 '#{}}
+          :initial :s_1
+          :edges   #{[:s_1 :s_2]
+                     [:s_1 :s_3]
+                     [:s_2 :s_2]
+                     [:s_3 :s_3]}})
 
 ;; valid?
 (s/valid? :lwb.ltl.kripke/model ks1)
