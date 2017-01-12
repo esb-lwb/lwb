@@ -2873,7 +2873,8 @@ net.brehaut.ClojureTools = (function (SH) {
             [clojure.spec :as s]))</pre></td></tr><tr><td class="docs"><h1>Kripke structures</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Kripke structures are models for formulas of the linear temporal logic.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The nodes of a Kripke structure are represented by a pair of a keyword and a set of the
-atoms of the structure that are true at that node.</p>
+atoms of the structure that are true at that node.
+By convention the keywords have the form <code>:s_n</code> with a numbering <code>n</code> beginning at 1.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The edges of a Kripke structure are vectors of the keywords of the nodes that are
 connected by that edge.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The keyword :initial indicates the starting state of the Kripke model.</p>

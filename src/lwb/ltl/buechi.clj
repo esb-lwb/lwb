@@ -172,7 +172,7 @@
         :args (s/cat :phi wff?)
         :ret ::ba)
 
-;; ### Functions that analyzes Büchi automaton 
+;; ### Functions that analyze Büchi automaton 
 
 (defn id->node
   "Node of the automaton `ba` with the given `id`."
@@ -190,22 +190,51 @@
   [ba]
   (:id (first (filter :init (:nodes ba)))))
 
-(defn succs
-  "Successors of node with `id` in automaton `ba`.     
-   Loops are taken into account at accepting nodes."
+(defn successors
+  "Successors of node with `id` in automaton `ba`."
   [ba id]
-  (let [to (map :to (filter #(= id (:from %)) (:edges ba)))]
-    (if (accepting? ba id)
-      (if (contains? (set to) id)
-        [id]
-      (vec to))
-      (vec (filter #(not= id %) to)))))
+  (mapv :to (filter #(= id (:from %)) (:edges ba))))
 
-; TODO: check whether there is an accepting node in the cycle
-(defn cycle?
-  "Has the given vector of node id's a cyle?"
-  [pathv]
-  (not (apply distinct? pathv)))
+(defn cycle-check
+  "Returns `0` if `pathv` has no cycle,     
+           `1` if `pathv` has a cycle with an aceepting state,       
+           `-1` if `pathv` has a cycle but without an accepting state,      
+   Requires: The new element that may lead to a cacle is at the last position of the vector."
+  [ba pathv]
+  (let [last-idx (dec (count pathv))
+        last-elt (last pathv)
+        pos-last (.indexOf pathv last-elt)]
+    (if (= last-idx pos-last)
+      0
+      (let [cycle (subvec pathv pos-last)]
+        (if (some #(accepting? ba %) cycle)
+          1
+          -1)))))
+
+(defn flatten-seqs
+  "Like flatten but only affects seqs."
+  [coll]
+  (mapcat
+    (fn [x]
+      (if (seq? x)
+        (flatten-seqs x)
+        (list x)))
+    coll))
+
+(defn- paths'
+  "Inner function of `paths`."
+  [ba pathv]
+   (case (cycle-check ba pathv)
+     -1 nil
+      1 pathv
+      0 (let [succs (successors ba (last pathv))]
+          (drop-while nil? (map #(paths' ba (conj pathv %)) succs)))))
+
+"Paths in `ba` starting from init node or given `id` resp."
+(defn paths
+  "Paths in `ba` starting from init node."
+  [ba] 
+  (flatten-seqs (paths' ba [(init-id ba)])))
 
 (defn ids->edge
   "Edge of the automaton `ba` from `from` to `to`."
@@ -215,15 +244,5 @@
 (defn loop?
   "Does `id` in `ba` have a loop?"
   [ba id]
-  (not (empty? (ids->edge ba id id))))
+  (seq (ids->edge ba id id)))
 
-(defn path 
-  "Path in `ba` starting from init node or given `id` resp."
-  ([ba]
-   (path ba [(init-id ba)]))
-  ([ba pathv]
-    (if (cycle? pathv)
-      pathv
-      (let [successors (succs ba (last pathv))]
-        (first (map #(path ba (conj pathv %)) successors))))))
-    

@@ -2868,7 +2868,6 @@ net.brehaut.ClojureTools = (function (SH) {
 </script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.ltl.sat" name="lwb.ltl.sat"><h1 class="project-name">lwb.ltl.sat</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.ltl.sat
   (:require [lwb.ltl :refer :all]
-            [lwb.ltl.kripke :as ks]
             [lwb.ltl.buechi :as ba]
             [clojure.spec :as s]
             [clojure.set :as set]))</pre></td></tr><tr><td class="docs"><h1>Satisfiability in the linear temporal logic</h1>
@@ -2881,43 +2880,42 @@ automaton are exactly the set of computations satisfying the formula.</li>
 construct a model, i.e. a Kripke structure for the formula.</li>
 </ol>
 </td><td class="codes"></td></tr><tr><td class="docs"><h4>Helper functions</h4>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Label for a node with <code>id</code> in the Kripke structure for the automaton <code>ba</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- node-label
-  [ba id]
-  (let [incoming (filter #(and (set? (:guard %)) (= id (:to %))) (:edges ba))]
-    (set/select symbol? (apply set/union (map :guard incoming)))))</pre></td></tr><tr><td class="docs"><p>Keyword for a node with <code>id</code></p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Label for a node with <code>id</code> with edge from <code>from</code> in the Kripke structure for the automaton <code>ba</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn node-label
+  [ba from id]
+  (let [edge (ba/ids-&gt;edge ba from id)
+        guard (:guard edge)]
+    (if (set? guard)
+      (set/select symbol? guard)
+      #{})))</pre></td></tr><tr><td class="docs"><p>Keyword for a node with <code>id</code></p>
 </td><td class="codes"><pre class="brush: clojure">(defn- node-key
   [id]
-  (keyword (str &quot;s_&quot; id)))</pre></td></tr><tr><td class="docs"><p>Successor of init node in the automaton.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- succ-init
-  [ba]
-  (let [init-node (first (filter :init (:nodes ba)))
-        init-id (:id init-node)]
-    (if (:accepting init-node)
-      init-id
-      (let [succ-ids (distinct (mapv :to (filter #(= (:from %) init-id) (:edges ba))))]
-        (first succ-ids)))))</pre></td></tr><tr><td class="docs"><h4>Transformation of Büchi automaton into a corresponding Kripke structure</h4>
+  (keyword (str &quot;s_&quot; id)))</pre></td></tr><tr><td class="docs"><h4>Transformation of Büchi automaton into a corresponding Kripke structure</h4>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The idea:        </p>
+</td><td class="codes"></td></tr><tr><td class="docs"><ol>
+<li>We determine a path from the init node of the automaton to a cycle that contains
+an acccpeting state</li>
+<li>The we use this path to construct a Kripke structure.</li>
+</ol>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A Kripke structure is generated from a Büchi automaton as a model <br />
    for the formula the automaton accepts.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn ba-&gt;ks 
+</td><td class="codes"><pre class="brush: clojure">(defn ba-&gt;ks
   [ba]
-  (let [nodes (mapv :id (filter #(or (not (:init %)) (:accepting %)) (:nodes ba)))
-        nodes' (mapv #(hash-map (node-key %) (node-label ba %)) nodes)
-        nodes'' (apply merge nodes')
-        initial (succ-init ba)
-        edges (map #(vector (:from %) (:to %)) (:edges ba))
-        node-id-set (set nodes)
-        edges' (distinct (filter #(and (contains? node-id-set (first %)) (contains? node-id-set (second %))) edges))
-        edges'' (set (map #(vector (node-key (first %)) (node-key (second %))) edges'))
-        ]
-    (hash-map :nodes nodes'' :initial initial :edges edges'')))</pre></td></tr><tr><td class="docs"><h2>Satisfiability and Validity for LTL formulas</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Gives a model for <code>phi</code> if the formula is satisfiable, nil if not.</p>
+  (let [pathv (first (ba/paths ba))
+        nodes (mapv #(hash-map (node-key %2) (node-label ba %1 %2)) pathv (rest pathv))
+        nodes' (apply merge-with set/union nodes)
+        initial (node-key (second pathv))
+        pathv' (if (ba/accepting? ba (second pathv)) (conj pathv (second pathv)) pathv)
+        edges (set (map #(vector (node-key %1) (node-key %2)) (rest pathv') (rest (rest pathv'))))                  
+        acc-nodes (distinct (filter #(ba/accepting? ba %) pathv))
+        acc-loops  (set (map #(vector (node-key %) (node-key %)) (filter #(ba/loop? ba %) acc-nodes)))
+        edges' (set/union edges acc-loops)]
+    (hash-map :nodes nodes' :initial initial :edges edges')))</pre></td></tr><tr><td class="docs"><h2>Satisfiability and validity for LTL formulas</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Gives a model for <code>phi</code> if the formula is satisfiable, nil otherwise.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat
   [phi]
   (let [ba (ba/ba phi)]
-    (if (empty? (:nodes ba)) 
-      nil
-      (ba-&gt;ks ba))))</pre></td></tr><tr><td class="docs">
+    (when (seq (:nodes ba)) (ba-&gt;ks ba))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat
         :args (s/cat :phi wff?)
         :ret (s/or :as/model nil?))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>

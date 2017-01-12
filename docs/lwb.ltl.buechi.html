@@ -2870,25 +2870,37 @@ net.brehaut.ClojureTools = (function (SH) {
   (:require [lwb.ltl :refer :all]
             [clojure.spec :as s])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
-           (gov.nasa.ltl.graph Graph Node Edge Guard Literal)
-           (gov.nasa.ltl.graphio Writer)))</pre></td></tr><tr><td class="docs"><h1>Generating the Büchi automata for a LTL formula</h1>
+           (gov.nasa.ltl.graph Graph Node Edge Guard Literal)))</pre></td></tr><tr><td class="docs"><h1>Generating the Büchi automata for a LTL formula</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We use the library <code>ltl2buchi</code>, the LTL2Buchi translator, 
 implemented at NASA Ames research Center, by Dimitra Giannakopoulou and Flavio Lerda.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>For <code>ltl2buchi</code> the operators <code>and</code> and <code>or</code> have to be binary.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Caveat: strange behaviour of Clojure! <br />
+this can only be used if not only lwb.ltl.buechi is required <br />
+but also lwb.ltl</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that the operator <code>ite</code> , <code>equiv</code>, and <code>xor</code> are not used.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- norm-ltl
+  [phi]
+  (if (literal? phi)
+    phi
+    (let [op (first phi)]
+      (if (contains? #{'ite 'equiv 'xor} op)
+        (let [exp-phi (macroexpand-1 phi)]
+          (apply list (first exp-phi) (map norm-ltl (rest exp-phi))))
+        (apply list op (map norm-ltl (rest phi)))))))</pre></td></tr><tr><td class="docs"><p>For <code>ltl2buchi</code> the operators <code>and</code> and <code>or</code> have to be binary.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Makes nary <code>and</code> and <code>or</code> binary.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- nary-&gt;binary
   [phi]
-  (cond (or (atom? phi) (boolean? phi)) phi
-        :else (let [[op &amp; args] phi]
-                (cond (= 1 (arity op)) (list op (nary-&gt;binary (first args)))
-                      ; and or
-                      (contains? '#{and or} op) (cond (empty? args) (if (= op 'and) true false)
-                                                      (= 1 (count args)) (first args)
-                                                      (= 2 (count args)) (list op (nary-&gt;binary (first args))
-                                                                               (nary-&gt;binary (second args)))
-                                                      :else (nary-&gt;binary (reduce #(list op %1 %2) args)))
-                      ; implies until release
-                      :else (list op (nary-&gt;binary (first args)) (nary-&gt;binary (second args)))))))</pre></td></tr><tr><td class="docs"><p>Makes a Formula&lt;String> object from a Clojure LTL formula.</p>
+  (let [phi (norm-ltl phi)]
+    (cond (or (atom? phi) (boolean? phi)) phi
+          :else (let [[op &amp; args] phi]
+                  (cond (= 1 (arity op)) (list op (nary-&gt;binary (first args)))
+                        ; and or
+                        (contains? '#{and or} op) (cond (empty? args) (if (= op 'and) true false)
+                                                        (= 1 (count args)) (first args)
+                                                        (= 2 (count args)) (list op (nary-&gt;binary (first args))
+                                                                                 (nary-&gt;binary (second args)))
+                                                        :else (nary-&gt;binary (reduce #(list op %1 %2) args)))
+                        ; implies until release
+                        :else (list op (nary-&gt;binary (first args)) (nary-&gt;binary (second args))))))))</pre></td></tr><tr><td class="docs"><p>Makes a Formula&lt;String> object from a Clojure LTL formula.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn fml
   [phi]
   (let [phi (nary-&gt;binary phi)]
@@ -2906,7 +2918,7 @@ implemented at NASA Ames research Center, by Dimitra Giannakopoulou and Flavio L
                       (= op 'always) (Formula/Always (fml (first args)))
                       (= op 'finally) (Formula/Eventually (fml (first args))))))))</pre></td></tr><tr><td class="docs"><p>Translates the formula <code>phi</code> into a Büchi automaton. <br />
    Here we use the algorithm developed by Dimitra Giannakopoulou and Flavio Lerda.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- translate
+</td><td class="codes"><pre class="brush: clojure">(defn translate
   [phi]
   (let [fml (fml phi)]
     (LTL2Buchi/translate ^Formula fml)))</pre></td></tr><tr><td class="docs"><h2>Clojure datastructure for Büchi automata</h2>
@@ -2972,13 +2984,66 @@ represneting a Büchi automaton into a Clojure data structure</p>
         :ret ::ba)</pre></td></tr><tr><td class="docs"><p>Büchi automaton from LTL formula <code>phi</code>, <br />
    with a little help from LTL2Buchi.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn ba
-  [ba]
-  (-&gt; ba
+  [phi]
+  (-&gt; phi
       translate
       ba'))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef ba
         :args (s/cat :phi wff?)
-        :ret ::ba)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+        :ret ::ba)</pre></td></tr><tr><td class="docs"><h3>Functions that analyze Büchi automaton</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Node of the automaton <code>ba</code> with the given <code>id</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn id-&gt;node
+  [ba id]
+  (first (filter #(= id (:id %)) (:nodes ba)) ))</pre></td></tr><tr><td class="docs"><p>Is the node in <code>ba</code> with the <code>id</code> accepting? <br />
+   Returns: <code>nil</code> if not or no node with such <code>id</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn accepting?
+  [ba id]
+  (:accepting (id-&gt;node ba id)))</pre></td></tr><tr><td class="docs"><p>Id of the initial node of the automaton <code>ba</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn init-id
+  [ba]
+  (:id (first (filter :init (:nodes ba)))))</pre></td></tr><tr><td class="docs"><p>Successors of node with <code>id</code> in automaton <code>ba</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn successors
+  [ba id]
+  (mapv :to (filter #(= id (:from %)) (:edges ba))))</pre></td></tr><tr><td class="docs"><p>Returns <code>0</code> if <code>pathv</code> has no cycle, <br />
+           <code>1</code> if <code>pathv</code> has a cycle with an aceepting state, <br />
+           <code>-1</code> if <code>pathv</code> has a cycle but without an accepting state, <br />
+   Requires: The new element that may lead to a cacle is at the last position of the vector.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn cycle-check
+  [ba pathv]
+  (let [last-idx (dec (count pathv))
+        last-elt (last pathv)
+        pos-last (.indexOf pathv last-elt)]
+    (if (= last-idx pos-last)
+      0
+      (let [cycle (subvec pathv pos-last)]
+        (if (some #(accepting? ba %) cycle)
+          1
+          -1)))))</pre></td></tr><tr><td class="docs"><p>Like flatten but only affects seqs.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn flatten-seqs
+  [coll]
+  (mapcat
+    (fn [x]
+      (if (seq? x)
+        (flatten-seqs x)
+        (list x)))
+    coll))</pre></td></tr><tr><td class="docs"><p>Inner function of <code>paths</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- paths'
+  [ba pathv]
+   (case (cycle-check ba pathv)
+     -1 nil
+      1 pathv
+      0 (let [succs (successors ba (last pathv))]
+          (drop-while nil? (map #(paths' ba (conj pathv %)) succs)))))</pre></td></tr><tr><td class="docs"><p>Paths in <code>ba</code> starting from init node.</p>
+</td><td class="codes"><pre class="brush: clojure">&quot;Paths in `ba` starting from init node or given `id` resp.&quot;
+(defn paths
+  [ba] 
+  (flatten-seqs (paths' ba [(init-id ba)])))</pre></td></tr><tr><td class="docs"><p>Edge of the automaton <code>ba</code> from <code>from</code> to <code>to</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn ids-&gt;edge
+  [ba from to]
+  (first (filter #(and (= from (:from %)) (= to (:to %))) (:edges ba))))</pre></td></tr><tr><td class="docs"><p>Does <code>id</code> in <code>ba</code> have a loop?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn loop?
+  [ba id]
+  (seq (ids-&gt;edge ba id id)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

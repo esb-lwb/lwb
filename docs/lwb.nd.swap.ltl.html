@@ -2904,17 +2904,15 @@ net.brehaut.ClojureTools = (function (SH) {
       (= #{:alone} bts)    :alone
       (contains? bts :rel) :rel
       (= #{:state} bts)    (let [[state _] (separate-state (second (first ib)))]
-                             (if (= old state) :state :prop)))))</pre></td></tr><tr><td class="docs">
+                             (if (= old state) :state :prop)))))</pre></td></tr><tr><td class="docs"><p><code>new</code> must be a wellformed ltl formula at a certain state. <br />
+   Exception otherwise.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- check-alone
   [new]
-  &quot;`new` must be a wellformed ltl formula at a certain state.       
-   Exception otherwise.&quot;
   (if-not (s/valid? :lwb.ltl/at-fml new)
-    (throw (ex-error (format &quot;'%s' is not a valid ltl formula at a certain state.&quot; new)))))</pre></td></tr><tr><td class="docs">
+    (throw (ex-error (format &quot;'%s' is not a valid ltl formula at a certain state.&quot; new)))))</pre></td></tr><tr><td class="docs"><p><code>new</code> must be a symbol named with a single small character or a small character followed by <code>'</code>. <br />
+   Exception otherwise.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- check-state
   [new]
-  &quot;`new` must be a symbol named with a single small character or a small character followed by `'`.       
-   Exception otherwise.&quot;
   (if-not (and (symbol? new) (re-matches #&quot;[a-z]'*&quot; (name new)))
     (throw (ex-error (format &quot;'%s' is not a valid state symbol.&quot; new)))))</pre></td></tr><tr><td class="docs"><p>Find the pline in <code>proof</code>with a relational expression containing <code>old</code>. <br />
    Require: the swap-type is <code>:rel</code>. <br />

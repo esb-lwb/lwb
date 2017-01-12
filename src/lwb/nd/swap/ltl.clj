@@ -55,16 +55,16 @@
                              (if (= old state) :state :prop)))))
 
 (defn- check-alone
-  [new]
   "`new` must be a wellformed ltl formula at a certain state.       
    Exception otherwise."
+  [new]
   (if-not (s/valid? :lwb.ltl/at-fml new)
     (throw (ex-error (format "'%s' is not a valid ltl formula at a certain state." new)))))
 
 (defn- check-state
-  [new]
   "`new` must be a symbol named with a single small character or a small character followed by `'`.       
    Exception otherwise."
+  [new]
   (if-not (and (symbol? new) (re-matches #"[a-z]'*" (name new)))
     (throw (ex-error (format "'%s' is not a valid state symbol." new)))))
 

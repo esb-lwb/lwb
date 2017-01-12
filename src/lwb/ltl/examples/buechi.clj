@@ -8,57 +8,71 @@
 
 (ns lwb.ltl.examples.buechi
   (:require [lwb.ltl.buechi :refer :all]
-            [clojure.spec :as s]))
+            [clojure.spec :as s]
+            [clojure.java.io :as io])
+  (:import (gov.nasa.ltl.graphio Writer Writer$Format)
+           (java.io PrintStream StringReader StringWriter ByteArrayOutputStream)
+           (javax.xml.transform.stream StreamSource StreamResult)
+           (javax.xml.transform TransformerFactory)))
 
-; The temporal operators
+;; Output of Graph from LTL2Buchi in Format SM
 
-(def ba-always (ba '(always P)))
-(s/valid? :lwb.ltl.buechi/ba ba-always)
+(defn sm-write
+  ([graph]
+  (let [writer (Writer/getWriter Writer$Format/SM System/out)]
+    (.write writer graph)))
+  ([graph filename]
+   (let [printstream (PrintStream. filename)
+         writer (Writer/getWriter Writer$Format/SM printstream)]
+     (.write writer graph)))
+  )
 
-ba-always
+;; Output of Graph from LTL2Buchi in Format XML
 
-(def ba-atnext (ba '(atnext P)))
-(s/valid? :lwb.ltl.buechi/ba ba-atnext)
+; Pretty printing XML (from Nurullah Akkaye, see https://nakkaya.com/2010/03/27/pretty-printing-xml-with-clojure/
+(defn ppxml [xml]
+  (let [in (StreamSource.
+             (StringReader. xml))
+        writer (StringWriter.)
+        out (StreamResult. writer)
+        transformer (.newTransformer
+                      (TransformerFactory/newInstance))]
+    (.setOutputProperty transformer
+                        javax.xml.transform.OutputKeys/INDENT "yes")
+    (.setOutputProperty transformer
+                        "{http://xml.apache.org/xslt}indent-amount" "2")
+    (.setOutputProperty transformer
+                        javax.xml.transform.OutputKeys/METHOD "xml")
+    (.transform transformer in out)
+    (-> out .getWriter .toString)))
 
-ba-atnext
+(defn xml-write
+  [graph]
+  (let [baos (ByteArrayOutputStream.)
+        ps   (PrintStream. baos)
+        writer (Writer/getWriter Writer$Format/XML ps)]
+    (.write writer graph)
+    (-> (String. (.toByteArray baos))
+        ppxml
+        println)))
 
-(def ba-finally (ba '(finally P)))
-(s/valid? :lwb.ltl.buechi/ba ba-finally)
 
-ba-finally
+(def o02 '(and P Q))
+(def g02 (translate o02))
+(xml-write g02)
 
-(def ba-until (ba '(until P Q)))
-(s/valid? :lwb.ltl.buechi/ba ba-until)
+(paths (ba o02))
+(paths (ba '(always P)))
 
-ba-until
+(def o03 '(or P Q))
+(def g03 (translate o03))
+(xml-write g03)
 
-(def ba-release (ba '(release P Q)))
-(s/valid? :lwb.ltl.buechi/ba ba-release)
+(paths (ba o03))
 
-ba-release
+(def ba12  (ba '(and (until P Q) (atnext P))))
+ba12
 
-(def ba-infinitely-often (ba '(always (finally P))))
+(paths ba12)
 
-ba-infinitely-often
 
-(def ba-aif (ba '(always (impl P (finally Q)))))
-
-ba-aif
-
-(def ba-finally-always (ba '(finally (always P))))
-
-ba-finally-always
-
-(def ba-trivial (ba '(always (or P (not P)))))
-
-ba-trivial
-
-(def ba-empty (ba '(always (and P (not P)))))
-
-ba-empty
-
-; Theorems
-
-(def ba-1 (ba '(impl (always P) (finally P))))
-
-ba-1

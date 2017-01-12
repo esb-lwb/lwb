@@ -40,21 +40,26 @@
 
 ;; #### Transformation of Büchi automaton into a corresponding Kripke structure
 
+;; The idea:        
+
+;; 1. We determine a path from the init node of the automaton to a cycle that contains
+;;    an acccpeting state
+;; 2. The we use this path to construct a Kripke structure.
+
 (defn ba->ks
   "A Kripke structure is generated from a Büchi automaton as a model       
    for the formula the automaton accepts."
   [ba]
-  (let [pathv (ba/path ba)
+  (let [pathv (first (ba/paths ba))
         nodes (mapv #(hash-map (node-key %2) (node-label ba %1 %2)) pathv (rest pathv))
         nodes' (apply merge-with set/union nodes)
         initial (node-key (second pathv))
         pathv' (if (ba/accepting? ba (second pathv)) (conj pathv (second pathv)) pathv)
         edges (set (map #(vector (node-key %1) (node-key %2)) (rest pathv') (rest (rest pathv'))))                  
-        ;acc-nodes (distinct (filter #(ba/accepting? ba %) pathv))
-        ;acc-loops  (set (map #(vector (node-key %) (node-key %)) (filter #(ba/loop? ba %) acc-nodes)))
-        ;edges' (set/union edges acc-loops)]
-        ]
-    (hash-map :nodes nodes' :initial initial :edges edges)))
+        acc-nodes (distinct (filter #(ba/accepting? ba %) pathv))
+        acc-loops  (set (map #(vector (node-key %) (node-key %)) (filter #(ba/loop? ba %) acc-nodes)))
+        edges' (set/union edges acc-loops)]
+    (hash-map :nodes nodes' :initial initial :edges edges')))
   
 ;; ## Satisfiability and validity for LTL formulas
 
@@ -62,7 +67,7 @@
   "Gives a model for `phi` if the formula is satisfiable, nil otherwise."
   [phi]
   (let [ba (ba/ba phi)]
-    (when-not (empty? (:nodes ba)) (ba->ks ba))))
+    (when (seq (:nodes ba)) (ba->ks ba))))
 
 (s/fdef sat
         :args (s/cat :phi wff?)

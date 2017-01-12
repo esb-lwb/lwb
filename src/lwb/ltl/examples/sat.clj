@@ -98,8 +98,6 @@
   (k/texify (sat '(and (until P Q) (atnext P))) "ks")
   )
 
-(sat '(and (until P Q) (atnext P)))
-
 (def o12 '(release P Q))
 (sat? o12)
 (comment
@@ -112,37 +110,22 @@
 
 (sat? t1)      ; => true
 (valid? t1)    ; => true
-(comment
-  (k/texify (sat t1) "ks")  
-  )
 
 (def t2 '(impl (always P) (atnext P)))
 (sat? t2)      ; => true
 (valid? t2)    ; => true
-(comment
-  (k/texify (sat t2) "ks") 
-  )
 
 (def t3 '(impl (always P) (finally P)))
 (sat? t3)      ; => true
 (valid? t3)    ; => true
-(comment
-  (k/texify (sat t3) "ks")
-  )
 
 (def t4 '(impl (always P) (always (always P))))
 (sat? t4)      ; => true
 (valid? t4)    ; => true
-(comment
-  (k/texify (sat t4) "ks")
-  )
 
 (def t5 '(impl (atnext P) (finally P)))
 (sat? t5)      ; => true
 (valid? t5)    ; => true
-(comment
-  (k/texify (sat t5) "ks") 
-  )
 
 ; Typical formulas ---------------------------------------------------------------------------
 
@@ -184,7 +167,7 @@
 (sat? f5)       ; => true
 (valid? f5)     ; => false
 (comment
-  (k/texify (sat f5) "ks") ; always {P, Q} is a possible model
+  (k/texify (sat f5) "ks") 
   )
 
 (def f6 '(always (and (and P (not Q)) (atnext (and (not P) Q)))))
@@ -195,7 +178,7 @@
 (sat? f7)       ; => true
 (valid? f7)     ; => false
 (comment
-  (k/texify (sat f7) "ks") ; first {P}  the always {Q} is a possible model
+  (k/texify (sat f7) "ks") 
   )
 
 ; Fairness constraints -------------------------------------------------------
@@ -204,6 +187,8 @@
 (def ufair '(always (finally Q)))
 (sat? ufair)    ; => true
 (valid? ufair)  ; => false
+(b/ba ufair)
+(b/paths (b/ba ufair))
 (comment
   (k/texify (sat ufair) "ks")
   )
