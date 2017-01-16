@@ -12,7 +12,8 @@
 
 ;;Two simple examples
 
-(def ks1 {:nodes   {:s_1 '#{P Q}
+(def ks1 {:atoms   '#{P Q}
+          :nodes   {:s_1 '#{P Q}
                     :s_2 '#{P Q}
                     :s_3 '#{P}}
           :initial :s_1
@@ -21,7 +22,8 @@
                      [:s_2 :s_3]
                      [:s_3 :s_3]}})
 
-(def ks2 {:nodes   {:s_1 '#{}
+(def ks2 {:atoms   '#{P}
+          :nodes   {:s_1 '#{}
                     :s_2 '#{P}
                     :s_3 '#{}}
           :initial :s_1
@@ -39,6 +41,8 @@
 (tikzify ks1)
 
 (comment
-  (texify ks1 "ks1" :dot)
-  (texify ks2 "ks2")
+  (texify ks1 "ks" :dot)
+  (texify ks2 "ks")
   )
+
+

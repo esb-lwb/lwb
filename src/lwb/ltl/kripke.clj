@@ -7,27 +7,30 @@
 ; the terms of this license.
 
 (ns lwb.ltl.kripke
-  (:require [lwb.prop :refer [atom?]]
+  (:require [lwb.ltl :refer [atom?]]
             [clojure.string :as str]
             [clojure.java.shell :as shell]
-            [clojure.spec :as s]))
+            [clojure.spec :as s]
+            [clojure.set :as set]))
 
 ;; # Kripke structures
 
 ;; Kripke structures are models for formulas of the linear temporal logic.
 
-;; The nodes of a Kripke structure are represented by a pair of a keyword and a set of the
-;; atoms of the structure that are true at that node.
-;; By convention the keywords have the form `:s_n` with a numbering `n` beginning at 1.
+;; The set of atomic propositions defining the "worlds" in the states is given
+;; with the keywqord `:atoms`.
+;; 
+;; The nodes of a Kripke structure are represented by pairs of a keyword and a set of the
+;; atoms of the structure that are true at that node, associated with the keyword
+;; `:nodes`..
 
-;; The edges of a Kripke structure are vectors of the keywords of the nodes that are
-;; connected by that edge.
+;; The edges of a Kripke structure is a set of vectors of the keywords of the nodes that are
+;; connected by that edge, associated with the keyword `:edges`.
 
 ;; The keyword :initial indicates the starting state of the Kripke model.
  
-;; Composed together a Kripke structure is a map of a map of :nodes and a set of :edges
-
 ;; Here is the specification:
+(s/def ::atoms (s/coll-of atom? :kind set? :distinct true :into #{}))
 (s/def ::nodes (s/map-of keyword? (s/coll-of atom? :kind set? :distinct true :into #{})))
 (s/def ::initial keyword?)
 (s/def ::edges (s/coll-of (s/tuple keyword? keyword?) :into #{}))
@@ -37,15 +40,18 @@
 ;; 1. the initial node is an element of the node set
 ;; 2. all nodes of edges are elements of the node set
 ;; 3. for each node there is at least one edge which starts at that node
+;; 4. the set of true atoms of a node is a subset of `:atoms`
 
 (defn kripke-ok?
-  [{:keys [nodes initial edges]}]
+  [{:keys [atoms nodes initial edges]}]
   (let [nodeset   (set (keys nodes))
         nodeset'  (set (flatten (seq edges)))
-        nodeset'' (set (map first (seq edges)))]
+        nodeset'' (set (map first (seq edges)))
+        atomset   (reduce set/union (vals nodes))]
     (and (contains? nodeset initial)
          (= nodeset nodeset')
-         (= nodeset nodeset''))))
+         (= nodeset nodeset'')
+         (set/subset? atomset atoms))))
 
 ;; The final specification of a Kripke structure, i.e. a model in the linear temporal logic.
 (s/def ::model (s/and kripke-ok? (s/keys :req-un [::nodes ::initial ::edges])))
