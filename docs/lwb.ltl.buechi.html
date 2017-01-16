@@ -2904,31 +2904,31 @@ but also lwb.ltl</p>
 </td><td class="codes"><pre class="brush: clojure">(defn fml
   [phi]
   (let [phi (nary-&gt;binary phi)]
-  (cond (atom? phi) (Formula/Proposition (name phi))
-        (true? phi) (Formula/True)
-        (false? phi) (Formula/False)
-        :else (let [[op &amp; args] phi]
-                (cond (= op 'not) (Formula/Not (fml (first args)))
-                      (= op 'and) (Formula/And (fml (first args)) (fml (second args)))
-                      (= op 'or) (Formula/Or (fml (first args)) (fml (second args)))
-                      (= op 'impl) (Formula/Implies (fml (first args)) (fml (second args)))
-                      (= op 'until) (Formula/Until (fml (first args)) (fml (second args)))
-                      (= op 'release) (Formula/Release (fml (first args)) (fml (second args)))
-                      (= op 'atnext) (Formula/Next (fml (first args)))
-                      (= op 'always) (Formula/Always (fml (first args)))
-                      (= op 'finally) (Formula/Eventually (fml (first args))))))))</pre></td></tr><tr><td class="docs"><p>Translates the formula <code>phi</code> into a Büchi automaton. <br />
+    (cond (atom? phi) (Formula/Proposition (name phi))
+          (true? phi) (Formula/True)
+          (false? phi) (Formula/False)
+          :else (let [[op &amp; args] phi]
+                  (cond (= op 'not) (Formula/Not (fml (first args)))
+                        (= op 'and) (Formula/And (fml (first args)) (fml (second args)))
+                        (= op 'or) (Formula/Or (fml (first args)) (fml (second args)))
+                        (= op 'impl) (Formula/Implies (fml (first args)) (fml (second args)))
+                        (= op 'until) (Formula/Until (fml (first args)) (fml (second args)))
+                        (= op 'release) (Formula/Release (fml (first args)) (fml (second args)))
+                        (= op 'atnext) (Formula/Next (fml (first args)))
+                        (= op 'always) (Formula/Always (fml (first args)))
+                        (= op 'finally) (Formula/Eventually (fml (first args))))))))</pre></td></tr><tr><td class="docs"><p>Translates the formula <code>phi</code> into a Büchi automaton. <br />
    Here we use the algorithm developed by Dimitra Giannakopoulou and Flavio Lerda.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn translate
   [phi]
   (let [fml (fml phi)]
     (LTL2Buchi/translate ^Formula fml)))</pre></td></tr><tr><td class="docs"><h2>Clojure datastructure for Büchi automata</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><h4>A node of the automaton</h4>
+</td><td class="codes"></td></tr><tr><td class="docs"><h3>A node of the automaton</h3>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::id        int?)
-(s/def ::init      boolean?)
+</td><td class="codes"><pre class="brush: clojure">(s/def ::id int?)
+(s/def ::init boolean?)
 (s/def ::accepting boolean?)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::node (s/keys :req-un [::id]
-                         :opt-un [::init ::accepting]))</pre></td></tr><tr><td class="docs"><p>A node from a Büchi automaton as a Clojure map <code>::ba-node</code>.</p>
+                      :opt-un [::init ::accepting]))</pre></td></tr><tr><td class="docs"><p>A node from a Büchi automaton as a Clojure map <code>::ba-node</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- node
   [^Node n]
   (let [g (.getGraph n)
@@ -2937,16 +2937,16 @@ but also lwb.ltl</p>
     (into {:id (.getId n)} [(if init? {:init true}) (if accepting? {:accepting true})])))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef node
         :args (s/cat :node #(instance? Node %))
-        :ret ::node)</pre></td></tr><tr><td class="docs"><h4>A guard, i.e. a label of the transitions in the Büchi automaton</h4>
+        :ret ::node)</pre></td></tr><tr><td class="docs"><h3>A guard, i.e. a label of the transitions in the Büchi automaton</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A literal from a guard of a Büchi automaton</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- literal 
+</td><td class="codes"><pre class="brush: clojure">(defn- literal
   [^Literal l]
   (let [atom (symbol (.getAtom l))]
     (if (.isNegated l) (list 'not atom) atom)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef literal
         :args (s/cat :literal #(instance? Literal %))
         :ret :lwb.ltl/literal)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::guard (s/or :true true? 
+</td><td class="codes"><pre class="brush: clojure">(s/def ::guard (s/or :true true?
                      :literals (s/coll-of :lwb.ltl/literal :kind set?)))</pre></td></tr><tr><td class="docs"><p>A guard from a Büchi automata as a Clojure set of literals.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- guard
   [^Guard g]
@@ -2961,15 +2961,15 @@ but also lwb.ltl</p>
 (s/def ::edge (s/keys :req-un [::from ::to ::guard]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- edge
   [^Edge e]
-  {:from (.getId (.getSource e))
-   :to   (.getId (.getNext e))
+  {:from  (.getId (.getSource e))
+   :to    (.getId (.getNext e))
    :guard (guard (.getGuard e))})</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef edge
         :args (s/cat :edge #(instance? Edge %))
         :ret ::edge)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/def ::nodes (s/coll-of ::node :kind vector?))
 (s/def ::edges (s/coll-of ::edge :kind vector?))
-(s/def ::ba (s/keys :req-un [::nodes ::edges]))</pre></td></tr><tr><td class="docs"><h4>Transformation into a Clojure data structure</h4>
+(s/def ::ba (s/keys :req-un [::nodes ::edges]))</pre></td></tr><tr><td class="docs"><h3>Transformation into a Clojure data structure</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Using the helper functions for the transformation of a Grahph of LTL2Buchi
 represneting a Büchi automaton into a Clojure data structure</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Clojure datastructure from a Büchi automaton given as a Graph of LTL2Buchi.</p>
@@ -2990,11 +2990,11 @@ represneting a Büchi automaton into a Clojure data structure</p>
       ba'))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef ba
         :args (s/cat :phi wff?)
-        :ret ::ba)</pre></td></tr><tr><td class="docs"><h3>Functions that analyze Büchi automaton</h3>
+        :ret ::ba)</pre></td></tr><tr><td class="docs"><h1>Functions that analyze Büchi automaton</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Node of the automaton <code>ba</code> with the given <code>id</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn id-&gt;node
   [ba id]
-  (first (filter #(= id (:id %)) (:nodes ba)) ))</pre></td></tr><tr><td class="docs"><p>Is the node in <code>ba</code> with the <code>id</code> accepting? <br />
+  (first (filter #(= id (:id %)) (:nodes ba))))</pre></td></tr><tr><td class="docs"><p>Is the node in <code>ba</code> with the <code>id</code> accepting? <br />
    Returns: <code>nil</code> if not or no node with such <code>id</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn accepting?
   [ba id]
@@ -3002,13 +3002,13 @@ represneting a Büchi automaton into a Clojure data structure</p>
 </td><td class="codes"><pre class="brush: clojure">(defn init-id
   [ba]
   (:id (first (filter :init (:nodes ba)))))</pre></td></tr><tr><td class="docs"><p>Successors of node with <code>id</code> in automaton <code>ba</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn successors
+</td><td class="codes"><pre class="brush: clojure">(defn- successors
   [ba id]
   (mapv :to (filter #(= id (:from %)) (:edges ba))))</pre></td></tr><tr><td class="docs"><p>Returns <code>0</code> if <code>pathv</code> has no cycle, <br />
            <code>1</code> if <code>pathv</code> has a cycle with an aceepting state, <br />
            <code>-1</code> if <code>pathv</code> has a cycle but without an accepting state, <br />
    Requires: The new element that may lead to a cacle is at the last position of the vector.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn cycle-check
+</td><td class="codes"><pre class="brush: clojure">(defn- cycle-check
   [ba pathv]
   (let [last-idx (dec (count pathv))
         last-elt (last pathv)
@@ -3019,7 +3019,7 @@ represneting a Büchi automaton into a Clojure data structure</p>
         (if (some #(accepting? ba %) cycle)
           1
           -1)))))</pre></td></tr><tr><td class="docs"><p>Like flatten but only affects seqs.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn flatten-seqs
+</td><td class="codes"><pre class="brush: clojure">(defn- flatten-seqs
   [coll]
   (mapcat
     (fn [x]
@@ -3029,21 +3029,44 @@ represneting a Büchi automaton into a Clojure data structure</p>
     coll))</pre></td></tr><tr><td class="docs"><p>Inner function of <code>paths</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- paths'
   [ba pathv]
-   (case (cycle-check ba pathv)
-     -1 nil
-      1 pathv
-      0 (let [succs (successors ba (last pathv))]
-          (drop-while nil? (map #(paths' ba (conj pathv %)) succs)))))</pre></td></tr><tr><td class="docs"><p>Paths in <code>ba</code> starting from init node.</p>
+  (case (cycle-check ba pathv)
+    -1 nil
+    1 pathv
+    0 (let [succs (successors ba (last pathv))]
+        (drop-while nil? (map #(paths' ba (conj pathv %)) succs)))))</pre></td></tr><tr><td class="docs"><p>Paths in <code>ba</code> starting from init node.</p>
 </td><td class="codes"><pre class="brush: clojure">&quot;Paths in `ba` starting from init node or given `id` resp.&quot;
 (defn paths
-  [ba] 
+  [ba]
   (flatten-seqs (paths' ba [(init-id ba)])))</pre></td></tr><tr><td class="docs"><p>Edge of the automaton <code>ba</code> from <code>from</code> to <code>to</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn ids-&gt;edge
   [ba from to]
   (first (filter #(and (= from (:from %)) (= to (:to %))) (:edges ba))))</pre></td></tr><tr><td class="docs"><p>Does <code>id</code> in <code>ba</code> have a loop?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn loop?
   [ba id]
-  (seq (ids-&gt;edge ba id id)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (seq (ids-&gt;edge ba id id)))</pre></td></tr><tr><td class="docs"><h1>Constructing a Büchi automaton from a given Kripke structure</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a guard for the transition to state <code>state</code> int the Büchi automaton
+   constructed from Kripke structure <code>ks</code>. <br />
+   Requires: <code>state</code> is a state of the Kripke structure</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- baguard
+  [ks state]
+  (let [atoms (:atoms ks)
+        node-state (state (:nodes ks))]
+    (set (map #(if (contains? node-state %) % (list 'not %)) atoms))))</pre></td></tr><tr><td class="docs"><p>Given the Kripke structure <code>ks</code> we construct a corresponding Büchi automaton <code>ba</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn ks-&gt;ba
+  [ks]
+  (let [node-vec (into [:init-3961] (keys (:nodes ks)))
+        node-map (clojure.set/map-invert (zipmap (range) node-vec))
+        nodes (map-indexed (fn [idx _] (if (zero? idx) (hash-map :id idx :accepting true :init true)
+                                                       (hash-map :id idx :accepting true))) node-vec)
+        edges' (conj (:edges ks) [:init-3961 (:initial ks)])
+        edges (map #(hash-map :from ((first %) node-map)
+                              :to ((second %) node-map)
+                              :guard (baguard ks (second %))) edges')]
+    (hash-map :nodes nodes :edges edges)))</pre></td></tr><tr><td class="docs"><p>from a Büchi automaton as a Clojure data structure a
+  corresponding object of type Graph of LTL2Buchi is build.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn ba-&gt;Graph
+  [ba]
+  :to-be-done)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

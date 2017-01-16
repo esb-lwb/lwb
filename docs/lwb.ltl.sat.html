@@ -2901,7 +2901,9 @@ an acccpeting state</li>
    for the formula the automaton accepts.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn ba-&gt;ks
   [ba]
-  (let [pathv (first (ba/paths ba))
+  (let [literals (reduce set/union (filter set? (map :guard (:edges ba))))
+        atoms (set (map #(if (list? %) (second %) %) literals)) 
+        pathv (first (ba/paths ba))
         nodes (mapv #(hash-map (node-key %2) (node-label ba %1 %2)) pathv (rest pathv))
         nodes' (apply merge-with set/union nodes)
         initial (node-key (second pathv))
@@ -2910,7 +2912,7 @@ an acccpeting state</li>
         acc-nodes (distinct (filter #(ba/accepting? ba %) pathv))
         acc-loops  (set (map #(vector (node-key %) (node-key %)) (filter #(ba/loop? ba %) acc-nodes)))
         edges' (set/union edges acc-loops)]
-    (hash-map :nodes nodes' :initial initial :edges edges')))</pre></td></tr><tr><td class="docs"><h2>Satisfiability and validity for LTL formulas</h2>
+    (hash-map :atoms atoms :nodes nodes' :initial initial :edges edges')))</pre></td></tr><tr><td class="docs"><h2>Satisfiability and validity for LTL formulas</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Gives a model for <code>phi</code> if the formula is satisfiable, nil otherwise.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat
   [phi]

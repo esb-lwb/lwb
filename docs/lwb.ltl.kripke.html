@@ -2867,36 +2867,43 @@ net.brehaut.ClojureTools = (function (SH) {
 })(SyntaxHighlighter);
 </script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.ltl.kripke" name="lwb.ltl.kripke"><h1 class="project-name">lwb.ltl.kripke</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.ltl.kripke
-  (:require [lwb.prop :refer [atom?]]
+  (:require [lwb.ltl :refer [atom?]]
             [clojure.string :as str]
             [clojure.java.shell :as shell]
-            [clojure.spec :as s]))</pre></td></tr><tr><td class="docs"><h1>Kripke structures</h1>
+            [clojure.spec :as s]
+            [clojure.set :as set]))</pre></td></tr><tr><td class="docs"><h1>Kripke structures</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Kripke structures are models for formulas of the linear temporal logic.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>The nodes of a Kripke structure are represented by a pair of a keyword and a set of the
-atoms of the structure that are true at that node.
-By convention the keywords have the form <code>:s_n</code> with a numbering <code>n</code> beginning at 1.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>The edges of a Kripke structure are vectors of the keywords of the nodes that are
-connected by that edge.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The set of atomic propositions defining the "worlds" in the states is given
+with the keyword <code>:atoms</code>.</p>
+
+<p>The nodes of a Kripke structure are represented by pairs of a keyword and a set of the
+atoms of the structure that are true at that node, associated with the keyword
+<code>:nodes</code>.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The edges of a Kripke structure is a set of vectors of the keywords of the nodes that are
+connected by that edge, associated with the keyword <code>:edges</code>.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The keyword :initial indicates the starting state of the Kripke model.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Composed together a Kripke structure is a map of a map of :nodes and a set of :edges</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Here is the specification:</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::nodes (s/map-of keyword? (s/coll-of atom? :kind set? :distinct true :into #{})))
+</td><td class="codes"><pre class="brush: clojure">(s/def ::atoms (s/coll-of atom? :kind set? :distinct true :into #{}))
+(s/def ::nodes (s/map-of keyword? (s/coll-of atom? :kind set? :distinct true :into #{})))
 (s/def ::initial keyword?)
 (s/def ::edges (s/coll-of (s/tuple keyword? keyword?) :into #{}))</pre></td></tr><tr><td class="docs"><p>For Kripke structure we have the following constraints:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ol>
 <li>the initial node is an element of the node set</li>
 <li>all nodes of edges are elements of the node set</li>
 <li>for each node there is at least one edge which starts at that node</li>
+<li>the set of true atoms of a node is a subset of <code>:atoms</code></li>
 </ol>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn kripke-ok?
-  [{:keys [nodes initial edges]}]
+  [{:keys [atoms nodes initial edges]}]
   (let [nodeset   (set (keys nodes))
         nodeset'  (set (flatten (seq edges)))
-        nodeset'' (set (map first (seq edges)))]
+        nodeset'' (set (map first (seq edges)))
+        atomset   (reduce set/union (vals nodes))]
     (and (contains? nodeset initial)
          (= nodeset nodeset')
-         (= nodeset nodeset''))))</pre></td></tr><tr><td class="docs"><p>The final specification of a Kripke structure, i.e. a model in the linear temporal logic.</p>
+         (= nodeset nodeset'')
+         (set/subset? atomset atoms))))</pre></td></tr><tr><td class="docs"><p>The final specification of a Kripke structure, i.e. a model in the linear temporal logic.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::model (s/and kripke-ok? (s/keys :req-un [::nodes ::initial ::edges])))</pre></td></tr><tr><td class="docs"><h2>Visualisation of a Kripke structure</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We use dot2tex which in many cases gives good results,
 but sometimes we should rework the result.</p>
