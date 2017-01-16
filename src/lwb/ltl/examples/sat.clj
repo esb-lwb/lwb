@@ -25,6 +25,7 @@
 (def o02 '(and P Q))
 (b/ba o02)
 (sat? o02)
+(sat o02)
 (comment
   (k/texify (sat o02) "ks") 
   )
@@ -32,6 +33,7 @@
 (def o03 '(or P Q))
 (b/ba o03)
 (sat? o03)
+(sat o03)
 (comment
   (k/texify (sat o03) "ks")
   )
@@ -39,6 +41,7 @@
 (def o04 '(impl P Q))
 (b/ba o04)
 (sat? o04)
+(sat o04)
 (comment
   (k/texify (sat o04) "ks")
   )
@@ -46,6 +49,7 @@
 (def o05 '(equiv P Q))
 (b/ba o05)
 (sat? o05)
+(sat o05)
 (comment
   (k/texify (sat o05) "ks") 
   )
@@ -53,6 +57,7 @@
 (def o06 '(xor P Q))
 (b/ba o06)
 (sat? o06)
+(sat o06)
 (comment
   (k/texify (sat o06) "ks")  
   )

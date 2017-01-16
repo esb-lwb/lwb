@@ -50,7 +50,9 @@
   "A Kripke structure is generated from a Büchi automaton as a model       
    for the formula the automaton accepts."
   [ba]
-  (let [pathv (first (ba/paths ba))
+  (let [literals (reduce set/union (filter set? (map :guard (:edges ba))))
+        atoms (set (map #(if (list? %) (second %) %) literals)) 
+        pathv (first (ba/paths ba))
         nodes (mapv #(hash-map (node-key %2) (node-label ba %1 %2)) pathv (rest pathv))
         nodes' (apply merge-with set/union nodes)
         initial (node-key (second pathv))
@@ -59,7 +61,7 @@
         acc-nodes (distinct (filter #(ba/accepting? ba %) pathv))
         acc-loops  (set (map #(vector (node-key %) (node-key %)) (filter #(ba/loop? ba %) acc-nodes)))
         edges' (set/union edges acc-loops)]
-    (hash-map :nodes nodes' :initial initial :edges edges')))
+    (hash-map :atoms atoms :nodes nodes' :initial initial :edges edges')))
   
 ;; ## Satisfiability and validity for LTL formulas
 
