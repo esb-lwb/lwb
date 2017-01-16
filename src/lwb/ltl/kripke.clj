@@ -18,11 +18,11 @@
 ;; Kripke structures are models for formulas of the linear temporal logic.
 
 ;; The set of atomic propositions defining the "worlds" in the states is given
-;; with the keywqord `:atoms`.
+;; with the keyword `:atoms`.
 ;; 
 ;; The nodes of a Kripke structure are represented by pairs of a keyword and a set of the
 ;; atoms of the structure that are true at that node, associated with the keyword
-;; `:nodes`..
+;; `:nodes`.
 
 ;; The edges of a Kripke structure is a set of vectors of the keywords of the nodes that are
 ;; connected by that edge, associated with the keyword `:edges`.

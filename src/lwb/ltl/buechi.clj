@@ -54,19 +54,19 @@
   "Makes a Formula<String> object from a Clojure LTL formula."
   [phi]
   (let [phi (nary->binary phi)]
-  (cond (atom? phi) (Formula/Proposition (name phi))
-        (true? phi) (Formula/True)
-        (false? phi) (Formula/False)
-        :else (let [[op & args] phi]
-                (cond (= op 'not) (Formula/Not (fml (first args)))
-                      (= op 'and) (Formula/And (fml (first args)) (fml (second args)))
-                      (= op 'or) (Formula/Or (fml (first args)) (fml (second args)))
-                      (= op 'impl) (Formula/Implies (fml (first args)) (fml (second args)))
-                      (= op 'until) (Formula/Until (fml (first args)) (fml (second args)))
-                      (= op 'release) (Formula/Release (fml (first args)) (fml (second args)))
-                      (= op 'atnext) (Formula/Next (fml (first args)))
-                      (= op 'always) (Formula/Always (fml (first args)))
-                      (= op 'finally) (Formula/Eventually (fml (first args))))))))
+    (cond (atom? phi) (Formula/Proposition (name phi))
+          (true? phi) (Formula/True)
+          (false? phi) (Formula/False)
+          :else (let [[op & args] phi]
+                  (cond (= op 'not) (Formula/Not (fml (first args)))
+                        (= op 'and) (Formula/And (fml (first args)) (fml (second args)))
+                        (= op 'or) (Formula/Or (fml (first args)) (fml (second args)))
+                        (= op 'impl) (Formula/Implies (fml (first args)) (fml (second args)))
+                        (= op 'until) (Formula/Until (fml (first args)) (fml (second args)))
+                        (= op 'release) (Formula/Release (fml (first args)) (fml (second args)))
+                        (= op 'atnext) (Formula/Next (fml (first args)))
+                        (= op 'always) (Formula/Always (fml (first args)))
+                        (= op 'finally) (Formula/Eventually (fml (first args))))))))
 
 (defn translate
   "Translates the formula `phi` into a Büchi automaton.      
@@ -77,14 +77,14 @@
 
 ;; ## Clojure datastructure for Büchi automata
 
-;; #### A node of the automaton
+;; ### A node of the automaton
 
-(s/def ::id        int?)
-(s/def ::init      boolean?)
+(s/def ::id int?)
+(s/def ::init boolean?)
 (s/def ::accepting boolean?)
 
 (s/def ::node (s/keys :req-un [::id]
-                         :opt-un [::init ::accepting]))
+                      :opt-un [::init ::accepting]))
 
 (defn- node
   "A node from a Büchi automaton as a Clojure map `::ba-node`."
@@ -98,9 +98,9 @@
         :args (s/cat :node #(instance? Node %))
         :ret ::node)
 
-;; #### A guard, i.e. a label of the transitions in the Büchi automaton
+;; ### A guard, i.e. a label of the transitions in the Büchi automaton
 
-(defn- literal 
+(defn- literal
   "A literal from a guard of a Büchi automaton"
   [^Literal l]
   (let [atom (symbol (.getAtom l))]
@@ -110,7 +110,7 @@
         :args (s/cat :literal #(instance? Literal %))
         :ret :lwb.ltl/literal)
 
-(s/def ::guard (s/or :true true? 
+(s/def ::guard (s/or :true true?
                      :literals (s/coll-of :lwb.ltl/literal :kind set?)))
 
 (defn- guard
@@ -131,8 +131,8 @@
 
 (defn- edge
   [^Edge e]
-  {:from (.getId (.getSource e))
-   :to   (.getId (.getNext e))
+  {:from  (.getId (.getSource e))
+   :to    (.getId (.getNext e))
    :guard (guard (.getGuard e))})
 
 (s/fdef edge
@@ -143,7 +143,7 @@
 (s/def ::edges (s/coll-of ::edge :kind vector?))
 (s/def ::ba (s/keys :req-un [::nodes ::edges]))
 
-;; #### Transformation into a Clojure data structure
+;; ### Transformation into a Clojure data structure
 
 ;; Using the helper functions for the transformation of a Grahph of LTL2Buchi
 ;; represneting a Büchi automaton into a Clojure data structure
@@ -172,12 +172,12 @@
         :args (s/cat :phi wff?)
         :ret ::ba)
 
-;; ### Functions that analyze Büchi automaton 
+;; # Functions that analyze Büchi automaton 
 
 (defn id->node
   "Node of the automaton `ba` with the given `id`."
   [ba id]
-  (first (filter #(= id (:id %)) (:nodes ba)) ))
+  (first (filter #(= id (:id %)) (:nodes ba))))
 
 (defn accepting?
   "Is the node in `ba` with the `id` accepting?     
@@ -190,12 +190,12 @@
   [ba]
   (:id (first (filter :init (:nodes ba)))))
 
-(defn successors
+(defn- successors
   "Successors of node with `id` in automaton `ba`."
   [ba id]
   (mapv :to (filter #(= id (:from %)) (:edges ba))))
 
-(defn cycle-check
+(defn- cycle-check
   "Returns `0` if `pathv` has no cycle,     
            `1` if `pathv` has a cycle with an aceepting state,       
            `-1` if `pathv` has a cycle but without an accepting state,      
@@ -211,7 +211,7 @@
           1
           -1)))))
 
-(defn flatten-seqs
+(defn- flatten-seqs
   "Like flatten but only affects seqs."
   [coll]
   (mapcat
@@ -224,16 +224,16 @@
 (defn- paths'
   "Inner function of `paths`."
   [ba pathv]
-   (case (cycle-check ba pathv)
-     -1 nil
-      1 pathv
-      0 (let [succs (successors ba (last pathv))]
-          (drop-while nil? (map #(paths' ba (conj pathv %)) succs)))))
+  (case (cycle-check ba pathv)
+    -1 nil
+    1 pathv
+    0 (let [succs (successors ba (last pathv))]
+        (drop-while nil? (map #(paths' ba (conj pathv %)) succs)))))
 
 "Paths in `ba` starting from init node or given `id` resp."
 (defn paths
   "Paths in `ba` starting from init node."
-  [ba] 
+  [ba]
   (flatten-seqs (paths' ba [(init-id ba)])))
 
 (defn ids->edge
@@ -245,4 +245,38 @@
   "Does `id` in `ba` have a loop?"
   [ba id]
   (seq (ids->edge ba id id)))
+
+;; # Constructing a Büchi automaton from a given Kripke structure
+
+(defn- baguard
+  "Returns a guard for the transition to state `state` int the Büchi automaton
+   constructed from Kripke structure `ks`.      
+   Requires: `state` is a state of the Kripke structure"
+  [ks state]
+  (let [atoms (:atoms ks)
+        node-state (state (:nodes ks))]
+    (set (map #(if (contains? node-state %) % (list 'not %)) atoms))))
+
+(defn ks->ba
+  "Given the Kripke structure `ks` we construct a corresponding Büchi automaton `ba`."
+  [ks]
+  (let [node-vec (into [:init-3961] (keys (:nodes ks)))
+        node-map (clojure.set/map-invert (zipmap (range) node-vec))
+        nodes (map-indexed (fn [idx _] (if (zero? idx) (hash-map :id idx :accepting true :init true)
+                                                       (hash-map :id idx :accepting true))) node-vec)
+        edges' (conj (:edges ks) [:init-3961 (:initial ks)])
+        edges (map #(hash-map :from ((first %) node-map)
+                              :to ((second %) node-map)
+                              :guard (baguard ks (second %))) edges')]
+    (hash-map :nodes nodes :edges edges)))
+
+(defn ba->Graph
+  "from a Büchi automaton as a Clojure data structure a
+  corresponding object of type Graph of LTL2Buchi is build."
+  [ba]
+  :to-be-done
+  )
+
+
+
 
