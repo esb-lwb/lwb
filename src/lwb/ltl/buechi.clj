@@ -11,8 +11,7 @@
             [clojure.spec :as s])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
            (gov.nasa.ltl.graph Graph Node Edge Guard Literal Attributes)
-           (java.util Collection)
-           (gov.nasa.ltl.graphio Writer)))
+           (java.util Collection)))
 
 ;; # Generating the Büchi automata for a LTL formula
 
@@ -286,14 +285,14 @@
   [literals]
   (let [g (new Guard)
         literals (if (= literals true) #{} literals)]
-    (.addAll g ^Collection (mapv make-literal literals))
+    (.addAll g ^Collection (mapv make-Literal literals))
     g))
 
 (defn- make-Nodes-vec
   "Makes a vector of Node object from `ba` for the given Graph `g`."
   [^Graph g ba]
   (let [nodes-map (sort-by :id (:nodes ba))
-        make-Node (fn [g node] (if (:accepting node)
+        make-Node (fn [^Graph g node] (if (:accepting node)
                                  (let [a (doto (Attributes.)
                                     (.setBoolean "accepting" true))]
                                   (Node. g a))

@@ -60,6 +60,7 @@
 (def o02 '(and P Q))
 (def g02 (translate o02))
 (xml-write g02)
+(sm-write g02)
 
 (paths (ba o02))
 (paths (ba '(always P)))
@@ -70,9 +71,14 @@
 
 (paths (ba o03))
 
-(def ba12  (ba '(and (until P Q) (atnext P))))
+(def ba12  (translate '(and (until P Q) (atnext (not P)))))
+(sm-write ba12)
+(def ba12  (ba '(and (until P Q) (atnext (not P)))))
 ba12
 
-(paths ba12)
+(def g12 (ba->Graph ba12))
+
+(sm-write g12)
+
 
 
