@@ -149,7 +149,7 @@
 ;; Using the helper functions for the transformation of a Grahph of LTL2Buchi
 ;; represneting a Büchi automaton into a Clojure data structure
 
-(defn- ba'
+(defn ba'
   "Clojure datastructure from a Büchi automaton given as a Graph of LTL2Buchi."
   [^Graph g]
   (let [nodes (mapv node (.getNodes g))
@@ -200,7 +200,7 @@
   "Returns `0` if `pathv` has no cycle,     
            `1` if `pathv` has a cycle with an aceepting state,       
            `-1` if `pathv` has a cycle but without an accepting state,      
-   Requires: The new element that may lead to a cacle is at the last position of the vector."
+   Requires: The new element that may lead to a cycle is at the last position of the vector."
   [ba pathv]
   (let [last-idx (dec (count pathv))
         last-elt (last pathv)
@@ -249,6 +249,9 @@
 
 ;; # Constructing a Büchi automaton from a given Kripke structure
 
+;; see Edmund M. Clarke, Orna Grumberg and Doron A. Peled: Model Checking, 
+;; 9.2 Model Checking Using Automata on p. 123
+
 (defn- baguard
   "Returns a guard for the transition to state `state` int the Büchi automaton
    constructed from Kripke structure `ks`.      
@@ -263,15 +266,19 @@
   [ks]
   (let [node-vec (into [:init-3961] (keys (:nodes ks)))
         node-map (clojure.set/map-invert (zipmap (range) node-vec))
-        nodes (map-indexed (fn [idx _] (if (zero? idx) (hash-map :id idx :accepting true :init true)
-                                                       (hash-map :id idx :accepting true))) node-vec)
+        nodes (into [] (map-indexed (fn [idx _] (if (zero? idx) (hash-map :id idx :accepting true :init true)
+                                                       (hash-map :id idx :accepting true))) node-vec))
         edges' (conj (:edges ks) [:init-3961 (:initial ks)])
-        edges (map #(hash-map :from ((first %) node-map)
+        edges (mapv #(hash-map :from ((first %) node-map)
                               :to ((second %) node-map)
                               :guard (baguard ks (second %))) edges')]
     (hash-map :nodes nodes :edges edges)))
 
-;; ### Helper functions that construct object for LTL2Buchi
+(s/fdef ks->ba
+        :args (s/cat :ks :lwb.ltl.kripke/model)
+        :ret ::ba)
+
+;; ### Helper functions that construct objects for LTL2Buchi
 
 (defn- make-Literal
   "Makes a Literal object from `P` or `(not P)` for an atom `P`.     
