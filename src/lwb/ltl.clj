@@ -54,6 +54,14 @@
     (prop/op? op) (prop/arity op)
                   (if (contains?  '#{until release} op) 2
                                     1)))
+(defn atoms-of-phi
+  "Set of the propositional atoms of formula `phi`."
+  [phi]
+  (if (coll? phi)
+    (set (filter #(not (or (op? %) (boolean? %))) (flatten phi)))
+    (if (boolean? phi)
+      #{}
+      #{phi})))
 
 ;; A simple expression is an atom or a boolean constant.
 (s/def ::simple-expr (s/or :bool boolean?

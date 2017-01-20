@@ -9,104 +9,104 @@
 (ns lwb.ltl.examples.sat
   (:require [lwb.ltl :refer :all]         ; needed for macroexpand-1 of xor etc !!
             [lwb.ltl.sat :refer :all]
-            [lwb.ltl.buechi :as b]
-            [lwb.ltl.kripke :as k]))
+            [lwb.ltl.buechi :as ba]
+            [lwb.ltl.kripke :as ks]))
 
 ; Operators -------------------------------------------------------------------------------------------------
 
 (def o01 '(not P))
-(b/ba o01)
+(ba/ba o01)
 (sat? o01)
 (sat o01)
 (comment
-  (k/texify (sat o01) "ks")
+  (ks/texify (sat o01) "ks")
   )
 
 (def o02 '(and P Q))
-(b/ba o02)
+(ba/ba o02)
 (sat? o02)
 (sat o02)
 (comment
-  (k/texify (sat o02) "ks") 
+  (ks/texify (sat o02) "ks") 
   )
 
 (def o03 '(or P Q))
-(b/ba o03)
+(ba/ba o03)
 (sat? o03)
 (sat o03)
 (comment
-  (k/texify (sat o03) "ks")
+  (ks/texify (sat o03) "ks")
   )
 
 (def o04 '(impl P Q))
-(b/ba o04)
+(ba/ba o04)
 (sat? o04)
 (sat o04)
 (comment
-  (k/texify (sat o04) "ks")
+  (ks/texify (sat o04) "ks")
   )
 
 (def o05 '(equiv P Q))
-(b/ba o05)
+(ba/ba o05)
 (sat? o05)
 (sat o05)
 (comment
-  (k/texify (sat o05) "ks") 
+  (ks/texify (sat o05) "ks") 
   )
 
 (def o06 '(xor P Q))
-(b/ba o06)
+(ba/ba o06)
 (sat? o06)
 (sat o06)
 (comment
-  (k/texify (sat o06) "ks")  
+  (ks/texify (sat o06) "ks")  
   )
 
 (def o07 '(ite P Q R))
-(b/ba o07)
+(ba/ba o07)
 (sat? o07)
 (comment
-  (k/texify (sat o07) "ks") 
+  (ks/texify (sat o07) "ks") 
   )
 
 (def o08 '(always P))
-(b/ba o08)
+(ba/ba o08)
 (sat? o08)
 (sat o08)
 (comment
-  (k/texify (sat o08) "ks")
-  (k/texify (sat '(always (and P Q))) "ks")
+  (ks/texify (sat o08) "ks")
+  (ks/texify (sat '(always (and P Q))) "ks")
   )
 
 (def o09 '(finally P))
-(b/ba o09)
+(ba/ba o09)
 (sat? o09)
 (comment
-  (k/texify (sat o09) "ks")
-  (k/texify (sat '(finally (or P Q))) "ks")
+  (ks/texify (sat o09) "ks")
+  (ks/texify (sat '(finally (or P Q))) "ks")
   )
 
 (def o10 '(atnext P))
-(b/ba o10)
+(ba/ba o10)
 (sat? o10)
 (comment
-  (k/texify (sat o10) "ks")
-  (k/texify (sat '(atnext (atnext P))) "ks")
+  (ks/texify (sat o10) "ks")
+  (ks/texify (sat '(atnext (atnext P))) "ks")
   )
 
 (def o11 '(until P Q))
-(b/ba o11)
+(ba/ba o11)
 (sat? o11)
 (comment
-  (k/texify (sat o11) "ks")
-  (k/texify (sat '(and P (until P Q))) "ks")
-  (k/texify (sat '(and (until P Q) (atnext P))) "ks")
+  (ks/texify (sat o11) "ks")
+  (ks/texify (sat '(and P (until P Q))) "ks")
+  (ks/texify (sat '(and (until P Q) (atnext P))) "ks")
   )
 
 (def o12 '(release P Q))
 (sat? o12)
 (comment
-  (k/texify (sat o12) "ks")  
+  (ks/texify (sat o12) "ks")  
   )
 
 ; Theorems --------------------------------------------------------------------------
@@ -139,24 +139,24 @@
 (sat? f1)      ; => true
 (valid? f1)    ; => false
 (comment
-  (k/texify (sat f1) "ks") 
+  (ks/texify (sat f1) "ks") 
   )
 
 ; Infinitely often  P
 (def f2 '(always (finally P)))
 (sat? f2)       ; => true
 (valid? f2)     ; => false
-(b/ba f2)
+(ba/ba f2)
 (sat f2)
 (comment
-  (k/texify (sat f2) "ks") 
+  (ks/texify (sat f2) "ks") 
   )
 
 (def f3 '(always (finally (not P))))
 (sat? f3)       ; => true
 (valid? f3)     ; => false
 (comment
-  (k/texify (sat f3) "ks") 
+  (ks/texify (sat f3) "ks") 
   )
 
 ; Finitely often (not P)
@@ -164,7 +164,7 @@
 (sat? f4)       ; => true
 (valid? f4)     ; => false
 (comment
-  (k/texify (sat f4) "ks") 
+  (ks/texify (sat f4) "ks") 
   )
 
 ; playing with always and atnext
@@ -172,7 +172,7 @@
 (sat? f5)       ; => true
 (valid? f5)     ; => false
 (comment
-  (k/texify (sat f5) "ks") 
+  (ks/texify (sat f5) "ks") 
   )
 
 (def f6 '(always (and (and P (not Q)) (atnext (and (not P) Q)))))
@@ -183,7 +183,7 @@
 (sat? f7)       ; => true
 (valid? f7)     ; => false
 (comment
-  (k/texify (sat f7) "ks") 
+  (ks/texify (sat f7) "ks") 
   )
 
 ; Fairness constraints -------------------------------------------------------
@@ -192,10 +192,10 @@
 (def ufair '(always (finally Q)))
 (sat? ufair)    ; => true
 (valid? ufair)  ; => false
-(b/ba ufair)
-(b/paths (b/ba ufair))
+(ba/ba ufair)
+(ba/paths (ba/ba ufair))
 (comment
-  (k/texify (sat ufair) "ks")
+  (ks/texify (sat ufair) "ks")
   )
 
 ; strong fairness
@@ -203,7 +203,7 @@
 (sat? sfair)    ; => true
 (valid? sfair)  ; => false
 (comment
-  (k/texify (sat sfair) "ks") ; not a very interesting model!!
+  (ks/texify (sat sfair) "ks") ; not a very interesting model!!
   )
 
 ; weak fairness
@@ -211,7 +211,7 @@
 (sat? wfair)    ; => true
 (valid? wfair)  ; => false
 (comment
-  (k/texify (sat wfair) "ks") ; not a very interesting model!!
+  (ks/texify (sat wfair) "ks") ; not a very interesting model!!
   )
 
 ; fairness
@@ -219,5 +219,5 @@
 (sat? fair)    ; => true
 (valid? fair)  ; => false
 (comment
-  (k/texify (sat fair) "ks") ; see ufair
+  (ks/texify (sat fair) "ks") ; see ufair
   )

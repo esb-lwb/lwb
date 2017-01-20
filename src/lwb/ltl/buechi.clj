@@ -19,8 +19,8 @@
 ;; implemented at NASA Ames research Center, by Dimitra Giannakopoulou and Flavio Lerda.
 
 ;; Caveat: strange behaviour of Clojure!     
-;; this can only be used if not only lwb.ltl.buechi is required    
-;; but also lwb.ltl
+;; this package can only be used if not only lwb.ltl.buechi is required    
+;; but also lwb.ltl in which the macros `impl` etc are defined
 
 (defn- norm-ltl
   "Normalize formula `phi` such that the operator `ite` , `equiv`, and `xor` are not used."
@@ -36,7 +36,7 @@
 ;; For `ltl2buchi` the operators `and` and `or` have to be binary.
 
 (defn- nary->binary
-  "Makes nary `and` and `or` binary."
+  "Makes n formula `phi` the nary `and` and `or` binary."
   [phi]
   (let [phi (norm-ltl phi)]
     (cond (or (atom? phi) (boolean? phi)) phi
@@ -111,13 +111,12 @@
         :args (s/cat :literal #(instance? Literal %))
         :ret :lwb.ltl/literal)
 
-(s/def ::guard (s/or :true true?
-                     :literals (s/coll-of :lwb.ltl/literal :kind set?)))
+(s/def ::guard (s/coll-of :lwb.ltl/literal :kind set?))
 
 (defn- guard
   "A guard from a Büchi automata as a Clojure set of literals."
   [^Guard g]
-  (if (.isTrue g) true
+  (if (.isTrue g) #{}    ;the empty set is equiv to true i.e. no restriction for the transition
                   (set (map literal g))))
 
 (s/fdef guard
@@ -146,10 +145,10 @@
 
 ;; ### Transformation into a Clojure data structure
 
-;; Using the helper functions for the transformation of a Grahph of LTL2Buchi
-;; represneting a Büchi automaton into a Clojure data structure
+;; Using the helper functions for the transformation of a Graph of LTL2Buchi
+;; representing a Büchi automaton into a Clojure data structure
 
-(defn ba'
+(defn Graph->ba
   "Clojure datastructure from a Büchi automaton given as a Graph of LTL2Buchi."
   [^Graph g]
   (let [nodes (mapv node (.getNodes g))
@@ -157,7 +156,7 @@
         edges (mapv edge edges)]
     {:nodes nodes, :edges edges}))
 
-(s/fdef ba'
+(s/fdef Graph->ba
         :args (s/cat :ba #(instance? Graph %))
         :ret ::ba)
 
@@ -167,13 +166,13 @@
   [phi]
   (-> phi
       translate
-      ba'))
+      Graph->ba))
 
 (s/fdef ba
         :args (s/cat :phi wff?)
         :ret ::ba)
 
-;; # Functions that analyze Büchi automaton 
+;; ## Functions that analyze Büchi automaton 
 
 (defn id->node
   "Node of the automaton `ba` with the given `id`."
@@ -231,7 +230,6 @@
     0 (let [succs (successors ba (last pathv))]
         (drop-while nil? (map #(paths' ba (conj pathv %)) succs)))))
 
-"Paths in `ba` starting from init node or given `id` resp."
 (defn paths
   "Paths in `ba` starting from init node."
   [ba]
