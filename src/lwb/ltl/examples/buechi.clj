@@ -13,7 +13,7 @@
   (:import (gov.nasa.ltl.graphio Writer Writer$Format)
            (java.io PrintStream StringReader StringWriter ByteArrayOutputStream)
            (javax.xml.transform.stream StreamSource StreamResult)
-           (javax.xml.transform TransformerFactory)))
+           (javax.xml.transform TransformerFactory OutputKeys)))
 
 ;; Output of Graph from LTL2Buchi in Format SM
 
@@ -38,11 +38,11 @@
         transformer (.newTransformer
                       (TransformerFactory/newInstance))]
     (.setOutputProperty transformer
-                        javax.xml.transform.OutputKeys/INDENT "yes")
+                        OutputKeys/INDENT "yes")
     (.setOutputProperty transformer
                         "{http://xml.apache.org/xslt}indent-amount" "2")
     (.setOutputProperty transformer
-                        javax.xml.transform.OutputKeys/METHOD "xml")
+                        OutputKeys/METHOD "xml")
     (.transform transformer in out)
     (-> out .getWriter .toString)))
 

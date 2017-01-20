@@ -9,10 +9,8 @@
 (ns lwb.ltl.eval
   (:require [lwb.ltl :refer :all]
             [lwb.ltl.buechi :as ba]
-            [lwb.ltl.kripke :as ks]
             [clojure.spec :as s]
             [clojure.set :as set])
-  (:import (gov.nasa.ltl.graph degenSynchronousProduct SCCReduction Simplify SFSReduction Graph)) 
   )
 
 ;; # Evaluation in linear temporal logic LTL
@@ -78,7 +76,7 @@
   (set/subset? (atoms-of-phi (:phi params)) (:atoms (:ks params))))
 
 (s/fdef eval-phi
-        :args (s/& (s/alt :2-args (s/cat :ks ::ks/model :phi wff?)
-                          :3-args (s/cat :ks ::ks/model :phi wff? :mode #{:bool :counter-expl})) #(params-ok? (second %)))
+        :args (s/& (s/alt :2-args (s/cat :ks :lwb.ltl.kripke/model :phi wff?)
+                          :3-args (s/cat :ks :lwb.ltl.kripke/model :phi wff? :mode #{:bool :counter-expl})) #(params-ok? (second %)))
         :ret (s/alt :bool boolean? :counter-expl (s/coll-of int? :kind vector?)))
 

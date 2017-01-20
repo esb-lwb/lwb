@@ -159,7 +159,7 @@
       :state (check-state new)
       :rel   (check-rel proof old new mode)
       :prop  (check-prop new))
-    (catch IllegalArgumentException e
+    (catch IllegalArgumentException _
       (throw (ex-error (format "There is no '%s' in the proof." old))))
     (catch Exception e 
       (throw e)))))

@@ -2870,12 +2870,13 @@ net.brehaut.ClojureTools = (function (SH) {
   (:require [lwb.ltl :refer :all]
             [clojure.spec :as s])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
-           (gov.nasa.ltl.graph Graph Node Edge Guard Literal)))</pre></td></tr><tr><td class="docs"><h1>Generating the Büchi automata for a LTL formula</h1>
+           (gov.nasa.ltl.graph Graph Node Edge Guard Literal Attributes)
+           (java.util Collection)))</pre></td></tr><tr><td class="docs"><h1>Generating the Büchi automata for a LTL formula</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We use the library <code>ltl2buchi</code>, the LTL2Buchi translator, 
 implemented at NASA Ames research Center, by Dimitra Giannakopoulou and Flavio Lerda.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Caveat: strange behaviour of Clojure! <br />
-this can only be used if not only lwb.ltl.buechi is required <br />
-but also lwb.ltl</p>
+this package can only be used if not only lwb.ltl.buechi is required <br />
+but also lwb.ltl in which the macros <code>impl</code> etc are defined</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that the operator <code>ite</code> , <code>equiv</code>, and <code>xor</code> are not used.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- norm-ltl
   [phi]
@@ -2886,7 +2887,7 @@ but also lwb.ltl</p>
         (let [exp-phi (macroexpand-1 phi)]
           (apply list (first exp-phi) (map norm-ltl (rest exp-phi))))
         (apply list op (map norm-ltl (rest phi)))))))</pre></td></tr><tr><td class="docs"><p>For <code>ltl2buchi</code> the operators <code>and</code> and <code>or</code> have to be binary.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Makes nary <code>and</code> and <code>or</code> binary.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Makes n formula <code>phi</code> the nary <code>and</code> and <code>or</code> binary.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- nary-&gt;binary
   [phi]
   (let [phi (norm-ltl phi)]
@@ -2946,11 +2947,10 @@ but also lwb.ltl</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef literal
         :args (s/cat :literal #(instance? Literal %))
         :ret :lwb.ltl/literal)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::guard (s/or :true true?
-                     :literals (s/coll-of :lwb.ltl/literal :kind set?)))</pre></td></tr><tr><td class="docs"><p>A guard from a Büchi automata as a Clojure set of literals.</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::guard (s/coll-of :lwb.ltl/literal :kind set?))</pre></td></tr><tr><td class="docs"><p>A guard from a Büchi automata as a Clojure set of literals.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- guard
   [^Guard g]
-  (if (.isTrue g) true
+  (if (.isTrue g) #{}    ;the empty set is equiv to true i.e. no restriction for the transition
                   (set (map literal g))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef guard
         :args (s/cat :guard #(instance? Guard %))
@@ -2970,16 +2970,16 @@ but also lwb.ltl</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::nodes (s/coll-of ::node :kind vector?))
 (s/def ::edges (s/coll-of ::edge :kind vector?))
 (s/def ::ba (s/keys :req-un [::nodes ::edges]))</pre></td></tr><tr><td class="docs"><h3>Transformation into a Clojure data structure</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Using the helper functions for the transformation of a Grahph of LTL2Buchi
-represneting a Büchi automaton into a Clojure data structure</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Using the helper functions for the transformation of a Graph of LTL2Buchi
+representing a Büchi automaton into a Clojure data structure</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Clojure datastructure from a Büchi automaton given as a Graph of LTL2Buchi.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- ba'
+</td><td class="codes"><pre class="brush: clojure">(defn Graph-&gt;ba
   [^Graph g]
   (let [nodes (mapv node (.getNodes g))
         edges (mapcat #(.getOutgoingEdges %) (.getNodes g))
         edges (mapv edge edges)]
     {:nodes nodes, :edges edges}))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef ba'
+</td><td class="codes"><pre class="brush: clojure">(s/fdef Graph-&gt;ba
         :args (s/cat :ba #(instance? Graph %))
         :ret ::ba)</pre></td></tr><tr><td class="docs"><p>Büchi automaton from LTL formula <code>phi</code>, <br />
    with a little help from LTL2Buchi.</p>
@@ -2987,10 +2987,10 @@ represneting a Büchi automaton into a Clojure data structure</p>
   [phi]
   (-&gt; phi
       translate
-      ba'))</pre></td></tr><tr><td class="docs">
+      Graph-&gt;ba))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef ba
         :args (s/cat :phi wff?)
-        :ret ::ba)</pre></td></tr><tr><td class="docs"><h1>Functions that analyze Büchi automaton</h1>
+        :ret ::ba)</pre></td></tr><tr><td class="docs"><h2>Functions that analyze Büchi automaton</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Node of the automaton <code>ba</code> with the given <code>id</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn id-&gt;node
   [ba id]
@@ -3007,7 +3007,7 @@ represneting a Büchi automaton into a Clojure data structure</p>
   (mapv :to (filter #(= id (:from %)) (:edges ba))))</pre></td></tr><tr><td class="docs"><p>Returns <code>0</code> if <code>pathv</code> has no cycle, <br />
            <code>1</code> if <code>pathv</code> has a cycle with an aceepting state, <br />
            <code>-1</code> if <code>pathv</code> has a cycle but without an accepting state, <br />
-   Requires: The new element that may lead to a cacle is at the last position of the vector.</p>
+   Requires: The new element that may lead to a cycle is at the last position of the vector.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- cycle-check
   [ba pathv]
   (let [last-idx (dec (count pathv))
@@ -3034,8 +3034,7 @@ represneting a Büchi automaton into a Clojure data structure</p>
     1 pathv
     0 (let [succs (successors ba (last pathv))]
         (drop-while nil? (map #(paths' ba (conj pathv %)) succs)))))</pre></td></tr><tr><td class="docs"><p>Paths in <code>ba</code> starting from init node.</p>
-</td><td class="codes"><pre class="brush: clojure">&quot;Paths in `ba` starting from init node or given `id` resp.&quot;
-(defn paths
+</td><td class="codes"><pre class="brush: clojure">(defn paths
   [ba]
   (flatten-seqs (paths' ba [(init-id ba)])))</pre></td></tr><tr><td class="docs"><p>Edge of the automaton <code>ba</code> from <code>from</code> to <code>to</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn ids-&gt;edge
@@ -3044,6 +3043,8 @@ represneting a Büchi automaton into a Clojure data structure</p>
 </td><td class="codes"><pre class="brush: clojure">(defn loop?
   [ba id]
   (seq (ids-&gt;edge ba id id)))</pre></td></tr><tr><td class="docs"><h1>Constructing a Büchi automaton from a given Kripke structure</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>see Edmund M. Clarke, Orna Grumberg and Doron A. Peled: Model Checking, 
+9.2 Model Checking Using Automata on p. 123</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a guard for the transition to state <code>state</code> int the Büchi automaton
    constructed from Kripke structure <code>ks</code>. <br />
    Requires: <code>state</code> is a state of the Kripke structure</p>
@@ -3056,17 +3057,49 @@ represneting a Büchi automaton into a Clojure data structure</p>
   [ks]
   (let [node-vec (into [:init-3961] (keys (:nodes ks)))
         node-map (clojure.set/map-invert (zipmap (range) node-vec))
-        nodes (map-indexed (fn [idx _] (if (zero? idx) (hash-map :id idx :accepting true :init true)
-                                                       (hash-map :id idx :accepting true))) node-vec)
+        nodes (into [] (map-indexed (fn [idx _] (if (zero? idx) (hash-map :id idx :accepting true :init true)
+                                                       (hash-map :id idx :accepting true))) node-vec))
         edges' (conj (:edges ks) [:init-3961 (:initial ks)])
-        edges (map #(hash-map :from ((first %) node-map)
+        edges (mapv #(hash-map :from ((first %) node-map)
                               :to ((second %) node-map)
                               :guard (baguard ks (second %))) edges')]
-    (hash-map :nodes nodes :edges edges)))</pre></td></tr><tr><td class="docs"><p>from a Büchi automaton as a Clojure data structure a
+    (hash-map :nodes nodes :edges edges)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef ks-&gt;ba
+        :args (s/cat :ks :lwb.ltl.kripke/model)
+        :ret ::ba)</pre></td></tr><tr><td class="docs"><h3>Helper functions that construct objects for LTL2Buchi</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Makes a Literal object from <code>P</code> or <code>(not P)</code> for an atom <code>P</code>. <br />
+   Requires: <code>literal</code> has that from.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- make-Literal
+  [literal]
+  (if (list? literal) (Literal. (name (second literal)) true)
+                      (Literal. (name literal) false)))</pre></td></tr><tr><td class="docs"><p>Makes a Guard object from a set of literals.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- make-Guard
+  [literals]
+  (let [g (new Guard)
+        literals (if (= literals true) #{} literals)]
+    (.addAll g ^Collection (mapv make-Literal literals))
+    g))</pre></td></tr><tr><td class="docs"><p>Makes a vector of Node object from <code>ba</code> for the given Graph <code>g</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- make-Nodes-vec
+  [^Graph g ba]
+  (let [nodes-map (sort-by :id (:nodes ba))
+        make-Node (fn [^Graph g node] (if (:accepting node)
+                                 (let [a (doto (Attributes.)
+                                    (.setBoolean &quot;accepting&quot; true))]
+                                  (Node. g a))
+                                 (Node. g)))]
+    (mapv #(make-Node g %) nodes-map )))</pre></td></tr><tr><td class="docs"><p>Makes an Edge object for an edge from <code>from</code> to <code>to</code> with guard <code>guard</code>. <br />
+   Needs a vector <code>Node-vec</code> with the Node object of the graph.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- make-Edge
+  [Nodes-vec {:keys [from to guard]}]
+  (Edge. (nth Nodes-vec from) (nth Nodes-vec to) (make-Guard guard)))</pre></td></tr><tr><td class="docs"><p>From a Büchi automaton as a Clojure data structure a
   corresponding object of type Graph of LTL2Buchi is build.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn ba-&gt;Graph
   [ba]
-  :to-be-done)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (let [graph (Graph.)
+        nodes (make-Nodes-vec graph ba)]
+    (.setInit graph (nth nodes (init-id ba)))
+    (mapv #(make-Edge nodes %) (:edges ba))
+    graph))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

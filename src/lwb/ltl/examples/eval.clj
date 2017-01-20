@@ -9,9 +9,7 @@
 (ns lwb.ltl.examples.eval
   (:require [lwb.ltl :refer :all]         ; needed for macroexpand-1 of xor etc !!
             [lwb.ltl.eval :refer :all]
-            [clojure.spec.test :as stest]
-            [lwb.ltl.buechi :as ba]
-            [lwb.ltl.kripke :as ks]))
+            [clojure.spec.test :as stest]))
 
 (stest/instrument `eval-phi)
 

@@ -2896,12 +2896,21 @@ net.brehaut.ClojureTools = (function (SH) {
    (and (symbol? symb) (not (op? symb))))</pre></td></tr><tr><td class="docs"><p>Arity of operator <code>op</code>. <br />
    -1 means n-ary. <br />
    requires: <code>op</code> an operator.</p>
+
+<p>Set of the propositional atoms of formula <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn arity
   [op]
   (if
     (prop/op? op) (prop/arity op)
                   (if (contains?  '#{until release} op) 2
-                                    1)))</pre></td></tr><tr><td class="docs"><p>A simple expression is an atom or a boolean constant.</p>
+                                    1)))
+(defn atoms-of-phi
+  [phi]
+  (if (coll? phi)
+    (set (filter #(not (or (op? %) (boolean? %))) (flatten phi)))
+    (if (boolean? phi)
+      #{}
+      #{phi})))</pre></td></tr><tr><td class="docs"><p>A simple expression is an atom or a boolean constant.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::simple-expr (s/or :bool boolean?
                            :atom atom?))</pre></td></tr><tr><td class="docs"><p>A compound expression is a list of an operator together with
 several formulas as arguments whose number matches the arity of the operator.</p>

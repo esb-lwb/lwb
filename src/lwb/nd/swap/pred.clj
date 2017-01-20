@@ -138,7 +138,7 @@
         :actual (check-actual proof old new)
         :fml    (check-fml new)
         :equal  (check-equal new))
-      (catch IllegalArgumentException e
+      (catch IllegalArgumentException _
         (throw (Exception. (format "There is no '%s' in the proof." old))))
       (catch Exception e
         (throw (ex-error (.getMessage e)))))))

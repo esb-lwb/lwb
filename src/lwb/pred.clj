@@ -381,7 +381,7 @@
         var1-vec [(first var-vec)]
         varr-vec (vec (rest var-vec))
         right (-> loc zip/down zip/right zip/right zip/node)
-        edited-loc (zip/edit loc (fn [loc] `(~quantor ~var1-vec (~quantor ~varr-vec ~right))))]
+        edited-loc (zip/edit loc (fn [_] `(~quantor ~var1-vec (~quantor ~varr-vec ~right))))]
     (-> edited-loc zip/down zip/right)))
 
 (defn unfold-vars
@@ -417,7 +417,7 @@
         var-vec (-> loc zip/down zip/right zip/node)
         var     (first var-vec)
         body (-> loc zip/down zip/right zip/right zip/node)
-        edit-func (fn [loc]
+        edit-func (fn [_]
                     (let [body-seq (for [item univ] (walk/postwalk-replace {var item} body))]
                       (if (= quantor 'forall)
                         (apply list 'and body-seq)

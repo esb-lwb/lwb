@@ -264,7 +264,7 @@
   [ks]
   (let [node-vec (into [:init-3961] (keys (:nodes ks)))
         node-map (clojure.set/map-invert (zipmap (range) node-vec))
-        nodes (into [] (map-indexed (fn [idx _] (if (zero? idx) (hash-map :id idx :accepting true :init true)
+        nodes (vec (map-indexed (fn [idx _] (if (zero? idx) (hash-map :id idx :accepting true :init true)
                                                        (hash-map :id idx :accepting true))) node-vec))
         edges' (conj (:edges ks) [:init-3961 (:initial ks)])
         edges (mapv #(hash-map :from ((first %) node-map)

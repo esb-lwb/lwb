@@ -9,7 +9,7 @@ lein marg -m src/lwb/main.clj\
   src/lwb/prop/cardinality.clj src/lwb/prop/bdd.clj\
   src/lwb/pred.clj src/lwb/vis.clj\
   src/lwb/ltl.clj src/lwb/ltl/kripke.clj src/lwb/ltl/buechi.clj\
-  src/lwb/ltl/sat.clj\
+  src/lwb/ltl/sat.clj src/lwb/ltl/eval.clj\
   src/lwb/nd/repl.clj src/lwb/nd/deduction.clj src/lwb/nd/proof.clj\
   src/lwb/nd/rules.clj src/lwb/nd/specs.clj src/lwb/nd/error.clj\
   src/lwb/nd/swap/common.clj src/lwb/nd/swap/prop.clj\
