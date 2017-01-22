@@ -9,6 +9,7 @@
 (ns lwb.ltl.examples.eval
   (:require [lwb.ltl :refer :all]         ; needed for macroexpand-1 of xor etc !!
             [lwb.ltl.eval :refer :all]
+            [lwb.ltl.kripke :as ks]       ; needed for instrument
             [clojure.spec.test :as stest]))
 
 (stest/instrument `eval-phi)
@@ -20,21 +21,23 @@
           :initial :s_1
           :edges   #{[:s_1 :s_1]}})
 
-(eval-phi ks1 '(always P))
+(eval-phi '(always P) ks1)
 ; => true
-(eval-phi ks1 'P)
+(eval-phi 'P ks1)
 ; => true
-(eval-phi ks1 '(atnext P))
+(eval-phi '(atnext P) ks1)
 ; => true
-(eval-phi ks1 '(finally P))
+(eval-phi '(finally P) ks1)
+; => true
+(eval-phi '(impl (always P) (finally P)) ks1)
 ; => true
 
-(eval-phi ks1 '(atnext (not P)))
+(eval-phi '(atnext (not P)) ks1)
 ; => false
-(eval-phi ks1 '(atnext (not P)) :counter-expl)
-; => [1 1 1]
-(eval-phi ks1 '(not (finally P)) :counter-expl)
-; => [1 1 1]
+(eval-phi '(atnext (not P)) ks1 :counterexample)
+; => [:s_1 :s_1 :s_1]
+(eval-phi '(not (finally P)) ks1 :counterexample)
+; => [:s_1 :s_1 :s_1]
 
 (def ks2 {:atoms   '#{P Q}
           :nodes   {:s_1 '#{P Q}

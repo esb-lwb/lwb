@@ -10,8 +10,7 @@
   (:require [lwb.ltl :refer :all]
             [lwb.ltl.buechi :as ba]
             [clojure.spec :as s]
-            [clojure.set :as set])
-  )
+            [clojure.set :as set]))
 
 ;; # Evaluation in linear temporal logic LTL
 
@@ -53,12 +52,11 @@
 (defn eval-phi
   "Checks whether the LTL formula `phi` is true in the Kripke structure `ks`.      
    Requires: the atoms in `phi` are a subset of `:atoms` in `ks`.     
-   Returns: boolean or a counterexample if `mode` is `:counter-expl`.     
-   The counterexample is a vector of ints indexing the nodes in the given
-   Kripke structure beginning with index `1`."
-  ([ks phi]
-   (eval-phi ks phi :bool))
-  ([ks phi mode]
+   Returns: boolean or a counterexample if `mode` is `:counterexample`.     
+   The counterexample is a vector of states in the Kripke structure."
+  ([phi ks]
+   (eval-phi phi ks :bool))
+  ([phi ks mode]
    (let [ba1 (ba/ks->ba ks)
          ba2 (ba/ba (list 'not phi))
          bap (hash-map :nodes (vec (nodes ba1 ba2)) 
@@ -66,7 +64,9 @@
          paths (ba/paths bap)]
      (if (= mode :bool)
        (if (empty? paths) true false)
-       (vec (rest (map first (first paths))))))))
+       (let [node-vec (into [:init-3961] (keys (:nodes ks))) ; same as in ba/ks->ba
+             path (map first (first paths))]
+         (mapv #(nth node-vec %) (rest path)))))))
 
 (defn- params-ok?
   "Is the pre condition of `eval-phi` fulfilled?      
@@ -76,7 +76,8 @@
   (set/subset? (atoms-of-phi (:phi params)) (:atoms (:ks params))))
 
 (s/fdef eval-phi
-        :args (s/& (s/alt :2-args (s/cat :ks :lwb.ltl.kripke/model :phi wff?)
-                          :3-args (s/cat :ks :lwb.ltl.kripke/model :phi wff? :mode #{:bool :counter-expl})) #(params-ok? (second %)))
-        :ret (s/alt :bool boolean? :counter-expl (s/coll-of int? :kind vector?)))
+        :args (s/& (s/alt :2-args (s/cat :phi wff? :ks :lwb.ltl.kripke/model)
+                          :3-args (s/cat :phi wff? :ks :lwb.ltl.kripke/model :mode #{:bool :counterexample})) 
+                   #(params-ok? (second %)))
+        :ret (s/alt :bool boolean? :counterexample (s/coll-of keyword? :kind vector?)))
 
