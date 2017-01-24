@@ -10,7 +10,6 @@
   (:require [clojure.test :refer :all]
             [lwb.prop :refer :all]
             [clojure.spec :as s]
-            [clojure.spec.gen :as sgen]
             [clojure.spec.test :as stest]))
 
 
