@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Propositional Logic
 
-; Copyright (c) 2014 - 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2017 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -93,6 +93,10 @@
   [symb]
   (contains? #{'not 'and 'or 'impl 'equiv 'xor 'ite} symb))
 
+(s/fdef op?
+  :args any?
+  :ret  boolean?)
+
 ;; Atoms beginning with `ts` followed by a number are not allowed, since such atoms are generated
 ;; during the Tseitin transformation of a formula
 ;; but nethertheless a symbol beginning with `ts` is well-formed
@@ -101,6 +105,11 @@
   [symb]
   (and (symbol? symb) (not (op? symb))))
 
+(s/fdef atom?
+        :args any?
+        :ret  boolean?)
+
+; -----
 (defn arity
   "Arity of operator `op`.   
    -1 means n-ary.      
@@ -112,11 +121,20 @@
     ('#{ite} op)            3
     ('#{and or} op)        -1))
 
+(s/fdef arity
+        :args (s/cat :op op?)
+        :ret  #{-1 1 2 3})
+
+; -----
 (defn nary?
   "Is `op` nary?"
   [op]
   (= -1 (arity op)))
 
+(s/fdef nary?
+        :args (s/cat :op op?)
+        :ret  boolean?)
+        
 ;; ### Definition of the grammar of propositional logic
 
 ;; A simple expression is an atom or a boolean constant.
@@ -253,7 +271,7 @@
 	    
 	    (let [all-combs (selections [true false] (count atoms))
 	          assign-vecs (for [comb all-combs] (vec (interleave atoms comb)))]
-         {:prop phi
+         {:phi phi
           :header  (conj (vec atoms) :result)
 	        :table   (vec (for [assign-vec assign-vecs]
                           (conj (vec (take-nth 2 (rest assign-vec)))
@@ -270,7 +288,7 @@
                      :2-args (s/cat :phi wff? :mode #{:true-only :false-only}))
         :ret ::truth-table)
 
-(defn print-table
+(defn- print-table
   "Pretty prints vector `header` and vector of vectors `table`.   
    Pre: header and row in the table have the same no of item,
         the size of items in header is >= size of items in the rows."
@@ -300,12 +318,20 @@
     (println prop)
 	  (print-table header table)))
 
+(s/fdef print-truth-table
+        :args (s/cat :tt ::truth-table)
+        :ret  nil?)
+
 (defn ptt
   "Pretty prints truth-table for `phi`."
   [phi]
   (->> phi
        truth-table
        print-truth-table))
+
+(s/fdef ptt
+        :args (s/cat :phi wff?)
+        :ret  nil?)
 
 ;;## Transformation to conjunctive normal form
 
@@ -347,6 +373,10 @@
   [phi]
   (s/valid? ::literal phi))
 
+(s/fdef literal?
+        :args (s/cat :phi wff?)
+        :ret  boolean?)
+
 (defn impl-free 
   "Normalize formula `phi` such that just the operators `not`, `and`, `or` are used."
   [phi]
@@ -357,6 +387,10 @@
         (apply list op (map impl-free (rest phi)))
         (let [exp-phi (macroexpand-1 phi)]
           (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))
+
+(s/fdef impl-free
+        :args (s/cat :phi wff?)
+        :ret  wff?)
 
 (defn nnf
   "Transforms an impl-free formula `phi` into negation normal form."
@@ -370,6 +404,10 @@
           (if (contains? #{'and 'or} second-op)
             (nnf (apply list (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
             (nnf (first second-more))))))))
+
+(s/fdef nnf
+        :args (s/cat :phi wff?)
+        :ret  wff?)
 
 (defn- distr
   "Application of the distributive laws to the given formulae"
@@ -385,14 +423,18 @@
   ([phi-1 phi-2 & more]
     (reduce distr (distr phi-1 phi-2) more)))
 
-(defn nnf2cnf 
+(defn nnf->cnf 
   "Transforms the formula `phi` from nnf to cnf."
   [phi]
   (cond
     (literal? phi) (list 'and (list 'or phi))
     (= '(or) phi) '(and (or))
-    (= 'and (first phi)) (apply list 'and (map nnf2cnf (rest phi)))
-    (= 'or (first phi)) (apply distr (map nnf2cnf (rest phi)))))
+    (= 'and (first phi)) (apply list 'and (map nnf->cnf (rest phi)))
+    (= 'or (first phi)) (apply distr (map nnf->cnf (rest phi)))))
+
+(s/fdef nnf->cnf
+        :args (s/cat :phi wff?)
+        :ret  wff?)
 
 (defn flatten-ops
   "Flattens the formula `phi`.      
@@ -410,7 +452,11 @@
 					             sub-phi))]
         (postwalk flat-step phi)))
 
-(defn- clause2sets
+(s/fdef flatten-ops
+        :args (s/cat :phi wff?)
+        :ret  wff?)
+
+(defn- clause->sets
   "Transforms a clause `(or ...)` into a map of the sets of `:pos` atoms 
    and `:neg` atoms in the clause."
   [cl]
@@ -437,10 +483,10 @@
       (let [pos' (filter #(not= 'false %) pos), neg' (filter #(not= 'true %) neg)]
         (conj (apply list (concat (apply list pos') (map #(list 'not %) neg'))) 'or))))
 
-(defn red-cnf
+(defn- red-cnf
   "Reduces a formula `ucnf` of the form `(and (or ...) (or ...) ...)`."
   [ucnf]
-  (let [result (filter #(not= 'true %) (map #(red-clmap (clause2sets %)) (rest ucnf)))]
+  (let [result (filter #(not= 'true %) (map #(red-clmap (clause->sets %)) (rest ucnf)))]
     (cond
       (some #{'(or)} result) false
       (empty? result) true
@@ -449,7 +495,7 @@
 (defn cnf
   "Transforms `phi` to (standardized) conjunctive normal form cnf."
   [phi]
-  (-> phi impl-free nnf nnf2cnf flatten-ops red-cnf))
+  (-> phi impl-free nnf nnf->cnf flatten-ops red-cnf))
 
 ;; Specification of function `cnf`
 ;; `:ret` is in cnf and equivalent to the argument `:phi`.
@@ -539,4 +585,10 @@
    (vis/texify phi))
   ([phi filename]
    (vis/texify phi filename)))
+
+(s/fdef texify
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :filename string?))
+        :ret  nil?)
+
 
