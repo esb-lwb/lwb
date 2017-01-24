@@ -98,7 +98,7 @@
 (eval-phi '(not (finally P)) ks3 :counterexample)
 ; => [:s_0 :s_1 :s_1 :s_1]
 
-; Microwave oven example from Clarke et aL Model Checking p.39
+; Microwave oven example from Clarke et al Model Checking p.39
 (def oven {:atoms  '#{Start Close Heat Error}
            :nodes  {:s_1 '#{}
                     :s_2 '#{Start Error}
@@ -132,7 +132,7 @@
 ; => true
 
 ; p.47
-; Whenever an illegal sequence of steps accors, the oven will never heat or will eventually reset
+; Whenever an illegal sequence of steps occurs, the oven will never heat or will eventually reset
 (eval-phi '(impl (always (and (not Close) Start)) (or (always (not Heat)) (finally (not Error)))) oven)
 ; => true
 

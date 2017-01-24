@@ -212,7 +212,6 @@
 (deftest literal?-test
   (is (= true (literal? 'true)))
   (is (= true (literal? 'p)))
-  (is (thrown? Exception (literal? '(P Q))))
   (is (= true (literal? '(not q))))
   (is (= false (literal? '(and p q))))
   (is (= false (literal? '(and)))))

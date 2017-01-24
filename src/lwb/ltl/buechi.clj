@@ -1,14 +1,16 @@
 ; lwb Logic WorkBench -- Linear Temporal Logic: Büchi automaton
 
-; Copyright (c) 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2016 - 2017 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
 (ns lwb.ltl.buechi
-  (:require [lwb.ltl :refer :all]
-            [clojure.spec :as s])
+  (:require [lwb.ltl :refer [atom? literal? ite equiv xor arity wff?]]
+            [clojure.spec :as s]
+            [clojure.string :as str]
+            [clojure.java.shell :as shell])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
            (gov.nasa.ltl.graph Graph Node Edge Guard Literal Attributes)
            (java.util Collection)))
@@ -275,52 +277,5 @@
 (s/fdef ks->ba
         :args (s/cat :ks :lwb.ltl.kripke/model)
         :ret ::ba)
-
-;; ### Helper functions that construct objects for LTL2Buchi
-
-(defn- make-Literal
-  "Makes a Literal object from `P` or `(not P)` for an atom `P`.     
-   Requires: `literal` has that from."
-  [literal]
-  (if (list? literal) (Literal. (name (second literal)) true)
-                      (Literal. (name literal) false)))
-
-(defn- make-Guard
-  "Makes a Guard object from a set of literals."
-  [literals]
-  (let [g (new Guard)
-        literals (if (= literals true) #{} literals)]
-    (.addAll g ^Collection (mapv make-Literal literals))
-    g))
-
-(defn- make-Nodes-vec
-  "Makes a vector of Node object from `ba` for the given Graph `g`."
-  [^Graph g ba]
-  (let [nodes-map (sort-by :id (:nodes ba))
-        make-Node (fn [^Graph g node] (if (:accepting node)
-                                 (let [a (doto (Attributes.)
-                                    (.setBoolean "accepting" true))]
-                                  (Node. g a))
-                                 (Node. g)))]
-    (mapv #(make-Node g %) nodes-map )))
-
-(defn- make-Edge
-  "Makes an Edge object for an edge from `from` to `to` with guard `guard`.     
-   Needs a vector `Node-vec` with the Node object of the graph."
-  [Nodes-vec {:keys [from to guard]}]
-  (Edge. (nth Nodes-vec from) (nth Nodes-vec to) (make-Guard guard)))
-
-
-(defn ba->Graph
-  "From a Büchi automaton as a Clojure data structure a
-  corresponding object of type Graph of LTL2Buchi is build."
-  [ba]
-  (let [graph (Graph.)
-        nodes (make-Nodes-vec graph ba)]
-    (.setInit graph (nth nodes (init-id ba)))
-    (mapv #(make-Edge nodes %) (:edges ba))
-    graph))
-
-
 
 

@@ -64,8 +64,8 @@
 (valid? '(equiv (and (not phi) (not psi)) (not (or phi psi))))
 ; => true
 
-(valid? `(~'equiv ~phi5 ~'(not (or phi psi))))
-; =>
+(valid? (list 'equiv phi5 '(not (or phi psi))))
+; => true
 
 ;; Exercise 2.5 from Volkar Halbach's Exercises Booklet
 

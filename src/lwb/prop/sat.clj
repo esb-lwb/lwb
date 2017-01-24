@@ -12,9 +12,10 @@
             [clojure.string :refer (starts-with?)]
             [clojure.zip :as z]
             [clojure.spec :as s])
-  (:import  (org.sat4j.minisat SolverFactory)
-            (org.sat4j.core VecInt)
-            (org.sat4j.specs ContradictionException)))
+  (:import (org.sat4j.minisat SolverFactory)
+           (org.sat4j.core VecInt)
+           (org.sat4j.specs ContradictionException)
+           (clojure.lang LazySeq)))
 
 ;; # Satisfiability in propositional logic
 
@@ -158,7 +159,13 @@
     (atom? phi) (list 'and (list 'or phi))
     ; actual transformation
     :else
-		  (let [parts (map cnf (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi)))))]
+		  (let [branches (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi))))
+            ; a hack to get rid of lazy seqs
+            non-lazy-branches (clojure.walk/postwalk (fn [node]
+                                                 (if (instance? LazySeq node)
+                                                   (apply list node)
+                                                   node)) branches )
+            parts (map cnf non-lazy-branches)]
 		    (flatten-ops (cons 'and (cons '(and (or ts1)) parts))))))
 
 (s/fdef tseitin
