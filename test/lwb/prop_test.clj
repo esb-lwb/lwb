@@ -13,20 +13,7 @@
             [clojure.spec.test :as stest]))
 
 
-(stest/instrument `op?)
-(stest/instrument `atom?)
-(stest/instrument `arity)
-(stest/instrument `nary?)
-(stest/instrument `wff?)
-(stest/instrument `eval-phi)
-(stest/instrument `truth-table)
-(stest/instrument `literal?)
-(stest/instrument `impl-free)
-(stest/instrument `nnf)
-(stest/instrument `cnf)
-(stest/instrument `cnf?)
-(stest/instrument `dnf)
-(stest/instrument `dnf?)
+(stest/instrument)
 
 ; Operators -----------------------------------------------------------
 

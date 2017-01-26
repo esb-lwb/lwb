@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Propositional Logic, tests
 
-; Copyright (c) 2014 - 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2017 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -10,21 +10,37 @@
   (:require [clojure.test :refer :all]
             [lwb.prop :refer :all]
             [lwb.prop.sat :refer :all]
-            [clojure.spec :as s]))
+            [clojure.spec :as s]
+            [clojure.spec.test :as stest]))
+
+(stest/instrument)
 
 ; dimacs --------------------------------------------------------------
 
-(deftest cnf2dimacs-test
-  (is (= true (s/valid? :lwb.prop.sat/dimacs (cnf2dimacs '(and (or P Q) (or (not Q) R))))))
-  (is (= true (s/valid? :lwb.prop.sat/dimacs (cnf2dimacs '(and (or P Q) (or (not Q) R) (or (not T) (not R) S))))))
+(deftest cl->dimacs-test
+  (is (= #{1 2} (#'lwb.prop.sat/cl->dimacs '(or P Q) '{P 1 Q 2})))
+  (is (= #{-1 2} (#'lwb.prop.sat/cl->dimacs '(or (not P) Q) '{P 1 Q 2})))
+  (is (= #{-1 -2} (#'lwb.prop.sat/cl->dimacs '(or (not P) (not Q)) '{P 1 Q 2})))
   )
 
+(deftest cnf->dimacs-test
+  (is (= true (s/valid? :lwb.prop.sat/dimacs (cnf->dimacs '(and (or P Q) (or (not Q) R))))))
+  (is (= {:formula '(and (or P Q) (or (not Q) R)), :num-atoms 3, :int-atoms '{1 P, 2 Q, 3 R}, :num-cl 2, :cl-set #{#{1 2} #{-2 3}}}
+         (cnf->dimacs '(and (or P Q) (or (not Q) R)))))
+  (is (= true (s/valid? :lwb.prop.sat/dimacs (cnf->dimacs '(and (or P Q) (or (not Q) R) (or (not T) (not R) S))))))
+  (is (= {:formula   '(and (or P Q) (or (not Q) R) (or (not T) (not R) S)),
+          :num-atoms 5,
+          :int-atoms '{1 P, 2 Q, 3 R, 4 S, 5 T},
+          :num-cl    3,
+          :cl-set    #{#{4 -3 -5} #{1 2} #{-2 3}}}
+         (cnf->dimacs '(and (or P Q) (or (not Q) R) (or (not T) (not R) S)))))
+  )
 
 ; sat4j ---------------------------------------------------------------
 
 (deftest sat4j-solve-test
-  (is (= true (s/valid? :lwb.prop/model (sat4j-solve (cnf2dimacs '(and (or P Q) (or (not Q) R)))))))
-  (is (= true (s/valid? nil? (sat4j-solve (cnf2dimacs '(and (or P) (or (not P))))))))
+  (is (= true (s/valid? :lwb.prop/model (sat4j-solve (cnf->dimacs '(and (or P Q) (or (not Q) R)))))))
+  (is (= true (s/valid? nil? (sat4j-solve (cnf->dimacs '(and (or P) (or (not P))))))))
   )
 
 ; tseitin -------------------------------------------------------------
