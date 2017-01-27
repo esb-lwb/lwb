@@ -2895,19 +2895,23 @@ singleton.</p>
      (try ~@body
           (catch Exception e# (str &quot;caught: &quot; (.getMessage e#)))
           (finally (.done ^JFactory (~binding 0))))))</pre></td></tr><tr><td class="docs"><p>Initializing the JFactory <br />
-   (init-bddf :small)   inits the JFactory for small formulae, <br />
-   (init-bddf :medsize) inits the JFactory for medium size formulae, <br />
-   (init-bddf :large)   inits the JFactory for large formulae, <br />
-   (init-bddf nodesize cachesize) inits the JFactory <br />
+   <code>(init-bddf :small)</code>   inits the JFactory for small formulae, <br />
+   <code>(init-bddf :medsize)</code> inits the JFactory for medium size formulae, <br />
+   <code>(init-bddf :large)</code>   inits the JFactory for large formulae, <br />
+   <code>(init-bddf nodesize cachesize)</code> inits the JFactory <br />
    Typical values according to the documentation of bdd_init of BuDDy.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn init-bddf
-  ([type]
-   (case type
+  ([size]
+   (case size
      :small (init-bddf 10000 1000)
      :medsize (init-bddf 100000 10000)
      (init-bddf 1000000 100000)))
   ([nodesize cachesize]
-   (JFactory/init nodesize cachesize)))</pre></td></tr><tr><td class="docs"><p>The JavaBDD Factory <code>bddf</code> returns a map of BDD objects for each atom of formula <code>phi</code>.
+   (JFactory/init nodesize cachesize)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef init-bddf
+        :args (s/alt :1-args (s/cat :size #{:small :medsize :large})
+                     :2-args (s/cat :nodesize int? :cachesize int?))
+        :ret #(instance? JFactory %))</pre></td></tr><tr><td class="docs"><p>The JavaBDD Factory <code>bddf</code> returns a map of BDD objects for each atom of formula <code>phi</code>.
    Since atoms-of-phi gives the atoms in alphabetic order, the index of the atom in the
    factory is according to the alphabetic position.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- atoms-as-bddis
@@ -2945,7 +2949,10 @@ singleton.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn build-bddi
   [bddf phi]
   (let [atom-map (atoms-as-bddis bddf phi)]
-    (build-bddi-recur bddf atom-map phi)))</pre></td></tr><tr><td class="docs"><p>From the internal data structure of a binary decision diagram, we
+    (build-bddi-recur bddf atom-map phi)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef build-bddi
+        :args (s/cat :bddf #(instance? JFactory %) :phi prop/wff?)
+        :ret  #(instance? BDD %) )</pre></td></tr><tr><td class="docs"><p>From the internal data structure of a binary decision diagram, we
 build a Clojure data structure representing the bdd.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The bdd is a vector of nodes, each node has a unique identifiying <code>no</code>,
 the symbol for the <code>atom</code> of the node, as well as the number of the
@@ -2953,9 +2960,11 @@ child in the false branch <code>lo-no</code>and the number of the child in the
 true branch <code>hi-no</code>.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We have two special nodes for the sinks.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Definition of a Node in the representation of the bdd</p>
-</td><td class="codes"><pre class="brush: clojure">(defrecord Node [no atom lo-no hi-no])</pre></td></tr><tr><td class="docs"><p>Nodes for verum and falsum</p>
+</td><td class="codes"><pre class="brush: clojure">(defrecord Node [no atom lo-no hi-no])
+(defn node? [x] (instance? Node x))</pre></td></tr><tr><td class="docs"><p>Nodes for verum and falsum</p>
 </td><td class="codes"><pre class="brush: clojure">(def ^:private false-node (Node. 0 'false 0 0))
-(def ^:private true-node (Node. 1 'true 1 1))</pre></td></tr><tr><td class="docs"><p>While building the vector of nodes for a bddi we use a map </p>
+(def ^:private true-node (Node. 1 'true 1 1))</pre></td></tr><tr><td class="docs"><p>Representation of a binary decision diagram in Clojure: a vector of Nodes</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::bdd (s/coll-of node? :kind vector?))</pre></td></tr><tr><td class="docs"><p>While building the vector of nodes for a bddi we use a map </p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The map with the two sinks</p>
 </td><td class="codes"><pre class="brush: clojure">(def ^:private base-map {'false false-node 'true true-node})</pre></td></tr><tr><td class="docs"><p>Has the entry with key already been visited?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- visited?
@@ -3003,7 +3012,10 @@ true branch <code>hi-no</code>.</p>
   (cond
     (.isZero ^BDD bddi) [(Node. 0 'false 0 0)]
     (.isOne ^BDD bddi) [(Node. 1 'true 1 1)]
-    :else (vec (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))</pre></td></tr><tr><td class="docs"><p>gives a JFactory based on the number of the variables in the
+    :else (vec (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef build-bdd
+        :args (s/cat :bddi #(instance? BDD %))
+        :ret  ::bdd)</pre></td></tr><tr><td class="docs"><p>gives a JFactory based on the number of the variables in the
    formula <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn reasonable-bddf
   [phi]
@@ -3011,7 +3023,10 @@ true branch <code>hi-no</code>.</p>
     (cond
       (&lt; c 20) (init-bddf :small)
       (&lt; c 50) (init-bddf :medsize)
-      :else (init-bddf :large))))</pre></td></tr><tr><td class="docs"><p>A vector of nodes for the formula <code>phi</code> and the corresponding vector of nodes
+      :else (init-bddf :large))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef reasonable-bddf
+        :args (s/cat :phi prop/wff?)
+        :ret  #(instance? JFactory %))</pre></td></tr><tr><td class="docs"><p>A vector of nodes for the formula <code>phi</code> and the corresponding vector of nodes
    with the internal numbering of atoms where these are replaced by the symbols for
    the atoms.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- syms-for-atoms
@@ -3031,11 +3046,12 @@ true branch <code>hi-no</code>.</p>
   [phi]
   (with-bddf [bddf (reasonable-bddf phi)]
              (let [bddi (build-bddi bddf phi)]
-               (syms-for-atoms phi (build-bdd bddi)))))</pre></td></tr><tr><td class="docs"><p>Representation of a binary decision diagram in Clojure: a vector of Nodes</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::bdd (s/coll-of #(instance? Node %)))</pre></td></tr><tr><td class="docs">
+               (syms-for-atoms phi (build-bdd bddi)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef bdd
         :args (s/cat :phi prop/wff?)
-        :ret ::bdd)</pre></td></tr><tr><td class="docs"><p>Transforms byte vector result from AllSatIterator to get an assignment vector</p>
+        :ret ::bdd)</pre></td></tr><tr><td class="docs"><h2>Satisfiability via bdd</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><h3>Helper functions</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Transforms byte vector result from AllSatIterator to get an assignment vector</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- tf1-vec
   [phi bvec]
   (let [atom-vec (vec (prop/atoms-of-phi phi))
@@ -3062,8 +3078,9 @@ true branch <code>hi-no</code>.</p>
   [bvec]
   (let [c (count (filter #(= -1 %) bvec))
         sels (selections [0 1] c)]
-    (map #(tf2-vec bvec %) sels)))</pre></td></tr><tr><td class="docs"><p>Gives a model for <code>phi</code> if the formula is satisfiable, nil if not.
-   If <code>phi</code> is trivially valid, the result is true.
+    (map #(tf2-vec bvec %) sels)))</pre></td></tr><tr><td class="docs"><h3>Satisfiability and validity</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Gives a model for <code>phi</code> if the formula is satisfiable, nil if not. <br />
+   If <code>phi</code> is trivially valid, the result is true. <br />
    Mode <code>:all</code> returns a sequence of all the models.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat
   ([phi]
@@ -3095,7 +3112,9 @@ true branch <code>hi-no</code>.</p>
   (not (sat? (list 'not phi))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef valid?
         :args (s/cat :phi prop/wff?)
-        :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Generates texcode for atoms;
+        :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Visualisation of binary decision diagrams</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><h3>Helper functions for visualisation</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Generates texcode for atoms;
    Since '{' and '}' are a reserved character in Clojure,
    one can use '&lt;' and '>'
    as characters for grouping subscripts e.g.</p>
@@ -3121,7 +3140,10 @@ true branch <code>hi-no</code>.</p>
         dot-head &quot;digraph G {\n&quot;
         dot-tail &quot;}&quot;
         dot-lines (str/join (map dot-line bdd))]
-    (str dot-head dot-lines dot-tail)))</pre></td></tr><tr><td class="docs"><h3>Visualisation with tikz</h3>
+    (str dot-head dot-lines dot-tail)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef dotify
+        :args (s/cat :phi prop/wff?)
+        :ret  nil?)</pre></td></tr><tr><td class="docs"><h3>Visualisation with tikz</h3>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def ^:private tikz-header
   &quot;\\documentclass{standalone}
@@ -3151,7 +3173,11 @@ true branch <code>hi-no</code>.</p>
          tex-file (str filename &quot;.tex&quot;)]
      (spit tex-file tex-code)
      (shell/sh &quot;texi2pdf&quot; tex-file))
-   (shell/sh &quot;open&quot; (str filename &quot;.pdf&quot;))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+   (shell/sh &quot;open&quot; (str filename &quot;.pdf&quot;))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef texify
+        :args (s/alt :1-args (s/cat :phi prop/wff?)
+                     :2-args (s/cat :phi prop/wff? :filename string?))
+        :ret  nil?)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

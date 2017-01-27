@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Propositional Logic - Binary Decision Diagrams
 
-; Copyright (c) 2016 Mathias Gutenbrunner, Jens Lehnhäuser and Burkhardt Renz, THM.
+; Copyright (c) 2016 - 2017 Mathias Gutenbrunner, Jens Lehnhäuser and Burkhardt Renz, THM.
 ; All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
@@ -47,18 +47,23 @@
 ; Initializing the JFactory
 (defn init-bddf
   "Initializing the JFactory      
-   (init-bddf :small)   inits the JFactory for small formulae,    
-   (init-bddf :medsize) inits the JFactory for medium size formulae,    
-   (init-bddf :large)   inits the JFactory for large formulae,    
-   (init-bddf nodesize cachesize) inits the JFactory    
+   `(init-bddf :small)`   inits the JFactory for small formulae,      
+   `(init-bddf :medsize)` inits the JFactory for medium size formulae,    
+   `(init-bddf :large)`   inits the JFactory for large formulae,    
+   `(init-bddf nodesize cachesize)` inits the JFactory    
    Typical values according to the documentation of bdd_init of BuDDy."
-  ([type]
-   (case type
+  ([size]
+   (case size
      :small (init-bddf 10000 1000)
      :medsize (init-bddf 100000 10000)
      (init-bddf 1000000 100000)))
   ([nodesize cachesize]
    (JFactory/init nodesize cachesize)))
+
+(s/fdef init-bddf
+        :args (s/alt :1-args (s/cat :size #{:small :medsize :large})
+                     :2-args (s/cat :nodesize int? :cachesize int?))
+        :ret #(instance? JFactory %))
 
 (defn- atoms-as-bddis
   "The JavaBDD Factory `bddf` returns a map of BDD objects for each atom of formula `phi`.
@@ -106,6 +111,10 @@
   (let [atom-map (atoms-as-bddis bddf phi)]
     (build-bddi-recur bddf atom-map phi)))
 
+(s/fdef build-bddi
+        :args (s/cat :bddf #(instance? JFactory %) :phi prop/wff?)
+        :ret  #(instance? BDD %) )
+
 ;; From the internal data structure of a binary decision diagram, we
 ;; build a Clojure data structure representing the bdd.
 
@@ -118,10 +127,14 @@
 
 ;; Definition of a Node in the representation of the bdd
 (defrecord Node [no atom lo-no hi-no])
+(defn node? [x] (instance? Node x))
 
 ;; Nodes for verum and falsum
 (def ^:private false-node (Node. 0 'false 0 0))
 (def ^:private true-node (Node. 1 'true 1 1))
+
+;; Representation of a binary decision diagram in Clojure: a vector of Nodes
+(s/def ::bdd (s/coll-of node? :kind vector?))
 
 ;; While building the vector of nodes for a bddi we use a map 
 
@@ -185,6 +198,10 @@
     (.isOne ^BDD bddi) [(Node. 1 'true 1 1)]
     :else (vec (vals (persistent! (build-bdd-recur bddi (transient base-map)))))))
 
+(s/fdef build-bdd
+        :args (s/cat :bddi #(instance? BDD %))
+        :ret  ::bdd)
+
 (defn reasonable-bddf
   "gives a JFactory based on the number of the variables in the
    formula `phi`."
@@ -194,6 +211,10 @@
       (< c 20) (init-bddf :small)
       (< c 50) (init-bddf :medsize)
       :else (init-bddf :large))))
+
+(s/fdef reasonable-bddf
+        :args (s/cat :phi prop/wff?)
+        :ret  #(instance? JFactory %))
 
 (defn- syms-for-atoms
   "A vector of nodes for the formula `phi` and the corresponding vector of nodes
@@ -220,13 +241,13 @@
              (let [bddi (build-bddi bddf phi)]
                (syms-for-atoms phi (build-bdd bddi)))))
 
-
-;; Representation of a binary decision diagram in Clojure: a vector of Nodes
-(s/def ::bdd (s/coll-of #(instance? Node %)))
-
 (s/fdef bdd
         :args (s/cat :phi prop/wff?)
         :ret ::bdd)
+
+;; ## Satisfiability via bdd
+
+;; ### Helper functions
 
 (defn- tf1-vec
   "Transforms byte vector result from AllSatIterator to get an assignment vector"
@@ -263,9 +284,11 @@
         sels (selections [0 1] c)]
     (map #(tf2-vec bvec %) sels)))
 
+;; ### Satisfiability and validity
+
 (defn sat
-  "Gives a model for `phi` if the formula is satisfiable, nil if not.
-   If `phi` is trivially valid, the result is true.
+  "Gives a model for `phi` if the formula is satisfiable, nil if not.     
+   If `phi` is trivially valid, the result is true.       
    Mode `:all` returns a sequence of all the models."
   ([phi]
    (sat phi :one))
@@ -305,7 +328,9 @@
         :args (s/cat :phi prop/wff?)
         :ret boolean?)
 
-; helper functions for visualisation
+;; ## Visualisation of binary decision diagrams
+
+;; ### Helper functions for visualisation
 
 (defn- process-atom
   "Generates texcode for atoms;
@@ -340,6 +365,9 @@
         dot-lines (str/join (map dot-line bdd))]
     (str dot-head dot-lines dot-tail)))
 
+(s/fdef dotify
+        :args (s/cat :phi prop/wff?)
+        :ret  nil?)
 
 ;; ### Visualisation with tikz
 
@@ -375,3 +403,9 @@
      (spit tex-file tex-code)
      (shell/sh "texi2pdf" tex-file))
    (shell/sh "open" (str filename ".pdf"))))
+
+(s/fdef texify
+        :args (s/alt :1-args (s/cat :phi prop/wff?)
+                     :2-args (s/cat :phi prop/wff? :filename string?))
+        :ret  nil?)
+
