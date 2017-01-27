@@ -7,24 +7,23 @@
 ; the terms of this license.
 
 (ns lwb.ltl.examples.buechi
-  (:require [lwb.ltl.buechi :refer :all]
-            [clojure.spec :as s]
-            [clojure.java.io :as io])
+  (:require [lwb.ltl.buechi :refer :all])
   (:import (gov.nasa.ltl.graphio Writer Writer$Format)
            (java.io PrintStream StringReader StringWriter ByteArrayOutputStream)
            (javax.xml.transform.stream StreamSource StreamResult)
-           (javax.xml.transform TransformerFactory OutputKeys)))
+           (javax.xml.transform TransformerFactory OutputKeys)
+           (gov.nasa.ltl.graph Graph)))
 
 ;; Output of Graph from LTL2Buchi in Format SM
 
 (defn sm-write
   ([graph]
   (let [writer (Writer/getWriter Writer$Format/SM System/out)]
-    (.write writer graph)))
+    (.write writer ^Graph graph)))
   ([graph filename]
-   (let [printstream (PrintStream. filename)
+   (let [printstream (PrintStream. ^String filename)
          writer (Writer/getWriter Writer$Format/SM printstream)]
-     (.write writer graph)))
+     (.write writer ^Graph graph)))
   )
 
 ;; Output of Graph from LTL2Buchi in Format XML
@@ -51,7 +50,7 @@
   (let [baos (ByteArrayOutputStream.)
         ps   (PrintStream. baos)
         writer (Writer/getWriter Writer$Format/XML ps)]
-    (.write writer graph)
+    (.write writer ^Graph graph)
     (-> (String. (.toByteArray baos))
         ppxml
         println)))
