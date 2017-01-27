@@ -57,28 +57,32 @@
         println)))
 
 
-(def o02 '(and P Q))
-(def g02 (translate o02))
-(xml-write g02)
-(sm-write g02)
+(comment
+  (def b1 (translate '(and P Q)))
+  (xml-write b1)
+  (sm-write b1)
 
-(paths (ba o02))
-(paths (ba '(always P)))
+  (def b2 (translate '(or P Q)))
+  (xml-write b2)
+  (sm-write b2)
 
-(def o03 '(or P Q))
-(def g03 (translate o03))
-(xml-write g03)
+  (def b3 (translate '(always P)))
+  (xml-write b3)
+  (sm-write b3)
 
-(paths (ba o03))
+  (def b4 (translate '(and (until P Q) (atnext (not P)))))
+  (xml-write b4)
+  (sm-write b4)
 
-(def ba12  (translate '(and (until P Q) (atnext (not P)))))
-(sm-write ba12)
-(def ba12  (ba '(and (until P Q) (atnext (not P)))))
-ba12
-
-(def g12 (ba->Graph ba12))
-
-(sm-write g12)
+  (def b5 (translate '(impl (always P) (atnext P))))
+  (xml-write b5)
+  (sm-write b5)
+  
+  ; empty graph
+  (def b6 (translate '(not (impl (always P) (atnext P)))))
+  (xml-write b6)
+  (sm-write b6)
+  )
 
 
 
