@@ -2869,8 +2869,11 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.prop.cardinality
   (:require [lwb.prop :refer :all]
             [clojure.math.combinatorics :refer (combinations)]
-            [clojure.spec :as s]))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::acoll (s/coll-of atom?))</pre></td></tr><tr><td class="docs"><p>(min-kof k acoll) -> a seq of clauses expressing that 
+            [clojure.spec :as s]))</pre></td></tr><tr><td class="docs"><h1>Cardinality constraints in propositional logic</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The functions are returning sequences of clauses of the form <code>(or literal1 literal2 ...)</code>
+expressing cardinality constraints for the given collection of atoms</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def ::acoll (s/coll-of atom?))</pre></td></tr><tr><td class="docs"><p><code>(min-kof k acoll)</code> -> a seq of clauses expressing that 
    at least k of the symbols in acoll are true.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn min-kof
   [k acoll]
@@ -2878,7 +2881,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (map #(apply list 'or %) (combinations acoll (inc (- (count acoll) k)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef min-kof
         :args (s/cat :k int? :acoll ::acoll)
-        :ret (s/* :lwb.prop/clause))</pre></td></tr><tr><td class="docs"><p>(max-kof k acoll) -> a seq of clauses expressing that 
+        :ret (s/* :lwb.prop/clause))</pre></td></tr><tr><td class="docs"><p><code>(max-kof k acoll)</code> -> a seq of clauses expressing that 
    at most k of the symbols in acoll are true.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn max-kof
   [k acoll]
@@ -2889,7 +2892,7 @@ net.brehaut.ClojureTools = (function (SH) {
     (apply list 'or (map #(list 'not %) s))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef max-kof
         :args (s/cat :k int? :acoll ::acoll)
-        :ret (s/* :lwb.prop/clause))</pre></td></tr><tr><td class="docs"><p>(kof k acoll) -> a seq of clauses expressing that
+        :ret (s/* :lwb.prop/clause))</pre></td></tr><tr><td class="docs"><p><code>(kof k acoll)</code> -> a seq of clauses expressing that
    exactly k of the symbols in acoll are true.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn kof
   [k acoll]
@@ -2899,12 +2902,12 @@ net.brehaut.ClojureTools = (function (SH) {
     (concat (min-kof k acoll) (max-kof k acoll))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef kof
         :args (s/cat :k int? :acoll ::acoll)
-        :ret (s/* :lwb.prop/clause))</pre></td></tr><tr><td class="docs"><p>(oneof acoll) -> a seq of clauses expressing that
+        :ret (s/* :lwb.prop/clause))</pre></td></tr><tr><td class="docs"><p><code>(oneof acoll)</code> -> a seq of clauses expressing that
    exactly 1 symbol in acoll is true.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn oneof
   [acoll]
   (if (empty? acoll)
-    false
+    nil
     (kof 1 acoll)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef oneof
         :args (s/cat :acoll ::acoll)

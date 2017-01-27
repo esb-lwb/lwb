@@ -2871,10 +2871,12 @@ net.brehaut.ClojureTools = (function (SH) {
             [clojure.set :refer (map-invert)]
             [clojure.string :refer (starts-with?)]
             [clojure.zip :as z]
-            [clojure.spec :as s])
-  (:import  (org.sat4j.minisat SolverFactory)
-            (org.sat4j.core VecInt)
-            (org.sat4j.specs ContradictionException)))</pre></td></tr><tr><td class="docs"><h1>Satisfiability in propositional logic</h1>
+            [clojure.spec :as s]
+            [clojure.walk :as walk])
+  (:import (org.sat4j.minisat SolverFactory)
+           (org.sat4j.core VecInt)
+           (org.sat4j.specs ContradictionException)
+           (clojure.lang LazySeq)))</pre></td></tr><tr><td class="docs"><h1>Satisfiability in propositional logic</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><h2>Transformation of a formula in cnf to dimacs format</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A formula in dimacs format is organized as a map with the
 following entries:</p>
@@ -2882,33 +2884,35 @@ following entries:</p>
 <li><code>:formula</code>    the formula in cnf</li>
 <li><code>:num-atoms</code>  the number of atoms in the formula</li>
 <li><code>:int-atoms</code>  the mapping of integers in dimacs to the atoms</li>
+<li><code>:num-cl</code>     the number of clauses</li>
 <li><code>:cl-set</code>     the set of clauses encoded with the integers</li>
 </ul>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::formula :lwb.prop/cnf)
+</td><td class="codes"><pre class="brush: clojure">(s/def ::formula   :lwb.prop/cnf)
 (s/def ::num-atoms pos-int?)
 (s/def ::int-atoms (s/map-of pos-int? atom?))
-(s/def ::cl-set (s/coll-of set? :kind set? ))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::dimacs (s/keys :req-un [::formula ::num-atoms ::int-atoms ::cl-set]))</pre></td></tr><tr><td class="docs"><p>Remark: obviously there are more constraints not yet expressed in this spec</p>
+(s/def ::num-cl    pos-int?)
+(s/def ::cl-set    (s/coll-of set? :kind set? ))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/def ::dimacs (s/keys :req-un [::formula ::num-atoms ::int-atoms ::num-cl ::cl-set]))</pre></td></tr><tr><td class="docs"><p>Remark: obviously there are more constraints not yet expressed in this spec</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Transforms a clause <code>cl</code> of the form <code>(or literal literal ...)</code> to a set
    of integers according to the mapping <code>atoms-int</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- cl2dimacs
+</td><td class="codes"><pre class="brush: clojure">(defn- cl-&gt;dimacs
   [cl atoms-int]
-  (let [lit2int (fn [literal] 
+  (let [lit-&gt;int (fn [literal] 
                   (if (list? literal) (- ((second literal) atoms-int)) (literal atoms-int)))]
-    (set (map lit2int  (rest cl)))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> in (standardized) cnf to a map with dimacs informations.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn cnf2dimacs
+    (set (map lit-&gt;int  (rest cl)))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> in (standardized) cnf to a map with dimacs informations.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn cnf-&gt;dimacs
   [phi]
   (let [atoms     (atoms-of-phi phi)
         num-atoms (count atoms)
         atoms-int (zipmap atoms (range 1 (inc num-atoms)))
-        cl-set    (set (map #(cl2dimacs % atoms-int) (rest phi)))]
+        cl-set    (set (map #(cl-&gt;dimacs % atoms-int) (rest phi)))]
     {:formula   phi
      :num-atoms num-atoms
      :int-atoms (map-invert atoms-int)
      :num-cl    (count cl-set)
      :cl-set    cl-set}))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef cnf2dimacs
+</td><td class="codes"><pre class="brush: clojure">(s/fdef cnf-&gt;dimacs
         :args (s/cat :phi ::formula)
         :ret ::dimacs)</pre></td></tr><tr><td class="docs"><p>Timeout of Sat4j in seconds.</p>
 
@@ -2917,11 +2921,8 @@ following entries:</p>
   300)</pre></td></tr><tr><td class="docs"><p>Checks whether the formula in <code>dimacs-map</code> is satisfiable. <br />
    Returns nil if not, an assignment vector if it is satisfiable.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat4j-solve
-  [dimacs-map]
+  [{:keys [num-atoms cl-set num-cl int-atoms]}]
   (let [solver     (SolverFactory/newDefault)
-        cl-set     (:cl-set dimacs-map)
-        num-atoms  (:num-atoms dimacs-map)
-        num-cl     (:num-cl dimacs-map)
         make-model (fn [model int-atoms]
                      (vec (flatten 
                             (map #(if (pos? %) 
@@ -2933,7 +2934,7 @@ following entries:</p>
       (.setExpectedNumberOfClauses solver num-cl)
       (dorun (map #(.addClause solver (VecInt. (int-array %))) cl-set))
       (when (.isSatisfiable solver)
-        (make-model (vec (.model solver)) (:int-atoms dimacs-map)))
+        (make-model (vec (.model solver)) int-atoms))
       (catch ContradictionException _ nil))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat4j-solve
         :args (s/cat :dimacs-map ::dimacs)
@@ -2943,7 +2944,7 @@ a formula which is equivalent with respect to satisfiability.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Prefix for tseitin symbols.</p>
 
 <p>New atoms generated by the Tseitin transformation have the prefix "ts" followed by an int</p>
-</td><td class="codes"><pre class="brush: clojure">(def tseitin-prefix
+</td><td class="codes"><pre class="brush: clojure">(def ^:private tseitin-prefix
   &quot;ts&quot;)</pre></td></tr><tr><td class="docs"><p>A function that generates unique tseitin symbols,
    beginning with <code>ts1</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- tseitin-symbol-generator
@@ -2986,8 +2987,12 @@ a formula which is equivalent with respect to satisfiability.</p>
     (atom? phi) (list 'and (list 'or phi))
     ; actual transformation
     :else
-		  (let [parts (map cnf (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi)))))]
-		    (flatten-ops (cons 'and (cons '(and (or ts1)) parts))))))</pre></td></tr><tr><td class="docs">
+		  (let [branches (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi))))
+            ; a hack to get rid of lazy seqs
+            walk-fn (fn [node] (if (instance? LazySeq node) (apply list node) node))
+            non-lazy-branches (walk/postwalk walk-fn branches)
+            parts (apply list (map cnf non-lazy-branches))]
+        (walk/postwalk walk-fn (flatten-ops (into (conj parts '(and (or ts1))) '(and)))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef tseitin
         :args (s/cat :phi wff?)
         :ret :lwb.prop/cnf)</pre></td></tr><tr><td class="docs"><p>Removes the tseitin-symbols and their value from a model.</p>
@@ -3022,7 +3027,7 @@ a formula which is equivalent with respect to satisfiability.</p>
 		               (recur (list 'and (model2negated-cnf sol) f) (conj results sol)))))
 	       ; default
 		       (let [tcnf   (if (cnf? phi) phi (tseitin phi))
-		             dimacs (cnf2dimacs tcnf)
+		             dimacs (cnf-&gt;dimacs tcnf)
 		             res    (sat4j-solve dimacs)]
 		         (when res
 		           (remove-tseitin-symbols res)))))))</pre></td></tr><tr><td class="docs">

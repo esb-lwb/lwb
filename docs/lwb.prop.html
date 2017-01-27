@@ -2930,14 +2930,20 @@ atoms, operators and parentheses that conforms to the grammar of propositional l
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>symb</code> an operator of propositional logic?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn op?
   [symb]
-  (contains? #{'not 'and 'or 'impl 'equiv 'xor 'ite} symb))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> an atomar proposition?</p>
+  (contains? #{'not 'and 'or 'impl 'equiv 'xor 'ite} symb))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef op?
+  :args any?
+  :ret  boolean?)</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> an atomar proposition?</p>
 
 <p>Atoms beginning with <code>ts</code> followed by a number are not allowed, since such atoms are generated
 during the Tseitin transformation of a formula
 but nethertheless a symbol beginning with <code>ts</code> is well-formed</p>
 </td><td class="codes"><pre class="brush: clojure">(defn atom?
   [symb]
-  (and (symbol? symb) (not (op? symb))))</pre></td></tr><tr><td class="docs"><p>Arity of operator <code>op</code>. <br />
+  (and (symbol? symb) (not (op? symb))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef atom?
+        :args any?
+        :ret  boolean?)</pre></td></tr><tr><td class="docs"><p>Arity of operator <code>op</code>. <br />
    -1 means n-ary. <br />
    requires: <code>op</code> an operator.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn arity
@@ -2946,10 +2952,16 @@ but nethertheless a symbol beginning with <code>ts</code> is well-formed</p>
     ('#{not} op)            1
     ('#{impl equiv xor} op) 2
     ('#{ite} op)            3
-    ('#{and or} op)        -1))</pre></td></tr><tr><td class="docs"><p>Is <code>op</code> nary?</p>
+    ('#{and or} op)        -1))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef arity
+        :args (s/cat :op op?)
+        :ret  #{-1 1 2 3})</pre></td></tr><tr><td class="docs"><p>Is <code>op</code> nary?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn nary?
   [op]
-  (= -1 (arity op)))</pre></td></tr><tr><td class="docs"><h3>Definition of the grammar of propositional logic</h3>
+  (= -1 (arity op)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef nary?
+        :args (s/cat :op op?)
+        :ret  boolean?)</pre></td></tr><tr><td class="docs"><h3>Definition of the grammar of propositional logic</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A simple expression is an atom or a boolean constant.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::simple-expr (s/or :bool boolean?
                            :atom atom?))</pre></td></tr><tr><td class="docs"><p>A compound expression is a list of an operator together with
@@ -3051,7 +3063,7 @@ corresponding atom in the header as well as the result of the evaluation.</p>
                     &quot;so you might want to use the SAT solver.&quot;)))
 	    (let [all-combs (selections [true false] (count atoms))
 	          assign-vecs (for [comb all-combs] (vec (interleave atoms comb)))]
-         {:prop phi
+         {:phi phi
           :header  (conj (vec atoms) :result)
 	        :table   (vec (for [assign-vec assign-vecs]
                           (conj (vec (take-nth 2 (rest assign-vec)))
@@ -3068,7 +3080,7 @@ corresponding atom in the header as well as the result of the evaluation.</p>
         :ret ::truth-table)</pre></td></tr><tr><td class="docs"><p>Pretty prints vector <code>header</code> and vector of vectors <code>table</code>. <br />
    Pre: header and row in the table have the same no of item,
         the size of items in header is >= size of items in the rows.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn print-table
+</td><td class="codes"><pre class="brush: clojure">(defn- print-table
   ; inspired from clojure.pprint
   [header table]
   (let [table'  (vec (map #(replace {true &quot;T&quot; false &quot;F&quot;} %) table)) 
@@ -3091,12 +3103,18 @@ corresponding atom in the header as well as the result of the evaluation.</p>
   (do
     (println &quot;Truth table&quot;)
     (println prop)
-	  (print-table header table)))</pre></td></tr><tr><td class="docs"><p>Pretty prints truth-table for <code>phi</code>.</p>
+	  (print-table header table)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef print-truth-table
+        :args (s/cat :tt ::truth-table)
+        :ret  nil?)</pre></td></tr><tr><td class="docs"><p>Pretty prints truth-table for <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn ptt
   [phi]
   (-&gt;&gt; phi
        truth-table
-       print-truth-table))</pre></td></tr><tr><td class="docs"><h2>Transformation to conjunctive normal form</h2>
+       print-truth-table))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef ptt
+        :args (s/cat :phi wff?)
+        :ret  nil?)</pre></td></tr><tr><td class="docs"><h2>Transformation to conjunctive normal form</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><h3>(Standardized) conjunctive normal form</h3>
 
 <p>Conjunctive normal form in lwb is defined as a formula of the form
@@ -3124,7 +3142,10 @@ and as such it has to be a list!</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Checks whether <code>phi</code> is a literal, i.e. a propositional atom or its negation.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn literal?
   [phi]
-  (s/valid? ::literal phi))</pre></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that just the operators <code>not</code>, <code>and</code>, <code>or</code> are used.</p>
+  (s/valid? ::literal phi))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef literal?
+        :args (s/cat :phi wff?)
+        :ret  boolean?)</pre></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that just the operators <code>not</code>, <code>and</code>, <code>or</code> are used.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn impl-free 
   [phi]
   (if (literal? phi)
@@ -3133,7 +3154,10 @@ and as such it has to be a list!</p>
       (if (contains? #{'and 'or 'not} op) 
         (apply list op (map impl-free (rest phi)))
         (let [exp-phi (macroexpand-1 phi)]
-          (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs"><p>Transforms an impl-free formula <code>phi</code> into negation normal form.</p>
+          (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef impl-free
+        :args (s/cat :phi wff?)
+        :ret  wff?)</pre></td></tr><tr><td class="docs"><p>Transforms an impl-free formula <code>phi</code> into negation normal form.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn nnf
   [phi]
   (if (literal? phi) 
@@ -3144,7 +3168,10 @@ and as such it has to be a list!</p>
         (let [[second-op &amp; second-more] (second phi)]
           (if (contains? #{'and 'or} second-op)
             (nnf (apply list (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
-            (nnf (first second-more))))))))</pre></td></tr><tr><td class="docs"><p>Application of the distributive laws to the given formulae</p>
+            (nnf (first second-more))))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef nnf
+        :args (s/cat :phi wff?)
+        :ret  wff?)</pre></td></tr><tr><td class="docs"><p>Application of the distributive laws to the given formulae</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- distr
   ([phi] phi)
   ([phi-1 phi-2]
@@ -3157,13 +3184,16 @@ and as such it has to be a list!</p>
         (list 'or phi-1 phi-2)))
   ([phi-1 phi-2 &amp; more]
     (reduce distr (distr phi-1 phi-2) more)))</pre></td></tr><tr><td class="docs"><p>Transforms the formula <code>phi</code> from nnf to cnf.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn nnf2cnf 
+</td><td class="codes"><pre class="brush: clojure">(defn nnf-&gt;cnf 
   [phi]
   (cond
     (literal? phi) (list 'and (list 'or phi))
     (= '(or) phi) '(and (or))
-    (= 'and (first phi)) (apply list 'and (map nnf2cnf (rest phi)))
-    (= 'or (first phi)) (apply distr (map nnf2cnf (rest phi)))))</pre></td></tr><tr><td class="docs"><p>Flattens the formula <code>phi</code>. <br />
+    (= 'and (first phi)) (apply list 'and (map nnf-&gt;cnf (rest phi)))
+    (= 'or (first phi)) (apply distr (map nnf-&gt;cnf (rest phi)))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef nnf-&gt;cnf
+        :args (s/cat :phi wff?)
+        :ret  wff?)</pre></td></tr><tr><td class="docs"><p>Flattens the formula <code>phi</code>. <br />
    Nested binary applications of n-ary operators will be transformed to the n-ary form,
    e.g. <code>(and (and a b) c) =&gt; (and a b c)</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn flatten-ops
@@ -3177,9 +3207,12 @@ and as such it has to be a list!</p>
 						                not-flat (filter (partial (complement flat-filter) op) args)]
 						            (apply concat `((~op) ~@flat ~not-flat)))
 					             sub-phi))]
-        (postwalk flat-step phi)))</pre></td></tr><tr><td class="docs"><p>Transforms a clause <code>(or ...)</code> into a map of the sets of <code>:pos</code> atoms 
+        (postwalk flat-step phi)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef flatten-ops
+        :args (s/cat :phi wff?)
+        :ret  wff?)</pre></td></tr><tr><td class="docs"><p>Transforms a clause <code>(or ...)</code> into a map of the sets of <code>:pos</code> atoms 
    and <code>:neg</code> atoms in the clause.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- clause2sets
+</td><td class="codes"><pre class="brush: clojure">(defn- clause-&gt;sets
   [cl]
   (apply merge-with union
          (for [literal (rest cl)]
@@ -3200,16 +3233,16 @@ and as such it has to be a list!</p>
     :else
       (let [pos' (filter #(not= 'false %) pos), neg' (filter #(not= 'true %) neg)]
         (conj (apply list (concat (apply list pos') (map #(list 'not %) neg'))) 'or))))</pre></td></tr><tr><td class="docs"><p>Reduces a formula <code>ucnf</code> of the form <code>(and (or ...) (or ...) ...)</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn red-cnf
+</td><td class="codes"><pre class="brush: clojure">(defn- red-cnf
   [ucnf]
-  (let [result (filter #(not= 'true %) (map #(red-clmap (clause2sets %)) (rest ucnf)))]
+  (let [result (filter #(not= 'true %) (map #(red-clmap (clause-&gt;sets %)) (rest ucnf)))]
     (cond
       (some #{'(or)} result) false
       (empty? result) true
       :else (conj (apply list (distinct result)) 'and))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to (standardized) conjunctive normal form cnf.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn cnf
   [phi]
-  (-&gt; phi impl-free nnf nnf2cnf flatten-ops red-cnf))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
+  (-&gt; phi impl-free nnf nnf-&gt;cnf flatten-ops red-cnf))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
 <code>:ret</code> is in cnf and equivalent to the argument <code>:phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef cnf
         :args (s/cat :phi wff?)
@@ -3273,7 +3306,11 @@ and as such it has to be a list!</p>
   ([phi]
    (vis/texify phi))
   ([phi filename]
-   (vis/texify phi filename)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+   (vis/texify phi filename)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef texify
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :filename string?))
+        :ret  nil?)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

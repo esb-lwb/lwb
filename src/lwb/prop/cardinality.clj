@@ -15,12 +15,12 @@
 ;; # Cardinality constraints in propositional logic
 
 ;; The functions are returning sequences of clauses of the form `(or literal1 literal2 ...)`
-;; expressing caridnality constraints for the giveen collection of atoms
+;; expressing cardinality constraints for the given collection of atoms
 
 (s/def ::acoll (s/coll-of atom?))
 
 (defn min-kof
-  "(min-kof k acoll) -> a seq of clauses expressing that 
+  "`(min-kof k acoll)` -> a seq of clauses expressing that 
    at least k of the symbols in acoll are true."
   [k acoll]
   {:pre [(<= 1 k (count acoll))]}
@@ -31,7 +31,7 @@
         :ret (s/* :lwb.prop/clause))
 
 (defn max-kof
-  "(max-kof k acoll) -> a seq of clauses expressing that 
+  "`(max-kof k acoll)` -> a seq of clauses expressing that 
    at most k of the symbols in acoll are true."
   [k acoll]
   {:pre [(<= 0 k (dec (count acoll)))]}
@@ -45,7 +45,7 @@
         :ret (s/* :lwb.prop/clause))
 
 (defn kof
-  "(kof k acoll) -> a seq of clauses expressing that
+  "`(kof k acoll)` -> a seq of clauses expressing that
    exactly k of the symbols in acoll are true."
   [k acoll]
   (condp = k
@@ -58,7 +58,7 @@
         :ret (s/* :lwb.prop/clause))
         
 (defn oneof
-  "(oneof acoll) -> a seq of clauses expressing that
+  "`(oneof acoll)` -> a seq of clauses expressing that
    exactly 1 symbol in acoll is true."
   [acoll]
   (if (empty? acoll)
