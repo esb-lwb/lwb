@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Boolean Cardinality Constraints
 
-; Copyright (c) 2014 - 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2017 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -11,6 +11,11 @@
   (:require [lwb.prop :refer :all]
             [clojure.math.combinatorics :refer (combinations)]
             [clojure.spec :as s]))
+
+;; # Cardinality constraints in propositional logic
+
+;; The functions are returning sequences of clauses of the form `(or literal1 literal2 ...)`
+;; expressing caridnality constraints for the giveen collection of atoms
 
 (s/def ::acoll (s/coll-of atom?))
 
@@ -57,7 +62,7 @@
    exactly 1 symbol in acoll is true."
   [acoll]
   (if (empty? acoll)
-    false
+    nil
     (kof 1 acoll)))
 
 (s/fdef oneof

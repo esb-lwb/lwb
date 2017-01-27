@@ -10,7 +10,10 @@
   (:require [clojure.test :refer :all]
             [lwb.prop :refer :all]
             [lwb.prop.cardinality :refer :all]
-            [clojure.spec :as s]))
+            [clojure.spec :as s]
+            [clojure.spec.test :as stest]))
+
+(stest/instrument)
 
 ; skoll ---------------------------------------------------------------
 
