@@ -61,9 +61,7 @@
   "`(oneof acoll)` -> a seq of clauses expressing that
    exactly 1 symbol in acoll is true."
   [acoll]
-  (if (empty? acoll)
-    nil
-    (kof 1 acoll)))
+  (when-not (empty? acoll) (kof 1 acoll)))
 
 (s/fdef oneof
         :args (s/cat :acoll ::acoll)
