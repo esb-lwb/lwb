@@ -2945,7 +2945,7 @@ but nethertheless a symbol beginning with <code>ts</code> is well-formed</p>
         :args any?
         :ret  boolean?)</pre></td></tr><tr><td class="docs"><p>Arity of operator <code>op</code>. <br />
    -1 means n-ary. <br />
-   requires: <code>op</code> an operator.</p>
+   nil if <code>op</code> is not an operator.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn arity
   [op]
   (cond
@@ -2954,13 +2954,13 @@ but nethertheless a symbol beginning with <code>ts</code> is well-formed</p>
     ('#{ite} op)            3
     ('#{and or} op)        -1))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef arity
-        :args (s/cat :op op?)
+        :args (s/cat :op any?)
         :ret  #{-1 1 2 3})</pre></td></tr><tr><td class="docs"><p>Is <code>op</code> nary?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn nary?
   [op]
   (= -1 (arity op)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef nary?
-        :args (s/cat :op op?)
+        :args (s/cat :op any?)
         :ret  boolean?)</pre></td></tr><tr><td class="docs"><h3>Definition of the grammar of propositional logic</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A simple expression is an atom or a boolean constant.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::simple-expr (s/or :bool boolean?
@@ -3207,12 +3207,12 @@ and as such it has to be a list!</p>
 						                not-flat (filter (partial (complement flat-filter) op) args)]
 						            (apply concat `((~op) ~@flat ~not-flat)))
 					             sub-phi))]
-        (postwalk flat-step phi)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef flatten-ops
-        :args (s/cat :phi wff?)
-        :ret  wff?)</pre></td></tr><tr><td class="docs"><p>Transforms a clause <code>(or ...)</code> into a map of the sets of <code>:pos</code> atoms 
+        (postwalk flat-step phi)))</pre></td></tr><tr><td class="docs"><p>Transforms a clause <code>(or ...)</code> into a map of the sets of <code>:pos</code> atoms 
    and <code>:neg</code> atoms in the clause.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- clause-&gt;sets
+</td><td class="codes"><pre class="brush: clojure">#_(s/fdef flatten-ops
+        :args (s/cat :phi wff?)
+        :ret  wff?)
+(defn- clause-&gt;sets
   [cl]
   (apply merge-with union
          (for [literal (rest cl)]

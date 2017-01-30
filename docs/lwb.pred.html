@@ -2901,7 +2901,7 @@ the values are vectors with type and arity of the element.</p>
 </code></pre>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>defines a signature comprising the constant <code>:c</code>, the binary function <code>f</code>,
 the proposition <code>a</code>, and the unary predicate <code>p</code>.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Constants are represented as keywords in Clojure. Thus it's not necessary
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Constants are represented as keywords or ints in Clojure. Thus it's not necessary
 to declare them in the signature. The declaration in the signature is just
 the documentation, but even an undeclared keyword is recognized and accepted
 in a formula.</p>
@@ -2912,7 +2912,7 @@ in a formula.</p>
   (and (symbol? symb) (= (first ((keyword symb) sig)) type)))</pre></td></tr><tr><td class="docs"><p>Is <code>kw</code> a constant?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn const?
   [kw]
-  (keyword? kw))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> a function in the signature <code>sig</code>?</p>
+  (or (keyword? kw) (int? kw)))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> a function in the signature <code>sig</code>?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn func?
   [symb sig]
   (sig-what :func symb sig))</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> a predicate in the signature <code>sig</code>?</p>
@@ -2955,10 +2955,10 @@ the language.</p>
 Thus we define a dynamic Var for the signature since all checks of
 a formula of the predicate logic have to be done with respect to a
 given signature.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Var for binding a signature for checking formulae of predicate logic</p>
-</td><td class="codes"><pre class="brush: clojure">(def 
-^:dynamic *signature*)</pre></td></tr><tr><td class="docs"><p><strong>Simple terms</strong> are constants, variables or nullary functions.</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::simple-term (s/or :const keyword?
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *signature*
+  &quot;Var for binding a signature for checking formulae of predicate logic&quot;)</pre></td></tr><tr><td class="docs"><p><strong>Simple terms</strong> are constants, variables or nullary functions.</p>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::simple-term (s/or :const const?
                            :logvar #(logvar? % *signature*)
                            :func-0 #(func-0? % *signature*)))</pre></td></tr><tr><td class="docs"><p>Checks arity of operators, functions and predicates.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- arity-ok? 
@@ -2996,8 +2996,8 @@ given signature.</p>
      (let [result (s/valid? ::fml phi)]
        (or result (if (= mode :msg) (s/explain-str ::fml phi) result))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef wff?
-        :args (s/alt :2-args (s/cat :fml ::fml :sig ::signature)
-                     :3-args (s/cat :fml ::fml :sig ::signature :mode #{:bool :msg}))
+        :args (s/alt :2-args (s/cat :fml any? :sig ::signature)
+                     :3-args (s/cat :fml any? :sig ::signature :mode #{:bool :msg}))
         :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Models</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A model is a "world" consisting of a universe, as well as functions and relations 
 on the universe. A model assigns concrete functions and relations to the
@@ -3029,19 +3029,19 @@ the provided relation.</p>
 </code></pre>
 </td><td class="codes"></td></tr><tr><td class="docs"><h3>Specification of models</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>x</code> the definition of a universe?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn univ-def?
+</td><td class="codes"><pre class="brush: clojure">(defn- univ-def?
   [x]
   (set? x))</pre></td></tr><tr><td class="docs"><p>Is <code>[key arity def]</code> the definition of a function?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn func-def?
+</td><td class="codes"><pre class="brush: clojure">(defn- func-def?
   [[key arity def]]
   (and (= key :func) (&gt;= arity 0) (if (pos? arity) (fn? def) true)))</pre></td></tr><tr><td class="docs"><p>Is <code>[key arity def]</code> the definition of a predicate?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn pred-def?
+</td><td class="codes"><pre class="brush: clojure">(defn- pred-def?
   [[key arity def]]
   (and (= key :pred) (&gt;= arity 1) (fn? def) ))</pre></td></tr><tr><td class="docs"><p>Is <code>[key arity def]</code> the definition of a proposition?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn prop-def?
+</td><td class="codes"><pre class="brush: clojure">(defn- prop-def?
   [[key arity def]]
   (and (= key :prop) (zero? arity) (boolean? def) ))</pre></td></tr><tr><td class="docs"><p>Is the universe defined and a set?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn univ-ok?
+</td><td class="codes"><pre class="brush: clojure">(defn- univ-ok?
   [model]
   (and (contains? model :univ) (set? (:univ model))))</pre></td></tr><tr><td class="docs"><p><strong>Specification</strong> of a model in the predicate logic.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::model  (s/and univ-ok? (s/map-of keyword? 
@@ -3085,7 +3085,7 @@ In Clojure the model is used in a let-binding.</p>
     '[p true
       foo (make-adder 2)])
   (my-eval avec'' '(and p (= 7 (foo 5))))
-  ; =&gt; true)</pre></td></tr><tr><td class="docs"><p>Generates a predicate expressing that the parameters to the predicate
+  ; =&gt; true) ; end of remarks</pre></td></tr><tr><td class="docs"><p>Generates a predicate expressing that the parameters to the predicate
    fulfill the given relation.</p>
 </td><td class="codes"><pre class="brush: clojure">(defmacro make-pred
   [rel]
@@ -3118,7 +3118,7 @@ Unfold the variables in quantor expression, e.g. <br />
         right (-&gt; loc zip/down zip/right zip/right zip/node)
         edited-loc (zip/edit loc (fn [_] `(~quantor ~var1-vec (~quantor ~varr-vec ~right))))]
     (-&gt; edited-loc zip/down zip/right)))</pre></td></tr><tr><td class="docs"><p><code>phi</code> with unfolded vars in all quantor expressions.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn unfold-vars
+</td><td class="codes"><pre class="brush: clojure">(defn- unfold-vars
   [phi]
   (if-not (list? phi)
                 phi ;border case
@@ -3160,8 +3160,8 @@ the elements of the universe.</p>
                (if (quant-expr? loc)
                  (expand-quant univ loc)
                  loc))))))</pre></td></tr><tr><td class="docs"><p>Given a universe, <code>phi</code> is transformed into a proposition. <br />
-   phi has to have unfolded vars, i.e. each quantor has exactly 1 var!</p>
-</td><td class="codes"><pre class="brush: clojure">(defn pred2prop
+   Requires: <code>phi</code> has to have unfolded vars, i.e. each quantor has exactly 1 var!</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- pred2prop
   [univ phi]
   (let [phi' (loop [cur phi]
                (if (no-more-quant? cur)
@@ -3175,7 +3175,7 @@ evaluating.</p>
   (if (= keyw :univ)
     ['univ value]
     [(symbol (name keyw)) (nth value 2)]))</pre></td></tr><tr><td class="docs"><p>Makes an assignment vector from the given model</p>
-</td><td class="codes"><pre class="brush: clojure">(defn model2assign-vec
+</td><td class="codes"><pre class="brush: clojure">(defn- model2assign-vec
   [model]
   (vec (mapcat modelmap model)))</pre></td></tr><tr><td class="docs"><p><strong>Finally: the evaluation</strong></p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Evaluates the formula <code>phi</code> with respect to the given 
@@ -3187,7 +3187,7 @@ evaluating.</p>
     (binding [*ns* (find-ns 'lwb.pred)]
       (eval `(let ~assign-vec ~phi')))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef eval-phi
-        :args (s/cat :fml ::fml :model ::model)
+        :args (s/&amp; (s/cat :phi any? :model ::model) (fn [param] (wff? (:phi param) (sig-from-model (:model param)))))
         :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX code for TikZ or a pdf file if filename given. <br />
    Requires: TeX installation, commands texipdf and open</p>
@@ -3195,7 +3195,11 @@ evaluating.</p>
   ([phi]
    (vis/texify phi))
   ([phi filename]
-   (vis/texify phi filename)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+   (vis/texify phi filename)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef texify
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :filename string?))
+        :ret  nil?)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack
