@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic - Substitution
 
-; Copyright (c) 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2016 - 2017 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -8,10 +8,15 @@
 
 (ns lwb.pred.substitution
   (:require [clojure.set :as set]
-            [lwb.pred :refer [const? op? quantor? eq?]]
-            [clojure.zip :as zip]))
+            [lwb.pred :refer [const? op? quantor? eq? wff?]]
+            [clojure.zip :as zip]
+            [clojure.spec :as s]))
 
-(defn vars-in-term
+;; # Substitution in predicate logic
+
+;; ## Helper functions
+
+(defn- vars-in-term
   "Given a term `t` returns the set of variables in `t`.      
    Remark: Since we have no given signature here, we can't distinguish variables and unary functions.     
    requires: `t` is a term without unary functions."
@@ -24,14 +29,14 @@
     (seq-ok? t)    (reduce #(set/union %1 (vars-in-term %2)) #{} (rest t))
     :else          (throw (Exception. (format "Should be a term in a substitution, not: %s" t))))))
 
-(defn bounded?
+(defn- bounded?
   "Is variable `var` bounded in `path`?"
   [path var]
   (let [bounded-vars (reduce #(if (quantor? (first %2))
                                (set (concat %1 (second %2))) %1) #{} path)]
     (contains? bounded-vars var)))
 
-(defn paths-with-free-var
+(defn- paths-with-free-var
   "Returns a vector with all paths in `phi` in which there is a free occurence of `var`."
   [phi var]
   (let [paths (loop [loc (zip/next (zip/seq-zip phi))
@@ -42,14 +47,15 @@
                   :else (recur (zip/next loc) result)))]
     (filterv #(not (bounded? % var)) paths)))
 
-(defn in-scope?
+(defn- in-scope?
   "Is `var1` in the scope of a quantor for `var2` in vector `pathv`?"
   [pathv var1 var2]
   (let [paths-with-var2 (filter #(and (quantor? (first %)) (contains? (set (second %)) var2)) pathv)]
     (some true? (map #(contains? (set (flatten %)) var1) paths-with-var2))))
 
-;; A term `t` for a variable `var` in a formula `phi` iff there is no free `var` that's in the scope
-;; of any of the variables in `t`.     
+;; ## Definition of `freefor?`    
+;; A term `t` is free for a variable `var` in a formula `phi` iff there is no free `var` that's in the scope
+;; of any of the variables in `t`.         
 ;; In other words: In the substitution of `var` by `t` no variable in `t` gets in the scope of a quantor.
 
 (defn freefor? 
@@ -59,6 +65,9 @@
         tvars (set/difference (vars-in-term t) #{var}) ; we don't need to check var itself
         scope? (fn [tvar paths] (map #(in-scope? % var tvar) paths))]
     (not-any? true? (flatten (map #(scope? %1 paths) tvars)))))
+
+;; ## Substitution  
+;; A variable `var` can be substituted by a term `t`, iff the term is free for the variable.
 
 (defn substitution
   "Substitution of variable `var` by term `t` in formaula `phi`."
@@ -72,4 +81,10 @@
              (if (and (= var (zip/node loc)) (not (bounded? (zip/path loc) var)))
                (recur (zip/next (zip/remove (zip/insert-left loc t)))) ; no recursion please
                (recur (zip/next loc)))))))
+
+;; Remark:     
+;; We don't have a signature given, thus we can't use `(wff? phi sig)` here!!
+(s/fdef substitution
+        :args (s/cat :phi list? :var symbol? :term any?)
+        :ret  wff?)
 

@@ -113,7 +113,7 @@
 (defn arity
   "Arity of operator `op`.   
    -1 means n-ary.      
-   requires: `op` an operator."
+   nil if `op` is not an operator."
   [op]
   (cond
     ('#{not} op)            1
@@ -122,7 +122,7 @@
     ('#{and or} op)        -1))
 
 (s/fdef arity
-        :args (s/cat :op op?)
+        :args (s/cat :op any?)
         :ret  #{-1 1 2 3})
 
 ; -----
@@ -132,7 +132,7 @@
   (= -1 (arity op)))
 
 (s/fdef nary?
-        :args (s/cat :op op?)
+        :args (s/cat :op any?)
         :ret  boolean?)
         
 ;; ### Definition of the grammar of propositional logic
@@ -452,7 +452,9 @@
 					             sub-phi))]
         (postwalk flat-step phi)))
 
-(s/fdef flatten-ops
+; Caveat: The function flatten-ops is used for propositional logic and predicate logic
+; Thus the following spec is not possible, since it would fail in predicate logic
+#_(s/fdef flatten-ops
         :args (s/cat :phi wff?)
         :ret  wff?)
 

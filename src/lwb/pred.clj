@@ -53,7 +53,7 @@
 ;; defines a signature comprising the constant `:c`, the binary function `f`,
 ;; the proposition `a`, and the unary predicate `p`.
 
-;; Constants are represented as keywords in Clojure. Thus it's not necessary
+;; Constants are represented as keywords or ints in Clojure. Thus it's not necessary
 ;; to declare them in the signature. The declaration in the signature is just
 ;; the documentation, but even an undeclared keyword is recognized and accepted
 ;; in a formula.
@@ -67,7 +67,7 @@
 (defn const?
   "Is `kw` a constant?"
   [kw]
-  (keyword? kw))
+  (or (keyword? kw) (int? kw)))
 
 (defn func?
   "Is `symb` a function in the signature `sig`?"
@@ -136,11 +136,11 @@
 ;; a formula of the predicate logic have to be done with respect to a
 ;; given signature.
 
-(def ^{:doc "Var for binding a signature for checking formulae of predicate logic"}
-^:dynamic *signature*)
+(def ^:dynamic *signature*
+  "Var for binding a signature for checking formulae of predicate logic")
 
 ;; **Simple terms** are constants, variables or nullary functions.
-(s/def ::simple-term (s/or :const keyword?
+(s/def ::simple-term (s/or :const const?
                            :logvar #(logvar? % *signature*)
                            :func-0 #(func-0? % *signature*)))
 
@@ -205,8 +205,8 @@
        (or result (if (= mode :msg) (s/explain-str ::fml phi) result))))))
 
 (s/fdef wff?
-        :args (s/alt :2-args (s/cat :fml ::fml :sig ::signature)
-                     :3-args (s/cat :fml ::fml :sig ::signature :mode #{:bool :msg}))
+        :args (s/alt :2-args (s/cat :fml any? :sig ::signature)
+                     :3-args (s/cat :fml any? :sig ::signature :mode #{:bool :msg}))
         :ret boolean?)
 
 ;; ## Models
@@ -250,27 +250,27 @@
 
 ;; ### Specification of models
 
-(defn univ-def?
+(defn- univ-def?
   "Is `x` the definition of a universe?"
   [x]
   (set? x))
 
-(defn func-def?
+(defn- func-def?
   "Is `[key arity def]` the definition of a function?"
   [[key arity def]]
   (and (= key :func) (>= arity 0) (if (pos? arity) (fn? def) true)))
 
-(defn pred-def?
+(defn- pred-def?
   "Is `[key arity def]` the definition of a predicate?"
   [[key arity def]]
   (and (= key :pred) (>= arity 1) (fn? def) ))
 
-(defn prop-def?
+(defn- prop-def?
   "Is `[key arity def]` the definition of a proposition?"
   [[key arity def]]
   (and (= key :prop) (zero? arity) (boolean? def) ))
 
-(defn univ-ok?
+(defn- univ-ok?
   "Is the universe defined and a set?"
   [model]
   (and (contains? model :univ) (set? (:univ model))))
@@ -337,7 +337,7 @@
   (my-eval avec'' '(and p (= 7 (foo 5))))
   ; => true
   
-  )
+  ) ; end of remarks
 
 (defmacro make-pred
   "Generates a predicate expressing that the parameters to the predicate
@@ -384,7 +384,7 @@
         edited-loc (zip/edit loc (fn [_] `(~quantor ~var1-vec (~quantor ~varr-vec ~right))))]
     (-> edited-loc zip/down zip/right)))
 
-(defn unfold-vars
+(defn- unfold-vars
   "`phi` with unfolded vars in all quantor expressions."
   [phi]
   (if-not (list? phi)
@@ -435,9 +435,9 @@
                  (expand-quant univ loc)
                  loc))))))
 
-(defn pred2prop
+(defn- pred2prop
   "Given a universe, `phi` is transformed into a proposition.        
-   phi has to have unfolded vars, i.e. each quantor has exactly 1 var!"
+   Requires: `phi` has to have unfolded vars, i.e. each quantor has exactly 1 var!"
   [univ phi]
   (let [phi' (loop [cur phi]
                (if (no-more-quant? cur)
@@ -455,7 +455,7 @@
     ['univ value]
     [(symbol (name keyw)) (nth value 2)]))
 
-(defn model2assign-vec
+(defn- model2assign-vec
   "Makes an assignment vector from the given model"
   [model]
   (vec (mapcat modelmap model)))
@@ -472,7 +472,7 @@
       (eval `(let ~assign-vec ~phi')))))
 
 (s/fdef eval-phi
-        :args (s/cat :fml ::fml :model ::model)
+        :args (s/& (s/cat :phi any? :model ::model) (fn [param] (wff? (:phi param) (sig-from-model (:model param)))))
         :ret boolean?)
 
 ;; ## Visualisation of a formula
@@ -484,3 +484,8 @@
    (vis/texify phi))
   ([phi filename]
    (vis/texify phi filename)))
+
+(s/fdef texify
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :filename string?))
+        :ret  nil?)

@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate Logic, tests
 
-; Copyright (c) 2014 - 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2017 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -9,25 +9,22 @@
 (ns lwb.pred-test
   (:require [clojure.test :refer :all]
             [clojure.spec :as s]
-            [lwb.pred :refer :all]))
+            [lwb.pred :refer :all]
+            [clojure.spec.test :as stest]))
+
+(stest/instrument)
 
 ; signature ------------------------------------------------------------------
-(defn setup []
-  (def sig {:c  [:const 0]
-            :d  [:const 0]
-            :f0 [:func 0]
-            :f1 [:func 1]
-            :f2 [:func 2]
-            :f3 [:func 3]
-            :r  [:prop 0]
-            :P1 [:pred 1]
-            :P2 [:pred 2]}))
 
-(defn fixture [f]
-  (setup)
-  (f))
-
-(use-fixtures :once fixture)
+(def sig {:c  [:const 0]
+          :d  [:const 0]
+          :f0 [:func 0]
+          :f1 [:func 1]
+          :f2 [:func 2]
+          :f3 [:func 3]
+          :r  [:prop 0]
+          :P1 [:pred 1]
+          :P2 [:pred 2]})
 
 ; tests -----------------------------------------------------------------------
 
@@ -90,6 +87,11 @@
   (is (= true (wff? '(P2 x y) sig)))
   (is (= true (wff? '(ite (P2 x y) r (= :c :d)) sig))))
 
+(deftest spec-test
+  (is (= true (binding [*signature* sig] (s/valid? :lwb.pred/fml '(forall [x y] (P2 x y))))))
+  (is (= true (binding [*signature* sig] (s/valid? :lwb.pred/fml '(= 5 (f2 2 3))))))
+  )
+
 ; models -----------------------------------------------------------------------
 
 ; example for a model 
@@ -113,8 +115,8 @@
 ; evaluation -------------------------------------------------------------------
 
 (deftest eval-test
-  (is (= '(forall [x] (forall [y] (= (op x y) ((op y x))))) (unfold-vars '(forall [x y] (= (op x y) ((op y x)))))))
-  (is (= '(forall [x] (forall [y] (= (op x y) ((op y x))))) (unfold-vars '(forall [x y] (= (op x y) ((op y x)))))))
+  (is (= '(forall [x] (forall [y] (= (op x y) ((op y x))))) (#'lwb.pred/unfold-vars '(forall [x y] (= (op x y) ((op y x)))))))
+  (is (= '(forall [x] (forall [y] (= (op x y) ((op y x))))) (#'lwb.pred/unfold-vars '(forall [x y] (= (op x y) ((op y x)))))))
   (is (= true (eval-phi 'P m)))
   (is (= false (eval-phi '(and P (not P)) m)))
   (is (= true (eval-phi '(= 5 (op 2 3)) m)))

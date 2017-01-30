@@ -8,17 +8,20 @@
 
 (ns lwb.pred.substitution-test
   (:require [clojure.test :refer :all]
-            [lwb.pred.substitution :refer :all]))
+            [lwb.pred.substitution :refer :all]
+            [clojure.spec.test :as stest]))
+
+(stest/instrument)
 
 (deftest vars-in-term-test
-  (is (= #{} (vars-in-term :i)))
-  (is (= #{} (vars-in-term '(f :i))))
-  (is (= '#{x} (vars-in-term '(f x))))
-  (is (= '#{x y} (vars-in-term '(f x y))))
-  (is (= '#{x y} (vars-in-term '(f x y :e))))
-  (is (= '#{x y} (vars-in-term '(f (g (h x y))))))
-  (is (thrown? Exception (vars-in-term '(f = x y))))
-  (is (thrown? Exception (vars-in-term '(and x y))))
+  (is (= #{} (#'lwb.pred.substitution/vars-in-term :i)))
+  (is (= #{} (#'lwb.pred.substitution/vars-in-term '(f :i))))
+  (is (= '#{x} (#'lwb.pred.substitution/vars-in-term '(f x))))
+  (is (= '#{x y} (#'lwb.pred.substitution/vars-in-term '(f x y))))
+  (is (= '#{x y} (#'lwb.pred.substitution/vars-in-term '(f x y :e))))
+  (is (= '#{x y} (#'lwb.pred.substitution/vars-in-term '(f (g (h x y))))))
+  (is (thrown? Exception (#'lwb.pred.substitution/vars-in-term '(f = x y))))
+  (is (thrown? Exception (#'lwb.pred.substitution/vars-in-term '(and x y))))
   )
 
 (deftest freefor?-test
@@ -35,7 +38,7 @@
          (freefor? '(exists [z] (impl (R z y) (forall [x] (R x z)))) 'y 'x)))
   )
 
-(deftest lwb.pred.substitution-test
+(deftest substitution-test
   (is (= '(P :e) (substitution '(P x) 'x :e)))
   (is (= '(P (f x)) (substitution '(P x) 'x '(f x))))
   (is (= '(P (f (g x))) (substitution '(P x) 'x '(f (g x)))))
