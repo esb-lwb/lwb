@@ -573,12 +573,12 @@
 ; That's the proof for the more general theorem
 
 (proof '(exists [x] (impl (Drunk x) (forall [y] (Drunk y)))))
-(step-f :actual)
-(swap '?1 :i)
 (step-f :tnd)
-(swap '?2 '(forall [y] (Drunk y)))
-(step-f :or-e 2 4)
-(step-b :exists-i 5 1)
+(swap '?1 '(forall [y] (Drunk y)))
+(step-f :or-e 1 3)
+(step-f :actual)
+(swap '?2 :i)
+(step-b :exists-i 5 3)
 (step-b :impl-i 5)
 (step-f :not-forall->exists-not 8)
 (step-f :exists-e 9 11)
@@ -589,32 +589,32 @@
 (step-b :efq 15)
 
 ;     --------------------------------------------------
-;  1: (actual :i)                             :actual []
-;  2: (or (forall [y] (Drunk y)) (not (forall [y] (Drunk y)))):tnd []
+;  1: (or (forall [y] (Drunk y)) (not (forall [y] (Drunk y)))) :tnd []
 ;      ------------------------------------------------
-;  3:  | (forall [y] (Drunk y))               :assumption
+;  2:  | (forall [y] (Drunk y))                :assumption
+;  3:  | (actual :i)                           :actual []   ; that's okay since our universe is not empty
 ;      | ----------------------------------------------
-;  4:  | | (Drunk :i)                         :assumption
-;  5:  | | (forall [y] (Drunk y))             :repeat [3]
+;  4:  | | (Drunk :i)                          :assumption
+;  5:  | | (forall [y] (Drunk y))              :repeat [2]
 ;      | ----------------------------------------------
-;  6:  | (impl (Drunk :i) (forall [y] (Drunk y))):impl-i [[4 5]]
-;  7:  | (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))):exists-i [1 6]
+;  6:  | (impl (Drunk :i) (forall [y] (Drunk y))) :impl-i [[4 5]]
+;  7:  | (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))) :exists-i [3 6]
 ;      ------------------------------------------------
 ;      ------------------------------------------------
-;  8:  | (not (forall [y] (Drunk y)))         :assumption
-;  9:  | (exists [y] (not (Drunk y)))         :not-forall->exists-not [8]
+;  8:  | (not (forall [y] (Drunk y)))          :assumption
+;  9:  | (exists [y] (not (Drunk y)))          :not-forall->exists-not [8]
 ;      | ----------------------------------------------
-; 10:  | | (actual :j)                        :assumption
-; 11:  | | (not (Drunk :j))                   :assumption
+; 10:  | | (actual :j)                         :assumption
+; 11:  | | (not (Drunk :j))                    :assumption
 ;      | | --------------------------------------------
-; 12:  | | | (Drunk :j)                       :assumption
-; 13:  | | | contradiction                    :not-e [11 12]
-; 14:  | | | (forall [y] (Drunk y))           :efq [13]
+; 12:  | | | (Drunk :j)                        :assumption
+; 13:  | | | contradiction                     :not-e [11 12]
+; 14:  | | | (forall [y] (Drunk y))            :efq [13]
 ;      | | --------------------------------------------
-; 15:  | | (impl (Drunk :j) (forall [y] (Drunk y))):impl-i [[12 14]]
-; 16:  | | (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))):exists-i [10 15]
+; 15:  | | (impl (Drunk :j) (forall [y] (Drunk y))) :impl-i [[12 14]]
+; 16:  | | (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))) :exists-i [10 15]
 ;      | ----------------------------------------------
-; 17:  | (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))):exists-e [9 [10 16]]
+; 17:  | (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))) :exists-e [9 [10 16]]
 ;      ------------------------------------------------
-; 18: (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))):or-e [2 [3 7] [8 17]]
+; 18: (exists [x] (impl (Drunk x) (forall [y] (Drunk y)))) :or-e [1 [2 7] [8 17]]
 ;     --------------------------------------------------
