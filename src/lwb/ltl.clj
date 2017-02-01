@@ -186,3 +186,7 @@
   ([phi filename]
    (vis/texify phi filename)))
 
+(s/fdef texify
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :filename string?))
+        :ret  nil?)

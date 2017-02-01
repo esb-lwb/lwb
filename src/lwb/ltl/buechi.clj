@@ -8,12 +8,9 @@
 
 (ns lwb.ltl.buechi
   (:require [lwb.ltl :refer [atom? literal? ite equiv xor arity wff?]]
-            [clojure.spec :as s]
-            [clojure.string :as str]
-            [clojure.java.shell :as shell])
+            [clojure.spec :as s])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
-           (gov.nasa.ltl.graph Graph Node Edge Guard Literal Attributes)
-           (java.util Collection)))
+           (gov.nasa.ltl.graph Graph Node Edge Guard Literal)))
 
 ;; # Generating the Büchi automata for a LTL formula
 

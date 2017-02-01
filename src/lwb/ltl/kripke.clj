@@ -128,6 +128,11 @@
           prog     (name mode)]
     (:out (shell/sh "dot2tex" (str "--prog=" prog) "-ftikz" "--styleonly" "--codeonly" :in dot-code)))))
 
+(s/fdef tikzify
+        :args (s/alt :1-args (s/cat :ks ::model)
+                     :2-args (s/cat :ks ::model :mode #{:dot :neato}))
+        :ret  nil?)
+
 (defn texify
   "Makes a pdf file with the visualisation of the Kripke structure `ks`.      
   `filename` is the name of the file to be generated, must have no extension.      
@@ -144,5 +149,8 @@
        (shell/sh "texi2pdf" tex-file))
        (shell/sh "open" (str filename ".pdf"))))
 
-
+(s/fdef texify
+        :args (s/alt :2-args (s/cat :ks ::model :filename string?)
+                     :2-args (s/cat :ks ::model :filename string? :mode #{:dot :neato}))
+        :ret  nil?)
 

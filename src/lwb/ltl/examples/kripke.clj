@@ -10,7 +10,7 @@
   (:require [lwb.ltl.kripke :refer :all]
             [clojure.spec :as s]))
 
-;;Two simple examples
+;; Two simple examples
 
 (def ks1 {:atoms   '#{P Q}
           :nodes   {:s_1 '#{P Q}
