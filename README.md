@@ -14,5 +14,8 @@ Contributors see [documentation](https://github.com/esb-dev/lwb/wiki).
 
 Distributed under the Eclipse Public License, the same as Clojure.
 
-lwb uses [SAT4J](http://www.sat4j.org), licensed under both the Eclipse Public License and the 
-GNU LGPL licence.
+lwb uses 
+- [SAT4J](http://www.sat4j.org), licensed under both the Eclipse Public License and the 
+GNU LGPL licence,
+- [JavaBDD](http://javabdd.sourceforge.net), licensed under the GNU LGPL,
+- [LTL2Buchi](https://ti.arc.nasa.gov/profile/dimitra/projects-tools/#LTL2Buchi), licensed under the NASA Open Source Agreement (NOSA), version 1.3.
