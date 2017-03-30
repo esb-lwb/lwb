@@ -11,6 +11,10 @@
   (:require [lwb.prop :refer :all])
   (:require [lwb.prop.sat :refer [valid? sat?]]))
 
+(def phi '(and (impl (and P Q S) P) (impl (and P S) Q)))
+
+(ptt phi)
+
 ;; Examples from Volker Halbach: The Logic Manual
 
 ;; p. 38
