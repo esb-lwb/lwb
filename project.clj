@@ -11,15 +11,23 @@
   :url "http://homepages.thm.de/~hg11260/lwb.html"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha15"]
                  [org.clojure/core.logic "0.8.11"]
-                 [net.mikera/core.matrix "0.57.0"]
+                 [net.mikera/core.matrix "0.58.0"]
                  [org.clojure/tools.macro "0.1.5"]
                  [org.clojure/math.combinatorics "0.1.4"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [potemkin "0.4.3"]
                  [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]
                  [de.fosd.typechef/javabdd_repackaged_2.10 "0.1"]
-                 [ltl2buchi "1.0.0"]]
+                 [ltl2buchi "1.0.0"]
+                 [kodkod "2.1.0"]]
   :jvm-opts ["-Xms2G"]
   :uberjar-name "lwb.jar")
+
+; ltl2buchi is not available as a maven jar
+; compile github/esb-dev/ltl2buchi and put the ltl2buchi.jar into your local maven repo
+; lein localrepo install ltl2buchi.jar ltl2buchi 1.0.0
+; kodkod is not available as a maven jar
+; download kodkod.jar from http://emina.github.io/kodkod/
+; lein localrepo install kodkod.jar kodkod 2.1.0

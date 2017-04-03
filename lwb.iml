@@ -10,7 +10,7 @@
       <src_folder value="file://$MODULE_DIR$/resources" expected_position="4" />
     </src_description>
   </component>
-  <component name="NewModuleRootManager" inherit-compiler-output="false">
+  <component name="NewModuleRootManager">
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/classes" />
     <exclude-output />
@@ -36,9 +36,10 @@
     <orderEntry type="library" name="Leiningen: clj-tuple:0.2.2" level="project" />
     <orderEntry type="library" name="Leiningen: clojure-complete:0.2.4" level="project" />
     <orderEntry type="library" name="Leiningen: de.fosd.typechef/javabdd_repackaged_2.10:0.1" level="project" />
+    <orderEntry type="library" name="Leiningen: kodkod:2.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: ltl2buchi:1.0.0" level="project" />
-    <orderEntry type="library" name="Leiningen: net.mikera/core.matrix:0.57.0" level="project" />
-    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.9.0-alpha14" level="project" />
+    <orderEntry type="library" name="Leiningen: net.mikera/core.matrix:0.58.0" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.9.0-alpha15" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/core.logic:0.8.11" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/math.combinatorics:0.1.4" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/math.numeric-tower:0.0.4" level="project" />
