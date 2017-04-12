@@ -82,3 +82,37 @@
 
 (sat grp-na-classic grp-sig-classic 6 :one)
 ; fast result
+
+
+;; Another signature for the definition of a group
+;; see: Kenneth Kunen: Single Axioms for Groups, Technical Report University of Wisconsin, February 1992
+(def grp-sig-2
+  {:op   [:func 2]
+   :inv  [:func 1]})
+
+(def grp-s1 '(forall [x y w z] (= x (op w (inv (op (op (inv (op (inv y) (op (inv w) x))) z) (inv (op y z))))))))
+
+(sat grp-s1 grp-sig-2 2 :all)
+(sat grp-s1 grp-sig-2 3 :all)
+
+(def grp-axioms-2
+  '(and
+     (forall [x y z] (= (op x (op y z)) (op (op x y) z)))
+     (exists [unit] (and
+                      (forall [x] (= (op x unit) x))
+                      (forall [x] (= (op x (inv x)) unit))))))
+
+(sat grp-axioms-2 grp-sig-2 2 :all)
+
+(def kunen
+  (list 'equiv grp-s1 grp-axioms-2))
+
+(sat? kunen grp-sig-2 2)
+(valid? kunen grp-sig-2 2)
+
+(valid? kunen grp-sig-2 5)
+; => true (after 1 minute or so)
+
+(time (valid? kunen grp-sig-2 6))
+; "Elapsed time: 805705.043977 msecs"
+; => true

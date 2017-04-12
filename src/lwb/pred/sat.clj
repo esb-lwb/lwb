@@ -155,13 +155,20 @@
           ssize (count consts)]
       (if (< usize ssize)
         (throw (Exception. "usize must be >= number of constants and unary functions in the signature.")))
-        (sat-intern phi sig (fill-up consts usize) mode) 
-)))
+        (sat-intern phi sig (fill-up consts usize) mode))))
 
 (defmethod sat :set
   ([phi sig set]
     (sat phi sig set :one))
   ([phi sig set mode]
-    (sat-intern phi sig set mode)
-    ))
+    (sat-intern phi sig set mode)))
 
+(defn sat?
+  "Is `phi` satisfiable?"
+  [phi sig usize]
+  (if (nil? (sat phi sig usize)) false true))
+
+(defn valid?
+  "Is `phi` valid?"
+  [phi sig usize]
+  (not (sat? (list 'not phi) sig usize)))
