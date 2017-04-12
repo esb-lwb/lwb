@@ -7,6 +7,7 @@
 ; the terms of this license.
 
 (ns lwb.prop
+  "Syntax, models and evaluation in propositional logic."
   (:require [clojure.spec :as s]
             [clojure.string :as str]
             [clojure.java.browse :as browse]
@@ -25,17 +26,23 @@
 
 ;; The namespace `lwb.prop` provides
 
-;; * operators of propositional logic
-;; * functions for checking whether a formula is well-formed
-;; * evaluation of formulae in a given model
-;; * the truth table for a formula
-;; * normal forms: conjunctive normal form (cnf) and disjunctive normal form (dnf)
+;; * syntax
+;;     - operators of propositional logic
+;;     - checking whether a formula is well-formed
+;; * models and evaluation
+;;     - specification of a model in propositional logic
+;;     - evaluation of formulas in a given model
+;;     - the truth table for a formula
+;; * normal forms
+;;     - conjunctive normal form (cnf) 
+;;     - disjunctive normal form (dnf)
 
 
-;; ## Representation of propositional formulae
+;; ## Syntax of formulas of propositional logic
 
 ;; The propositional atoms are represented by Clojure symbols, 
-;; e.g. `P` or `Q`.
+;; e.g. `P` or `Q`. Operators, the constants `true` and `false`, and
+;; symbols beginning with `ts-` are not allowed as atoms.
 
 ;; The propositional constants for truth (_verum_) and falsity (_falsum_) are represented
 ;; by `true` and `false`, respectively.
@@ -44,15 +51,15 @@
 ;; of boolean operators, propositional atoms and constants in the usual
 ;; lispy syntax, e.g. `(impl (and P (not P)) Q)`.
 
-;; ## The operators of propositional logic
+;; ### The operators of propositional logic
 
-;; * not   -- unary, provided by Clojure
-;; * and   -- n-ary, provided by Clojure
-;; * or    -- n-ary, provided by Clojure
-;; * impl  -- implication, binary
-;; * equiv -- equivalence, binary
-;; * xor   -- exclusive or, binary
-;; * ite   -- if-then-else, ternary
+;; * `not`:   Negation - unary
+;; * `and`:   Conjunction  -- n-ary
+;; * `or`:    Disjunction  -- n-ary
+;; * `impl`:  Implication  --  binary
+;; * `equiv`: Equivalence  -- binary
+;; * `xor`:   Exclusive or -- binary
+;; * `ite`:  If-then-else  -- ternary
 
 (defmacro impl
   "Logical implication."
@@ -79,14 +86,14 @@
   (list 'or (list 'and i t)
         (list 'and (list 'not i) e)))
 
-;; Remark: The definitions of the operators may not be changed to functions.
+;; *Remark*: The definitions of the operators may not be changed to functions.
 ;; In the transformation of a formula to cnf it is useful and necessary that the operators
 ;; are defined as macros
 
-;; ## Well-formed formulae
+;; ### Well-formed formulas
 
 ;; We can see a formula from the syntactic perspective as a finite sequence of
-;; atoms, operators and parentheses that conforms to the grammar of propositional logic.
+;; atoms, operators and parentheses that conform to the grammar of propositional logic.
 
 (defn op?
   "Is `symb` an operator of propositional logic?"
@@ -97,19 +104,25 @@
   :args any?
   :ret  boolean?)
 
-;; Atoms beginning with `ts` followed by a number are not allowed, since such atoms are generated
-;; during the Tseitin transformation of a formula
-;; but nethertheless a symbol beginning with `ts` is well-formed
+(def tseitin-prefix
+  "Prefix for tseitin symbols."
+  "ts-")
+
 (defn atom?
   "Is `symb` an atomar proposition?"
   [symb]
   (and (symbol? symb) (not (op? symb))))
 
+;; *Remark*     
+;; Atoms beginning with `ts-` are not allowed, since such atoms are generated
+;; during the Tseitin transformation of a formula.      
+;; But: we do not check this, because `atom?` is internally used too, and there
+;; atoms like `ts-1` are allowed!
+
 (s/fdef atom?
         :args any?
         :ret  boolean?)
 
-; -----
 (defn arity
   "Arity of operator `op`.   
    -1 means n-ary.      
@@ -125,7 +138,6 @@
         :args (s/cat :op any?)
         :ret  #{-1 1 2 3})
 
-; -----
 (defn nary?
   "Is `op` nary?"
   [op]
@@ -135,14 +147,14 @@
         :args (s/cat :op any?)
         :ret  boolean?)
 
-;; ### Definition of the grammar of propositional logic
+;; #### Definition of the grammar of propositional logic
 
 ;; A simple expression is an atom or a boolean constant.
 (s/def ::simple-expr (s/or :bool boolean?
                            :atom atom?))
 
 ;; A compound expression is a list of an operator together with
-;; several formulae as arguments whose number matches the arity of the operator.
+;; several formulas as arguments whose number matches the arity of the operator.
 
 (defn- arity-ok? [{:keys [op params]}]
   (let [arity (arity op)]
@@ -169,18 +181,22 @@
                :2-args (s/cat :phi any? :mode #{:bool :msg}))
   :ret (s/alt :bool boolean? :msg string?))
 
-;; ## Evaluation of propositional formulae
+;; ## Models and evaluation
+
+;; ### Models in propositional logic
 
 ;; A model for a formula is a function from the atoms of the formula into the set of the
 ;; boolean values {true, false}.
 
-;; We represent a model as a map of [symbol boolean] entries.
+;; We represent a model as a map of [atom boolean] entries.
 
-(s/def ::model (s/map-of symbol?  boolean?))
+(s/def ::model (s/map-of atom?  boolean?))
+
+;; ### Evaluation of a formula of propositional logic with respect to a model
 
 (defn eval-phi
   "Evaluates the formula `phi` with the given model.        
-  `model` must be a valuation `['atom1 true, 'atom2 false, ...]` for the
+  `model` must be a valuation `{'atom1 true, 'atom2 false, ...}` for the
   propositional atoms of `phi`."
   [phi model]
   (let [mv (vec (interleave (keys model) (vals model)))]
@@ -208,10 +224,10 @@
 
 (s/fdef eval-phi
         :args (s/and (s/cat :phi wff? :model (s/spec ::model))
-                     #(subset? (atoms-of-phi (:phi %)) (atoms-in-model (:model %))))
+                     #(subset? (atoms-of-phi (:phi %)) (set (keys (:model %)))))
         :ret boolean?)
 
-;; ## Truth table
+;; ### Truth table for a formula of propostional logic
 
 ;; The truth table of a proposition `phi` is represented as a map
 ;; with the keys:
@@ -224,15 +240,12 @@
 
 (s/def ::phi wff?)
 
-(defn- header-wff? [header]
-  (and (every? atom? (butlast header)) (= :result (last header))))
-
-(s/def ::header (s/and vector? header-wff?))
+(s/def ::header (s/and vector? #(and (every? atom? (butlast %)) (= :result (last %)))))
 
 (defn- vector-of-boolean? [vec]
   (every? boolean? vec))
 
-(s/def ::table (s/coll-of vector-of-boolean? :kind vector?))
+(s/def ::table (s/coll-of (s/coll-of boolean? :kind vector?) :kind vector?))
 
 ;; Remark: There are more constraints on the truth table:
 
@@ -245,15 +258,25 @@
   (let [atoms (atoms-of-phi phi)
         atoms' (set (butlast header))
         row-cnt (expt 2 (count atoms))
-        col-cnt (count header)
-        ]
+        col-cnt (count header)]
     (and (= atoms atoms')
          (= (count table) row-cnt)
          (every? #(= col-cnt (count %)) table))))
 
-(s/def ::truth-table (s/and truth-table-ok? (s/keys :req-un [::phi ::header ::table])))
+(defn- truth-table-ok'?
+  [{:keys [phi header table]}]
+  (let [atoms (atoms-of-phi phi)
+        atoms' (set (butlast header))
+        row-cnt (expt 2 (count atoms))
+        col-cnt (count header)]
+    (and (= atoms atoms')
+         (<= (count table) row-cnt)
+         (every? #(= col-cnt (count %)) table))))
 
-;## Calculation of the truth table
+(s/def ::truth-table (s/and truth-table-ok? (s/keys :req-un [::phi ::header ::table])))
+(s/def ::truth-table' (s/and truth-table-ok'? (s/keys :req-un [::phi ::header ::table])))
+
+;; #### Calculation of the truth table
 
 (defn truth-table
   "Truth table of `phi`.   
@@ -261,33 +284,31 @@
    `phi` evaluates to `true`.   
    For `mode` of `:false-only` accordingly."
   ([phi]
-  (let [atoms (atoms-of-phi phi)]
-    (if (> (count atoms) 10)
-      (throw (IllegalArgumentException. 
-               (str "This formula has more than 10 variables." 
-                    \newline 
-                    "The truth table would consist of more than 1024 rows," 
-                    "so you might want to use the SAT solver.")))
-	    
-	    (let [all-combs (selections [true false] (count atoms))
-	          assign-maps (for [comb all-combs] (zipmap atoms comb))
-            ]
-         {:phi phi
-          :header  (conj (vec atoms) :result)
-	        :table   (vec (for [assign-map assign-maps]
-                     (conj (vec (vals assign-map))
-                                (eval-phi phi assign-map))))}))))
+   (let [atoms (atoms-of-phi phi)]
+     (if (> (count atoms) 10)
+       (throw (IllegalArgumentException.
+                (str "This formula has more than 10 variables."
+                     \newline
+                     "The truth table would consist of more than 1024 rows,"
+                     "so you might want to use `sat`.")))
+       (let [all-combs (selections [true false] (count atoms))
+             assign-maps (for [comb all-combs] (zipmap atoms comb))]
+         {:phi    phi
+          :header (conj (vec atoms) :result)
+          :table  (vec (for [assign-map assign-maps]
+                         (conj (vec (vals assign-map))
+                               (eval-phi phi assign-map))))}))))
   ([phi mode]
-    (let [tt (truth-table phi)]
-    (condp = mode
-      :true-only (assoc tt :table (filterv #(true? (last %)) (:table tt)))
-      :false-only (assoc tt :table (filterv #(false? (last %)) (:table tt)))
-      tt))))
+   (let [tt (truth-table phi)]
+     (condp = mode
+       :true-only (assoc tt :table (filterv #(true? (last %)) (:table tt)))
+       :false-only (assoc tt :table (filterv #(false? (last %)) (:table tt)))
+       tt))))
 
 (s/fdef truth-table
         :args (s/alt :1-args (s/cat :phi wff?)
                      :2-args (s/cat :phi wff? :mode #{:true-only :false-only}))
-        :ret ::truth-table)
+        :ret (s/alt ::truth-table ::truth-table'))
 
 (defn- print-table
   "Pretty prints vector `header` and vector of vectors `table`.   
@@ -295,15 +316,15 @@
         the size of items in header is >= size of items in the rows."
   ; inspired from clojure.pprint
   [header table]
-  (let [table'  (vec (map #(replace {true "T" false "F"} %) table)) 
-        widths  (map #(count (str %)) header)
+  (let [table' (vec (map #(replace {true "T" false "F"} %) table))
+        widths (map #(count (str %)) header)
         spacers (map #(str/join (repeat % "-")) widths)
-        fmts    (map #(str "%" % "s") widths)
+        fmts (map #(str "%" % "s") widths)
         fmt-row (fn [leader divider trailer row]
                   (str leader
-                     (str/join divider
-                        (for [[col fmt] (map vector row fmts)]
-                              (format fmt (str col))))
+                       (str/join divider
+                                 (for [[col fmt] (map vector row fmts)]
+                                   (format fmt (str col))))
                        trailer))]
     (println)
     (println (fmt-row "| " " | " " |" header))
@@ -320,7 +341,7 @@
 	  (print-table header table)))
 
 (s/fdef print-truth-table
-        :args (s/cat :tt ::truth-table)
+        :args (s/cat :tt ::truth-table')
         :ret  nil?)
 
 (defn ptt
@@ -334,25 +355,27 @@
         :args (s/cat :phi wff?)
         :ret  nil?)
 
-;;## Transformation to conjunctive normal form
+;; ## Normal forms
 
-;;### (Standardized) conjunctive normal form
+;; ### Transformation to conjunctive normal form
+
+;; (Standardized) conjunctive normal form     
 ;; Conjunctive normal form in lwb is defined as a formula of the form
 ;; `(and (or ...) (or ...) (or ...) ...)` where the clauses contain
 ;; only literals, no constants --
-;; or the trivially true or false formulae.
+;; or the trivially true or false formula.
 
 ;; I.e. in lwb when transforming formula to cnf, we reduce it to this
 ;; standard form.
 
-; Specification of a literal
+;; Specification of a literal
 (s/def ::literal (s/or :simple-expr ::simple-expr
                        :neg (s/and list? (s/cat :not #{'not} :simple-expr ::simple-expr))))
 
-; Specification of clause
+;; Specification of a clause
 (s/def ::clause (s/and list? (s/cat :or #{'or} :literals (s/* ::literal))))
 
-; Specification of conjunctive normal form cnf
+;; Specification of conjunctive normal form cnf
 (s/def ::cnf (s/and list? (s/cat :and #{'and} :clauses (s/* ::clause))))
 
 ;; Caveat reader!
@@ -411,7 +434,7 @@
         :ret  wff?)
 
 (defn- distr
-  "Application of the distributive laws to the given formulae"
+  "Application of the distributive laws to the given formulas"
   ([phi] phi)
   ([phi-1 phi-2]
     (cond
@@ -476,7 +499,6 @@
    (2) :neg contains false -> clause is trivially true,   
    (3) :pos contains false -> false can be deleted,   
    (4) :neg contains true  -> true can be deleted."
-
   [{:keys [pos neg]}]
   (cond
     (pos? (count (intersection pos neg))) true
@@ -505,6 +527,7 @@
 (s/fdef cnf
         :args (s/cat :phi wff?)
         :ret (s/alt :cnf ::cnf :bool boolean?))
+
 (comment
   ;the spec of the function has a cyclic dependency as a consequence!
   ;:fn #(lwb.prop.sat/valid? (list 'equiv (-> % :args :phi) (-> % :ret))))
@@ -525,14 +548,12 @@
                      :2-args (s/cat :phi wff? :mode #{:bool :msg}))
         :ret (s/alt :bool boolean? :msg string?))
 
-;;## Transformation to disjunctive normal form
-
-;; Specification of disjunctive normal form dnf
+;; ### Transformation to disjunctive normal form
 
 ;; Specification of monom
 (s/def ::monom (s/and list? (s/cat :and #{'and} :literals (s/* ::literal))))
 
-;; Specification of dnf
+;; Specification of disjunctive normal form dnf
 (s/def ::dnf (s/and list? (s/cat :or #{'or} :monoms (s/* ::monom))))
 
 ; helper to transform (cnf (not phi)) to (dnf phi)
@@ -593,5 +614,4 @@
         :args (s/alt :1-args (s/cat :phi wff?)
                      :2-args (s/cat :phi wff? :filename string?))
         :ret  nil?)
-
 
