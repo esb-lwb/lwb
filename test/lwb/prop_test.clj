@@ -84,7 +84,7 @@
 
 (deftest arity-test
   (is (= 1 (arity 'not)))
-  (is (thrown? Exception (arity 'x)))
+  (is (= nil (arity 'x)))
   (is (= 2 (arity 'impl)))
   (is (= -1 (arity 'and)))
   (is (= 3 (arity 'ite)))
@@ -92,7 +92,7 @@
 
 (deftest nary?-test
   (is (= false (nary? 'not)))
-  (is (thrown? Exception (nary? 'x)))
+  (is (= false (nary? 'x)))
   (is (= false (nary? 'impl)))
   (is (= true (nary? 'and)))
   (is (= false (nary? 'ite)))
@@ -130,22 +130,21 @@
 ; model ---------------------------------------------------------------
 
 (deftest model-test
-  (is (= true (s/valid? :lwb.prop/model '[P true Q false])))
-  (is (= true (s/valid? :lwb.prop/model ['P true 'Q (= 1 2)])))
-  (is (= false (s/valid? :lwb.prop/model '[:P true Q false])))
-  (is (= false (s/valid? :lwb.prop/model '[P true Q false R])))
-  (is (= false (s/valid? :lwb.prop/model '[P true Q false R T])))
+  (is (= true (s/valid? :lwb.prop/model '{P true Q false})))
+  (is (= true (s/valid? :lwb.prop/model {'P true 'Q (= 1 2)})))
+  (is (= false (s/valid? :lwb.prop/model '{:P true Q false})))
+  (is (= false (s/valid? :lwb.prop/model '{P true Q false R 2})))
 )
 
 ; eval-phi    ---------------------------------------------------------
 
 (deftest eval-phi-test
-  (is (= true (eval-phi '(and P Q) '[P true Q true])))
-  (is (= true (eval-phi '(and P Q R) '[P true Q true R true])))
-  (is (= true (eval-phi '(ite P Q R) '[P true Q true R false])))
-  (is (= true (eval-phi '(impl P Q) '[P false Q true])))
-  (is (= false (eval-phi '(impl P Q) '[P true Q false])))
-  (is (= false (eval-phi '(and P Q) '[P true Q false])))
+  (is (= true (eval-phi '(and P Q) '{P true Q true})))
+  (is (= true (eval-phi '(and P Q R) '{P true Q true R true})))
+  (is (= true (eval-phi '(ite P Q R) '{P true Q true R false})))
+  (is (= true (eval-phi '(impl P Q) '{P false Q true})))
+  (is (= false (eval-phi '(impl P Q) '{P true Q false})))
+  (is (= false (eval-phi '(and P Q) '{P true Q false})))
 )
 
 ; truth-table ---------------------------------------------------------
@@ -191,7 +190,7 @@
   (ptt '(or P Q))
   (ptt '(xor P Q))
   (ptt '(ite P Q R))
-  (ptt '(xor P Q R)) ;=> spec failed:w
+  (ptt '(xor P Q R)) ;=> spec failed
   )
 
 ; cnf -----------------------------------------------------------------

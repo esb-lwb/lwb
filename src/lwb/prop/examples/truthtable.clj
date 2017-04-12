@@ -97,7 +97,7 @@
 ; de Morgan
 (ptt '(equiv (not (or P Q)) (and (not P) (not Q))))
 
-; Ex falso quoidlibet
+; Ex falso quodlibet
 (ptt '(impl (and P (not P)) Q))
 
 ;; Exercise 2.6

@@ -38,8 +38,6 @@
 ; => (true true true true true true true true)
 
 (sat (first R'-conjs) :all)
-; => ([x_1 false x_2 true x_3 false x_4 true]
-;     [x_1 false x_2 true x_3 true x_4 true])
 
 (map #(count (sat % :all)) R'-conjs)
 ; => (2 2 2 2 2 2 2 2)
@@ -57,9 +55,9 @@
 
 (sat phi1 :all)
 
-; => ([P false Q false R true S true]
-;     [P false Q true R true S true]
-;     [P false Q false R false S false])
+; => ({S true, R true, Q false, P false} 
+;     {S true, R true, Q true, P false} 
+;     {P false, Q false, R false, S false}) 
 
 (def phi2 '(and (or Y_1)
                (or Y_2)

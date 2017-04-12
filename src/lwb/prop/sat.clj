@@ -72,14 +72,13 @@
 
 (defn sat4j-solve
   "Checks whether the formula in `dimacs-map` is satisfiable.   
-   Returns nil if not, an assignment vector if it is satisfiable." 
+   Returns nil if not, a model if it is satisfiable." 
   [{:keys [num-atoms cl-set num-cl int-atoms]}]
   (let [solver     (SolverFactory/newDefault)
         make-model (fn [model int-atoms]
-                     (vec (flatten 
-                            (map #(if (pos? %) 
+                     (into {} (map #(if (pos? %) 
                                     [(int-atoms %) true] 
-                                    [(int-atoms (- %)) false]) model))))]
+                                    [(int-atoms (- %)) false]) model)))]
     (try
       (.setTimeout solver *sat4j-timeout*)
       (.newVar solver num-atoms)
@@ -173,18 +172,13 @@
 (defn- remove-tseitin-symbols
   "Removes the tseitin-symbols and their value from a model."
   [model]
-  (let [zipper (z/vector-zip model)]
-    (loop [loc zipper]
-      (if (z/end? loc)
-        (z/root loc)
-        (recur (z/next (if (starts-with? (str (z/node loc)) tseitin-prefix) (z/remove (z/next (z/remove loc))) loc)))))))
+  (into {} (filter #(not (starts-with? (name (key %)) tseitin-prefix)) model)))
 
 (defn- model2negated-cnf
   "Transforms a model into a formula in cnf with negated truth value."
   [model]
-  (let [pairs (partition 2 model)
-        negate (fn [[atom value]] (if value (list 'not atom) atom))]
-    (apply list 'or (map negate pairs))))
+  (let [negate (fn [[atom value]] (if value (list 'not atom) atom))]
+    (apply list 'or (map negate model))))
     
 (defn sat
   "Gives a model for `phi` if the formula is satisfiable, nil if not.   

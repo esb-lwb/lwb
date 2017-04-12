@@ -134,7 +134,7 @@
 (s/fdef nary?
         :args (s/cat :op any?)
         :ret  boolean?)
-        
+
 ;; ### Definition of the grammar of propositional logic
 
 ;; A simple expression is an atom or a boolean constant.
@@ -174,19 +174,18 @@
 ;; A model for a formula is a function from the atoms of the formula into the set of the
 ;; boolean values {true, false}.
 
-;; We represent a model as a vector of alternating atoms and boolean constants. The
-;; atoms must be unique in the model.
+;; We represent a model as a map of [symbol boolean] entries.
 
-(s/def ::model (s/and vector? (s/& (s/* (s/cat :atom atom? :value boolean?))
-                                   #(apply distinct? (map :atom %)))))
+(s/def ::model (s/map-of symbol?  boolean?))
 
 (defn eval-phi
   "Evaluates the formula `phi` with the given model.        
   `model` must be a valuation `['atom1 true, 'atom2 false, ...]` for the
   propositional atoms of `phi`."
   [phi model]
-  (binding [*ns* (find-ns 'lwb.prop)]
-    (eval `(let ~model ~phi))))
+  (let [mv (vec (interleave (keys model) (vals model)))]
+    (binding [*ns* (find-ns 'lwb.prop)]
+      (eval `(let ~mv ~phi)))))
 
 ;; Specification of the function `eval-phi`:
 ;; the first argument must be a well-formed formula, the second a model.
@@ -205,7 +204,7 @@
 (defn- atoms-in-model
   "Set of atoms in destructured model"
   [model]
-  (set (map :atom model)))
+  (set (keys model)))
 
 (s/fdef eval-phi
         :args (s/and (s/cat :phi wff? :model (s/spec ::model))
@@ -246,7 +245,8 @@
   (let [atoms (atoms-of-phi phi)
         atoms' (set (butlast header))
         row-cnt (expt 2 (count atoms))
-        col-cnt (count header)]
+        col-cnt (count header)
+        ]
     (and (= atoms atoms')
          (= (count table) row-cnt)
          (every? #(= col-cnt (count %)) table))))
@@ -270,12 +270,13 @@
                     "so you might want to use the SAT solver.")))
 	    
 	    (let [all-combs (selections [true false] (count atoms))
-	          assign-vecs (for [comb all-combs] (vec (interleave atoms comb)))]
+	          assign-maps (for [comb all-combs] (zipmap atoms comb))
+            ]
          {:phi phi
           :header  (conj (vec atoms) :result)
-	        :table   (vec (for [assign-vec assign-vecs]
-                          (conj (vec (take-nth 2 (rest assign-vec)))
-                                (eval-phi phi assign-vec))))}))))
+	        :table   (vec (for [assign-map assign-maps]
+                     (conj (vec (vals assign-map))
+                                (eval-phi phi assign-map))))}))))
   ([phi mode]
     (let [tt (truth-table phi)]
     (condp = mode

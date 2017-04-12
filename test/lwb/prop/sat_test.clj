@@ -72,9 +72,9 @@
 ; sat -----------------------------------------------------------------
 
 (deftest sat-test
-  (is (= (sat '(and P Q)) '[P true Q true]))
-  (is (= (sat '(and P Q R S)) '[P true Q true R true S true]))
-  (is (= (sat '(or P1 (and P2 (impl P3 P4)))) '[P1 false P2 true P3 false P4 false]))
+  (is (= (sat '(and P Q)) '{P true Q true}))
+  (is (= (sat '(and P Q R S)) '{P true Q true R true S true}))
+  (is (= (sat '(or P1 (and P2 (impl P3 P4)))) '{P1 false P2 true P3 false P4 false}))
   )
 
 ; sat? ----------------------------------------------------------------
