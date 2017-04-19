@@ -18,8 +18,8 @@
   (let [mapfn (fn [[key [type arity]]]
                 (cond
                   (= type :const) (kic/make-const key factory bounds)
-                  (and (= type :func) (= arity 0)) (kic/make-const key factory bounds)
-                  (and (= type :func) (> arity 0)) (kic/make-func key arity factory bounds)
+                  (and (= type :func) (zero? arity)) (kic/make-const key factory bounds)
+                  (and (= type :func) (pos? arity)) (kic/make-func key arity factory bounds)
                   (= type :pred) (kic/make-pred key arity factory bounds)
                   (= type :prop) (kic/make-prop key factory bounds) ))]
     (into {} (map mapfn sig))))
@@ -40,7 +40,7 @@
    in the given signature `sig` and the map of relations `rels`."
   [sig rels]
   (let [mapfn (fn [[key [type arity]]]
-                (if (and (= type :func) (> arity 0)) (func->constraint key arity rels)))]
+                (if (and (= type :func) (pos? arity)) (func->constraint key arity rels)))]
     (vec (keep identity (map mapfn sig)))))
 
 (defn prop->fml
@@ -124,7 +124,7 @@
       (let [sol (kic/solve fml bounds)]
         (kic/model sol))
       (let [sols (kic/solve-all fml bounds)]
-        (into #{} (keep identity (map kic/model sols)))))))
+        (set (keep identity (map kic/model sols)))))))
 
 (defn sig->consts
   "Set of consts in signature.     
@@ -145,7 +145,7 @@
   other an explicit vector with the elements of the universe."
   (fn [_ _ utype & _]
     (if (integer? utype) :int
-                         (if (set? utype) :set nil))))
+                         (when (set? utype) :set))))
 
 (defmethod sat :int
   ([phi sig usize]
