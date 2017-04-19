@@ -7,7 +7,9 @@
 ; the terms of this license.
 
 (ns lwb.prop.sat
+  "Satisfiability in propositional logic."
   (:require [lwb.prop :refer :all]
+            [lwb.prop.nf :refer (cnf cnf?)]
             [clojure.set :refer (map-invert)]
             [clojure.string :refer (starts-with?)]
             [clojure.zip :as z]
@@ -20,6 +22,14 @@
 
 ;; # Satisfiability in propositional logic
 
+;; The namespace `lwb.prop.sat` provides
+
+;; - transformation of a propositional formula in cnf to the
+;;   dimacs format used by SAT solvers
+;; - the Tseitin transformation of an arbitrary formula in propositional logic
+;;   into a formula in cnf thats equivalent with resprct to satisfiability
+;; - satisfiability in propositional logic
+
 ;; ## Transformation of a formula in cnf to dimacs format
 
 ;; A formula in dimacs format is organized as a map with the
@@ -31,7 +41,7 @@
 ;; - `:num-cl`     the number of clauses
 ;; - `:cl-set`     the set of clauses encoded with the integers
 
-(s/def ::formula   :lwb.prop/cnf)
+(s/def ::formula   :lwb.prop.nf/cnf)
 (s/def ::num-atoms pos-int?)
 (s/def ::int-atoms (s/map-of pos-int? atom?))
 (s/def ::num-cl    pos-int?)
@@ -65,7 +75,7 @@
         :args (s/cat :phi ::formula)
         :ret ::dimacs)
 
-;; ## SAT4J
+;; ### Using SAT4J as a SAT solver
 (def ^:dynamic *sat4j-timeout*
   "Timeout of Sat4j in seconds."
   300)
@@ -98,6 +108,10 @@
 
 ;; The Tseitin transformation takes a formula `phi` and generates in linear time
 ;; a formula which is equivalent with respect to satisfiability.
+
+(def ^:private tseitin-prefix
+  "Prefix for tseitin symbols."
+  "ts-")
 
 (defn- tseitin-symbol-generator
   "A function that generates unique tseitin symbols,
@@ -161,9 +175,15 @@
             parts (apply list (map cnf non-lazy-branches))]
         (walk/postwalk walk-fn (flatten-ops (into (conj parts (list 'and (list 'or ts-1))) '(and)))))))
 
+(defn- no-tseitin-symbol?
+  "Checks whether the formuka `phi` does not have an atom of the
+  form of a tseitin symbol, i.e. that matches #\"ts-\\d+\"."
+  [phi]
+  (empty? (filter #(re-matches #"ts-[0-9]+" (name %)) (atoms-of-phi phi))))
+
 (s/fdef tseitin
-        :args (s/cat :phi wff?)
-        :ret :lwb.prop/cnf)
+        :args (s/cat :phi (and wff? no-tseitin-symbol?))
+        :ret :lwb.prop.nf/cnf)
 
 (defn- remove-tseitin-symbols
   "Removes the tseitin-symbols and their value from a model."
@@ -175,6 +195,8 @@
   [model]
   (let [negate (fn [[atom value]] (if value (list 'not atom) atom))]
     (apply list 'or (map negate model))))
+
+;; ## Satisifiability in propositional logic
     
 (defn sat
   "Gives a model for `phi` if the formula is satisfiable, nil if not.   
@@ -202,8 +224,8 @@
 		           (remove-tseitin-symbols res)))))))
 
 (s/fdef sat
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:one :all}))
+        :args (s/alt :1-args (s/cat :phi (and wff? no-tseitin-symbol?))
+                     :2-args (s/cat :phi (and wff? no-tseitin-symbol?) :mode #{:one :all}))
         :ret (s/or :lwb.prop/model boolean?))
 
 (defn sat?
@@ -212,7 +234,7 @@
   (if (nil? (sat phi)) false true))
 
 (s/fdef sat?
-        :args (s/cat :phi wff?)
+        :args (s/cat :phi (and wff? no-tseitin-symbol?))
         :ret boolean?)
 
 (defn valid?
@@ -221,14 +243,10 @@
   (not (sat? (list 'not phi))))
 
 (s/fdef valid?
-        :args (s/cat :phi wff?)
+        :args (s/cat :phi (and wff? no-tseitin-symbol?))
         :ret boolean?)
 
 (defn true-only
   "Sequence of true atoms in a model"
   [model]
-  (loop [vec model, result []]
-    (if (empty? vec)
-      result
-      (let [atom (first vec) value (second vec)]
-        (recur (subvec vec 2) (if value (conj result atom) result))))))
+  (map first (filter #(true? (val %)) model)))

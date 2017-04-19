@@ -10,8 +10,7 @@
 (ns lwb.prop.examples.sudoku
   (:require [clojure.java.io :refer (reader)])
   (:require [lwb.prop.cardinality :refer (oneof max-kof min-kof)])
-  (:require [lwb.prop.sat :refer (sat true-only)])
-)
+  (:require [lwb.prop.sat :refer (sat true-only)]))
 
 ;; Configuration
 (def n1
@@ -39,7 +38,7 @@
 ;; has the value 'value'. The atoms are represented by symbols of the form 'cxyd',
 ;; with 'x' the row, 'y' the column and 'd' the value.
 
-(defn- make-sym 
+(defn- make-sym
   "Makes a symbol from [row, col, value]."
   [[row col value]]
   (symbol (str "c" row col value)))
@@ -55,13 +54,13 @@
 ; Sequence of clauses expressing that each row has at most one of the values 1..n2
 (def rows-cl
   (let [rows (partition n2 (for [r digits c digits] [r c]))
-        syms (for [row rows d digits] (map #(make-sym (conj % d)) row ))]
+        syms (for [row rows d digits] (map #(make-sym (conj % d)) row))]
     (mapcat #(max-kof 1 %) syms)))
 
 ; Sequence of clauses expressing that each col has at most one of the values 1..n2
 (def cols-cl
   (let [cols (partition n2 (for [r digits c digits] [c r]))
-        syms (for [col cols d digits] (map #(make-sym (conj % d)) col ))]
+        syms (for [col cols d digits] (map #(make-sym (conj % d)) col))]
     (mapcat #(max-kof 1 %) syms)))
 
 ; Sequence of clauses expressing that each block has at most one of the values 1..n2
@@ -77,9 +76,9 @@
 (defn puzzle-cl
   "Clauses for the givens of the puzzle."
   [puzzle]
-  (let [make-vec (fn [idx ch] (when-not (= ch \.) 
-                                  [(inc (quot idx n2)) (inc (rem idx n2)) (- (int ch) (int \0))]))
-        make-cl  (fn [vec] (list 'or (make-sym vec))) ]
+  (let [make-vec (fn [idx ch] (when-not (= ch \.)
+                                [(inc (quot idx n2)) (inc (rem idx n2)) (- (int ch) (int \0))]))
+        make-cl (fn [vec] (list 'or (make-sym vec)))]
     (map make-cl (remove nil? (map-indexed make-vec puzzle)))))
 
 ;; ## Combining a puzzle and the rules to a proposition
@@ -100,9 +99,9 @@
   "Solve Sudoku puzzle"
   [puzzle]
   (-> puzzle
-       (sudoku-prop)
-       (sat)
-       (solution)))
+      (sudoku-prop)
+      (sat)
+      (solution)))
 
 ;; ## Pretty-printing puzzles and solutions
 
@@ -130,7 +129,7 @@
 
   puzzle
 
-  (lwb.prop/cnf? (sudoku-prop puzzle))
+  (lwb.prop.nf/cnf? (sudoku-prop puzzle))
 
   (pretty-print puzzle)
 
@@ -159,41 +158,28 @@
 
   easy50
 
-  (dotimes [_ 10]
+  (dotimes [_ 3]
     (bench easy50))
-  ;=> 137 msecs per puzzle
+  ; => 467 msecs per puzzle
 
   ;; top95.txt
   (def top95 (parse "resources/sudoku/top95.txt"))
 
   top95
 
-  (dotimes [_ 10]
+  (dotimes [_ 3]
     (bench top95))
-  ;=> 141 msecs per puzzle
+  ; => 457 msecs per puzzle
 
   ;; hardest.txt
   (def hardest (parse "resources/sudoku/hardest.txt"))
+  (count hardest)
 
-  (dotimes [_ 10]
+  (dotimes [_ 3]
     (bench hardest))
-  ;=> 137 msecs per puzzle
+  ; => 454 msecs per puzzle
 
-  ; average 139 msecs per puzzle
+  ; average 139 msecs per puzzle (Clojure 1.8)
+  ; average 460 msecs per puzzle (Clojure 1.9)
 
-  (def p88 (nth top95 88))
-  (def p92 (nth top95 92))
-
-  (- 81 (count (filter zero? p88)))
-  ; => 17
-  (time (solve p88))
-  ; 445 msecs
-
-  (pretty-print p88)
-  (pretty-print (solve p88))
-
-  (- 81 (count (filter zero? p92)))
-  ; => 17
-  (time (solve p92))
-  ; 186 msecs
   ) ; end comment

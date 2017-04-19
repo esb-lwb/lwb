@@ -14,6 +14,10 @@
   (:require [clojure.core.matrix :refer (emap)])
   (:require [clojure.string :as str]))
 
+(def u
+  "A symbol for an unknown state of a cell in the puzzle"
+  \.)
+
 ;; The puzzle is given by a map with the keys :col-holes,
 ;; :row-holes and :field
 ;; e.g.
@@ -50,10 +54,6 @@
 ;; - the number of true atoms in a columns is given by the corresponding number in :col-holes,
 ;; - the atom for a cell with an arrow is false, and
 ;; - in the direction of the arrow one of the corresponding atoms has to be true
-
-(def u
-  "A symbol for an unknown state of a cell in the puzzle"
-  \.)
 
 ;; Symbols representing the proposition that a cell
 ;; is a "hole" or not.
@@ -179,8 +179,7 @@
   [puzzle solution]
   (let [[_ col-count] (size puzzle)]
     (->> solution
-       (partition 2)
-       (map vec)
+       (map identity)
        (sort)
        (map #(if (= (second %) true) \+ \-))
        (partition col-count)
@@ -221,7 +220,7 @@
   "Pretty-printing jabeh."
   [puzzle]
   (let [[row-count col-count] (size puzzle)]
-    (print "Puzzle\n")
+    (print "*** Jabeh\n")
     (print (str "  | " (str/join " " (:col-holes puzzle)) "\n"))
     (print (str "--+" (str/join (repeat col-count "--")) "\n"))
     (doseq [row (range row-count) col (range col-count)]
@@ -261,6 +260,6 @@
 
   (dotimes [_ 10]
     (bench ["jabeh01" "jabeh02" "jabeh03" "jabeh04" "jabeh05" "jabeh06"]))
-  ; => 150 msec
+  ; => 260 msec
 
   )

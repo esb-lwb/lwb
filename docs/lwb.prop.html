@@ -2882,14 +2882,12 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"></td></tr><tr><td class="docs"><ul>
 <li>syntax
 <ul><li>operators of propositional logic</li>
-<li>checking whether a formula is well-formed</li></ul></li>
+<li>checking whether a formula is well-formed</li>
+<li>visualizing the syntax tree of a formula</li></ul></li>
 <li>models and evaluation
 <ul><li>specification of a model in propositional logic</li>
 <li>evaluation of formulas in a given model</li>
 <li>the truth table for a formula</li></ul></li>
-<li>normal forms
-<ul><li>conjunctive normal form (cnf)</li>
-<li>disjunctive normal form (dnf)</li></ul></li>
 </ul>
 </td><td class="codes"></td></tr><tr><td class="docs"><h2>Syntax of formulas of propositional logic</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The propositional atoms are represented by Clojure symbols, 
@@ -2939,22 +2937,18 @@ atoms, operators and parentheses that conform to the grammar of propositional lo
   (contains? #{'not 'and 'or 'impl 'equiv 'xor 'ite} symb))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef op?
   :args any?
-  :ret  boolean?)</pre></td></tr><tr><td class="docs"><p>Prefix for tseitin symbols.</p>
-</td><td class="codes"><pre class="brush: clojure">(def tseitin-prefix
-  &quot;ts-&quot;)</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> an atomar proposition?</p>
+  :ret  boolean?)</pre></td></tr><tr><td class="docs"><p>Is <code>symb</code> an atomar proposition?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn atom?
   [symb]
   (and (symbol? symb) (not (op? symb))))</pre></td></tr><tr><td class="docs"><p><em>Remark</em> <br />
-Atoms beginning with <code>ts-</code> are not allowed, since such atoms are generated
-during the Tseitin transformation of a formula. <br />
-But: we do not check this, because <code>atom?</code> is internally used too, and there
-atoms like <code>ts-1</code> are allowed!</p>
+Atoms whose name matches <code>#"ts-[0-9]+"</code> are not allowed in the call of <code>sat</code>, since such atoms are generated
+during the Tseitin transformation of a formula.      </p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef atom?
         :args any?
         :ret  boolean?)</pre></td></tr><tr><td class="docs"><p>Arity of operator <code>op</code>. <br />
-   -1 means n-ary. <br />
-   nil if <code>op</code> is not an operator.</p>
+   <code>-1</code> means n-ary. <br />
+   <code>nil</code> if <code>op</code> is not an operator.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn arity
   [op]
   (cond
@@ -2994,7 +2988,33 @@ several formulas as arguments whose number matches the arity of the operator.</p
 </td><td class="codes"><pre class="brush: clojure">(s/fdef wff?
   :args (s/alt :1-args (s/cat :phi any?)
                :2-args (s/cat :phi any? :mode #{:bool :msg}))
-  :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><h2>Models and evaluation</h2>
+  :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><p>Utility function</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Flattens the formula <code>phi</code>. <br />
+   Nested binary applications of n-ary operators will be transformed to the n-ary form,
+   e.g. <code>(and (and a b) c) =&gt; (and a b c)</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn flatten-ops
+  [phi]
+  (let [flat-step (fn [sub-phi]
+                    (if (and (coll? sub-phi) (nary? (first sub-phi)))
+                      (let [op (first sub-phi)
+                            args (rest sub-phi)
+                            flat-filter (fn [op arg] (if (coll? arg) (= op (first arg)) false))
+                            flat (map rest (filter (partial flat-filter op) args))
+                            not-flat (filter (partial (complement flat-filter) op) args)]
+                        (apply concat `((~op) ~@flat ~not-flat)))
+                      sub-phi))]
+    (postwalk flat-step phi)))</pre></td></tr><tr><td class="docs"><h3>Visualization of the syntax tree of a formula</h3>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX code for TikZ or a pdf file if filename given. <br />
+   Requires: TeX installation, commands texipdf and open</p>
+</td><td class="codes"><pre class="brush: clojure">(defn texify
+  ([phi]
+   (vis/texify phi))
+  ([phi filename]
+   (vis/texify phi filename)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef texify
+        :args (s/alt :1-args (s/cat :phi wff?)
+                     :2-args (s/cat :phi wff? :filename string?))
+        :ret  nil?)</pre></td></tr><tr><td class="docs"><h2>Models and evaluation</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><h3>Models in propositional logic</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A model for a formula is a function from the atoms of the formula into the set of the
 boolean values {true, false}.</p>
@@ -3019,7 +3039,7 @@ Furthermore the atoms in the formula must be a subset of the atoms in the model.
            (filter #(not (or (op? %) (boolean? %))) (flatten phi)))
     (if (boolean? phi)
       #{}
-      #{phi})))</pre></td></tr><tr><td class="docs"><p>Set of atoms in destructured model</p>
+      #{phi})))</pre></td></tr><tr><td class="docs"><p>Set of atoms in a model.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- atoms-in-model
   [model]
   (set (keys model)))</pre></td></tr><tr><td class="docs">
@@ -3123,7 +3143,7 @@ corresponding atom in the header as well as the result of the evaluation.</p>
     (println prop)
 	  (print-table header table)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef print-truth-table
-        :args (s/cat :tt ::truth-table)
+        :args (s/cat :tt ::truth-table')
         :ret  nil?)</pre></td></tr><tr><td class="docs"><p>Pretty prints truth-table for <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn ptt
   [phi]
@@ -3132,201 +3152,6 @@ corresponding atom in the header as well as the result of the evaluation.</p>
        print-truth-table))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef ptt
         :args (s/cat :phi wff?)
-        :ret  nil?)</pre></td></tr><tr><td class="docs"><h2>Normal forms</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><h3>Transformation to conjunctive normal form</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>(Standardized) conjunctive normal form <br />
-Conjunctive normal form in lwb is defined as a formula of the form
-<code>(and (or ...) (or ...) (or ...) ...)</code> where the clauses contain
-only literals, no constants --
-or the trivially true or false formula.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>I.e. in lwb when transforming formula to cnf, we reduce it to this
-standard form.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Specification of a literal</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::literal (s/or :simple-expr ::simple-expr
-                       :neg (s/and list? (s/cat :not #{'not} :simple-expr ::simple-expr))))</pre></td></tr><tr><td class="docs"><p>Specification of a clause</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::clause (s/and list? (s/cat :or #{'or} :literals (s/* ::literal))))</pre></td></tr><tr><td class="docs"><p>Specification of conjunctive normal form cnf</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::cnf (s/and list? (s/cat :and #{'and} :clauses (s/* ::clause))))</pre></td></tr><tr><td class="docs"><p>Caveat reader!
-at the first sight <code>(apply list ...)</code> and <code>(list* ...)</code> seems to give the
-same result -- BUT
-the types are different: <br />
-<code>(list? (apply list [:a :b])) =&gt; true</code> <br />
-<code>(list? (list* [:a :b]))      =&gt; false</code> <br />
-since we check <code>list?</code> in the specs we have to be precise with the types
-our functions are returning!</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>One may argue that in the spirit of Clojure it's better to work with
-sequences whatever their implementation would be. <br />
-But: we want to use the data structure of a formula as code
-and as such it has to be a list!</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Checks whether <code>phi</code> is a literal, i.e. a propositional atom or its negation.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn literal?
-  [phi]
-  (s/valid? ::literal phi))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef literal?
-        :args (s/cat :phi wff?)
-        :ret  boolean?)</pre></td></tr><tr><td class="docs"><p>Normalize formula <code>phi</code> such that just the operators <code>not</code>, <code>and</code>, <code>or</code> are used.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn impl-free 
-  [phi]
-  (if (literal? phi)
-    phi
-	  (let [op (first phi)]
-      (if (contains? #{'and 'or 'not} op) 
-        (apply list op (map impl-free (rest phi)))
-        (let [exp-phi (macroexpand-1 phi)]
-          (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef impl-free
-        :args (s/cat :phi wff?)
-        :ret  wff?)</pre></td></tr><tr><td class="docs"><p>Transforms an impl-free formula <code>phi</code> into negation normal form.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn nnf
-  [phi]
-  (if (literal? phi) 
-    phi
-    (let [[op &amp; more] phi]
-      (if (contains? #{'and 'or} op)
-        (apply list op (map nnf more))
-        (let [[second-op &amp; second-more] (second phi)]
-          (if (contains? #{'and 'or} second-op)
-            (nnf (apply list (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
-            (nnf (first second-more))))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef nnf
-        :args (s/cat :phi wff?)
-        :ret  wff?)</pre></td></tr><tr><td class="docs"><p>Application of the distributive laws to the given formulas</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- distr
-  ([phi] phi)
-  ([phi-1 phi-2]
-    (cond
-      (and (not (literal? phi-1)) (= 'and (first phi-1)))
-        (apply list 'and (map #(distr % phi-2) (rest phi-1)))
-      (and (not (literal? phi-2)) (= 'and (first phi-2)))
-        (apply list 'and (map #(distr phi-1 %) (rest phi-2)))
-      :else
-        (list 'or phi-1 phi-2)))
-  ([phi-1 phi-2 &amp; more]
-    (reduce distr (distr phi-1 phi-2) more)))</pre></td></tr><tr><td class="docs"><p>Transforms the formula <code>phi</code> from nnf to cnf.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn nnf-&gt;cnf 
-  [phi]
-  (cond
-    (literal? phi) (list 'and (list 'or phi))
-    (= '(or) phi) '(and (or))
-    (= 'and (first phi)) (apply list 'and (map nnf-&gt;cnf (rest phi)))
-    (= 'or (first phi)) (apply distr (map nnf-&gt;cnf (rest phi)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef nnf-&gt;cnf
-        :args (s/cat :phi wff?)
-        :ret  wff?)</pre></td></tr><tr><td class="docs"><p>Flattens the formula <code>phi</code>. <br />
-   Nested binary applications of n-ary operators will be transformed to the n-ary form,
-   e.g. <code>(and (and a b) c) =&gt; (and a b c)</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn flatten-ops
-  [phi]
-  (let [flat-step (fn [sub-phi]
-						        (if (and (coll? sub-phi) (nary? (first sub-phi)))
-						          (let [op (first sub-phi)
-                            args (rest sub-phi)
-						                flat-filter (fn [op arg] (if (coll? arg) (= op (first arg)) false))
-						                flat (map rest (filter (partial flat-filter op) args))
-						                not-flat (filter (partial (complement flat-filter) op) args)]
-						            (apply concat `((~op) ~@flat ~not-flat)))
-					             sub-phi))]
-        (postwalk flat-step phi)))</pre></td></tr><tr><td class="docs"><p>Transforms a clause <code>(or ...)</code> into a map of the sets of <code>:pos</code> atoms 
-   and <code>:neg</code> atoms in the clause.</p>
-</td><td class="codes"><pre class="brush: clojure">#_(s/fdef flatten-ops
-        :args (s/cat :phi wff?)
-        :ret  wff?)
-(defn- clause-&gt;sets
-  [cl]
-  (apply merge-with union
-         (for [literal (rest cl)]
-					  (if (or (symbol? literal) (instance? Boolean literal))
-					      {:pos #{literal}}
-					      {:neg #{(second literal)}}))))</pre></td></tr><tr><td class="docs"><p>Reduces a clause in the form <code>{:pos #{...} :neg #{...}</code> <br />
-   by considering: <br />
-   (1) :pos contains true  -> clause is trivially true, <br />
-   (2) :neg contains false -> clause is trivially true, <br />
-   (3) :pos contains false -> false can be deleted, <br />
-   (4) :neg contains true  -> true can be deleted.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- red-clmap 
-  [{:keys [pos neg]}]
-  (cond
-    (pos? (count (intersection pos neg))) true
-    (contains? pos 'true) true
-    (contains? neg 'false) true
-    :else
-      (let [pos' (filter #(not= 'false %) pos), neg' (filter #(not= 'true %) neg)]
-        (conj (apply list (concat (apply list pos') (map #(list 'not %) neg'))) 'or))))</pre></td></tr><tr><td class="docs"><p>Reduces a formula <code>ucnf</code> of the form <code>(and (or ...) (or ...) ...)</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- red-cnf
-  [ucnf]
-  (let [result (filter #(not= 'true %) (map #(red-clmap (clause-&gt;sets %)) (rest ucnf)))]
-    (cond
-      (some #{'(or)} result) false
-      (empty? result) true
-      :else (conj (apply list (distinct result)) 'and))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to (standardized) conjunctive normal form cnf.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn cnf
-  [phi]
-  (-&gt; phi impl-free nnf nnf-&gt;cnf flatten-ops red-cnf))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>cnf</code>
-<code>:ret</code> is in cnf and equivalent to the argument <code>:phi</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(s/fdef cnf
-        :args (s/cat :phi wff?)
-        :ret (s/alt :cnf ::cnf :bool boolean?))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(comment
-  ;the spec of the function has a cyclic dependency as a consequence!
-  ;:fn #(lwb.prop.sat/valid? (list 'equiv (-&gt; % :args :phi) (-&gt; % :ret))))
-  )</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) conjunctive normal form?
-   <code>(cnf? phi)</code> returns true or false. <br />
-   <code>(cnf? phi :msg)</code> returns true or a message describing the error in <code>phi</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn cnf?
-  ([phi]
-   (cnf? phi :bool))
-  ([phi mode]
-   (let [result (s/valid? ::cnf phi)]
-     (or result (if (= mode :msg) (s/explain-str ::cnf phi) result)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef cnf?
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:bool :msg}))
-        :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><h3>Transformation to disjunctive normal form</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Specification of monom</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::monom (s/and list? (s/cat :and #{'and} :literals (s/* ::literal))))</pre></td></tr><tr><td class="docs"><p>Specification of disjunctive normal form dnf</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::dnf (s/and list? (s/cat :or #{'or} :monoms (s/* ::monom))))</pre></td></tr><tr><td class="docs"><p>maps clause to monom in transformation to dnf.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- mapdnfi
-  [inner]
-  (cond
-    (= inner 'or) 'and
-    (list? inner) (second inner)
-    :else (list 'not inner)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- mapdnf
-  [outer]
-  (if (= outer 'and) 'or
-                     (apply list (map mapdnfi outer))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> to disjunctive normal form dnf.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn dnf
-  [phi]
-  (let [cnf (cnf (list 'not phi))]
-    ; border case
-    (if (boolean? cnf)
-      (not cnf)
-      (apply list (map mapdnf cnf)))))</pre></td></tr><tr><td class="docs"><p>Specification of function <code>dnf</code>
-<code>:ret</code> is in dnf and equivalent to the argument <code>:phi</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(s/fdef dnf
-        :args (s/cat :phi wff?)
-        :ret (s/or :dnf ::dnf :bool boolean?))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> in (standardized) disjunctive normal form?
-   <code>(dnf? phi)</code> returns true or false. <br />
-   <code>(dnf? phi :msg)</code> returns true or a message describing the error in <code>phi</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn dnf?
-  ([phi]
-   (dnf? phi :bool))
-  ([phi mode]
-   (let [result (s/valid? ::dnf phi)]
-     (or result (if (= mode :msg) (s/explain-str ::dnf phi) result)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef dnf?
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:bool :msg}))
-        :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX code for TikZ or a pdf file if filename given. <br />
-   Requires: TeX installation, commands texipdf and open</p>
-</td><td class="codes"><pre class="brush: clojure">(defn texify
-  ([phi]
-   (vis/texify phi))
-  ([phi filename]
-   (vis/texify phi filename)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef texify
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :filename string?))
         :ret  nil?)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 

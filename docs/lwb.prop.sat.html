@@ -2865,9 +2865,10 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.prop.sat" name="lwb.prop.sat"><h1 class="project-name">lwb.prop.sat</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.prop.sat" name="lwb.prop.sat"><h1 class="project-name">lwb.prop.sat</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Satisfiability in propositional logic.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.prop.sat
   (:require [lwb.prop :refer :all]
+            [lwb.prop.nf :refer (cnf cnf?)]
             [clojure.set :refer (map-invert)]
             [clojure.string :refer (starts-with?)]
             [clojure.zip :as z]
@@ -2877,6 +2878,14 @@ net.brehaut.ClojureTools = (function (SH) {
            (org.sat4j.core VecInt)
            (org.sat4j.specs ContradictionException)
            (clojure.lang LazySeq)))</pre></td></tr><tr><td class="docs"><h1>Satisfiability in propositional logic</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>The namespace <code>lwb.prop.sat</code> provides</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><ul>
+<li>transformation of a propositional formula in cnf to the
+dimacs format used by SAT solvers</li>
+<li>the Tseitin transformation of an arbitrary formula in propositional logic
+into a formula in cnf thats equivalent with resprct to satisfiability</li>
+<li>satisfiability in propositional logic</li>
+</ul>
 </td><td class="codes"></td></tr><tr><td class="docs"><h2>Transformation of a formula in cnf to dimacs format</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A formula in dimacs format is organized as a map with the
 following entries:</p>
@@ -2888,7 +2897,7 @@ following entries:</p>
 <li><code>:cl-set</code>     the set of clauses encoded with the integers</li>
 </ul>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::formula   :lwb.prop/cnf)
+</td><td class="codes"><pre class="brush: clojure">(s/def ::formula   :lwb.prop.nf/cnf)
 (s/def ::num-atoms pos-int?)
 (s/def ::int-atoms (s/map-of pos-int? atom?))
 (s/def ::num-cl    pos-int?)
@@ -2916,7 +2925,7 @@ following entries:</p>
         :args (s/cat :phi ::formula)
         :ret ::dimacs)</pre></td></tr><tr><td class="docs"><p>Timeout of Sat4j in seconds.</p>
 
-<h2>SAT4J</h2>
+<h3>Using SAT4J as a SAT solver</h3>
 </td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *sat4j-timeout*
   300)</pre></td></tr><tr><td class="docs"><p>Checks whether the formula in <code>dimacs-map</code> is satisfiable. <br />
    Returns nil if not, a model if it is satisfiable.</p>
@@ -2940,7 +2949,9 @@ following entries:</p>
         :ret (s/or :model :lwb.prop/model :nil nil?))</pre></td></tr><tr><td class="docs"><h2>Tseitin transformation</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The Tseitin transformation takes a formula <code>phi</code> and generates in linear time
 a formula which is equivalent with respect to satisfiability.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>A function that generates unique tseitin symbols,
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Prefix for tseitin symbols.</p>
+</td><td class="codes"><pre class="brush: clojure">(def ^:private tseitin-prefix
+  &quot;ts-&quot;)</pre></td></tr><tr><td class="docs"><p>A function that generates unique tseitin symbols,
    beginning with <code>ts-1</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- tseitin-symbol-generator
   []
@@ -2988,17 +2999,24 @@ a formula which is equivalent with respect to satisfiability.</p>
             walk-fn (fn [node] (if (instance? LazySeq node) (apply list node) node))
             non-lazy-branches (walk/postwalk walk-fn branches)
             parts (apply list (map cnf non-lazy-branches))]
-        (walk/postwalk walk-fn (flatten-ops (into (conj parts (list 'and (list 'or ts-1))) '(and)))))))</pre></td></tr><tr><td class="docs">
+        (walk/postwalk walk-fn (flatten-ops (into (conj parts (list 'and (list 'or ts-1))) '(and)))))))</pre></td></tr><tr><td class="docs"><p>Checks whether the formuka <code>phi</code> does not have an atom of the
+  form of a tseitin symbol, i.e. that matches #"ts-\d+".</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- no-tseitin-symbol?
+  &quot;Checks whether the formuka `phi` does not have an atom of the
+  form of a tseitin symbol, i.e. that matches #\&quot;ts-\\d+\&quot;.&quot;
+  [phi]
+  (empty? (filter #(re-matches #&quot;ts-[0-9]+&quot; (name %)) (atoms-of-phi phi))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef tseitin
-        :args (s/cat :phi wff?)
-        :ret :lwb.prop/cnf)</pre></td></tr><tr><td class="docs"><p>Removes the tseitin-symbols and their value from a model.</p>
+        :args (s/cat :phi (and wff? no-tseitin-symbol?))
+        :ret :lwb.prop.nf/cnf)</pre></td></tr><tr><td class="docs"><p>Removes the tseitin-symbols and their value from a model.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- remove-tseitin-symbols
   [model]
   (into {} (filter #(not (starts-with? (name (key %)) tseitin-prefix)) model)))</pre></td></tr><tr><td class="docs"><p>Transforms a model into a formula in cnf with negated truth value.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- model2negated-cnf
   [model]
   (let [negate (fn [[atom value]] (if value (list 'not atom) atom))]
-    (apply list 'or (map negate model))))</pre></td></tr><tr><td class="docs"><p>Gives a model for <code>phi</code> if the formula is satisfiable, nil if not. <br />
+    (apply list 'or (map negate model))))</pre></td></tr><tr><td class="docs"><h2>Satisifiability in propositional logic</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Gives a model for <code>phi</code> if the formula is satisfiable, nil if not. <br />
    If <code>phi</code> is trivially valid, the result is true. <br />
    Mode <code>:all</code> returns a sequence of all the satisfying assignments.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat
@@ -3023,28 +3041,24 @@ a formula which is equivalent with respect to satisfiability.</p>
 		         (when res
 		           (remove-tseitin-symbols res)))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:one :all}))
+        :args (s/alt :1-args (s/cat :phi (and wff? no-tseitin-symbol?))
+                     :2-args (s/cat :phi (and wff? no-tseitin-symbol?) :mode #{:one :all}))
         :ret (s/or :lwb.prop/model boolean?))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat?
   [phi]
   (if (nil? (sat phi)) false true))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat?
-        :args (s/cat :phi wff?)
+        :args (s/cat :phi (and wff? no-tseitin-symbol?))
         :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> valid?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn valid?
   [phi]
   (not (sat? (list 'not phi))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef valid?
-        :args (s/cat :phi wff?)
+        :args (s/cat :phi (and wff? no-tseitin-symbol?))
         :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Sequence of true atoms in a model</p>
 </td><td class="codes"><pre class="brush: clojure">(defn true-only
   [model]
-  (loop [vec model, result []]
-    (if (empty? vec)
-      result
-      (let [atom (first vec) value (second vec)]
-        (recur (subvec vec 2) (if value (conj result atom) result))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (map first (filter #(true? (val %)) model)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

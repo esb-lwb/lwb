@@ -1,11 +1,10 @@
 #!/bin/bash
 # ----------------------------------------------------------------------------
-# Copyright (c) 2016 by Burkhardt Renz. All rights reserved.
+# Copyright (c) 2016 - 2017 by Burkhardt Renz. All rights reserved.
 # Bash script
-#
 # ----------------------------------------------------------------------------
 lein marg -m src/lwb/main.clj\
-  src/lwb/prop.clj src/lwb/prop/sat.clj\
+  src/lwb/prop.clj src/lwb/prop/nf.clj src/lwb/prop/sat.clj\
   src/lwb/prop/cardinality.clj src/lwb/prop/bdd.clj\
   src/lwb/pred.clj src/lwb/pred/substitution.clj src/lwb/vis.clj\
   src/lwb/ltl.clj src/lwb/ltl/kripke.clj src/lwb/ltl/buechi.clj\
@@ -13,5 +12,5 @@ lein marg -m src/lwb/main.clj\
   src/lwb/nd/repl.clj src/lwb/nd/deduction.clj src/lwb/nd/proof.clj\
   src/lwb/nd/rules.clj src/lwb/nd/specs.clj src/lwb/nd/error.clj\
   src/lwb/nd/swap/common.clj src/lwb/nd/swap/prop.clj\
-	src/lwb/nd/swap/pred.clj src/lwb/nd/swap/ltl.clj \
+  src/lwb/nd/swap/pred.clj src/lwb/nd/swap/ltl.clj \
   src/lwb/nd/io.clj src/lwb/nd/prereqs.clj src/lwb/nd/printer.clj\

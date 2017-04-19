@@ -9,7 +9,8 @@
 
 (ns lwb.prop.examples.sat
   (:require [lwb.prop :refer :all])
-  (:require [lwb.prop.sat :refer :all])
+  (:require [lwb.prop.nf :refer (cnf?)])
+  (:require [lwb.prop.sat :refer (sat sat? valid?)])
   (:require [clojure.math.combinatorics :refer (combinations)]))
 
 ; ----------------------------------------------------------------------------------------------------
