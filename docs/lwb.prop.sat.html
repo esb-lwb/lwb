@@ -3043,7 +3043,7 @@ a formula which is equivalent with respect to satisfiability.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat
         :args (s/alt :1-args (s/cat :phi (and wff? no-tseitin-symbol?))
                      :2-args (s/cat :phi (and wff? no-tseitin-symbol?) :mode #{:one :all}))
-        :ret (s/or :lwb.prop/model boolean?))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
+        :ret (s/nilable (s/or :bool boolean? :model :lwb.prop/model :models (s/coll-of :lwb.prop/model))))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat?
   [phi]
   (if (nil? (sat phi)) false true))</pre></td></tr><tr><td class="docs">

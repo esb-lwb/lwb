@@ -2978,17 +2978,17 @@ several formulas as arguments whose number matches the arity of the operator.</p
 </td><td class="codes"><pre class="brush: clojure">(s/def ::fml (s/or :simple-expr ::simple-expr
                    :compl-expr  ::compl-expr))</pre></td></tr><tr><td class="docs"><p>Is the propositional formula <code>phi</code> well-formed? <br />
    <code>(wff? phi)</code> returns true or false. <br />
-   <code>(wff? phi :msg)</code> returns true or a message describing the error in <code>phi</code>.</p>
+   <code>(wff? phi :exception-if-not)</code> returns true or throws an exception describing the error in <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn wff?
   ([phi]
    (wff? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
-     (or result (if (= mode :msg) (s/explain-str ::fml phi) result)))))</pre></td></tr><tr><td class="docs">
+     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::fml phi))) result)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef wff?
   :args (s/alt :1-args (s/cat :phi any?)
-               :2-args (s/cat :phi any? :mode #{:bool :msg}))
-  :ret (s/alt :bool boolean? :msg string?))</pre></td></tr><tr><td class="docs"><p>Utility function</p>
+               :2-args (s/cat :phi any? :mode #{:bool :exception-if-not}))
+  :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Utility function</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Flattens the formula <code>phi</code>. <br />
    Nested binary applications of n-ary operators will be transformed to the n-ary form,
    e.g. <code>(and (and a b) c) =&gt; (and a b c)</code>.</p>
@@ -3115,7 +3115,11 @@ corresponding atom in the header as well as the result of the evaluation.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/fdef truth-table
         :args (s/alt :1-args (s/cat :phi wff?)
                      :2-args (s/cat :phi wff? :mode #{:true-only :false-only}))
-        :ret (s/alt ::truth-table ::truth-table'))</pre></td></tr><tr><td class="docs"><p>Pretty prints vector <code>header</code> and vector of vectors <code>table</code>. <br />
+        :ret (s/alt ::truth-table ::truth-table')
+        :fn (fn [{args :args ret :ret}]
+              (if (contains? #{:true-only :false-only} (:mode ret))
+                (s/valid? ::truth-table' ret)
+                (s/valid? ::truth-table ret))))</pre></td></tr><tr><td class="docs"><p>Pretty prints vector <code>header</code> and vector of vectors <code>table</code>. <br />
    Pre: header and row in the table have the same no of item,
         the size of items in header is >= size of items in the rows.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- print-table

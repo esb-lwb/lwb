@@ -3051,15 +3051,15 @@ true branch <code>hi-no</code>.</p>
         :args (s/cat :phi prop/wff?)
         :ret ::bdd)</pre></td></tr><tr><td class="docs"><h2>Satisfiability via bdd</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><h3>Helper functions</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Transforms byte vector result from AllSatIterator to get an assignment vector</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- tf1-vec
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Transforms byte vector result from AllSatIterator to get an assignment map</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- tf1-map
   [phi bvec]
   (let [atom-vec (vec (prop/atoms-of-phi phi))
         tx (map-indexed (fn [idx a]
                           (if (zero? a)
                             [(nth atom-vec idx) 'false]
                             [(nth atom-vec idx) 'true])))]
-    (into [] (comp tx (mapcat identity)) bvec)))</pre></td></tr><tr><td class="docs"><p>Returns seq of indexes of number -1 in vec</p>
+    (apply array-map (into [] (comp tx (mapcat identity)) bvec))))</pre></td></tr><tr><td class="docs"><p>Returns seq of indexes of number -1 in vec</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- idx-in-vec
   [bvec]
   (let [tx (comp
@@ -3095,12 +3095,12 @@ true branch <code>hi-no</code>.</p>
                   (.isZero bddi) 'nil
                   :else
                   (case mode
-                    :all (map #(tf1-vec phi %) (mapcat tfa-vec (vec (map vec iseq))))
-                    (tf1-vec phi (first (map vec iseq)))))))))</pre></td></tr><tr><td class="docs">
+                    :all (map #(tf1-map phi %) (mapcat tfa-vec (vec (map vec iseq))))
+                    (tf1-map phi (first (map vec iseq)))))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef sat
         :args (s/alt :1-args (s/cat :phi prop/wff?)
                      :2-args (s/cat :phi prop/wff? :mode #{:one :all}))
-        :ret (s/nilable (s/or :verum true? :model :lwb.prop/model)))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
+        :ret (s/nilable (s/alt :verum true? :model :lwb.prop/model :models (s/coll-of :lwb.prop/model))))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn sat?
   [phi]
   (if (nil? (sat phi)) false true))</pre></td></tr><tr><td class="docs">

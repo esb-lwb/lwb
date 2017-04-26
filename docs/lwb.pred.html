@@ -2987,17 +2987,17 @@ given signature.</p>
 </td><td class="codes"><pre class="brush: clojure">(s/def ::fml (s/or :simple-expr ::simple-expr
                    :compl-expr  ::compl-expr))</pre></td></tr><tr><td class="docs"><p>Is the first order formula <code>phi</code> well-formed, with respect to signature <code>sig</code>? <br />
    <code>(wff? phi sig)</code> returns true or false <br />
-   <code>(wff? phi sig :msg)</code> returns true or a message on the error in <code>phi</code>.</p>
+   <code>(wff? phi sig :exception-if-not)</code> returns true or throws an exception describing the error in <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn wff?
   ([phi sig]
    (wff? phi sig :bool))
   ([phi sig mode]
    (binding [*signature* sig]
      (let [result (s/valid? ::fml phi)]
-       (or result (if (= mode :msg) (s/explain-str ::fml phi) result))))))</pre></td></tr><tr><td class="docs">
+       (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::fml phi))) result))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef wff?
         :args (s/alt :2-args (s/cat :fml any? :sig ::signature)
-                     :3-args (s/cat :fml any? :sig ::signature :mode #{:bool :msg}))
+                     :3-args (s/cat :fml any? :sig ::signature :mode #{:bool :exception-if-not}))
         :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Models</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A model is a "world" consisting of a universe, as well as functions and relations 
 on the universe. A model assigns concrete functions and relations to the
