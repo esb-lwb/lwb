@@ -89,17 +89,17 @@
 (defn wff?
   "Is the formula `phi` well-formed?       
    `(wff? phi)` returns true or false.       
-   `(wff? phi :msg)` returns true or a message describing the error in `phi`."
+   `(wff? phi :exception-if-not)` returns true or throws an exception describing the error in `phi`."
   ([phi]
    (wff? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
-     (or result (if (= mode :msg) (s/explain-str ::fml phi) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::fml phi))) result)))))
 
 (s/fdef wff?
         :args (s/alt :1-args (s/cat :phi any?)
-                     :2-args (s/cat :phi any? :mode #{:bool :msg}))
-        :ret (s/alt :bool boolean? :msg string?))
+                     :2-args (s/cat :phi any? :mode #{:bool :exception-if-not}))
+        :ret boolean?)
 
 ;; ## Negation normal form
 
@@ -164,17 +164,17 @@
 (defn nnf?
   "Is `phi` in negation normal form?
    `(nnf? phi)` returns true or false.       
-   `(nnf? phi :msg)` returns true or a message describing the error in `phi`."
+   `(nnf? phi :exception-if-not)` returns true or throws an exception describing the error in `phi`."
   ([phi]
    (nnf? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::nnf-fml phi)]
-     (or result (if (= mode :msg) (s/explain-str ::nnf-fml phi) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::nnf-fml phi))) result)))))
 
 (s/fdef nnf?
         :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:bool :msg}))
-        :ret (s/alt :bool boolean? :msg string?))
+                     :2-args (s/cat :phi wff? :mode #{:bool :exception-if-not}))
+        :ret boolean?)
 
 ;; ## Visualisation of a formula
 

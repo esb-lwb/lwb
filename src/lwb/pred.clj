@@ -196,17 +196,17 @@
 (defn wff?
   "Is the first order formula `phi` well-formed, with respect to signature `sig`?     
    `(wff? phi sig)` returns true or false      
-   `(wff? phi sig :msg)` returns true or a message on the error in `phi`."      
+   `(wff? phi sig :exception-if-not)` returns true or throws an exception describing the error in `phi`."      
   ([phi sig]
    (wff? phi sig :bool))
   ([phi sig mode]
    (binding [*signature* sig]
      (let [result (s/valid? ::fml phi)]
-       (or result (if (= mode :msg) (s/explain-str ::fml phi) result))))))
+       (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::fml phi))) result))))))
 
 (s/fdef wff?
         :args (s/alt :2-args (s/cat :fml any? :sig ::signature)
-                     :3-args (s/cat :fml any? :sig ::signature :mode #{:bool :msg}))
+                     :3-args (s/cat :fml any? :sig ::signature :mode #{:bool :exception-if-not}))
         :ret boolean?)
 
 ;; ## Models

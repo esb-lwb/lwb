@@ -160,17 +160,17 @@
 (defn wff?
   "Is the propositional formula `phi` well-formed?       
    `(wff? phi)` returns true or false.       
-   `(wff? phi :msg)` returns true or a message describing the error in `phi`."
+   `(wff? phi :exception-if-not)` returns true or throws an exception describing the error in `phi`."
   ([phi]
    (wff? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
-     (or result (if (= mode :msg) (s/explain-str ::fml phi) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::fml phi))) result)))))
 
 (s/fdef wff?
   :args (s/alt :1-args (s/cat :phi any?)
-               :2-args (s/cat :phi any? :mode #{:bool :msg}))
-  :ret (s/alt :bool boolean? :msg string?))
+               :2-args (s/cat :phi any? :mode #{:bool :exception-if-not}))
+  :ret boolean?)
 
 ;; Utility function
 
@@ -338,7 +338,11 @@
 (s/fdef truth-table
         :args (s/alt :1-args (s/cat :phi wff?)
                      :2-args (s/cat :phi wff? :mode #{:true-only :false-only}))
-        :ret (s/alt ::truth-table ::truth-table'))
+        :ret (s/alt ::truth-table ::truth-table')
+        :fn (fn [{args :args ret :ret}]
+              (if (contains? #{:true-only :false-only} (:mode ret))
+                (s/valid? ::truth-table' ret)
+                (s/valid? ::truth-table ret))))
 
 (defn- print-table
   "Pretty prints vector `header` and vector of vectors `table`.   

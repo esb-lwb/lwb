@@ -190,17 +190,17 @@
 (defn cnf?
   "Is `phi` in (standardized) conjunctive normal form?
    `(cnf? phi)` returns true or false.       
-   `(cnf? phi :msg)` returns true or a message describing the error in `phi`."
+   `(cnf? phi :exception-if-not)` returns true or throws an exception describing the error in `phi`."
   ([phi]
    (cnf? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::cnf phi)]
-     (or result (if (= mode :msg) (s/explain-str ::cnf phi) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::cnf phi))) result)))))
 
 (s/fdef cnf?
         :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:bool :msg}))
-        :ret (s/alt :bool boolean? :msg string?))
+                     :2-args (s/cat :phi wff? :mode #{:bool :exception-if-not}))
+        :ret boolean?)
 
 ;; ### Disjunctive normal form (dnf)
 
@@ -237,20 +237,20 @@
 ;; `:ret` is in dnf and equivalent to the argument `:phi`.
 (s/fdef dnf
         :args (s/cat :phi wff?)
-        :ret (s/or :dnf ::dnf :bool boolean?))
+        :ret (s/alt :dnf ::dnf :bool boolean?))
 
 (defn dnf?
   "Is `phi` in (standardized) disjunctive normal form?
    `(dnf? phi)` returns true or false.       
-   `(dnf? phi :msg)` returns true or a message describing the error in `phi`."
+   `(dnf? phi :exception-if-not)` returns true or throws an exception describing the error in `phi`."
   ([phi]
    (dnf? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::dnf phi)]
-     (or result (if (= mode :msg) (s/explain-str ::dnf phi) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::dnf phi))) result)))))
 
 (s/fdef dnf?
         :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:bool :msg}))
-        :ret (s/alt :bool boolean? :msg string?))
+                     :2-args (s/cat :phi wff? :mode #{:bool :exception-if-not}))
+        :ret boolean?)
 

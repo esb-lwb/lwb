@@ -249,15 +249,15 @@
 
 ;; ### Helper functions
 
-(defn- tf1-vec
-  "Transforms byte vector result from AllSatIterator to get an assignment vector"
+(defn- tf1-map
+  "Transforms byte vector result from AllSatIterator to get an assignment map"
   [phi bvec]
   (let [atom-vec (vec (prop/atoms-of-phi phi))
         tx (map-indexed (fn [idx a]
                           (if (zero? a)
                             [(nth atom-vec idx) 'false]
                             [(nth atom-vec idx) 'true])))]
-    (into [] (comp tx (mapcat identity)) bvec)))
+    (apply array-map (into [] (comp tx (mapcat identity)) bvec))))
 
 (defn- idx-in-vec
   "Returns seq of indexes of number -1 in vec"
@@ -302,13 +302,13 @@
                   (.isZero bddi) 'nil
                   :else
                   (case mode
-                    :all (map #(tf1-vec phi %) (mapcat tfa-vec (vec (map vec iseq))))
-                    (tf1-vec phi (first (map vec iseq)))))))))
+                    :all (map #(tf1-map phi %) (mapcat tfa-vec (vec (map vec iseq))))
+                    (tf1-map phi (first (map vec iseq)))))))))
 
 (s/fdef sat
         :args (s/alt :1-args (s/cat :phi prop/wff?)
                      :2-args (s/cat :phi prop/wff? :mode #{:one :all}))
-        :ret (s/nilable (s/or :verum true? :model :lwb.prop/model)))
+        :ret (s/nilable (s/alt :verum true? :model :lwb.prop/model :models (s/coll-of :lwb.prop/model))))
 
 (defn sat?
   "Is `phi` satisfiable?"

@@ -226,7 +226,7 @@
 (s/fdef sat
         :args (s/alt :1-args (s/cat :phi (and wff? no-tseitin-symbol?))
                      :2-args (s/cat :phi (and wff? no-tseitin-symbol?) :mode #{:one :all}))
-        :ret (s/or :lwb.prop/model boolean?))
+        :ret (s/nilable (s/or :bool boolean? :model :lwb.prop/model :models (s/coll-of :lwb.prop/model))))
 
 (defn sat?
   "Is `phi` satisfiable?"
