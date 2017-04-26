@@ -124,7 +124,7 @@
       (let [sol (kic/solve fml bounds)]
         (kic/model sol))
       (let [sols (kic/solve-all fml bounds)]
-        (set (keep identity (map kic/model sols)))))))
+        (apply hash-set (keep identity (map kic/model sols)))))))
 
 (defn sig->consts
   "Set of consts in signature.     
