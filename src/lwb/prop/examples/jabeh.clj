@@ -255,7 +255,7 @@
     [puzzles]
     (time
       (do
-        (dorun (map test-puzzle puzzles))
+        (run! test-puzzle puzzles)
         :done)))
 
   (dotimes [_ 10]

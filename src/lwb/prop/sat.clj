@@ -94,7 +94,7 @@
       (.newVar solver num-atoms)
       (.setExpectedNumberOfClauses solver num-cl)
 
-      (dorun (map #(.addClause solver (VecInt. (int-array %))) cl-set))
+      (run! #(.addClause solver (VecInt. (int-array %))) cl-set)
 
       (when (.isSatisfiable solver)
         (make-model (vec (.model solver)) int-atoms))

@@ -150,7 +150,7 @@
     [puzzles]
     (time
       (do
-        (dorun (map solve puzzles))
+        (run! solve puzzles)
         :done)))
 
   ;; easy50.txt
