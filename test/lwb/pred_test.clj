@@ -8,9 +8,9 @@
 
 (ns lwb.pred-test
   (:require [clojure.test :refer :all]
-            [clojure.spec :as s]
             [lwb.pred :refer :all]
-            [clojure.spec.test :as stest]))
+            [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]))
 
 (stest/instrument)
 

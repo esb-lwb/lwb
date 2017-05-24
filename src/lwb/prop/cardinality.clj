@@ -11,7 +11,7 @@
   "Cardinality constraints in propositional logic"
   (:require [lwb.prop :refer :all]
             [clojure.math.combinatorics :refer (combinations)]
-            [clojure.spec :as s]))
+            [clojure.spec.alpha :as s]))
 
 ;; # Cardinality constraints in propositional logic
 

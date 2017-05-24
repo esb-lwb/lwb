@@ -2877,7 +2877,7 @@ implementation in Java of the C/C++ library <a href="http://buddy.sourceforge.ne
             [clojure.string :as str]
             [clojure.math.combinatorics :refer (selections)]
             [clojure.java.shell :as shell]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [potemkin :as pot])
   (:import (net.sf.javabdd JFactory BDD)))</pre></td></tr><tr><td class="docs"><p>We import the operators and so forth from propositional logic</p>
 </td><td class="codes"><pre class="brush: clojure">(pot/import-vars

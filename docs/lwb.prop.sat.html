@@ -2872,7 +2872,7 @@ net.brehaut.ClojureTools = (function (SH) {
             [clojure.set :refer (map-invert)]
             [clojure.string :refer (starts-with?)]
             [clojure.zip :as z]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.walk :as walk])
   (:import (org.sat4j.minisat SolverFactory)
            (org.sat4j.core VecInt)
@@ -2940,7 +2940,7 @@ following entries:</p>
       (.setTimeout solver *sat4j-timeout*)
       (.newVar solver num-atoms)
       (.setExpectedNumberOfClauses solver num-cl)
-      (dorun (map #(.addClause solver (VecInt. (int-array %))) cl-set))
+      (run! #(.addClause solver (VecInt. (int-array %))) cl-set)
       (when (.isSatisfiable solver)
         (make-model (vec (.model solver)) int-atoms))
       (catch ContradictionException _ nil))))</pre></td></tr><tr><td class="docs">

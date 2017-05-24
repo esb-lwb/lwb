@@ -10,7 +10,7 @@
   (:require [lwb.ltl :refer [atom?]]
             [clojure.string :as str]
             [clojure.java.shell :as shell]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.set :as set]))
 
 ;; # Kripke structures

@@ -10,8 +10,8 @@
   (:require [clojure.test :refer :all]
             [lwb.prop :refer :all]
             [lwb.prop.cardinality :refer :all]
-            [clojure.spec :as s]
-            [clojure.spec.test :as stest]))
+            [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]))
 
 (stest/instrument)
 

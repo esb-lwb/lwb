@@ -9,7 +9,7 @@
 (ns lwb.prop.nf
   "Normal forms of formulas of propositional logic."
   (:require [lwb.prop :refer (wff? nary? flatten-ops)]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.walk :refer (postwalk)]
             [clojure.set :refer (union intersection subset?)]
             [clojure.math.numeric-tower :refer (expt)]

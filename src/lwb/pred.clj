@@ -10,7 +10,7 @@
   (:require [lwb.prop :as prop]
             [clojure.zip :as zip]
             [clojure.walk :as walk]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.java.browse :as browse]
             [potemkin :as pot]
             [lwb.vis :as vis]))

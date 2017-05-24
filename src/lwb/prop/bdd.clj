@@ -20,7 +20,7 @@
             [clojure.string :as str]
             [clojure.math.combinatorics :refer (selections)]
             [clojure.java.shell :as shell]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [potemkin :as pot])
   (:import (net.sf.javabdd JFactory BDD)))
 

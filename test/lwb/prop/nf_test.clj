@@ -9,8 +9,8 @@
 (ns lwb.prop.nf-test
   (:require [clojure.test :refer :all]
             [lwb.prop.nf :refer :all]
-            [clojure.spec :as s]
-            [clojure.spec.test :as stest]))
+            [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]))
 
 (stest/instrument)
 

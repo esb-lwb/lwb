@@ -13,7 +13,7 @@
             [clojure.set :refer (map-invert)]
             [clojure.string :refer (starts-with?)]
             [clojure.zip :as z]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.walk :as walk])
   (:import (org.sat4j.minisat SolverFactory)
            (org.sat4j.core VecInt)

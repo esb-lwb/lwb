@@ -2868,7 +2868,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.prop.nf" name="lwb.prop.nf"><h1 class="project-name">lwb.prop.nf</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Normal forms of formulas of propositional logic.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.prop.nf
   (:require [lwb.prop :refer (wff? nary? flatten-ops)]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.walk :refer (postwalk)]
             [clojure.set :refer (union intersection subset?)]
             [clojure.math.numeric-tower :refer (expt)]

@@ -9,7 +9,7 @@
 (ns lwb.pred.substitution-test
   (:require [clojure.test :refer :all]
             [lwb.pred.substitution :refer :all]
-            [clojure.spec.test :as stest]))
+            [clojure.spec.test.alpha :as stest]))
 
 (stest/instrument)
 

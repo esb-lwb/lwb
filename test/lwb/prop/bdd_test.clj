@@ -9,7 +9,7 @@
 (ns lwb.prop.bdd-test
   (:require [clojure.test :refer :all]
             [lwb.prop.bdd :refer :all]
-            [clojure.spec.test :as stest]))
+            [clojure.spec.test.alpha :as stest]))
 
 (stest/instrument)
 

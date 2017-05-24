@@ -8,7 +8,7 @@
 
 (ns lwb.ltl.examples.kripke
   (:require [lwb.ltl.kripke :refer :all]
-            [clojure.spec :as s]))
+            [clojure.spec.alpha :as s]))
 
 ;; Two simple examples
 

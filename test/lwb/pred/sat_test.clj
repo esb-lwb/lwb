@@ -9,7 +9,7 @@
 (ns lwb.pred.sat-test
   (:require [clojure.test :refer :all]
             [lwb.pred.sat :refer :all]
-            [clojure.spec.test :as stest]))
+            [clojure.spec.test.alpha :as stest]))
   
 (stest/instrument)  
 

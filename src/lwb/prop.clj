@@ -8,7 +8,7 @@
 
 (ns lwb.prop
   "Syntax, models and evaluation in propositional logic."
-  (:require [clojure.spec :as s]
+  (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [clojure.java.browse :as browse]
             [clojure.walk :refer (postwalk)]

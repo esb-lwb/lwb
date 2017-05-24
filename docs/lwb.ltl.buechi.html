@@ -2868,7 +2868,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.ltl.buechi" name="lwb.ltl.buechi"><h1 class="project-name">lwb.ltl.buechi</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.ltl.buechi
   (:require [lwb.ltl :refer [atom? literal? ite equiv xor arity wff?]]
-            [clojure.spec :as s])
+            [clojure.spec.alpha :as s])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
            (gov.nasa.ltl.graph Graph Node Edge Guard Literal)))</pre></td></tr><tr><td class="docs"><h1>Generating the Büchi automata for a LTL formula</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We use the library <code>ltl2buchi</code>, the LTL2Buchi translator, 

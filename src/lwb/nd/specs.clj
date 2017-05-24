@@ -7,7 +7,7 @@
 ; the terms of this license.
 
 (ns lwb.nd.specs
-  [:require [clojure.spec :as s]])
+  [:require [clojure.spec.alpha :as s]])
 
 ;; # Specification of rules and theorems
 

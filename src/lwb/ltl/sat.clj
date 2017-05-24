@@ -9,7 +9,7 @@
 (ns lwb.ltl.sat
   (:require [lwb.ltl :refer :all]
             [lwb.ltl.buechi :as ba]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.set :as set]))
 
 ;; # Satisfiability in the linear temporal logic

@@ -9,7 +9,7 @@
 (ns lwb.ltl.eval
   (:require [lwb.ltl :refer :all]
             [lwb.ltl.buechi :as ba]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.set :as set]))
 
 ;; # Evaluation in linear temporal logic LTL

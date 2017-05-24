@@ -10,7 +10,7 @@
   (:require [lwb.ltl :refer :all]         ; needed for macroexpand-1 of xor etc !!
             [lwb.ltl.eval :refer :all]
             [lwb.ltl.kripke :as ks]       ; needed for instrument
-            [clojure.spec.test :as stest]))
+            [clojure.spec.test.alpha :as stest]))
 
 (stest/instrument `eval-phi)
 

@@ -10,7 +10,7 @@
   (:require [lwb.nd.swap.common :refer :all]
             [lwb.pred :refer :all]
             [lwb.nd.error :refer :all]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [lwb.nd.proof :as proof]
             [lwb.prop :as prop]))
 

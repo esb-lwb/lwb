@@ -12,8 +12,8 @@
             [lwb.ltl.kripke :as ks]
             [lwb.ltl.sat :refer [sat sat? valid?]]
             [lwb.ltl.eval :refer [eval-phi]]
-            [clojure.spec :as s]
-            [clojure.spec.test :as stest]))
+            [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]))
 
 
 (stest/instrument)

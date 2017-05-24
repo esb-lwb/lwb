@@ -11,7 +11,7 @@
             [lwb.ltl :refer :all]
             [lwb.nd.error :refer :all]
             [lwb.nd.proof :as proof]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [lwb.nd.proof :as proof]))
 
 ;; # Checking constraints of ltl

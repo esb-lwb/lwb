@@ -8,7 +8,7 @@
 
 (ns lwb.ltl.buechi
   (:require [lwb.ltl :refer [atom? literal? ite equiv xor arity wff?]]
-            [clojure.spec :as s])
+            [clojure.spec.alpha :as s])
   (:import (gov.nasa.ltl.trans Formula LTL2Buchi)
            (gov.nasa.ltl.graph Graph Node Edge Guard Literal)))
 

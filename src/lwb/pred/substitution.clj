@@ -10,7 +10,7 @@
   (:require [clojure.set :as set]
             [lwb.pred :refer [const? op? quantor? eq? wff?]]
             [clojure.zip :as zip]
-            [clojure.spec :as s]))
+            [clojure.spec.alpha :as s]))
 
 ;; # Substitution in predicate logic
 

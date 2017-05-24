@@ -14,7 +14,7 @@
             [lwb.nd.rules :refer [gen-roth-relation roth-structure-f roth-structure-b]]
             [lwb.nd.proof :refer [proved?]]
             [lwb.nd.specs :refer :all]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.string :as str])
   (:import [java.io PushbackReader File]
            (java.time.format DateTimeFormatter)
