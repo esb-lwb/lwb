@@ -50,7 +50,7 @@
 
 ; Clojure hat eine Bibliothek core.logic, die einen
 ; Auswerter für logische Formeln enthält. 
-; Das Vorbild dieser Bibliothek ist minKanren, ein Logik-Werkzeug
+; Das Vorbild dieser Bibliothek ist miniKanren, ein Logik-Werkzeug
 ; geschrieben in Scheme.
 
 ; lwb verwendet core.logic, um die Regeln auszuwerten:
@@ -58,7 +58,7 @@
 ; die von der logic engine von core.logic dann beim Anwenden
 ; der Regel ausgewertet wird. Solche Funktionen können logische Variablen enthalten,
 ; die dann substituiert werden. Substitutionen bei uns sind selbst wieder
-; Teile der Formel, die man herlieten möchte.
+; Teile der Formel, die man herleiten möchte.
 
 ; Ende Exkurs --------------------------------
 

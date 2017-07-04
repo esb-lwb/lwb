@@ -82,8 +82,8 @@
 
 ; 1. Man konstruiert einen Büchi-Automaten zur gegebenen Kripke-Struktur
 ; 2. Man negiert die Formel phi und übersetzt sie in einen Büchi-Automaten, der sie erkennt
-; 3. Nun bildet man das synchronisierte Produkt der beiden Automaten. 
-;    Ein erfolgreicher Lauf  zu einem Endzustand entspricht einem Lauf in der
+; 3. Nun bildet man das synchronisierte Produkt (= Durchschnitt) der beiden Automaten. 
+;    Ein erfolgreicher Lauf zu einem Endzustand entspricht einem Lauf in der
 ;    Kripke-Struktur, der (not phi) erfüllt.
 ;    Also: Ist das Produkt leer, ist phi wahr.
 

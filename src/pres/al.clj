@@ -34,6 +34,8 @@
 
 (def phi '(or (not P) (and Q R)))
 
+phi
+
 ; Warum '??
 
 (wff? phi)
@@ -125,7 +127,7 @@
 ; erfüllbarkeits-äquvalent ist
 ; Umbauen ins dimac-Format
 ; Aufruf von SAT4J (www.sat4j.org)
-; Ergebnis in unsere Sprache zrurcü übersetzen
+; Ergebnis in unsere Sprache zurückübersetzen
 
 ; Ende Exkurs --------------------------------
 
