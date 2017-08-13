@@ -13,7 +13,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
                  [org.clojure/spec.alpha "0.1.94"]
-                 [org.clojure/core.specs.alpha "0.1.10"]
+                 [org.clojure/core.specs.alpha "0.1.24"]
                  [org.clojure/core.logic "0.8.11"]
                  [net.mikera/core.matrix "0.60.3"]
                  [org.clojure/tools.macro "0.1.5"]

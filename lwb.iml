@@ -41,7 +41,7 @@
     <orderEntry type="library" name="Leiningen: net.mikera/core.matrix:0.60.3" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.9.0-alpha16" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/core.logic:0.8.11" level="project" />
-    <orderEntry type="library" name="Leiningen: org.clojure/core.specs.alpha:0.1.10" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/core.specs.alpha:0.1.24" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/math.combinatorics:0.1.4" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/math.numeric-tower:0.0.4" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/spec.alpha:0.1.94" level="project" />
