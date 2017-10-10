@@ -24,7 +24,7 @@
 ;; The idea:
 
 ;; - when loading the roths from a file
-;; - we analyze the structure for forward and backward apllication
+;; - we analyze the structure for forward and backward application
 ;; - we generate the code for the logical relation
 ;; - and we store (see lwb.nd.io) the structure and the logical relation together with
 ;;   the roth in the global storage.
@@ -244,7 +244,7 @@
 ;; ### Function for users of this namespace
 
 (defn gen-roth-relation
-  "Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth.        
+  "Takes the specification of a rule or theorem and builds a core.logic relation that represents that roth.        
    e.g.  `:and-i` `[a b] => [(and a b)]`     
    `(fn [a b q1]`     
     `(fresh []`      
