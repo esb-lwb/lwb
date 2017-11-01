@@ -195,11 +195,10 @@
    (cnf? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::cnf phi)]
-     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::cnf phi))) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str ::cnf phi))) result)))))
 
 (s/fdef cnf?
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:bool :exception-if-not}))
+        :args (s/cat :phi wff? :mode (s/? #{:bool :exception-if-not}))
         :ret boolean?)
 
 ;; ### Disjunctive normal form (dnf)
@@ -247,10 +246,9 @@
    (dnf? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::dnf phi)]
-     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::dnf phi))) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str ::dnf phi))) result)))))
 
 (s/fdef dnf?
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:bool :exception-if-not}))
+        :args (s/cat :phi wff? :mode (s/? #{:bool :exception-if-not}))
         :ret boolean?)
 
