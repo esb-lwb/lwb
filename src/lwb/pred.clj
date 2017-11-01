@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2015 - 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2015 - 2017 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -22,7 +22,7 @@
 
 ;; # The language of predicate logic
 
-;; There are acutally many languages of predicate logic, which are
+;; There are actually many languages of predicate logic, which are
 ;; defined with respect to a given signature of the non-logical symbols.
 
 ;; ## Signatures
@@ -128,7 +128,7 @@
              (func? symb sig) (pred? symb sig) (prop? symb sig)))))
 
 ;; ## Well-formed first-order formulae
-;; The check whether a formula is well-formed reflects the grammer of
+;; The check whether a formula is well-formed reflects the grammar of
 ;; the language.
 
 ;; Predicates used as specs in clojure.spec can have just one argument.
@@ -202,11 +202,10 @@
   ([phi sig mode]
    (binding [*signature* sig]
      (let [result (s/valid? ::fml phi)]
-       (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::fml phi))) result))))))
+       (or result (if (= mode :exception-if-not) (throw (Exception.  ^String (s/explain-str ::fml phi))) result))))))
 
 (s/fdef wff?
-        :args (s/alt :2-args (s/cat :fml any? :sig ::signature)
-                     :3-args (s/cat :fml any? :sig ::signature :mode #{:bool :exception-if-not}))
+        :args (s/cat :fml any? :sig ::signature :mode (s/? #{:bool :exception-if-not}))
         :ret boolean?)
 
 ;; ## Models
@@ -486,6 +485,5 @@
    (vis/texify phi filename)))
 
 (s/fdef texify
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :filename string?))
+        :args (s/cat :phi wff? :filename (s/? string?))
         :ret  nil?)
