@@ -24,7 +24,7 @@
 ;; The steps for checking if the Kripke structure `ks` fulfills the formula `phi` are:
 
 ;; 1. Construct a Büchi automaton corresponding to the given Kripke structure `ks`.
-;; 2. Take the neagation `(not phi)` of the formula and translate it to a Büchi automaton.
+;; 2. Take the negation `(not phi)` of the formula and translate it to a Büchi automaton.
 ;; 3. Build the synchronized product of the two automaton. A successful run
 ;;    in the product correspond to the initial runs of `ks`  satisfying `(not phi)`.
 ;;    Thus: if the product is empty, `phi` is true in `ks` otherwise the product
@@ -76,8 +76,7 @@
   (set/subset? (atoms-of-phi (:phi params)) (:atoms (:ks params))))
 
 (s/fdef eval-phi
-        :args (s/& (s/alt :2-args (s/cat :phi wff? :ks :lwb.ltl.kripke/model)
-                          :3-args (s/cat :phi wff? :ks :lwb.ltl.kripke/model :mode #{:bool :counterexample})) 
+        :args (s/& (s/cat :phi wff? :ks :lwb.ltl.kripke/model :mode (s/? #{:bool :counterexample})) 
                    #(params-ok? (second %)))
         :ret (s/alt :bool boolean? :counterexample (s/coll-of keyword? :kind vector?)))
 
