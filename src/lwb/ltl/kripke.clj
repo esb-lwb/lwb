@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Linear Temporal Logic: Kripke Structures
 
-; Copyright (c) 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2016 - 2017 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -129,8 +129,7 @@
     (:out (shell/sh "dot2tex" (str "--prog=" prog) "-ftikz" "--styleonly" "--codeonly" :in dot-code)))))
 
 (s/fdef tikzify
-        :args (s/alt :1-args (s/cat :ks ::model)
-                     :2-args (s/cat :ks ::model :mode #{:dot :neato}))
+        :args (s/cat :ks ::model :mode (s/? #{:dot :neato}))
         :ret  nil?)
 
 (defn texify
@@ -150,7 +149,6 @@
        (shell/sh "open" (str filename ".pdf"))))
 
 (s/fdef texify
-        :args (s/alt :2-args (s/cat :ks ::model :filename string?)
-                     :2-args (s/cat :ks ::model :filename string? :mode #{:dot :neato}))
+        :args (s/cat :ks ::model :filename string? :mode (s/? #{:dot :neato}))
         :ret  nil?)
 
