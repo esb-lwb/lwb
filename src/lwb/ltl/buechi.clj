@@ -196,7 +196,7 @@
 
 (defn- cycle-check
   "Returns `0` if `pathv` has no cycle,     
-           `1` if `pathv` has a cycle with an aceepting state,       
+           `1` if `pathv` has a cycle with an accepting state,       
            `-1` if `pathv` has a cycle but without an accepting state,      
    Requires: The new element that may lead to a cycle is at the last position of the vector."
   [ba pathv]
