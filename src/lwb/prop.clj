@@ -165,11 +165,10 @@
    (wff? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
-     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::fml phi))) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str ::fml phi))) result)))))
 
 (s/fdef wff?
-  :args (s/alt :1-args (s/cat :phi any?)
-               :2-args (s/cat :phi any? :mode #{:bool :exception-if-not}))
+  :args (s/cat :phi any? :mode (s/? #{:bool :exception-if-not}))
   :ret boolean?)
 
 ;; Utility function
@@ -207,8 +206,7 @@
    (vis/texify phi filename)))
 
 (s/fdef texify
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :filename string?))
+        :args (s/cat :phi wff? :filename (s/? string?))
         :ret  nil?)
 
 ;; ## Models and evaluation
@@ -336,11 +334,10 @@
        tt))))
 
 (s/fdef truth-table
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:true-only :false-only}))
+        :args (s/cat :phi wff? :mode (s/? #{:true-only :false-only}))
         :ret (s/alt ::truth-table ::truth-table')
         :fn (fn [{args :args ret :ret}]
-              (if (contains? #{:true-only :false-only} (:mode ret))
+              (if (contains? #{:true-only :false-only} (:mode args))
                 (s/valid? ::truth-table' ret)
                 (s/valid? ::truth-table ret))))
 
