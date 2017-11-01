@@ -27,7 +27,7 @@
 ;; - transformation of a propositional formula in cnf to the
 ;;   dimacs format used by SAT solvers
 ;; - the Tseitin transformation of an arbitrary formula in propositional logic
-;;   into a formula in cnf thats equivalent with resprct to satisfiability
+;;   into a formula in cnf thats equivalent with respect to satisfiability
 ;; - satisfiability in propositional logic
 
 ;; ## Transformation of a formula in cnf to dimacs format
@@ -176,7 +176,7 @@
         (walk/postwalk walk-fn (flatten-ops (into (conj parts (list 'and (list 'or ts-1))) '(and)))))))
 
 (defn- no-tseitin-symbol?
-  "Checks whether the formuka `phi` does not have an atom of the
+  "Checks whether the formula `phi` does not have an atom of the
   form of a tseitin symbol, i.e. that matches #\"ts-\\d+\"."
   [phi]
   (empty? (filter #(re-matches #"ts-[0-9]+" (name %)) (atoms-of-phi phi))))
@@ -224,8 +224,7 @@
 		           (remove-tseitin-symbols res)))))))
 
 (s/fdef sat
-        :args (s/alt :1-args (s/cat :phi (and wff? no-tseitin-symbol?))
-                     :2-args (s/cat :phi (and wff? no-tseitin-symbol?) :mode #{:one :all}))
+        :args (s/cat :phi (and wff? no-tseitin-symbol?) :mode (s/? #{:one :all}))
         :ret (s/nilable (s/or :bool boolean? :model :lwb.prop/model :models (s/coll-of :lwb.prop/model))))
 
 (defn sat?
