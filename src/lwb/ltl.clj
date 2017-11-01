@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Linear Temporal Logic
 
-; Copyright (c) 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2016 - 2017 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -94,11 +94,10 @@
    (wff? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
-     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::fml phi))) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str ::fml phi))) result)))))
 
 (s/fdef wff?
-        :args (s/alt :1-args (s/cat :phi any?)
-                     :2-args (s/cat :phi any? :mode #{:bool :exception-if-not}))
+        :args (s/cat :phi any? :mode (s/? #{:bool :exception-if-not}))
         :ret boolean?)
 
 ;; ## Negation normal form
@@ -169,11 +168,10 @@
    (nnf? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::nnf-fml phi)]
-     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::nnf-fml phi))) result)))))
+     (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str ::nnf-fml phi))) result)))))
 
 (s/fdef nnf?
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:bool :exception-if-not}))
+        :args (s/cat :phi wff? :mode (s/? #{:bool :exception-if-not}))
         :ret boolean?)
 
 ;; ## Visualisation of a formula
@@ -187,6 +185,5 @@
    (vis/texify phi filename)))
 
 (s/fdef texify
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :filename string?))
+        :args (s/cat :phi wff? :filename (s/? string?))
         :ret  nil?)
