@@ -306,8 +306,7 @@
                     (tf1-map phi (first (map vec iseq)))))))))
 
 (s/fdef sat
-        :args (s/alt :1-args (s/cat :phi prop/wff?)
-                     :2-args (s/cat :phi prop/wff? :mode #{:one :all}))
+        :args (s/cat :phi prop/wff? :mode (s/? #{:one :all}))
         :ret (s/nilable (s/alt :verum true? :model :lwb.prop/model :models (s/coll-of :lwb.prop/model))))
 
 (defn sat?
@@ -405,7 +404,6 @@
    (shell/sh "open" (str filename ".pdf"))))
 
 (s/fdef texify
-        :args (s/alt :1-args (s/cat :phi prop/wff?)
-                     :2-args (s/cat :phi prop/wff? :filename string?))
+        :args (s/cat :phi prop/wff? :filename (s/? string?))
         :ret  nil?)
 
