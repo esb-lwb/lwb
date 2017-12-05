@@ -22,8 +22,8 @@
                  [potemkin "0.4.4"]
                  [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]
                  [de.fosd.typechef/javabdd_repackaged_2.10 "0.1"]
-                 [ltl2buchi "1.0.0"]
-                 [kodkod "2.1.0"]]
+                 [ltl2buchi/ltl2buchi "1.0.0"]
+                 [kodkod/kodkod "2.1.0"]]
   :jvm-opts ["-Xms2G"]
   :uberjar-name "lwb.jar")
 
