@@ -11,11 +11,11 @@
   :url "http://homepages.thm.de/~hg11260/lwb.html"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.9.0-beta4"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/spec.alpha "0.1.143"]
                  [org.clojure/core.specs.alpha "0.1.24"]
                  [org.clojure/core.logic "0.8.11"]
-                 [net.mikera/core.matrix "0.60.3"]
+                 [net.mikera/core.matrix "0.61.0"]
                  [org.clojure/tools.macro "0.1.5"]
                  [org.clojure/math.combinatorics "0.1.4"]
                  [org.clojure/math.numeric-tower "0.0.4"]
