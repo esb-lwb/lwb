@@ -153,7 +153,7 @@
          sys-name (System/getProperty "os.name")]
      (spit (str filename ".tex") tex-code)
      (shell/sh "texi2pdf" (str filename ".tex"))
-     (condp str/includes? sys-name
+     (condp #(str/includes? %2 %1) sys-name
        "Linux" (shell/sh "xdg-open" (str filename ".pdf"))
        "Mac" (shell/sh "open" (str filename ".pdf"))
        "Windows" (shell/sh "start" (str filename ".pdf"))))))
