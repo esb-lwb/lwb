@@ -149,8 +149,11 @@
    (let [tikz-body (vis-tikz-body phi)]
      (str tikz-header "\n" tikz-body "\n" tikz-footer)))
   ([phi filename]
-   (let [tex-code (texify phi)]
+   (let [tex-code (texify phi)
+         sys-name (System/getProperty "os.name")]
      (spit (str filename ".tex") tex-code)
      (shell/sh "texi2pdf" (str filename ".tex"))
-     (shell/sh "open" (str filename ".pdf")))))
-
+     (condp #(str/includes? %2 %1) sys-name
+       "Linux" (shell/sh "xdg-open" (str filename ".pdf"))
+       "Mac" (shell/sh "open" (str filename ".pdf"))
+       "Windows" (shell/sh "start" (str filename ".pdf"))))))
