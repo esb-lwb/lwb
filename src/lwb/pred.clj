@@ -478,7 +478,7 @@
 
 (defn texify
   "Generates TeX code for TikZ or a pdf file if filename given.       
-   Requires: TeX installation, commands texipdf and open"
+   Requires: TeX installation, commands in `lwb.util.shell`."
   ([phi]
    (vis/texify phi))
   ([phi filename]

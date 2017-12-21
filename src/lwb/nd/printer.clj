@@ -13,7 +13,7 @@
             [clojure.pprint :as pp]
             [clojure.zip :as zip]
             [clojure.string :as str]
-            [clojure.java.shell :as shell])
+            [lwb.util.shell :as shell])
   (:import (java.time.format DateTimeFormatter)
            (java.time LocalDate)))
 
@@ -204,5 +204,5 @@
   ([proof filename]
    (let [tex-body (with-out-str (tex-code proof))]
      (spit (str filename ".tex") (str (tex-header) tex-body tex-footer))
-     (shell/sh "texi2pdf" (str filename ".tex"))
-     (shell/sh "open" (str filename ".pdf")))))
+     (shell/tex2pdf (str filename ".tex"))
+     (shell/open (str filename ".pdf")))))

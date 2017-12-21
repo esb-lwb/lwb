@@ -2984,10 +2984,9 @@ several formulas as arguments whose number matches the arity of the operator.</p
    (wff? phi :bool))
   ([phi mode]
    (let [result (s/valid? ::fml phi)]
-     (or result (if (= mode :exception-if-not) (throw (Exception. (s/explain-str ::fml phi))) result)))))</pre></td></tr><tr><td class="docs">
+     (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str ::fml phi))) result)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef wff?
-  :args (s/alt :1-args (s/cat :phi any?)
-               :2-args (s/cat :phi any? :mode #{:bool :exception-if-not}))
+  :args (s/cat :phi any? :mode (s/? #{:bool :exception-if-not}))
   :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Utility function</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Flattens the formula <code>phi</code>. <br />
    Nested binary applications of n-ary operators will be transformed to the n-ary form,
@@ -3005,15 +3004,14 @@ several formulas as arguments whose number matches the arity of the operator.</p
                       sub-phi))]
     (postwalk flat-step phi)))</pre></td></tr><tr><td class="docs"><h3>Visualization of the syntax tree of a formula</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX code for TikZ or a pdf file if filename given. <br />
-   Requires: TeX installation, commands texipdf and open</p>
+   Requires: TeX installation, commands in <code>lwb.util.shell</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify
   ([phi]
    (vis/texify phi))
   ([phi filename]
    (vis/texify phi filename)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef texify
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :filename string?))
+        :args (s/cat :phi wff? :filename (s/? string?))
         :ret  nil?)</pre></td></tr><tr><td class="docs"><h2>Models and evaluation</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><h3>Models in propositional logic</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A model for a formula is a function from the atoms of the formula into the set of the
@@ -3113,11 +3111,10 @@ corresponding atom in the header as well as the result of the evaluation.</p>
        :false-only (assoc tt :table (filterv #(false? (last %)) (:table tt)))
        tt))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef truth-table
-        :args (s/alt :1-args (s/cat :phi wff?)
-                     :2-args (s/cat :phi wff? :mode #{:true-only :false-only}))
+        :args (s/cat :phi wff? :mode (s/? #{:true-only :false-only}))
         :ret (s/alt ::truth-table ::truth-table')
         :fn (fn [{args :args ret :ret}]
-              (if (contains? #{:true-only :false-only} (:mode ret))
+              (if (contains? #{:true-only :false-only} (:mode args))
                 (s/valid? ::truth-table' ret)
                 (s/valid? ::truth-table ret))))</pre></td></tr><tr><td class="docs"><p>Pretty prints vector <code>header</code> and vector of vectors <code>table</code>. <br />
    Pre: header and row in the table have the same no of item,

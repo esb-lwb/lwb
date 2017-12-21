@@ -9,7 +9,8 @@
 (ns lwb.ltl.kripke
   (:require [lwb.ltl :refer [atom?]]
             [clojure.string :as str]
-            [clojure.java.shell :as shell]
+            [clojure.java.shell :as sh]
+            [lwb.util.shell :as shell]
             [clojure.spec.alpha :as s]
             [clojure.set :as set]))
 
@@ -126,7 +127,7 @@
   ([ks mode]
     (let [dot-code (dotify ks mode)
           prog     (name mode)]
-    (:out (shell/sh "dot2tex" (str "--prog=" prog) "-ftikz" "--styleonly" "--codeonly" :in dot-code)))))
+    (:out (sh/sh "dot2tex" (str "--prog=" prog) "-ftikz" "--styleonly" "--codeonly" :in dot-code)))))
 
 (s/fdef tikzify
         :args (s/cat :ks ::model :mode (s/? #{:dot :neato}))
@@ -136,8 +137,8 @@
   "Makes a pdf file with the visualisation of the Kripke structure `ks`.      
   `filename` is the name of the file to be generated, must have no extension.      
   `mode` can be `:dot` (default) oder `:neato`, determining which renderer of      
-  graphviz is used. Further processing is done by `dot2tex` and `texi2pdf`.         
-  Finally the generated file is opened by the command `open`."
+  graphviz is used. Further processing is done by `dot2tex`.
+  Tex code is generated and the file opened by the commands in `lwb.util.shell`."
   ([ks filename]
    (texify ks filename :dot))
   ([ks filename mode]
@@ -145,8 +146,8 @@
            tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
            tex-file (str filename ".tex")]
        (spit tex-file tex-code)
-       (shell/sh "texi2pdf" tex-file))
-       (shell/sh "open" (str filename ".pdf"))))
+       (shell/tex2pdf tex-file))
+       (shell/open (str filename ".pdf"))))
 
 (s/fdef texify
         :args (s/cat :ks ::model :filename string? :mode (s/? #{:dot :neato}))

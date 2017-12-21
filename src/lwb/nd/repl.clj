@@ -239,8 +239,8 @@
   "Generates TeX-Code from the current proof.       
    The generated code uses the packages `MnSymbol` and `logicproof`.     
    If a filename is given as argument, a pdf file will be generated.      
-   In this case the function uses the shell command `texi2pdf` that compiles tex code,
-   and `open` to show the generated file."
+   In this case the function uses the commands in `lwb.util.shell` to 
+   compile the tex code and open to the generated file."
   ([] (printer/texify @p))
    ([filename] (printer/texify @p filename)))
 

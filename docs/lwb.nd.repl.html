@@ -3046,8 +3046,8 @@ generic solution possible.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX-Code from the current proof. <br />
    The generated code uses the packages <code>MnSymbol</code> and <code>logicproof</code>. <br />
    If a filename is given as argument, a pdf file will be generated. <br />
-   In this case the function uses the shell command <code>texi2pdf</code> that compiles tex code,
-   and <code>open</code> to show the generated file.</p>
+   In this case the function uses the commands in <code>lwb.util.shell</code> to 
+   compile the tex code and open to the generated file.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify
   ([] (printer/texify @p))
    ([filename] (printer/texify @p filename)))</pre></td></tr><tr><td class="docs"><h2>Function that loads the current proof into the storage of rohts for the current session</h2>

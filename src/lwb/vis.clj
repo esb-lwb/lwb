@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Visualisation of formulae
 
-; Copyright (c) 2016 Burkhardt Renz, Juan Markowich THM. 
+; Copyright (c) 2016 - 2017 Burkhardt Renz, Juan Markowich THM. 
 ; All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
@@ -10,7 +10,7 @@
 (ns lwb.vis
   (:require [clojure.zip :as zip]
             [clojure.string :as str]
-            [clojure.java.shell :as shell]
+            [lwb.util.shell :as shell]
             [clojure.java.browse :as browse]))
 
 (defn man
@@ -143,14 +143,14 @@
    With the filename given:      
    Makes a pdf file with the visualisation of the syntax tree of `phi`.        
    `filename` is the name of the file to be generated, must have no extension.       
-   The function uses the shell command `texi2pdf` that compiles tex code,
-   and `open` to show the generated file."
+   The function uses the commands defined in `lwb.util.shell` to generate
+   a tex file and open it."
   ([phi]
    (let [tikz-body (vis-tikz-body phi)]
      (str tikz-header "\n" tikz-body "\n" tikz-footer)))
   ([phi filename]
    (let [tex-code (texify phi)]
      (spit (str filename ".tex") tex-code)
-     (shell/sh "texi2pdf" (str filename ".tex"))
-     (shell/sh "open" (str filename ".pdf")))))
+     (shell/tex2pdf (str filename ".tex"))
+     (shell/open (str filename ".pdf")))))
 

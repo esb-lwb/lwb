@@ -2880,7 +2880,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The idea:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ul>
 <li>when loading the roths from a file</li>
-<li>we analyze the structure for forward and backward apllication</li>
+<li>we analyze the structure for forward and backward application</li>
 <li>we generate the code for the logical relation</li>
 <li>and we store (see lwb.nd.io) the structure and the logical relation together with
 the roth in the global storage.</li>
@@ -3044,7 +3044,7 @@ and which steps are okay</p>
   [prereqs fresh-args qs]
   (list (conj (map gen-prereq-row prereqs)
               (conj fresh-args qs) `project)))</pre></td></tr><tr><td class="docs"><h3>Function for users of this namespace</h3>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Takes the speccification of a rule or theorem and builds a core.logic relation that represents that roth. <br />
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Takes the specification of a rule or theorem and builds a core.logic relation that represents that roth. <br />
    e.g.  <code>:and-i</code> <code>[a b] =&gt; [(and a b)]</code> <br />
    <code>(fn [a b q1]</code> <br />
     <code>(fresh []</code> <br />

@@ -19,7 +19,8 @@
   (:require [lwb.prop :as prop]
             [clojure.string :as str]
             [clojure.math.combinatorics :refer (selections)]
-            [clojure.java.shell :as shell]
+            [clojure.java.shell :as sh]
+            [lwb.util.shell :as shell]
             [clojure.spec.alpha :as s]
             [potemkin :as pot])
   (:import (net.sf.javabdd JFactory BDD)))
@@ -390,18 +391,17 @@
    With a filename given:        
    Makes a pdf file with the visualisation of the bdd for `phi`.        
    `filename` is the name of the file to be generated, must have no extension.        
-   Uses `dot2tex` and `texi2pdf`, finally the
-   generated file is opened by the command `open`."
+   Uses `dot2tex` and the commands defined in 'lwb.uitl.shell'."
   ([phi]
    (let [dot-code (dotify phi)]
-     (:out (shell/sh "dot2tex" "-ftikz" "-tmath" "-s" "--codeonly" :in dot-code))))
+     (:out (sh/sh "dot2tex" "-ftikz" "-tmath" "-s" "--codeonly" :in dot-code))))
   ([phi filename]
    (let [tikz-body (texify phi)
          tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
          tex-file (str filename ".tex")]
      (spit tex-file tex-code)
-     (shell/sh "texi2pdf" tex-file))
-   (shell/sh "open" (str filename ".pdf"))))
+     (shell/tex2pdf tex-file))
+   (shell/open (str filename ".pdf"))))
 
 (s/fdef texify
         :args (s/cat :phi prop/wff? :filename (s/? string?))

@@ -2865,199 +2865,39 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.prop.sat" name="lwb.prop.sat"><h1 class="project-name">lwb.prop.sat</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Satisfiability in propositional logic.</p>
-</td><td class="codes"><pre class="brush: clojure">(ns lwb.prop.sat
-  (:require [lwb.prop :refer :all]
-            [lwb.prop.nf :refer (cnf cnf?)]
-            [clojure.set :refer (map-invert)]
-            [clojure.string :refer (starts-with?)]
-            [clojure.zip :as z]
-            [clojure.spec.alpha :as s]
-            [clojure.walk :as walk])
-  (:import (org.sat4j.minisat SolverFactory)
-           (org.sat4j.core VecInt)
-           (org.sat4j.specs ContradictionException)
-           (clojure.lang LazySeq)))</pre></td></tr><tr><td class="docs"><h1>Satisfiability in propositional logic</h1>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>The namespace <code>lwb.prop.sat</code> provides</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><ul>
-<li>transformation of a propositional formula in cnf to the
-dimacs format used by SAT solvers</li>
-<li>the Tseitin transformation of an arbitrary formula in propositional logic
-into a formula in cnf thats equivalent with respect to satisfiability</li>
-<li>satisfiability in propositional logic</li>
-</ul>
-</td><td class="codes"></td></tr><tr><td class="docs"><h2>Transformation of a formula in cnf to dimacs format</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>A formula in dimacs format is organized as a map with the
-following entries:</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><ul>
-<li><code>:formula</code>    the formula in cnf, but atoms beginning with <code>ts-</code> are allowed</li>
-<li><code>:num-atoms</code>  the number of atoms in the formula</li>
-<li><code>:int-atoms</code>  the mapping of integers in dimacs to the atoms</li>
-<li><code>:num-cl</code>     the number of clauses</li>
-<li><code>:cl-set</code>     the set of clauses encoded with the integers</li>
-</ul>
-</td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::formula   :lwb.prop.nf/cnf)
-(s/def ::num-atoms pos-int?)
-(s/def ::int-atoms (s/map-of pos-int? atom?))
-(s/def ::num-cl    pos-int?)
-(s/def ::cl-set    (s/coll-of set? :kind set? ))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/def ::dimacs (s/keys :req-un [::formula ::num-atoms ::int-atoms ::num-cl ::cl-set]))</pre></td></tr><tr><td class="docs"><p>Remark: obviously there are more constraints not yet expressed in this spec</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Transforms a clause <code>cl</code> of the form <code>(or literal literal ...)</code> to a set
-   of integers according to the mapping <code>atoms-int</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- cl-&gt;dimacs
-  [cl atoms-int]
-  (let [lit-&gt;int (fn [literal] 
-                  (if (list? literal) (- ((second literal) atoms-int)) (literal atoms-int)))]
-    (set (map lit-&gt;int  (rest cl)))))</pre></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> in (standardized) cnf to a map with dimacs informations.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn cnf-&gt;dimacs
-  [phi]
-  (let [atoms     (atoms-of-phi phi)
-        num-atoms (count atoms)
-        atoms-int (zipmap atoms (range 1 (inc num-atoms)))
-        cl-set    (set (map #(cl-&gt;dimacs % atoms-int) (rest phi)))]
-    {:formula   phi
-     :num-atoms num-atoms
-     :int-atoms (map-invert atoms-int)
-     :num-cl    (count cl-set)
-     :cl-set    cl-set}))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef cnf-&gt;dimacs
-        :args (s/cat :phi ::formula)
-        :ret ::dimacs)</pre></td></tr><tr><td class="docs"><p>Timeout of Sat4j in seconds.</p>
-
-<h3>Using SAT4J as a SAT solver</h3>
-</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *sat4j-timeout*
-  300)</pre></td></tr><tr><td class="docs"><p>Checks whether the formula in <code>dimacs-map</code> is satisfiable. <br />
-   Returns nil if not, a model if it is satisfiable.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sat4j-solve
-  [{:keys [num-atoms cl-set num-cl int-atoms]}]
-  (let [solver     (SolverFactory/newDefault)
-        make-model (fn [model int-atoms]
-                     (into {} (map #(if (pos? %) 
-                                    [(int-atoms %) true] 
-                                    [(int-atoms (- %)) false]) model)))]
-    (try
-      (.setTimeout solver *sat4j-timeout*)
-      (.newVar solver num-atoms)
-      (.setExpectedNumberOfClauses solver num-cl)
-      (run! #(.addClause solver (VecInt. (int-array %))) cl-set)
-      (when (.isSatisfiable solver)
-        (make-model (vec (.model solver)) int-atoms))
-      (catch ContradictionException _ nil))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef sat4j-solve
-        :args (s/cat :dimacs-map ::dimacs)
-        :ret (s/or :model :lwb.prop/model :nil nil?))</pre></td></tr><tr><td class="docs"><h2>Tseitin transformation</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>The Tseitin transformation takes a formula <code>phi</code> and generates in linear time
-a formula which is equivalent with respect to satisfiability.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Prefix for tseitin symbols.</p>
-</td><td class="codes"><pre class="brush: clojure">(def ^:private tseitin-prefix
-  &quot;ts-&quot;)</pre></td></tr><tr><td class="docs"><p>A function that generates unique tseitin symbols,
-   beginning with <code>ts-1</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- tseitin-symbol-generator
+</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.util.shell" name="lwb.util.shell"><h1 class="project-name">lwb.util.shell</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns lwb.util.shell
+  (:require [clojure.spec.alpha :as s]
+            [clojure.java.shell :as shell]
+            [clojure.string :as str]))</pre></td></tr><tr><td class="docs"><p>Get type of operating system</p>
+</td><td class="codes"><pre class="brush: clojure">(defn os
   []
-  (let [cnt    (atom 0)]
-    #(symbol (str tseitin-prefix (swap! cnt inc)))))</pre></td></tr><tr><td class="docs"><p>Marks each branch of <code>phi</code> with a unique tseitin symbol. <br />
-   The root has the symbol <code>ts-1</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- mark-phi
-  [phi]
-  (let [tsg     (tseitin-symbol-generator)
-        zipper  (z/seq-zip phi)
-        mark-fn (fn [node] (vary-meta node assoc :tseitin-symbol (tsg)))]
-    (loop [loc zipper]
-      (if (z/end? loc)
-        (z/root loc)
-        (recur (z/next (if (z/branch? loc) (z/edit loc mark-fn) loc)))))))</pre></td></tr><tr><td class="docs"><p>Sequence of all the locations of a zipper generated from the formula <code>phi</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- locs-phi
-  [phi]
-  (take-while (complement z/end?) (iterate z/next (z/seq-zip phi))))</pre></td></tr><tr><td class="docs"><p>Iterate beginning with <code>x</code> while <code>f</code> returns not nil</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- iterate-while
-  [f x]
-   (lazy-seq (when x (cons x (iterate-while f (f x))))))</pre></td></tr><tr><td class="docs"><p>Sequence of children locs at branch</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- children-locs
-  [branch]
-  (iterate-while z/right (z/down branch)))</pre></td></tr><tr><td class="docs"><p>Analyzes branch and generates equivalence formula for the branch. <br />
-   The formula is of the form <code>(equiv tsx (atoms or tseitin symbol of children))</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- tseitin-branch
-  [branch]
-  (let [children (map #(if (z/branch? %) (:tseitin-symbol (meta  (z/node %))) (z/node %)) (children-locs branch))]
-    (list 'equiv (:tseitin-symbol (meta (z/node branch))) children)))</pre></td></tr><tr><td class="docs"><p>Tseitin transformation for formula <code>phi</code>. <br />
-   (1) The formula is marked with tseitin symbols for the branches. <br />
-   (2) The tseitin equivalences for the branches are generated. <br />
-   (3) CNF of these is calculated. <br />
-   (4) The final formula with <code>ts-1</code> for the root is build and simplified.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn tseitin
-  [phi]
-  (cond
-    ; border cases
-    (boolean? phi) phi
-    (atom? phi) (list 'and (list 'or phi))
-    ; actual transformation
-    :else
-		  (let [ts-1 (symbol (str tseitin-prefix 1))
-            branches (map tseitin-branch (filter z/branch? (locs-phi (mark-phi phi))))
-            ; a hack to get rid of lazy seqs
-            walk-fn (fn [node] (if (instance? LazySeq node) (apply list node) node))
-            non-lazy-branches (walk/postwalk walk-fn branches)
-            parts (apply list (map cnf non-lazy-branches))]
-        (walk/postwalk walk-fn (flatten-ops (into (conj parts (list 'and (list 'or ts-1))) '(and)))))))</pre></td></tr><tr><td class="docs"><p>Checks whether the formula <code>phi</code> does not have an atom of the
-  form of a tseitin symbol, i.e. that matches #"ts-\d+".</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- no-tseitin-symbol?
-  &quot;Checks whether the formula `phi` does not have an atom of the
-  form of a tseitin symbol, i.e. that matches #\&quot;ts-\\d+\&quot;.&quot;
-  [phi]
-  (empty? (filter #(re-matches #&quot;ts-[0-9]+&quot; (name %)) (atoms-of-phi phi))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef tseitin
-        :args (s/cat :phi (and wff? no-tseitin-symbol?))
-        :ret :lwb.prop.nf/cnf)</pre></td></tr><tr><td class="docs"><p>Removes the tseitin-symbols and their value from a model.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- remove-tseitin-symbols
-  [model]
-  (into {} (filter #(not (starts-with? (name (key %)) tseitin-prefix)) model)))</pre></td></tr><tr><td class="docs"><p>Transforms a model into a formula in cnf with negated truth value.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- model2negated-cnf
-  [model]
-  (let [negate (fn [[atom value]] (if value (list 'not atom) atom))]
-    (apply list 'or (map negate model))))</pre></td></tr><tr><td class="docs"><h2>Satisifiability in propositional logic</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Gives a model for <code>phi</code> if the formula is satisfiable, nil if not. <br />
-   If <code>phi</code> is trivially valid, the result is true. <br />
-   Mode <code>:all</code> returns a sequence of all the satisfying assignments.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sat
-  ([phi]
-    (sat phi :one))
-  ([phi mode]
-    (cond
-	   ; border cases
-     (= phi 'true) true
-     (= phi 'false) nil
-     :else
-	     (case mode
-	       :all 
-		       (loop  [f phi, results '()]
-		        (let [sol (sat f)]
-	             (if (nil? sol) results
-		               (recur (list 'and (model2negated-cnf sol) f) (conj results sol)))))
-	       ; default
-		       (let [tcnf   (if (cnf? phi) phi (tseitin phi))
-		             dimacs (cnf-&gt;dimacs tcnf)
-		             res    (sat4j-solve dimacs)]
-		         (when res
-		           (remove-tseitin-symbols res)))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef sat
-        :args (s/cat :phi (and wff? no-tseitin-symbol?) :mode (s/? #{:one :all}))
-        :ret (s/nilable (s/or :bool boolean? :model :lwb.prop/model :models (s/coll-of :lwb.prop/model))))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sat?
-  [phi]
-  (if (nil? (sat phi)) false true))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef sat?
-        :args (s/cat :phi (and wff? no-tseitin-symbol?))
-        :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> valid?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn valid?
-  [phi]
-  (not (sat? (list 'not phi))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/fdef valid?
-        :args (s/cat :phi (and wff? no-tseitin-symbol?))
-        :ret boolean?)</pre></td></tr><tr><td class="docs"><p>Sequence of true atoms in a model</p>
-</td><td class="codes"><pre class="brush: clojure">(defn true-only
-  [model]
-  (map first (filter #(true? (val %)) model)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (let [os-name (System/getProperty &quot;os.name&quot;)]
+    (condp #(str/includes? %2 %1) os-name
+      &quot;Linux&quot;   :linux
+      &quot;Mac&quot;     :mac
+      &quot;Windows&quot; :windows
+                :other)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(s/fdef os
+        :args nil?
+        :ret #(contains? #{:linux :mac :windows :other} %))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(os)</pre></td></tr><tr><td class="docs"><p>Calls shell to generate pdf from tex file</p>
+</td><td class="codes"><pre class="brush: clojure">(defn tex2pdf 
+  [filename]
+  (let [command  (condp = (os)
+                        :linux   [&quot;texi2pdf&quot;]
+                        :mac     [&quot;texi2pdf&quot;]
+                        :windows [&quot;texify&quot; &quot;-p&quot;]
+                        :other   [&quot;texi2pdf&quot;])]
+    (apply shell/sh (conj command filename))))</pre></td></tr><tr><td class="docs"><p>Calls shell to open file with default app</p>
+</td><td class="codes"><pre class="brush: clojure">(defn open
+  [filename]
+  (let [command (condp = (os)
+                    :linux   [&quot;xdg-open&quot;]
+                    :mac     [&quot;open&quot;]
+                    :windows [&quot;start&quot;]
+                    :other   [&quot;open&quot;])]
+    (apply shell/sh (conj command filename))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

@@ -3004,7 +3004,7 @@ representing a Büchi automaton into a Clojure data structure</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- successors
   [ba id]
   (mapv :to (filter #(= id (:from %)) (:edges ba))))</pre></td></tr><tr><td class="docs"><p>Returns <code>0</code> if <code>pathv</code> has no cycle, <br />
-           <code>1</code> if <code>pathv</code> has a cycle with an aceepting state, <br />
+           <code>1</code> if <code>pathv</code> has a cycle with an accepting state, <br />
            <code>-1</code> if <code>pathv</code> has a cycle but without an accepting state, <br />
    Requires: The new element that may lead to a cycle is at the last position of the vector.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- cycle-check
