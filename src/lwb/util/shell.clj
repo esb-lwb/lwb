@@ -29,7 +29,9 @@
 (os)
 
 (defn dot2tex
-  "Calls shell to generate pdf from tex file"
+  "Calls shell to generate tex from dot,
+   the last two params are `:in` and the symbol that stands for the
+   dot input"
   [params]
   (let [command  (condp = (os)
                    :linux   ["dot2tex"]

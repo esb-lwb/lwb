@@ -2869,7 +2869,6 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns lwb.ltl.kripke
   (:require [lwb.ltl :refer [atom?]]
             [clojure.string :as str]
-            [clojure.java.shell :as sh]
             [lwb.util.shell :as shell]
             [clojure.spec.alpha :as s]
             [clojure.set :as set]))</pre></td></tr><tr><td class="docs"><h1>Kripke structures</h1>
@@ -2961,7 +2960,8 @@ For improving the results:</p>
   ([ks mode]
     (let [dot-code (dotify ks mode)
           prog     (name mode)]
-    (:out (sh/sh &quot;dot2tex&quot; (str &quot;--prog=&quot; prog) &quot;-ftikz&quot; &quot;--styleonly&quot; &quot;--codeonly&quot; :in dot-code)))))</pre></td></tr><tr><td class="docs">
+    (:out (shell/dot2tex [(str &quot;--prog=&quot; prog) &quot;-ftikz&quot; &quot;--styleonly&quot; 
+                          &quot;--codeonly&quot; :in dot-code])))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef tikzify
         :args (s/cat :ks ::model :mode (s/? #{:dot :neato}))
         :ret  nil?)</pre></td></tr><tr><td class="docs"><p>Makes a pdf file with the visualisation of the Kripke structure <code>ks</code>. <br />

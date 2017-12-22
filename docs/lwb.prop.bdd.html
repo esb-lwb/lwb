@@ -2876,7 +2876,6 @@ implementation in Java of the C/C++ library <a href="http://buddy.sourceforge.ne
   (:require [lwb.prop :as prop]
             [clojure.string :as str]
             [clojure.math.combinatorics :refer (selections)]
-            [clojure.java.shell :as sh]
             [lwb.util.shell :as shell]
             [clojure.spec.alpha :as s]
             [potemkin :as pot])
@@ -3161,11 +3160,11 @@ true branch <code>hi-no</code>.</p>
    With a filename given: <br />
    Makes a pdf file with the visualisation of the bdd for <code>phi</code>. <br />
    <code>filename</code> is the name of the file to be generated, must have no extension. <br />
-   Uses <code>dot2tex</code> and the commands defined in 'lwb.uitl.shell'.</p>
+   Uses <code>dot2tex</code> and the commands defined in 'lwb.util.shell'.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify
   ([phi]
    (let [dot-code (dotify phi)]
-     (:out (sh/sh &quot;dot2tex&quot; &quot;-ftikz&quot; &quot;-tmath&quot; &quot;-s&quot; &quot;--codeonly&quot; :in dot-code))))
+     (:out (shell/dot2tex [&quot;-ftikz&quot; &quot;-tmath&quot; &quot;-s&quot; &quot;--codeonly&quot; :in dot-code]))))
   ([phi filename]
    (let [tikz-body (texify phi)
          tex-code (str tikz-header &quot;\n&quot; tikz-body &quot;\n&quot; tikz-footer)

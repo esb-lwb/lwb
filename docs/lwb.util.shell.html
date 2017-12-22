@@ -2881,7 +2881,17 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(s/fdef os
         :args nil?
         :ret #(contains? #{:linux :mac :windows :other} %))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(os)</pre></td></tr><tr><td class="docs"><p>Calls shell to generate pdf from tex file</p>
+</td><td class="codes"><pre class="brush: clojure">(os)</pre></td></tr><tr><td class="docs"><p>Calls shell to generate tex from dot,
+   the last two params are <code>:in</code> and the symbol that stands for the
+   dot input</p>
+</td><td class="codes"><pre class="brush: clojure">(defn dot2tex
+  [params]
+  (let [command  (condp = (os)
+                   :linux   [&quot;dot2tex&quot;]
+                   :mac     [&quot;dot2tex&quot;]
+                   :windows [&quot;dot2tex&quot;]
+                   :other   [&quot;dot2tex&quot;])]
+    (apply shell/sh (into command params))))</pre></td></tr><tr><td class="docs"><p>Calls shell to generate pdf from tex file</p>
 </td><td class="codes"><pre class="brush: clojure">(defn tex2pdf 
   [filename]
   (let [command  (condp = (os)
