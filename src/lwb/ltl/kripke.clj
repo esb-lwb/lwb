@@ -9,7 +9,6 @@
 (ns lwb.ltl.kripke
   (:require [lwb.ltl :refer [atom?]]
             [clojure.string :as str]
-            [clojure.java.shell :as sh]
             [lwb.util.shell :as shell]
             [clojure.spec.alpha :as s]
             [clojure.set :as set]))
@@ -127,7 +126,8 @@
   ([ks mode]
     (let [dot-code (dotify ks mode)
           prog     (name mode)]
-    (:out (sh/sh "dot2tex" (str "--prog=" prog) "-ftikz" "--styleonly" "--codeonly" :in dot-code)))))
+    (:out (shell/dot2tex [(str "--prog=" prog) "-ftikz" "--styleonly" 
+                          "--codeonly" :in dot-code])))))
 
 (s/fdef tikzify
         :args (s/cat :ks ::model :mode (s/? #{:dot :neato}))

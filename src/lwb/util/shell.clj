@@ -28,7 +28,16 @@
 
 (os)
 
-; What's the right command on the windows platform??
+(defn dot2tex
+  "Calls shell to generate pdf from tex file"
+  [params]
+  (let [command  (condp = (os)
+                   :linux   ["dot2tex"]
+                   :mac     ["dot2tex"]
+                   :windows ["dot2tex"]
+                   :other   ["dot2tex"])]
+    (apply shell/sh (into command params))))
+
 (defn tex2pdf 
   "Calls shell to generate pdf from tex file"
   [filename]

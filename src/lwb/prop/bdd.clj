@@ -19,7 +19,6 @@
   (:require [lwb.prop :as prop]
             [clojure.string :as str]
             [clojure.math.combinatorics :refer (selections)]
-            [clojure.java.shell :as sh]
             [lwb.util.shell :as shell]
             [clojure.spec.alpha :as s]
             [potemkin :as pot])
@@ -391,10 +390,10 @@
    With a filename given:        
    Makes a pdf file with the visualisation of the bdd for `phi`.        
    `filename` is the name of the file to be generated, must have no extension.        
-   Uses `dot2tex` and the commands defined in 'lwb.uitl.shell'."
+   Uses `dot2tex` and the commands defined in 'lwb.util.shell'."
   ([phi]
    (let [dot-code (dotify phi)]
-     (:out (sh/sh "dot2tex" "-ftikz" "-tmath" "-s" "--codeonly" :in dot-code))))
+     (:out (shell/dot2tex ["-ftikz" "-tmath" "-s" "--codeonly" :in dot-code]))))
   ([phi filename]
    (let [tikz-body (texify phi)
          tex-code (str tikz-header "\n" tikz-body "\n" tikz-footer)
