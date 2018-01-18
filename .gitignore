@@ -11,3 +11,4 @@
 /target/
 /.nrepl-port
 mat*
+.DS_Store
