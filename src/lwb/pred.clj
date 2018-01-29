@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2015 - 2017 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2015 - 2018 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -20,6 +20,10 @@
   []
   (browse/browse-url "https://github.com/esb-dev/lwb/wiki/pred"))
 
+;; We import the operators and so forth from propositional logic.
+(pot/import-vars
+  [lwb.prop impl equiv xor ite op?])
+
 ;; # The language of predicate logic
 
 ;; There are actually many languages of predicate logic, which are
@@ -36,33 +40,37 @@
 ;; * predicates with their arity
 
 ;; Signatures are represented in Clojure as maps.
-;; The keys are keywords build from the names of the elements of the
-;; signature,
-;; the values are vectors with type and arity of the element.
+;; The items in the map are pairs of symbols and specification of the
+;; type (predicate or function) together with the arity.
+;; Constants do not habe to be specified, they are keywords or integers.
 
 ;; ### Specification of a signature
-(s/def ::signature (s/map-of keyword? (s/tuple #{:const :func :prop :pred} nat-int?)))
+
+(defn sig-symb?
+  "Is `symb` an allowed symbol  predicates or functions in predicate logic?"
+  [symb]
+  (let [not-ok #{forall exists =}]
+    (and (symbol? symb) (not (op? symb)) (not (contains not-ok symb)))))
+
+(s/def ::signature (s/map-of sig-symb? (s/tuple #{:pred :func} nat-int?)))
 
 ;; Example:
 
-;;        {:c [:const 0]
-;;         :f [:func  2]
-;;         :a [:prop  0]
-;;         :p [:pred  1]}
+;;        {'f [:func  2]
+;;         'A [:pred  0]
+;;         'P [:pred  1]}
 
-;; defines a signature comprising the constant `:c`, the binary function `f`,
-;; the proposition `a`, and the unary predicate `p`.
+;; defines a signature comprising the binary function `f`,
+;; the proposition `A`, and the unary predicate `P`.
 
 ;; Constants are represented as keywords or ints in Clojure. Thus it's not necessary
-;; to declare them in the signature. The declaration in the signature is just
-;; the documentation, but even an undeclared keyword is recognized and accepted
-;; in a formula.
+;; to declare them in the signature.
 
 ;; ## Utility functions for signatures
 
 (defn- sig-what
   [type symb sig]
-  (and (symbol? symb) (= (first ((keyword symb) sig)) type)))
+  (and (symbol? symb) (= (first (symb sig)) type)))
 
 (defn const?
   "Is `kw` a constant?"
@@ -74,15 +82,21 @@
   [symb sig]
   (sig-what :func symb sig))
 
+(def sig {'f [:func 2]
+          'A [:pred 0]
+          'P [:pred 1]})
+
+(func? 'f sig)
+(func? 'A sig)
+
 (defn pred?
   "Is `symb` a predicate in the signature `sig`?"
   [symb sig]
   (sig-what :pred symb sig))
 
-(defn prop?
-  "Is `symb` an atomic proposition in the signature `sig`?"
-  [symb sig]
-  (sig-what :prop symb sig))
+(func? 'f sig)
+(func? 'A sig)
+(func? 'P sig)
 
 (declare op?)
 
@@ -90,7 +104,15 @@
   "Arity of operator `op` or of `symb` in signature `sig`"
   [symb sig]
   (if (op? symb) (lwb.prop/arity symb)
-                 (second ((keyword symb) sig))))
+                 (second (symb sig))))
+
+(defn prop?
+  "Is `symb` an atomic proposition in the signature `sig`?"
+  [symb sig]
+  (and (pred? symb sig) (zero? (arity symb sig))))
+
+(prop? 'A sig)
+(prop? 'P sig)
 
 (defn func-0?
   "Is `symb` a function of arity `0` with respect to `sig`?"
@@ -98,10 +120,6 @@
   (and (func? symb sig) (zero? (arity symb sig))))
 
 ;; ## The logical symbols in the language(s) of predicate logic
-
-;; We import the operators and so forth from propositional logic.
-(pot/import-vars
-  [lwb.prop impl equiv xor ite op?])
 
 ;; ### Quantors in predicate logic
 
@@ -124,8 +142,7 @@
   [symb sig]
   (if-not (symbol? symb)
     false
-    (not (or (op? symb) (boolean? symb) (quantor? symb) (eq? symb)
-             (func? symb sig) (pred? symb sig) (prop? symb sig)))))
+    (not (or (sig-symb? symb) (func? symb sig) (pred? symb sig)))))
 
 ;; ## Well-formed first-order formulae
 ;; The check whether a formula is well-formed reflects the grammar of
@@ -187,7 +204,7 @@
 
 ;; **Complex expressions** are quantified expressions or expressions with an operator.
 (s/def ::compl-expr (s/or :op-expr ::op-expr
-                           :quant   ::quantified))
+                          :quant   ::quantified))
 
 ;; **Formulas of predicate logic** are simple or complex expressions.
 (s/def ::fml (s/or :simple-expr ::simple-expr
@@ -218,15 +235,15 @@
 
 ;; The key `:univ` denotes the universe, the value is a set of constants
 
-;; Functions are given by the keyword build from the name of the function, 
+;; Functions are given by symbol for the function, 
 ;; together with a vector consisting of the keyword `:func`, the arity of the
 ;; function and the function itsself.
 
-;; Propositions are given by the keyword build from the name of the
-;; proposition together with a vector consisting of the keyword `:prop`,
+;; Propositions are given by symbol for the
+;; proposition together with a vector consisting of the keyword `:pred`,
 ;; the arity `0` and the value for the proposition i.e. `true` or `false`.   
 
-;; Relations are given by the keyword build from the name of the corresponding
+;; Relations are given by the symbol for the corresponding
 ;; predicate symbol together with a vector consisting of the keyword `:pred`, 
 ;; the arity of the relation and a predicate constructed by `make-pred` from
 ;; the provided relation.
@@ -234,16 +251,16 @@
 ;; Example for a group of 2 elements:
 
 ;;     {:univ #{0 1}
-;;      :op   [:func 2 (fn [x y] (body of function for group operation))]
-;;      :inv  [:func 1 (fn [x] (body of function for inverse))]
-;;      :unit [:func 0 0]}
+;;      'op   [:func 2 (fn [x y] (body of function for group operation))]
+;;      'inv  [:func 1 (fn [x] (body of function for inverse))]
+;;      'unit [:func 0 0]}
 
 ;; see lwb.pred.examples.groups
 
 ;; Example for a family:
 
 ;;      {:univ #{:eve :adam :joe :susan :anne}
-;;       :mother [:pred 2 '(fn [mother child] 
+;;       'mother [:pred 2 '(fn [mother child] 
 ;;                             (let [rel #{[:eve :joe] [:eve :susan] [:susan :anne]}]
 ;;                                                (contains? rel [mother child])))]}
 
@@ -255,7 +272,7 @@
   (set? x))
 
 (defn- func-def?
-  "Is `[key arity def]` the definition of a function?"
+  "Is `[symb arity def]` the definition of a function?"
   [[key arity def]]
   (and (= key :func) (>= arity 0) (if (pos? arity) (fn? def) true)))
 
@@ -275,7 +292,10 @@
   (and (contains? model :univ) (set? (:univ model))))
 
 ;; **Specification** of a model in the predicate logic.
-(s/def ::model  (s/and univ-ok? (s/map-of keyword? 
+;; TODO
+(s/def ::model (s/and univ-ok? (s/cat :univ univ-def?
+                                      )
+                      (s/map-of keyword?
                                          #(or (univ-def? %) (func-def? %) (pred-def? %) (prop-def? %)))))
 
 
