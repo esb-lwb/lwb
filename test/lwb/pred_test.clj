@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate Logic, tests
 
-; Copyright (c) 2014 - 2017 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2018 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -16,32 +16,30 @@
 
 ; signature ------------------------------------------------------------------
 
-(def sig {:c  [:const 0]
-          :d  [:const 0]
-          :f0 [:func 0]
-          :f1 [:func 1]
-          :f2 [:func 2]
-          :f3 [:func 3]
-          :r  [:prop 0]
-          :P1 [:pred 1]
-          :P2 [:pred 2]})
+(def sig1 {'f0 [:func 0]
+           'f1 [:func 1]
+           'f2 [:func 2]
+           'f3 [:func 3]
+           'R  [:pred 0]
+           'P1 [:pred 1]
+           'P2 [:pred 2]})
 
 ; tests -----------------------------------------------------------------------
 
 (deftest sig-test
-  (is (= true (s/valid? :lwb.pred/signature sig)))
-  (is (= false (s/valid? :lwb.pred/signature (conj sig [:x [:hi 1]]))))
+  (is (= true (s/valid? :lwb.pred/signature sig1)))
+  (is (= false (s/valid? :lwb.pred/signature (conj sig1 [:x [:hi 1]]))))
   (is (= true  (const? :c)))
   (is (= true  (const? :d)))
   (is (= true  (const? :e)))
   (is (= false (const? 'f1)))
-  (is (= true  (func?  'f1 sig)))
-  (is (= false (func?  'P1 sig)))
-  (is (= true  (prop?  'r  sig)))
-  (is (= false (prop?  'd  sig)))
-  (is (= true  (pred?  'P1 sig)))
-  (is (= true  (pred?  'P2 sig)))
-  (is (= false (pred?  'f3 sig))))
+  (is (= true  (func?  'f1 sig1)))
+  (is (= false (func?  'P1 sig1)))
+  (is (= true  (prop?  'R  sig1)))
+  (is (= false (prop?  'D  sig1)))
+  (is (= true  (pred?  'P1 sig1)))
+  (is (= true  (pred?  'P2 sig1)))
+  (is (= false (pred?  'f3 sig1))))
 
 (deftest symb-test
   (is (= true  (op? 'and)))
@@ -49,11 +47,11 @@
   (is (= true  (quantor? 'forall)))
   (is (= false (quantor? 'all)))
   (is (= true  (eq?  '=)))
-  (is (= true (logvar? 'x sig)))
-  (is (= true (logvar? 'y sig)))
-  (is (= false (logvar? :c sig)))
-  (is (= true  (prop?  'r  sig)))
-  (is (= false (pred?  'f3 sig))))
+  (is (= true (logvar? 'x sig1)))
+  (is (= true (logvar? 'y sig1)))
+  (is (= false (logvar? :c sig1)))
+  (is (= true  (prop?  'R  sig1)))
+  (is (= false (pred?  'f3 sig1))))
 
 (deftest op-test
   (is (= '(or (not a) b) (macroexpand-1 '(impl a b)))))
@@ -71,46 +69,53 @@
   (is (= true (eq? '=))))
 
 (deftest term?-test
-  (is (= true (term? 'x sig)))
-  (is (= true (term? 'f0 sig)))
-  (is (= true (term? '(f1 y) sig)))
-  (is (= true (term? '(f1 :c) sig)))
-  (is (= true (term? '(f3 x y z) sig)))
-  (is (= true (term? '(f3 (f1 x) (f2 y1 y2) z) sig)))
-  (is (= false (term? 'r sig))))
+  (is (= true (term? 'x sig1)))
+  (is (= true (term? 'f0 sig1)))
+  (is (= true (term? '(f1 y) sig1)))
+  (is (= true (term? '(f1 :c) sig1)))
+  (is (= true (term? '(f3 x y z) sig1)))
+  (is (= true (term? '(f3 (f1 x) (f2 y1 y2) z) sig1)))
+  (is (= false (term? 'R sig1))))
 
 (deftest wff?-test
-  (is (= true (wff? '(forall [x y] (P2 x y)) sig)))
-  (is (= true (wff? '(exists [x y] (and (P1 x) (P1 y))) sig)))
-  (is (= true (wff? '(exists [x y] (and (P1 x) (= x y))) sig)))
-  (is (= true (wff? '(forall [x] (exists [y] (P2 x y))) sig)))
-  (is (= true (wff? '(P2 x y) sig)))
-  (is (= true (wff? '(ite (P2 x y) r (= :c :d)) sig))))
+  (is (= true (wff? '(forall [x y] (P2 x y)) sig1)))
+  (is (= true (wff? '(exists [x y] (and (P1 x) (P1 y))) sig1)))
+  (is (= true (wff? '(exists [x y] (and (P1 x) (= x y))) sig1)))
+  (is (= true (wff? '(forall [x] (exists [y] (P2 x y))) sig1)))
+  (is (= true (wff? '(P2 x y) sig1)))
+  (is (= true (wff? '(ite (P2 x y) R (= :c :d)) sig1))))
 
 (deftest spec-test
-  (is (= true (binding [*signature* sig] (s/valid? :lwb.pred/fml '(forall [x y] (P2 x y))))))
-  (is (= true (binding [*signature* sig] (s/valid? :lwb.pred/fml '(= 5 (f2 2 3))))))
+  (is (= true (binding [*signature* sig1] (s/valid? :lwb.pred/fml '(forall [x y] (P2 x y))))))
+  (is (= true (binding [*signature* sig1] (s/valid? :lwb.pred/fml '(= 5 (f2 2 3))))))
   )
 
 ; models -----------------------------------------------------------------------
 
 ; example for a model 
 (def m
-   {:univ #{:0 :1}
-    :op   [:func 2 (fn [x y] (+ x y))]
-    :inv  [:func 1 (fn [x] (- x))]
-    :unit [:func 0 :0]
-    :R    [:pred 2 (make-pred #{[:1 :1] [:0 :0]})]
-    :S    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
-    :P    [:prop 0 'true]})
+   {:univ #{0 1}})
+
+    'op   [:func 2 (fn [x y] (+ x y))]
+    'inv  [:func 1 (fn [x] (- x))]
+    'unit [:func 0 :0]
+    'R    [:pred 2 (make-pred #{[:1 :1] [:0 :0]})]
+    'S    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
+    'P    [:prop 0 'true]})
 ; just for the tests
 
 (deftest model-test
   (is (= true (s/valid? :lwb.pred/model m)))
-  (is (= 5 ((nth (:op m) 2) 2 3)))
-  (is (= {:op [:func 2], :inv [:func 1], :unit [:func 0], :R [:pred 2], :S [:pred 3], :P [:prop 0]}
+  (is (= 5 ((nth ('op m) 2) 2 3)))
+  (is (= {'op [:func 2], 'inv [:func 1], 'unit [:func 0], 'R [:pred 2], 'S [:pred 3], 'P [:pred 0]}
          (sig-from-model m)))
   )
+
+(s/describe :lwb.pred/model)
+(s/explain :lwb.pred/model m)
+(s/conform :lwb.pred/model m)
+(s/valid? :lwb.pred/model m)
+(model-test)
 
 ; evaluation -------------------------------------------------------------------
 

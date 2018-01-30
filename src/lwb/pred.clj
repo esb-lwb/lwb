@@ -49,8 +49,8 @@
 (defn sig-symb?
   "Is `symb` an allowed symbol  predicates or functions in predicate logic?"
   [symb]
-  (let [not-ok #{forall exists =}]
-    (and (symbol? symb) (not (op? symb)) (not (contains not-ok symb)))))
+  (let [not-ok '#{forall exists =}]
+    (and (symbol? symb) (not (op? symb)) (not (contains? not-ok symb)))))
 
 (s/def ::signature (s/map-of sig-symb? (s/tuple #{:pred :func} nat-int?)))
 
@@ -82,21 +82,10 @@
   [symb sig]
   (sig-what :func symb sig))
 
-(def sig {'f [:func 2]
-          'A [:pred 0]
-          'P [:pred 1]})
-
-(func? 'f sig)
-(func? 'A sig)
-
 (defn pred?
   "Is `symb` a predicate in the signature `sig`?"
   [symb sig]
   (sig-what :pred symb sig))
-
-(func? 'f sig)
-(func? 'A sig)
-(func? 'P sig)
 
 (declare op?)
 
@@ -110,9 +99,6 @@
   "Is `symb` an atomic proposition in the signature `sig`?"
   [symb sig]
   (and (pred? symb sig) (zero? (arity symb sig))))
-
-(prop? 'A sig)
-(prop? 'P sig)
 
 (defn func-0?
   "Is `symb` a function of arity `0` with respect to `sig`?"
@@ -140,9 +126,9 @@
 (defn logvar?
   "Is `symb` a logical variable with respect to signature `sig`?"
   [symb sig]
-  (if-not (symbol? symb)
+  (if-not (sig-symb? symb)
     false
-    (not (or (sig-symb? symb) (func? symb sig) (pred? symb sig)))))
+    (not (or (func? symb sig) (pred? symb sig)))))
 
 ;; ## Well-formed first-order formulae
 ;; The check whether a formula is well-formed reflects the grammar of
@@ -292,12 +278,13 @@
   (and (contains? model :univ) (set? (:univ model))))
 
 ;; **Specification** of a model in the predicate logic.
-;; TODO
-(s/def ::model (s/and univ-ok? (s/cat :univ univ-def?
-                                      )
-                      (s/map-of keyword?
-                                         #(or (univ-def? %) (func-def? %) (pred-def? %) (prop-def? %)))))
+(s/def ::model (s/cat :univ keyword? :univ-def set?))
+(s/def ::model (s/and univ-ok? map? 
+                      (s/cat :univ-kw #(= :univ %) :univ-def univ-def?)))
+                            ; :more (s/* (s/cat :sig-symb sig-symb? :sig-def #(or (func-def? %) (pred-def? %) (prop-def? %)))))))
 
+(s/def ::model2 (s/cat :no number? :kw keyword?))
+(s/explain ::model2 [2 :x])
 
 ;; **Caveat reader!**         
 ;; Formulas of predicate logic can be evaluated with respect to a model.
