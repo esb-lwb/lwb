@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2015 - 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2015 - 2018 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -12,9 +12,9 @@
 ;; First definition of a group
 ;; Signature of a group in the spirit of the universal algebra
 (def grp-sig
-  {:unit [:func 0]
-   :op   [:func 2]
-   :inv  [:func 1]})
+  {'unit [:func 0]
+   'op   [:func 2]
+   'inv  [:func 1]})
 
 ;; Group axioms
 ;; Associativity of group operation
@@ -36,9 +36,9 @@
 ;; Group with 1 element
 (def c1
   {:univ #{0}
-   :op   [:func 2 #(mod (+ %1 %2) 1)]
-   :inv  [:func 1 #(mod (- 1 %) 1)]
-   :unit [:func 0 0]})
+   'op   [:func 2 #(mod (+ %1 %2) 1)]
+   'inv  [:func 1 #(mod (- 1 %) 1)]
+   'unit [:func 0 0]})
 
 (eval-phi grp-ass c1)
 (eval-phi grp-inv c1)
@@ -48,9 +48,9 @@
 ;; Cyclic group with 6 elements
 (def c6
   {:univ #{0 1 2 3 4 5}
-   :op   [:func 2 #(mod (+ %1 %2) 6)]
-   :inv  [:func 1 #(mod (- 6 %) 6)]
-   :unit [:func 0 0]})
+   'op   [:func 2 #(mod (+ %1 %2) 6)]
+   'inv  [:func 1 #(mod (- 6 %) 6)]
+   'unit [:func 0 0]})
 
 (eval-phi grp-ass c6)
 (eval-phi grp-inv c6)
@@ -75,9 +75,9 @@
 
 (def sym3
   {:univ #{0 1 2 3 4 5}
-   :op   [:func 2 sym3-op]
-   :inv  [:func 1 sym3-inv]
-   :unit [:func 0 0]})
+   'op   [:func 2 sym3-op]
+   'inv  [:func 1 sym3-inv]
+   'unit [:func 0 0]})
 
 (eval-phi grp-ass sym3)
 (eval-phi grp-inv sym3)
@@ -88,7 +88,7 @@
 ;; Second, classic definition of a group
 ;; Signature of a group according to the classical definition
 (def grp-sig-classic
-  {:op [:func 2]})
+  {'op [:func 2]})
 
 (def grp-axioms-classic
   '(and
@@ -100,7 +100,7 @@
 
 (def sym3'
   {:univ #{0 1 2 3 4 5}
-   :op   [:func 2 sym3-op]})
+   'op   [:func 2 sym3-op]})
 
 (eval-phi grp-axioms-classic sym3')
 ; => true (but quite slow)

@@ -229,7 +229,7 @@
 ;; kodkod's Map<Relation, TupleSet> -> map of (relation name, set of vectors)
 (defn relmap-from-instmap
   [instmap]
-  (let [keys (for [^Relation r (keys instmap)] (keyword (.name r))),
+  (let [keys (for [^Relation r (keys instmap)] (symbol (.name r))),
         vals (for [^TupleSet t (vals instmap)] (vecset-from-ts t))]
     ;; a witness for a variable in an existential quantified formula is marked with a beginning $ in Kodkod,
     ;; it's not really a part of the result.

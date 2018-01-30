@@ -20,7 +20,7 @@
 (defn man
   "Manual"
   []
-  (browse/browse-url "https://github.com/esb-dev/lwb/wiki/prop"))
+  (browse/browse-url "https://github.com/esb-lwb/lwb/wiki/prop"))
 
 ;; # Propositional logic
 

@@ -93,42 +93,40 @@
 ; models -----------------------------------------------------------------------
 
 ; example for a model 
-(def m
-   {:univ #{0 1}})
-
+(def m-test
+   {:univ #{:0 :1 :2}
     'op   [:func 2 (fn [x y] (+ x y))]
     'inv  [:func 1 (fn [x] (- x))]
     'unit [:func 0 :0]
-    'R    [:pred 2 (make-pred #{[:1 :1] [:0 :0]})]
+    'R    [:pred 2 (make-pred #{[:1 :1] [:0 :0] [:2 :2]})]
     'S    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
-    'P    [:prop 0 'true]})
+    'P    [:pred 0 true]})
 ; just for the tests
 
 (deftest model-test
-  (is (= true (s/valid? :lwb.pred/model m)))
-  (is (= 5 ((nth ('op m) 2) 2 3)))
-  (is (= {'op [:func 2], 'inv [:func 1], 'unit [:func 0], 'R [:pred 2], 'S [:pred 3], 'P [:pred 0]}
-         (sig-from-model m)))
+  (is (= true (s/valid? :lwb.pred/model m-test)))
+  (is (= 5 ((nth ('op m-test) 2) 2 3)))
+  #_(is (= ([:func 2], [:func 1], [:func 0], [:pred 2], [:pred 3], [:pred 0])
+         (vals (sig-from-model m))))
   )
-
-(s/describe :lwb.pred/model)
-(s/explain :lwb.pred/model m)
-(s/conform :lwb.pred/model m)
-(s/valid? :lwb.pred/model m)
-(model-test)
+(comment
+  (sig-from-model m)
+  (vals (sig-from-model m))
+  )
 
 ; evaluation -------------------------------------------------------------------
 
 (deftest eval-test
   (is (= '(forall [x] (forall [y] (= (op x y) ((op y x))))) (#'lwb.pred/unfold-vars '(forall [x y] (= (op x y) ((op y x)))))))
   (is (= '(forall [x] (forall [y] (= (op x y) ((op y x))))) (#'lwb.pred/unfold-vars '(forall [x y] (= (op x y) ((op y x)))))))
-  (is (= true (eval-phi 'P m)))
-  (is (= false (eval-phi '(and P (not P)) m)))
-  (is (= true (eval-phi '(= 5 (op 2 3)) m)))
-  (is (= true (eval-phi '(= 2 (inv -2)) m)))
-  (is (= true (eval-phi '(forall [x y] (impl (= x y) (R x y))) m)))
-  (is (= true (eval-phi '(exists [x] (R x x)) m)))
-  (is (= false (eval-phi '(exists [x y] (and (not (= x y)) (R x y))) m)))
+  (is (= true (eval-phi 'P m-test)))
+  (is (= false (eval-phi '(and P (not P)) m-test)))
+  (is (= true (eval-phi '(= 5 (op 2 3)) m-test)))
+  (is (= true (eval-phi '(= 2 (inv -2)) m-test)))
+  (is (= true (eval-phi '(forall [x y] (impl (= x y) (R x y))) m-test)))
+  (is (= true (eval-phi '(exists [x] (R x x)) m-test)))
+  (is (= false (eval-phi '(exists [x y] (and (not (= x y)) (R x y))) m-test)))
   )
 
 (run-tests)
+

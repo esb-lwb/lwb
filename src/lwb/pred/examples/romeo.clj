@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2015 - 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2015 - 2018 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -15,11 +15,11 @@
 ;; Shakespeare's world
 (def s-world
   {:univ #{:romeo :juliet :benedick :beatrice}
-   :m    [:func 0 :romeo]
-   :n    [:func 0 :juliet]
-   :F    [:pred 1 (make-pred #{[:romeo] [:benedick]})]
-   :G    [:pred 1 (make-pred #{[:juliet] [:beatrice]})]
-   :L    [:pred 2 (make-pred #{[:romeo :juliet] 
+   'm    [:func 0 :romeo]
+   'n    [:func 0 :juliet]
+   'F    [:pred 1 (make-pred #{[:romeo] [:benedick]})]
+   'G    [:pred 1 (make-pred #{[:juliet] [:beatrice]})]
+   'L    [:pred 2 (make-pred #{[:romeo :juliet] 
                                [:juliet :romeo]
                                [:benedick :beatrice]
                                [:beatrice :benedick]
@@ -64,11 +64,11 @@
 ;; Another world
 (def a-world
   {:univ #{4 7 8 11 12}
-   :m    [:func 0 7]
-   :n    [:func 0 12]
-   :F    [:pred 1 even?]
-   :G    [:pred 1 odd?]
-   :L    [:pred 2 #(< %1 %2)]})
+   'm    [:func 0 7]
+   'n    [:func 0 12]
+   'F    [:pred 1 even?]
+   'G    [:pred 1 odd?]
+   'L    [:pred 2 #(< %1 %2)]})
 
 ; Both worlds have the same signature
 (= (sig-from-model s-world) (sig-from-model a-world))

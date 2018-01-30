@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2017 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2017 - 2018 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -12,9 +12,9 @@
 ;; First definition of a group
 ;; Signature of a group in the spirit of the universal algebra
 (def grp-sig
-  {:unit [:func 0]
-   :op   [:func 2]
-   :inv  [:func 1]})
+  {'unit [:func 0]
+   'op   [:func 2]
+   'inv  [:func 1]})
 
 ;; Group axioms
 ;; Associativity of group operation

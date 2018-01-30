@@ -16,7 +16,7 @@
 (defn man
   "Manual"
   []
-  (browse/browse-url "https://github.com/esb-dev/lwb/wiki/ltl"))
+  (browse/browse-url "https://github.com/esb-lwb/lwb/wiki/ltl"))
 
 ;; # Representation of formulas of ltl
 

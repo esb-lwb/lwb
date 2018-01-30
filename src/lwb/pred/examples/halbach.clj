@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2016 - 2018 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -14,10 +14,10 @@
 ;; European cities
 (def cities
   {:univ #{:florence :stockholm :barcelona :london}
-   :a    [:func 0 :florence]
-   :b    [:func 0 :london]
-   :Q    [:pred 1 (make-pred #{[:florence] [:stockholm] [:barcelona]})]
-   :R    [:pred 2 (make-pred #{[:florence :london] 
+   'a    [:func 0 :florence]
+   'b    [:func 0 :london]
+   'Q    [:pred 1 (make-pred #{[:florence] [:stockholm] [:barcelona]})]
+   'R    [:pred 2 (make-pred #{[:florence :london] 
                                [:barcelona :london]
                                [:stockholm :london]})]
    })
@@ -43,8 +43,8 @@
 ;; world-5-9
 (def world-5-9
   {:univ #{1 2}
-   :b    [:func 0 1]
-   :Q    [:pred 1 (make-pred #{[1]})]})
+   'b    [:func 0 1]
+   'Q    [:pred 1 (make-pred #{[1]})]})
 
 (def phi4 '(impl (Q b) (forall [x] (Q x))))
 
@@ -54,7 +54,7 @@
 ;; cosmos
 (def cosmos
   {:univ #{:sun :moon}
-   :R    [:pred 2 (make-pred #{[:sun :sun] [:moon :moon]})]})
+   'R    [:pred 2 (make-pred #{[:sun :sun] [:moon :moon]})]})
 
 (def phi5 '(impl (forall [x] (exists [y] (R x y))) (exists [y] (forall [x] (R x y)))))
 
@@ -64,10 +64,10 @@
 ;; world-5-11
 (def world-5-11
   {:univ #{1}
-   :a    [:func 0 1]
-   :P    [:pred 1 (make-pred #{[1]})]
-   :Q    [:pred 1 (make-pred #{[1]})]
-   :R    [:pred 1 (make-pred #{})]})
+   'a    [:func 0 1]
+   'P    [:pred 1 (make-pred #{[1]})]
+   'Q    [:pred 1 (make-pred #{[1]})]
+   'R    [:pred 1 (make-pred #{})]})
 
 (def phi6 '(impl (and (forall [x] (impl (P x) (or (Q x) (R x)))) (P a)) (R a)))
 
@@ -78,10 +78,10 @@
 
 (def ds
   {:univ #{1 2 3}
-   :a    [:func 0 1]
-   :b    [:func 0 3]
-   :P    [:pred 1 (make-pred #{[2]})]
-   :R    [:pred 2 (make-pred #{[1 2] [2 3] [1 3]})]})      
+   'a    [:func 0 1]
+   'b    [:func 0 3]
+   'P    [:pred 1 (make-pred #{[2]})]
+   'R    [:pred 2 (make-pred #{[1 2] [2 3] [1 3]})]})      
 
 ;; (i)
 (eval-phi '(P a) ds)
@@ -127,6 +127,3 @@
 (eval-phi '(forall [x] (impl (P x) (exists [y] (and (R y x) (R x y))))) ds)
 ; => false; x is 2, but no pair and its mirrored one
 
-
-
- 

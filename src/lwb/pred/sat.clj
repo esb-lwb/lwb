@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Satisfiability of formulas of predicate logic in finite universes
 
-; Copyright (c) 2017 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2017 - 2018 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -17,11 +17,10 @@
   [sig factory bounds]
   (let [mapfn (fn [[key [type arity]]]
                 (cond
-                  (= type :const) (kic/make-const key factory bounds)
                   (and (= type :func) (zero? arity)) (kic/make-const key factory bounds)
                   (and (= type :func) (pos? arity)) (kic/make-func key arity factory bounds)
-                  (= type :pred) (kic/make-pred key arity factory bounds)
-                  (= type :prop) (kic/make-prop key factory bounds) ))]
+                  (and (= type :pred) (pos? arity)) (kic/make-pred key arity factory bounds)
+                  (and (= type :pred) (zero? arity)) (kic/make-prop key factory bounds) ))]
     (into {} (map mapfn sig))))
 
 (defn func->constraint
@@ -124,11 +123,11 @@
       (let [sol (kic/solve fml bounds)]
         (kic/model sol))
       (let [sols (kic/solve-all fml bounds)]
-        (apply hash-set (keep identity (map kic/model sols)))))))
+        (seq (apply hash-set (keep identity (map kic/model sols))))))))
 
 (defn sig->consts
   "Set of consts in signature.     
-   `[:const 0]` and `[:func 0]' have to be consts in kodkod."
+   `[:func 0]' are consts in kodkod."
   [sig]
   (set (map key (filter #(#{[:const 0] [:func 0]} (val %)) sig))))
 
@@ -154,7 +153,7 @@
     (let [consts (sig->consts sig)
           ssize (count consts)]
       (if (< usize ssize)
-        (throw (Exception. "usize must be >= number of constants and unary functions in the signature.")))
+        (throw (Exception. "usize must be >= number of unary functions in the signature.")))
         (sat-intern phi sig (fill-up consts usize) mode))))
 
 (defmethod sat :set

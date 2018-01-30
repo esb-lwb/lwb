@@ -18,7 +18,7 @@
 (defn man
   "Manual"
   []
-  (browse/browse-url "https://github.com/esb-dev/lwb/wiki/pred"))
+  (browse/browse-url "https://github.com/esb-lwb/lwb/wiki/pred"))
 
 ;; We import the operators and so forth from propositional logic.
 (pot/import-vars
@@ -270,7 +270,7 @@
 (defn- prop-def?
   "Is `[key arity def]` the definition of a proposition?"
   [[key arity def]]
-  (and (= key :prop) (zero? arity) (boolean? def) ))
+  (and (= key :pred) (zero? arity) (boolean? def) ))
 
 (defn- univ-ok?
   "Is the universe defined and a set?"
@@ -278,13 +278,9 @@
   (and (contains? model :univ) (set? (:univ model))))
 
 ;; **Specification** of a model in the predicate logic.
-(s/def ::model (s/cat :univ keyword? :univ-def set?))
-(s/def ::model (s/and univ-ok? map? 
-                      (s/cat :univ-kw #(= :univ %) :univ-def univ-def?)))
-                            ; :more (s/* (s/cat :sig-symb sig-symb? :sig-def #(or (func-def? %) (pred-def? %) (prop-def? %)))))))
-
-(s/def ::model2 (s/cat :no number? :kw keyword?))
-(s/explain ::model2 [2 :x])
+(s/def ::model (s/and univ-ok? map?
+                      (s/map-of #(or (= :univ %) (sig-symb? %))
+                                #(or (set? %) (func-def? %) (pred-def? %) (prop-def? %)))))
 
 ;; **Caveat reader!**         
 ;; Formulas of predicate logic can be evaluated with respect to a model.
@@ -456,10 +452,10 @@
 
 (defn- modelmap 
    "Checks type of entry in model and returns binding appropriate to type."
-  [[keyw value]]
-  (if (= keyw :univ)
+  [[key value]]
+  (if (= key :univ)
     ['univ value]
-    [(symbol (name keyw)) (nth value 2)]))
+    [key (nth value 2)]))
 
 (defn- model2assign-vec
   "Makes an assignment vector from the given model"
@@ -480,6 +476,25 @@
 (s/fdef eval-phi
         :args (s/& (s/cat :phi any? :model ::model) (fn [param] (wff? (:phi param) (sig-from-model (:model param)))))
         :ret boolean?)
+
+(def m
+  {:univ #{:0 :1 :2}
+   'op   [:func 2 (fn [x y] (+ x y))]
+   'inv  [:func 1 (fn [x] (- x))]
+   'unit [:func 0 :0]
+   'R    [:pred 2 (make-pred #{[:1 :1] [:0 :0]})]
+   'S    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
+   'P    [:pred 0 'true]})
+; just for the tests
+
+(s/valid? ::model m)
+(s/explain ::model m)
+
+(def phi1 '(exists [x] (R x x)))
+
+(pred2prop (:univ m) phi1)
+
+(eval-phi phi1 m)
 
 ;; ## Visualisation of a formula
 
