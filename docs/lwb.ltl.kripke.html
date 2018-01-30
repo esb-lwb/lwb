@@ -2904,7 +2904,12 @@ connected by that edge, associated with the keyword <code>:edges</code>.</p>
          (= nodeset nodeset')
          (= nodeset nodeset'')
          (set/subset? atomset atoms))))</pre></td></tr><tr><td class="docs"><p>The final specification of a Kripke structure, i.e. a model in the linear temporal logic.</p>
-</td><td class="codes"><pre class="brush: clojure">(s/def ::model (s/and kripke-ok? (s/keys :req-un [::nodes ::initial ::edges])))</pre></td></tr><tr><td class="docs"><h2>Visualisation of a Kripke structure</h2>
+</td><td class="codes"><pre class="brush: clojure">(s/def ::model (s/and kripke-ok? (s/keys :req-un [::nodes ::initial ::edges])))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def ks1 {:atoms   '#{P}
+          :nodes   {:s_1 '#{P}}
+          :initial :s_1
+          :edges   #{[:s_1 :s_1]}})
+(s/explain ::model ks1)</pre></td></tr><tr><td class="docs"><h2>Visualisation of a Kripke structure</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>We use dot2tex which in many cases gives good results,
 but sometimes we should rework the result.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>dot2tex produces tikz code using the automata library.

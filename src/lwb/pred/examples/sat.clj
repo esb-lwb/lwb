@@ -55,7 +55,7 @@
 ;; Second, classic definition of a group
 ;; Signature of a group according to the classical definition
 (def grp-sig-classic
-  {:op [:func 2]})
+  {'op [:func 2]})
 
 (def grp-axioms-classic
   '(and
@@ -94,8 +94,8 @@
   ;; Another signature for the definition of a group
   ;; see: Kenneth Kunen: "Single Axioms for Groups", Technical Report University of Wisconsin, February 1992
   (def grp-sig-2
-    {:op  [:func 2]
-     :inv [:func 1]})
+    {'op  [:func 2]
+     'inv [:func 1]})
 
   (def grp-s1 '(forall [x y w z] (= x (op w (inv (op (op (inv (op (inv y) (op (inv w) x))) z) (inv (op y z))))))))
 
@@ -120,7 +120,7 @@
   (valid? kunen grp-sig-2 5)
   ; => true (after 1 minute or so)
 
-  (time (valid? kunen grp-sig-2 6))
+  ;(time (valid? kunen grp-sig-2 6))
   ; "Elapsed time: 805705.043977 msecs"
   ; => true
 

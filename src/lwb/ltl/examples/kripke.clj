@@ -12,37 +12,37 @@
 
 ;; Two simple examples
 
-(def ks1 {:atoms   '#{P Q}
-          :nodes   {:s_1 '#{P Q}
+(def kripke1 {:atoms '#{P Q}
+          :nodes     {:s_1 '#{P Q}
                     :s_2 '#{P Q}
                     :s_3 '#{P}}
-          :initial :s_1
-          :edges   #{[:s_1 :s_2]
+          :initial   :s_1
+          :edges     #{[:s_1 :s_2]
                      [:s_2 :s_1]
                      [:s_2 :s_3]
                      [:s_3 :s_3]}})
 
-(def ks2 {:atoms   '#{P}
-          :nodes   {:s_1 '#{}
+(def kripke2 {:atoms '#{P}
+          :nodes     {:s_1 '#{}
                     :s_2 '#{P}
                     :s_3 '#{}}
-          :initial :s_1
-          :edges   #{[:s_1 :s_2]
+          :initial   :s_1
+          :edges     #{[:s_1 :s_2]
                      [:s_1 :s_3]
                      [:s_2 :s_2]
                      [:s_3 :s_3]}})
 
 ;; valid?
-(s/valid? :lwb.ltl.kripke/model ks1)
-(s/valid? :lwb.ltl.kripke/model ks2)
+(s/valid? :lwb.ltl.kripke/model kripke1)
+(s/valid? :lwb.ltl.kripke/model kripke2)
 
 ;; visualisation 
-(dotify ks1 :dot)
-(tikzify ks1)
+(dotify kripke1 :dot)
+(tikzify kripke1)
 
 (comment
-  (texify ks1 "ks" :dot)
-  (texify ks2 "ks")
+  (texify kripke1 "ks" :dot)
+  (texify kripke2 "ks")
   )
 
 

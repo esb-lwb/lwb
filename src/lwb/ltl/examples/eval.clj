@@ -7,10 +7,11 @@
 ; the terms of this license.
 
 (ns lwb.ltl.examples.eval
-  (:require [lwb.ltl :refer :all]         ; needed for macroexpand-1 of xor etc !!
+  (:require [lwb.ltl :refer :all]                           ; needed for macroexpand-1 of xor etc !!
             [lwb.ltl.eval :refer :all]
-            [lwb.ltl.kripke :as ks]       ; needed for instrument
-            [clojure.spec.test.alpha :as stest]))
+            [lwb.ltl.kripke :as ks]                         ; needed for instrument
+            [clojure.spec.test.alpha :as stest]
+            [clojure.spec.alpha :as s]))
 
 (stest/instrument `eval-phi)
 
@@ -20,6 +21,8 @@
           :nodes   {:s_1 '#{P}}
           :initial :s_1
           :edges   #{[:s_1 :s_1]}})
+
+(s/conform ::ks/model ks1)
 
 (comment
   (ks/texify ks1 "eval")

@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Präsentation
 ; Prädikatenlogik
-; Copyright (c) 2017 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2017 - 2018 Burkhardt Renz, THM. All rights reserved.
 
 (ns pres.pl
   (:require [lwb.pred :refer :all])
@@ -19,9 +19,9 @@
 ; Beispiel einer Signatur
 
 (def grp-sig
-  {:unit [:func 0]
-   :op   [:func 2]
-   :inv  [:func 1]})
+  {'unit [:func 0]
+   'op   [:func 2]
+   'inv  [:func 1]})
 
 ; Für welche algebraische Struktur eignet sich diese Signatur?
 
@@ -52,7 +52,7 @@
 ; Auch hier wird für die Implementierung clojure.spec eingesetzt
 ; dies hat nicht nur Vorteile:
 
-(wff? '(forall [x] (= (mult x unit x))) grp-sig :exception-if-not)
+; (wff? '(forall [x] (= (mult x unit x))) grp-sig :exception-if-not)
 ; Fehlermeldung versteht nur, wer spec gut kennt!
 
 ; Ende Exkurs --------------------------------
@@ -69,9 +69,9 @@
 
 (def c6
   {:univ #{0 1 2 3 4 5}
-   :op   [:func 2 #(mod (+ %1 %2) 6)]
-   :inv  [:func 1 #(mod (- 6 %) 6)]
-   :unit [:func 0 0]})
+   'op   [:func 2 #(mod (+ %1 %2) 6)]
+   'inv  [:func 1 #(mod (- 6 %) 6)]
+   'unit [:func 0 0]})
 
 ; Nun können wir Formeln auswerten
 
@@ -137,7 +137,6 @@
 ; - transformiere die Formel in einen Kodkod-Ausdruck
 ; - lasse Kodkod ein Modell erzeugen
 ; - übersetze es zurück als Modell im Sinne von lwb
-; (hier ist noch eine kleine Bausstelle)
 
 ; Ende Exkurs --------------------------------
 

@@ -77,6 +77,6 @@
 
 (s/fdef eval-phi
         :args (s/& (s/cat :phi wff? :ks :lwb.ltl.kripke/model :mode (s/? #{:bool :counterexample})) 
-                   #(params-ok? (second %)))
+                   params-ok?)
         :ret (s/alt :bool boolean? :counterexample (s/coll-of keyword? :kind vector?)))
 
