@@ -1,7 +1,7 @@
 # lwb Logic WorkBench
 
-The Logic WorkBench (lwb) comprises tools for propositional and
-predicate logic. It is written in Clojure.
+The Logic WorkBench (lwb) comprises tools for propositional, 
+predicate, and linear temporal logic. It is written in Clojure.
 
 lwb is a playground, it's work in progress.
 
