@@ -2885,7 +2885,7 @@ expressing cardinality constraints for the given collection of atoms</p>
    at most k of the symbols in acoll are true.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn max-kof
   [k acoll]
-  {:pre [(&lt;= 0 k (dec (count acoll)))]}
+  {:pre [(&lt;= 0 k (count acoll))]}
   (if (zero? k)
     (map #(list 'not %) acoll))
   (for [s (combinations acoll (inc k))]

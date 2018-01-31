@@ -37,6 +37,7 @@
 
 (deftest max-kof-test
   (is (= (max-kof 1 '(P Q)) '((or (not P) (not Q)))))
+  (is (= (max-kof 2 '(P Q)) ())) ; the empty seq of clauses since max 2 of 2 does not constrain the values of P and Q
   (is (= (max-kof 1 '(P Q R)) '((or (not P) (not Q)) (or (not P) (not R)) (or (not Q) (not R)))))
   (is (= (max-kof 2 '(P Q R)) '((or (not P) (not Q) (not R)))))
   )

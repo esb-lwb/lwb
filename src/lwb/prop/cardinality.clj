@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Boolean Cardinality Constraints
 
-; Copyright (c) 2014 - 2017 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2018 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -35,7 +35,7 @@
   "`(max-kof k acoll)` -> a seq of clauses expressing that 
    at most k of the symbols in acoll are true."
   [k acoll]
-  {:pre [(<= 0 k (dec (count acoll)))]}
+  {:pre [(<= 0 k (count acoll))]}
   (if (zero? k)
     (map #(list 'not %) acoll))
   (for [s (combinations acoll (inc k))]
