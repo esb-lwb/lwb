@@ -32,6 +32,7 @@
 (def grp (list 'and grp-ass grp-unit grp-inv))
 
 (sat grp grp-sig 1)
+(sat grp grp-sig 2)
 (sat grp grp-sig 2 :all)
 (sat grp grp-sig 3 :all)
 (sat grp grp-sig 4 :all)

@@ -129,7 +129,7 @@
   "Set of consts in signature.     
    `[:func 0]' are consts in kodkod."
   [sig]
-  (set (map key (filter #(#{[:const 0] [:func 0]} (val %)) sig))))
+  (set (map key (filter #(= [:func 0] (val %)) sig))))
 
 (defn fill-up
   "Fills the given set with keywords `:e1, :e2...` until `size`is reached."

@@ -2,7 +2,7 @@
 ; based on the Kodkod Constraint Solver, see http://emina.github.io/kodkod/
 ; licensed under the MIT license
 
-; Copyright (c) 2014 - 2017 by Burkhardt Renz THM. All rights reserved.
+; Copyright (c) 2014 - 2018 by Burkhardt Renz THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ; which can be found in the file epl-v10.html at the root of this distribution.
@@ -12,21 +12,22 @@
 
 (ns ^{:doc    "An ultra-thin wrapper to the Kodkod constraint solver."
       :author "Burkhardt Renz, THM"}
-  lwb.pred.kic
+lwb.pred.kic
   (:refer-clojure :exclude [and or not some])
+  (:require [clojure.set :as set])
   (:import (kodkod.ast Formula Expression Decls Variable Relation)
            (kodkod.instance Universe Bounds Tuple TupleSet TupleFactory)
            (kodkod.engine Solver Solution)
            (java.util Collection)))
 
-;; Universe
+;; ##Universe
 
 (defn universe
-  "A Kodkod Universe from the given vector of atoms."
+  "A Kodkod Universe from the given vector of items."
   [set]
   (Universe. ^Collection set))
 
-;; Instances
+;; ##Instances
 
 (defn factory 
   "A Kodkod TupleFactory for the given universe."
@@ -38,7 +39,7 @@
   [universe]
   (Bounds. universe))
 
-;; Relations
+;; ##Relations
 
 (defn relation
   "A Kodkod relation with the given `name` and `arity'."
@@ -88,7 +89,7 @@
         _ (.bound bounds r ts)]
     [(symbol (name key)) r]))
 
-;; Definition of the operators in kic that are needed for lwb
+;; ##Operators in kic
 
 (defn not
   "(not fml), the negation of fml."
@@ -125,17 +126,15 @@
   [^Formula fml ^Formula fml1 ^Formula fml2]
   (.and (.implies fml fml1) (.implies (.not fml) fml2)))
 
-; TODO benötigt?
 (def TRUE
   "TRUE, truth, i.e. the constant fml TRUE."
   Formula/TRUE)
 
-; TODO benötigt?
 (def FALSE
   "FALSE, contradiction, i.e. the constant fml FALSE."
   Formula/FALSE)
 
-;; Predicates for expressions
+;; ##Predicates for expressions
 
 (defn eq 
   "(eq expr1 expr2), expressing whether expr1 equals expr2."
@@ -152,7 +151,7 @@
   [^Expression expr]
   (.one expr))
 
-;; Operators  for expressions
+;; ##Operators  for expressions
 
 (defn join
   "(join expr1 expr2), the dotjoin of the arguments."
@@ -164,7 +163,7 @@
   [& exprs]
   (Expression/product ^"[Lkodkod.ast.Expression;" (into-array Expression exprs)))
 
-;; Declarations
+;; ##Declarations
 
 (defn variable
   "(variable var-name), constructs a variable of arity 1."
@@ -181,7 +180,7 @@
   [^Variable variable]
    (.oneOf variable Expression/UNIV))
 
-;; Quantors
+;; ##Quantors
 
 (defn forall
   "`fml` holds for all variables in `var-vec` with values from the universe,
@@ -197,7 +196,7 @@
   (let [d (apply decls (map decl var-vec))]
     (.forSome fml d)))
 
-;; Running Kodkod
+;; ##Running Kodkod
 
 (defn solve
   "(solve formula bounds) -> a kodkod.engine.Solution"
@@ -212,32 +211,44 @@
       (.setSymmetryBreaking 0))
     (iterator-seq (.solveAll solver formula bounds))))
 
-;; Translating a Kodkod solution into Clojure data structures
+; Translating a Kodkod solution into Clojure data structures
 
-;; kodkod.instance.Tuple -> vector
 (defn vector-from-tpl
   "vector <- kodkod.instance.Tuple"
   [^Tuple tpl]
-  (vec (for [i (range 0 (.arity tpl))] (.atom tpl i))))
+  (vec (for [i (range 0 (.arity tpl))] (let [atom (.atom tpl i)] (if (symbol? atom) (keyword atom) atom)))))
 
-;; kodkod.instance.TupleSet -> set of vectors
+; kodkod.instance.TupleSet -> set of vectors
 (defn vecset-from-ts
   "set of vectors <- kodkod.instance.TupleSet"
   [^TupleSet ts]
   (set (map vector-from-tpl ts)))
 
-;; kodkod's Map<Relation, TupleSet> -> map of (relation name, set of vectors)
+; kodkod's Map<Relation, TupleSet> -> map of (relation name, set of vectors)
 (defn relmap-from-instmap
+  "map of (relation symbol, set of tuples) from kodkod's instance"
   [instmap]
   (let [keys (for [^Relation r (keys instmap)] (symbol (.name r))),
         vals (for [^TupleSet t (vals instmap)] (vecset-from-ts t))]
-    ;; a witness for a variable in an existential quantified formula is marked with a beginning $ in Kodkod,
-    ;; it's not really a part of the result.
+    ; a witness for a variable in an existential quantified formula is marked with a beginning $ in Kodkod,
+    ; it's not really a part of the result.
     (into {} (filter #(not= \$ (first (name (key %)))) (zipmap keys vals)))))
 
-;; kodkod.engine.Solution -> map of relations 
+; Universe from the tuples of the solution
+(defn univ
+  "Set of items from a relmap"
+  [relmap]
+  (->> relmap
+      (map second)
+      (apply set/union)
+      (reduce concat)
+      (set)
+      (hash-map :univ)))
+
+; kodkod.engine.Solution -> map of universe and relations 
 (defn model
-  "model satisfying the kic spec"
+  "Model satisfying the kic spec"
   [^Solution solution]
   (if (.sat solution)
-    (relmap-from-instmap (.relationTuples (.instance solution)))))
+    (let [relmap (relmap-from-instmap (.relationTuples (.instance solution)))]
+      (into relmap (univ relmap)))))
