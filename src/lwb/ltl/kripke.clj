@@ -56,11 +56,13 @@
 ;; The final specification of a Kripke structure, i.e. a model in the linear temporal logic.
 (s/def ::model (s/and kripke-ok? (s/keys :req-un [::nodes ::initial ::edges])))
 
-(def ks1 {:atoms   '#{P}
-          :nodes   {:s_1 '#{P}}
-          :initial :s_1
-          :edges   #{[:s_1 :s_1]}})
-(s/explain ::model ks1)
+(comment
+  (def ks1 {:atoms   '#{P}
+            :nodes   {:s_1 '#{P}}
+            :initial :s_1
+            :edges   #{[:s_1 :s_1]}})
+  (s/explain ::model ks1)
+  )
 
 ;; ## Visualisation of a Kripke structure
 
