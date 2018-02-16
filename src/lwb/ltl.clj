@@ -132,7 +132,8 @@
       (cond (contains? #{'and 'or 'not 'atnext 'until 'release} op) (apply list op (map impl-free (rest phi)))
             (= op 'finally) (apply list 'until true (map impl-free (rest phi)))
             (= op 'always) (apply list 'release false (map impl-free (rest phi)))
-            :else (let [exp-phi (macroexpand-1 phi)] (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))
+            :else (let [exp-phi (binding [*ns* (find-ns 'lwb.prop)] (macroexpand-1 phi))] 
+                    (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))
 
 ;; ### Transformation to nnf
 

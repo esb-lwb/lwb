@@ -28,7 +28,7 @@
     phi
     (let [op (first phi)]
       (if (contains? #{'ite 'equiv 'xor} op)
-        (let [exp-phi (macroexpand-1 phi)]
+        (let [exp-phi (binding [*ns* (find-ns 'lwb.prop)] (macroexpand-1 phi))]
           (apply list (first exp-phi) (map norm-ltl (rest exp-phi))))
         (apply list op (map norm-ltl (rest phi)))))))
 

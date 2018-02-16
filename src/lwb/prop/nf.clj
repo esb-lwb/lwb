@@ -54,7 +54,7 @@
     (let [op (first phi)]
       (if (contains? #{'and 'or 'not} op)
         (apply list op (map impl-free (rest phi)))
-        (let [exp-phi (macroexpand-1 phi)]
+        (let [exp-phi (binding [*ns* (find-ns 'lwb.prop)] (macroexpand-1 phi))]
           (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))
 
 (s/fdef impl-free
