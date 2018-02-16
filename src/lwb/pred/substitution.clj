@@ -70,7 +70,7 @@
 ;; A variable `var` can be substituted by a term `t`, iff the term is free for the variable.
 
 (defn substitution
-  "Substitution of variable `var` by term `t` in formaula `phi`."
+  "Substitution of variable `var` by term `t` in formula `phi`."
   [phi var t]
   (if (not (freefor? phi var t))
     (throw (Exception. (format "The term %s is not free for %s in the formula %s." t var phi))))
