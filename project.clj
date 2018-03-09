@@ -6,7 +6,7 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(defproject lwb "1.0.1"
+(defproject lwb "1.0.2"
   :description "lwb Logic WorkBench"
   :url "http://homepages.thm.de/~hg11260/lwb.html"
   :license {:name "Eclipse Public License"
@@ -30,6 +30,7 @@
 ; ltl2buchi is not available as a maven jar
 ; compile github/esb-dev/ltl2buchi and put the ltl2buchi.jar into your local maven repo
 ; lein localrepo install ltl2buchi.jar ltl2buchi 1.0.0
+
 ; kodkod is not available as a maven jar
 ; download kodkod.jar from http://emina.github.io/kodkod/
 ; lein localrepo install kodkod.jar kodkod 2.1.0
