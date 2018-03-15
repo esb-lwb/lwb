@@ -6,7 +6,8 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(defproject lwb "1.0.2"
+(defproject lwb "1.0.3"
+  :date "2018-03-15"
   :description "lwb Logic WorkBench"
   :url "http://homepages.thm.de/~hg11260/lwb.html"
   :license {:name "Eclipse Public License"
