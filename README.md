@@ -7,6 +7,11 @@ lwb is a playground, it's work in progress.
 
 [Documentation](https://github.com/esb-lwb/lwb/wiki)
 
+### Revisions
+
+- 1.0.1 [2018-01-31] First published version on Clojars
+- 1.0.2 [2018-02-16] Improved use of macroexpand-1 
+
 ### License
 
 Copyright (C) 2014 - 2018 by Burkhardt Renz, Technische Hochschule Mittelhessen (THM).
@@ -31,6 +36,10 @@ as follows:
 1. Download the libraries from the web sites 
 [kodkod](https://github.com/emina/kodkod) and 
 [LTL2Buchi](https://ti.arc.nasa.gov/profile/dimitra/projects-tools/#LTL2Buchi)
-respectively and put them into your local maven repository with the command 
+respectively or create the libraries from 
+[esb-lwb/kodkod](https://github.com/esb-lwb/kodkod) or
+[esb-lwb/ltl2buchi](https://github.com/esb-lwb/ltl2buchi)
+
+2. Put the libraires into your local maven repository with the command 
 `lein localrepo install`, using the localrepo plugin for leiningen - see 
 `project.clj`.
