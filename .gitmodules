@@ -1,0 +1,3 @@
+[submodule "lwb.wiki"]
+	path = lwb.wiki
+	url = https://github.com/esb-lwb/lwb.wiki

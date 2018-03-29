@@ -6,7 +6,7 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-;; # Examples for proof from Richard Bornat's book
+;; # Examples for proofs from Richard Bornat's book
 
 ;; Richard Bornat and Bernard Sufrin developed an app called Jape (just another proof editor) for natural deduction in
 ;; the propositinal and predicate logic, and further logics too.
@@ -14,7 +14,7 @@
 ;; describes formal logic with emphasis on natural deduction and demonstrates the concepts with Jape.
 ;; The book is highly recommended.
 
-;; In this file we reconstruct the exmaples concerning classical logic from the book in lwb.
+;; In this file we reconstruct the examples concerning classical logic from the book in lwb.
 
 (ns lwb.nd.examples.bornat
   (:require [lwb.nd.repl :refer :all]))
