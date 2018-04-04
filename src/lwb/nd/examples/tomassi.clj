@@ -415,3 +415,340 @@
 (swap '?3 '(not P))
 (step-f :or-not->impl 15)
 (step-b :or-i1 18)
+
+; -----------------------------------------------------------------------------------------
+; Exercises in predicate logic
+
+(load-logic :pred)
+
+; -----------------------------------------------------------------------------------------
+; p. 328
+
+; I.1
+(proof '[(actual :a) (not (F :a))] '(not (forall [x] (F x))))
+(step-b :not-i 4)
+(step-f :forall-e 3 1)
+(step-f :not-e 2 4)
+
+; I.2
+(proof '(forall [x] (impl (F x) (G x))) '(forall [y] (impl (F y) (G y))))
+(step-b :forall-i 3)
+(swap '?1 :i)
+(step-f :forall-e 1 2)
+
+; I.3
+(proof '[(forall [x] (impl (F x) (impl (G x) (H x)))) (actual :a) (and (F :a) (G :a))] '(exists [x] (H x)))
+(step-f :forall-e 1 2)
+(step-f :and-e1 3)
+(step-f :impl-e 4 5)
+(step-f :and-e2 3)
+(step-f :impl-e 6 7)
+(step-b :exists-i 10 2)
+
+; I.4
+(proof '(impl (exists [x] (F x)) P) '(forall [x] (impl (F x) P)))
+(step-b :forall-i 3)
+(swap '?1 :i)
+(step-b :impl-i 4)
+(step-f :impl-e 1)
+(step-b :exists-i 5 2)
+
+; I.5
+(proof '(or (forall [x] (F x)) (forall [x] (G x))) '(forall [x] (or (F x) (G x))))
+(step-b :forall-i 3)
+(swap '?1 :i)
+(step-f :or-e 1 4)
+(step-f :forall-e 3 2)
+(step-b :or-i1 6)
+(step-f :forall-e 6 2)
+(step-b :or-i2 9)
+
+; I.6 
+(proof '[(forall [x] (impl (G x) (H x))) (exists [x] (and (F x) (G x)))] '(exists [x] (and (F x) (H x))))
+(step-f :exists-e 2 4)
+(swap '?1 :i)
+(step-f :and-e1 4)
+(step-f :and-e2 4)
+(step-f :forall-e 1 3)
+(step-f :impl-e 7 6)
+(step-f :and-i 5 8)
+(step-b :exists-i 11 3)
+
+; I.7
+(proof '(forall [y] (impl (G y) (H y))) '(impl (exists [x] (G x)) (exists [y] (H y))))
+(step-b :impl-i 3)
+(step-f :exists-e 2 4)
+(swap '?1 :i)
+(step-f :forall-e 1 3)
+(step-f :impl-e 5 4)
+(step-b :exists-i 8 3)
+
+; I.8
+(proof '(forall [y] (forall [x] (R x y))) '(forall [x] (forall [y] (R x y))))
+(step-b :forall-i 3)
+(swap '?1 :i)
+(step-b :forall-i 4)
+(swap '?2 :j)
+(step-f :forall-e 1 3)
+(step-f :forall-e 4 2)
+
+; I.9
+(proof '(forall [x] (forall [y] (impl (R x y) (not ( R y x))))) '(forall [x] (not (R x x))))
+(step-b :forall-i 3)
+(swap '?1 :i)
+(step-b :not-i 4)
+(step-f :forall-e 1 2)
+(step-f :forall-e 4 2)
+(step-f :impl-e 5 3)
+(step-f :not-e 6 3)
+
+; I.10
+(proof '[(forall [x] (impl (F x) (= x :a)))] '(exists [x] (impl (F x) (F :a))))
+(step-f :actual)
+(swap '?1 :i)
+(step-f :forall-e 1 2)
+(step-b :exists-i 5 2)
+(step-b :impl-i 5)
+(step-f :impl-e 3 4)
+(step-f :equal-e 5 4 '(F x) 'x)
+
+; -----------------------------------------------------------------------------------------
+; p. 329
+
+; II.1
+(proof '[(forall [x] (impl (F x) (G x))) (forall [x] (impl (H x) (not (G x))))] '(forall [x] (impl (F x) (not (H x)))))
+(step-b :forall-i 4)
+(swap '?1 :i)
+(step-f :forall-e 1 3)
+(step-f :forall-e 2 3)
+(step-b :impl-i 7)
+(step-f :impl-e 4 6)
+(step-b :not-i 9)
+(step-f :impl-e 5 8)
+(step-f :not-e 9 7)
+
+; II.2
+(proof '[(not (exists [x] (F x))) (actual :a)] '(not (F :a)))
+(step-f :not-exists->forall-not 1)
+(step-f :forall-e 3 2)
+
+; II.3
+(proof '[(forall [x] (impl (F x) (G x))) (exists [y] (and (F y) (H y)))] '(exists [z] (and (G z) (H z))))
+(step-f :exists-e 2 4)
+(swap '?1 :i)
+(step-f :forall-e 1 3)
+(step-f :and-e1 4)
+(step-f :impl-e 5 6)
+(step-f :and-e2 4)
+(step-f :and-i 7 8)
+(step-b :exists-i 11 3)
+
+; II.4
+(proof '(or (exists [x] (F x)) (exists [x] (G x))) '(exists [x] (or (F x) (G x))))
+(step-f :exists-or-dist2 1)
+; we already have a theroem for that claim
+
+; II.5 
+(proof '(exists [x] (and (F x) (not (G x)))) '(not (forall [x] (impl (F x) (G x)))))
+(step-b :not-i 3)
+(step-f :exists-e 1 4)
+(swap '?1 :i)
+(step-f :forall-e 2 3)
+(step-f :and-e1 4)
+(step-f :and-e2 4)
+(step-f :impl-e 5 6)
+(step-f :not-e 7 8)
+
+; II.6 
+(proof '(exists [x] (exists [y] (R x y))) '(exists [y] (exists [x] (R x y))))
+(step-f :exists-comm1 1)
+
+; II.7
+(proof '(forall [x] (forall [y] (impl (R x y) (R y x)))) '(forall [x] (impl (exists [y] (R x y)) (exists [y] (R y x)))))
+(step-b :forall-i 3)
+(swap '?1 :i)
+(step-f :forall-e 1 2)
+(step-b :impl-i 5)
+(step-f :exists-e 4 6)
+(swap '?2 :j)
+(step-f :forall-e 3 5)
+(step-f :impl-e 7 6)
+(step-b :exists-i 10 5)
+
+; II.8
+(proof '[(actual :a) (forall [x] (impl (F x) (or (G x) (= x :a))))] '(impl (G :a) (forall [x] (impl (F x) (G x)))))
+(step-b :impl-i 4)
+(step-b :forall-i 5)
+(swap '?1 :i)
+(step-f :forall-e 2 4)
+(step-b :impl-i 7)
+(step-f :impl-e 5 6)
+(step-f :or-e 7 9)
+(step-f :equal-refl 10)
+(step-f :equal-e 11 3 '(G x) 'x)
+
+; II.9
+(proof '(forall [x] (exists [y] (= x y))))
+(step-b :forall-i 2)
+(swap '?1 :i)
+(step-b :exists-i 3 1)
+(step-f :equal-i)
+(swap '?2 :i)
+
+; II.10
+(proof '(forall [x] (or (F x) (not (F x)))))
+(step-b :forall-i 2)
+(swap '?1 :i)
+(step-f :tnd)
+(swap '?2 '(F :i))
+
+; -----------------------------------------------------------------------------------------
+; p. 329
+
+; III.1
+(proof '(actual :a) '(exists [x] (= x :a)))
+(step-f :equal-i)
+(swap '?1 :a)
+(step-b :exists-i 4 1)
+
+; III.2
+(proof '(forall [x] (F x)) '(not (exists [x] (not (F x)))))
+(step-b :not-i 3)
+(step-f :exists-e 2 4)
+(swap '?1 :i)
+(step-f :forall-e 1 3)
+(step-f :not-e 4 5)
+
+; III.3
+(proof '(exists [x] (exists [y] (forall [z] (R x y z)))) '(forall [z] (exists [y] (exists [x] (R x y z)))))
+(step-b :forall-i 3)
+(swap '?1 :i)
+(step-f :exists-e 1 4)
+(swap '?2 :j)
+(step-f :exists-e 4 6)
+(swap '?3 :k)
+(step-f :forall-e 6 2)
+(step-b :exists-i 9 5)
+(step-b :exists-i 9 3)
+
+; III.4
+(proof '(exists [x] (not (F x))) '(exists [x] (impl (F x) P)))
+(step-f :exists-e 1 3)
+(swap '?1 :i)
+(step-f :or-i1 3)
+(swap '?2 'P)
+(step-f :or-not->impl 4)
+(step-b :exists-i 7 2)
+
+; III.5
+(proof '(or (exists [x] (F x)) (forall [y] (not (F y)))))
+(step-f :tnd)
+(swap '?1 '(exists [x] (F x)))
+(step-f :or-e 1 3)
+(step-b :or-i1 4)
+(step-b :or-i2 6)
+(step-b :forall-i 6)
+(swap '?2 :i)
+(step-b :not-i 7)
+(step-f :not-e 4)
+(step-b :exists-i 8 5)
+
+; III.6
+(proof '(or (forall [x] (F x)) (exists[x] (not (F x)))))
+(step-f :tnd)
+(swap '?1 '(forall [x] (F x)))
+(step-f :or-e 1 3)
+(step-b :or-i1 4)
+(step-b :or-i2 6)
+(step-f :not-forall->exists-not 4)
+
+; III.7
+(proof '[(forall [x] (impl (F x) (or (= x :a) (= x :b)))) (exists [x] (and (F x) (G x)))] '(or (G :a) (G :b)))
+(step-f :exists-e 2 4)
+(swap '?1 :i)
+(step-f :and-e1 4)
+(step-f :forall-e 1 3)
+(step-f :impl-e 6 5)
+(step-f :or-e 7 9)
+(step-f :and-e2 4)
+(step-f :equal-e 8 9 '(G x) 'x)
+(step-b :or-i1 12)
+(step-f :and-e2 4)
+(step-f :equal-e 12 13 '(G x) 'x)
+(step-b :or-i2 16)
+
+; III.8
+(proof '[(exists [x] (and (F x) (G x))) (exists [x] (and (F x) (not (G x))))] '(not (forall [x] (forall [y] (impl (and (F x) (F y)) (= x y))))))
+(step-f :exists-e 1 4)
+(swap '?1 :i)
+(step-f :exists-e 2 6)
+(swap '?2 :j)
+(step-b :not-i 8)
+(step-f :forall-e 7 3)
+(step-f :forall-e 8 5)
+(step-f :and-e1 4)
+(step-f :and-e1 6)
+(step-f :and-i 10 11)
+(step-f :impl-e 9 12)
+(step-f :and-e2 4)
+(step-f :equal-e 13 14 '(G x) 'x)
+(step-f :and-e2 6)
+(step-f :not-e 16 15)
+
+; III.9
+(proof '[(exists [x] (and (F x) (G x))) (exists [x] (and (F x) (forall [y] (impl (G y) (not (R x y))))))]
+       '(exists [x] (and (F x) (not (forall [y] (impl (F y) (R y x)))))))
+(step-f :exists-e 1 4)
+(swap '?1 :i)
+(step-f :exists-e 2 6)
+(swap '?2 :j)
+(step-f :and-e1 6)
+(step-f :and-e2 6)
+(step-f :forall-e 8 3)
+(step-f :and-e2 4)
+(step-f :impl-e 9 10)
+(step-f :and-e1 4)
+(subclaim '(not (impl (F :j) (R :j :i))))
+(step-b :not-i 14)
+(step-f :impl-e 13 7)
+(step-f :not-e 11 14)
+(step-b :exists-i 18 )
+(step-f :and-i 12 16)
+(subclaim '(exists [y] (not (impl (F y) (R y :i)))))
+(step-b :exists-i 18 5)
+(subclaim '(not (forall [y] (impl (F y) (R y :i)))))
+(step-b :not-i 19)
+(step-f :exists-e 17 20)
+(swap '?3 :k)
+(step-f :forall-e 18 19)
+(step-f :not-e 20 21)
+(step-f :and-i 12 24)
+(step-b :exists-i 27 3)
+
+; III.10
+; The premise says that F has at most one element
+(proof '(forall [x] (forall [y] (impl (and (F x) (F y)) (= x y)))) '(exists [x] (forall [y] (impl (F y) (= x y)))))
+(step-f :tnd)
+(swap '?1 '(exists [x] (F x)))
+(step-f :or-e 2 4)
+(step-f :exists-e 3 5)
+(swap '?2 :i)
+(step-b :exists-i 7 4)
+(step-b :forall-i 7)
+(swap '?3 :j)
+(step-b :impl-i 8)
+(step-f :and-i 5 7)
+(step-f :forall-e 1 4)
+(step-f :forall-e 9 6)
+(step-f :impl-e 10 8)
+(step-f :not-exists->forall-not 16)
+(step-f :actual)
+(swap '?4 :k)
+(step-b :exists-i 20 18)
+(step-b :forall-i 20)
+(swap '?5 :l)
+(step-f :forall-e 17 19)
+(step-f :or-i1 20)
+(swap '?6 '(= :k :l))
+(step-f :or-not->impl 21)
+
