@@ -9,18 +9,11 @@
 (ns lwb.consts
   (:require [clojure.edn :as edn]))
 
-; version and date from project file
-(defmacro proj-version []
-  (some-> "project.clj" slurp edn/read-string (nth 2)))
-
-(defmacro proj-date []
-  (some-> "project.clj" slurp edn/read-string (nth 4)))
+(def ^:const
+  rev "1.0.3")
 
 (def ^:const
-  rev (proj-version))
-
-(def ^:const
-  rev-date (proj-date))
+  rev-date "2018-03-15")
 
 (def ^:const
    welcome (str "This is lwb, Version " rev ", " rev-date))
