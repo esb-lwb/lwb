@@ -61,7 +61,7 @@
         :args (s/cat :phi wff?)
         :ret  wff?)
 
-(defn nnf
+(defn nnf'
   "Transforms an impl-free formula `phi` into negation normal form."
   [phi]
   (if (literal? phi)
@@ -71,9 +71,18 @@
         (apply list op (map nnf more))
         (let [[second-op & second-more] (second phi)]
           (if (contains? #{'and 'or} second-op)
-            (nnf (apply list (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
-            (nnf (first second-more))))))))
+            (nnf' (apply list (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
+            (nnf' (first second-more))))))))
 
+(s/fdef nnf'
+        :args (s/cat :phi wff?)
+        :ret  wff?)
+
+(defn nnf
+  "Transforms formula into negation normal form"
+  [phi]
+  (-> phi impl-free nnf'))
+ 
 (s/fdef nnf
         :args (s/cat :phi wff?)
         :ret  wff?)
@@ -174,7 +183,7 @@
 (defn cnf
   "Transforms `phi` to (standardized) conjunctive normal form cnf."
   [phi]
-  (-> phi impl-free nnf nnf->cnf flatten-ops red-cnf))
+  (-> phi impl-free nnf' nnf->cnf flatten-ops red-cnf))
 
 ;; Specification of function `cnf`      
 ;; `:ret` is in cnf and equivalent to the argument `:phi`.
