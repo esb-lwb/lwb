@@ -68,7 +68,7 @@
     phi
     (let [[op & more] phi]
       (if (contains? #{'and 'or} op)
-        (apply list op (map nnf more))
+        (apply list op (map nnf' more))
         (let [[second-op & second-more] (second phi)]
           (if (contains? #{'and 'or} second-op)
             (nnf' (apply list (if (= 'and second-op) 'or 'and) (map #(list 'not %) second-more)))
