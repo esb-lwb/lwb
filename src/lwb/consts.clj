@@ -10,10 +10,10 @@
   (:require [clojure.edn :as edn]))
 
 (def ^:const
-  rev "1.0.3")
+  rev "1.0.4")
 
 (def ^:const
-  rev-date "2018-03-15")
+  rev-date "2018-06-14")
 
 (def ^:const
    welcome (str "This is lwb, Version " rev ", " rev-date))

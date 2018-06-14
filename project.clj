@@ -8,8 +8,8 @@
 
 
 ; Remember: update rev and date in consts.clj too 
-(defproject lwb "1.0.3"
-  :date "2018-03-15"
+(defproject lwb "1.0.4"
+  :date "2018-06-14"
   :description "lwb Logic WorkBench"
   :url "http://homepages.thm.de/~hg11260/lwb.html"
   :license {:name "Eclipse Public License"
@@ -18,11 +18,11 @@
                  [org.clojure/spec.alpha "0.1.143"]
                  [org.clojure/core.specs.alpha "0.1.24"]
                  [org.clojure/core.logic "0.8.11"]
-                 [net.mikera/core.matrix "0.61.0"]
+                 [net.mikera/core.matrix "0.62.0"]
                  [org.clojure/tools.macro "0.1.5"]
                  [org.clojure/math.combinatorics "0.1.4"]
                  [org.clojure/math.numeric-tower "0.0.4"]
-                 [potemkin "0.4.4"]
+                 [potemkin "0.4.5"]
                  [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]
                  [de.fosd.typechef/javabdd_repackaged_2.10 "0.1"]
                  [ltl2buchi/ltl2buchi "1.0.0"]
