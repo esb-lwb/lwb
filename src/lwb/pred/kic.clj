@@ -236,19 +236,18 @@ lwb.pred.kic
 
 ; Universe from the tuples of the solution
 (defn univ
-  "Set of items from a relmap"
-  [relmap]
-  (->> relmap
-      (map second)
-      (apply set/union)
-      (reduce concat)
-      (set)
-      (hash-map :univ)))
+  "Set of items from a Kodkod Universe"
+  [^Universe universe]
+  (->> universe
+       (map #(if (symbol? %) (identity %) (keyword %)))
+       (set)
+       (hash-map :univ)
+       ))
 
 ; kodkod.engine.Solution -> map of universe and relations 
 (defn model
   "Model satisfying the kic spec"
-  [^Solution solution]
+  [^Universe universe ^Solution solution]
   (if (.sat solution)
     (let [relmap (relmap-from-instmap (.relationTuples (.instance solution)))]
-      (into relmap (univ relmap)))))
+      (into relmap (univ universe)))))

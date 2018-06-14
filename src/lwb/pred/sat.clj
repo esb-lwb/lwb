@@ -121,9 +121,9 @@
         fml (apply kic/and fmls)]
     (if (= mode :one)
       (let [sol (kic/solve fml bounds)]
-        (kic/model sol))
+        (kic/model universe sol))
       (let [sols (kic/solve-all fml bounds)]
-        (seq (apply hash-set (keep identity (map kic/model sols))))))))
+        (seq (apply hash-set (keep identity (map #(kic/model universe %) sols))))))))
 
 (defn sig->consts
   "Set of consts in signature.     
@@ -132,7 +132,7 @@
   (set (map key (filter #(= [:func 0] (val %)) sig))))
 
 (defn fill-up
-  "Fills the given set with keywords `:e1, :e2...` until `size`is reached."
+  "Fills the given set with keywords `:e1, :e2...` until `size` is reached."
   [set size]
   (loop [s set, i 1]
     (if (= (count s) size) s
