@@ -15,8 +15,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/spec.alpha "0.1.143"]
-                 [org.clojure/core.specs.alpha "0.1.24"]
+                 [org.clojure/spec.alpha "0.2.168"]
+                 [org.clojure/core.specs.alpha "0.2.36"]
                  [org.clojure/core.logic "0.8.11"]
                  [net.mikera/core.matrix "0.62.0"]
                  [org.clojure/tools.macro "0.1.5"]
