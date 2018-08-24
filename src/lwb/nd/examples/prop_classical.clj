@@ -103,9 +103,22 @@
 ; 8: (or P (not P))                          :raa [[1 7]]
 ;    --------------------------------------------------
 
+; -----------------------------------------------------------------------------------------
+; resolution
 
-; We want to use the derived rules
-;(load-logic :prop)
+(proof '[(or P Q) (or (not P) R)] '(or Q R))
+(step-f :tnd)
+(swap '?1 'P)
+(step-f :or-e 3 5)
+(step-f :or-not->impl 2)
+(step-f :impl-e 5 4)
+(step-b :or-i2 8)
+(step-f :or-e 1 10)
+(step-f :not-e 8 9)
+(step-b :efq 12)
+(step-b :or-i1 14)
+
+;(export "resources/nd/theorems-prop.edn" :resolution)
 
 ; -----------------------------------------------------------------------------------------
 ; not-or-e1
