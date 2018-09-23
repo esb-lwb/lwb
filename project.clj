@@ -8,15 +8,15 @@
 
 
 ; Remember: update rev and date in consts.clj too 
-(defproject lwb "1.0.4"
-  :date "2018-06-14"
+(defproject lwb "1.0.5"
+  :date "2018-09-23"
   :description "lwb Logic WorkBench"
-  :url "http://homepages.thm.de/~hg11260/lwb.html"
+  :url "http://esb-dev-github.io/lwb.html"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/spec.alpha "0.2.168"]
-                 [org.clojure/core.specs.alpha "0.2.36"]
+                 [org.clojure/spec.alpha "0.2.176"]
+                 [org.clojure/core.specs.alpha "0.2.44"]
                  [org.clojure/core.logic "0.8.11"]
                  [net.mikera/core.matrix "0.62.0"]
                  [org.clojure/tools.macro "0.1.5"]
