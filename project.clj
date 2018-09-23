@@ -11,7 +11,7 @@
 (defproject lwb "1.0.5"
   :date "2018-09-23"
   :description "lwb Logic WorkBench"
-  :url "http://esb-dev-github.io/lwb.html"
+  :url "http://esb-dev.github.io/lwb.html"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
