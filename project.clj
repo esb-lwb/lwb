@@ -12,6 +12,7 @@
   :date "2018-09-23"
   :description "lwb Logic WorkBench"
   :url "http://esb-dev.github.io/lwb.html"
+  :scm {:name "git" :url "https://github.com/esb-lwb/lwb"}
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
