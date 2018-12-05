@@ -20,6 +20,25 @@
 
 (stest/instrument `eval-phi)
 
+; Tertium non datur is not true in intuitionistic logic
+
+(def k   {:atoms   '#{E}
+          :nodes   {:s_1 '#{}
+                    :s_2 '#{E}}
+          :initial :s_1
+          :edges   #{[:s_1 :s_2]
+                     [:s_2 :s_2]}})
+
+(s/conform ::ks/model k)
+
+(comment
+  (ks/texify k "bornat")
+  )
+
+(eval-phi '(always E) k) ; => false
+(eval-phi '(always (not E)) k) ; => false
+(eval-phi '(or (always E) (always (not E))) k) ; => false
+
 ; Examples p.142
 
 (def f1 '(always E))
