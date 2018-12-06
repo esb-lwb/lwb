@@ -20,8 +20,21 @@
 
 (stest/instrument `eval-phi)
 
-; Tertium non datur is not true in intuitionistic logic
+;; We have to translate to formula of intuitionistic propositional logic into a formula
+;; of linear temporal logical:
+;; 1. each literal P or (not p) gets (always P) or (always (not P)) respectively
+;; 2. each implication (impl P Q) gets (always (impl P q)
 
+;; Furthermor we have to constructs Kripke structures, that have the following properties:
+;; 1. The transition relation in the structures is a partial order, i.e. reflexiv, anti-symmetric and transitiv
+;; 2. The labeling function is monotonic, 
+;;    i.e. if [s_1 s_2] is a transition, then the set at s_1 is a subset of the set at s_2
+
+;; Remark: The spec :ks/model does not comprises these additional constraints for a
+;; Kripke structure for the intuitionistic logic.
+
+
+;; Tertium non datur is not true in intuitionistic logic
 (def k   {:atoms   '#{E}
           :nodes   {:s_1 '#{}
                     :s_2 '#{E}}
