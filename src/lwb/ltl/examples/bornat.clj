@@ -25,10 +25,15 @@
 ;; 1. each literal P or (not p) gets (always P) or (always (not P)) respectively
 ;; 2. each implication (impl P Q) gets (always (impl P q)
 
-;; Furthermor we have to constructs Kripke structures, that have the following properties:
-;; 1. The transition relation in the structures is a partial order, i.e. reflexiv, anti-symmetric and transitiv
+;; Furthermore we have to constructs Kripke structures, that have the following properties:
+;; 1. Since the Kripke models for the intuitionistic logic are lattices
+;;    i.e. they are reflexiv, anti-symmetric and transitiv and every two elements have a unique supremum
+;;    and a unique infimum,
+;;    the Kripke structure is basically the Hasse diagram, the transitive reduction of the
+;;    lattice. Kripke models have just one unique infimum.
+;;    To get a proper Kripke structure, we extend the Hasse diagram with a loop for each supremum. 
 ;; 2. The labeling function is monotonic, 
-;;    i.e. if [s_1 s_2] is a transition, then the set at s_1 is a subset of the set at s_2
+;;    i.e. if [s_1 s_2] is a transition, then the set at s_1 is a subset of the set at s_2.
 
 ;; Remark: The spec :ks/model does not comprises these additional constraints for a
 ;; Kripke structure for the intuitionistic logic.
