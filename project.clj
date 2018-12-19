@@ -15,7 +15,7 @@
   :scm {:name "git" :url "https://github.com/esb-lwb/lwb"}
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.9.0"]
+  :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/spec.alpha "0.2.176"]
                  [org.clojure/core.specs.alpha "0.2.44"]
                  [org.clojure/core.logic "0.8.11"]

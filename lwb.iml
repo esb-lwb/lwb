@@ -39,7 +39,7 @@
     <orderEntry type="library" name="Leiningen: kodkod:2.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: ltl2buchi:1.0.0" level="project" />
     <orderEntry type="library" name="Leiningen: net.mikera/core.matrix:0.62.0" level="project" />
-    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.9.0" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.10.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/core.logic:0.8.11" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/core.specs.alpha:0.2.44" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/math.combinatorics:0.1.4" level="project" />
