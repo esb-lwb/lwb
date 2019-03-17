@@ -157,7 +157,7 @@
   ([old new]
    (swap old new :unchecked))
   ([old new mode]
-  (try
+   (try
     (let [proof' (deduc/swap @p (:logic (meta #'roths)) old new mode)]
       (swap! p-history conj @p)
       (reset! p proof')
@@ -242,7 +242,7 @@
    In this case the function uses the commands in `lwb.util.shell` to 
    compile the tex code and open to the generated file."
   ([] (printer/texify @p))
-   ([filename] (printer/texify @p filename)))
+  ([filename] (printer/texify @p filename)))
 
 ;; ## Function that loads the current proof into the storage of rohts for the current session
 
