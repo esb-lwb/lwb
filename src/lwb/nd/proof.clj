@@ -54,7 +54,7 @@
   (reset! qmno 0))
 
 (defn qmsymbol?
-  "Is `s` a symbol of the form `Vn`?"
+  "Is `s` a symbol of the form `?n`?"
   [s]
   (and (symbol? s) (re-matches #"\?\d+$" (name s))))
 
