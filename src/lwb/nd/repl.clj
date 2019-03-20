@@ -14,8 +14,8 @@
             [lwb.nd.prereqs :as prereqs]                    ; unused alias, but needed for potemkin
             [lwb.nd.rules :refer [roths reset-roths]]
             [lwb.nd.io :as io]
-            [lwb.nd.printer :as printer])
-  (:import (clojure.lang ExceptionInfo)))
+            [lwb.nd.error :refer :all]
+            [lwb.nd.printer :as printer]))
 
 (defn man
   "Manual"
@@ -71,10 +71,8 @@
 (comment
   (load-logic :prop)
   (load-logic :pred)
-  (load-logic :ltl)
-  )
-
-
+  (load-logic :ltl))
+  
 ;; ## Atoms that hold the state of the proof session
 
 (def p
@@ -111,16 +109,6 @@
      (println "[lwb] Info: There are no rules available, please load a logic with load-logic."))))
 
 ;; ## Functions that perform steps in proving a conclusion
-
-(defn- handle-exception
-  "Prints message according to type of exception.      
-   Requires: throwing `ex-info`s in lwb."
-  [e]
-  (if
-    (instance? ExceptionInfo e)
-    (let [type (if (= (-> e ex-data :type) :error) "Error: " "Warning: ")]
-        (println (str "[lwb] " type (.getMessage e))))
-    (println (str "Exception: " (.getMessage e)))))
 
 (defn step-f
   "Execute a forward step.      

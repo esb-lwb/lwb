@@ -34,7 +34,7 @@
   (reset! plid 0))
 
 ;; Some rules generate new logical variables, e.g. new atomic propositions
-;; They get new names beginning with the letter `V` and follwed by a unique number.
+;; They get new names beginning with the letter `?` and follwed by a unique number.
 
 ;; Caveat: Don't use this naming convention for propositions in formulas.
 

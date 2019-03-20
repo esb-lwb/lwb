@@ -6,7 +6,8 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(ns lwb.nd.error)
+(ns lwb.nd.error
+  (:import (clojure.lang ExceptionInfo)))
 
 ;; # Custom exceptions for natural deduction in lwb
 
@@ -19,3 +20,13 @@
   "ExceptionInfo reporting a warning."
   [msg]
   (ex-info msg {:type :warning}))
+
+(defn handle-exception
+  "Prints message according to type of exception.      
+   Requires: throwing `ex-info`s in lwb."
+  [e]
+  (if
+    (instance? ExceptionInfo e)
+    (let [type (if (= (-> e ex-data :type) :error) "Error: " "Warning: ")]
+      (println (str "[lwb] " type (.getMessage e))))
+    (println (str "Exception: " (.getMessage e)))))
