@@ -6,7 +6,8 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-(ns lwb.cl.printer)
+(ns lwb.cl.printer
+  (:require [clojure.string :as str]))
 
 ;; printing the defined combinators ---------------------------------------------
 
@@ -29,10 +30,10 @@
     (let [length-id (apply max (map #(count (str %)) (keys combs-value)))
           length-item (length-item combs-value)
           length (- (+ 2 length-id length-item) (count "Defined combinators"))]
-      (println (str "--- Defined combinators ---" (apply str (repeat length "-"))))
+      (println (str "--- Defined combinators ---" (str/join (repeat length "-"))))
       (doseq [item combs-value]
         (println (print-combs-item item length-id)))
-      (println (str "---------------------------" (apply str (repeat length "-")))))))
+      (println (str "---------------------------" (str/join (repeat length "-")))))))
 
 ;; printing the current session --------------------------------------------------
 
@@ -45,10 +46,10 @@
   (if (empty? session-store-val)
     (println "There is no current session!\nUse (session term) to start one.")
     (let [length (inc (apply max (map #(count (str (:term %))) session-store-val)))]
-      (println (str "--- Current session -" (apply str (repeat length "-"))))
+      (println (str "--- Current session -" (str/join (repeat length "-"))))
       (doseq [line session-store-val]
         (println (print-session-line line length)))
-      (println (str "---------------------" (apply str (repeat length "-")))))))
+      (println (str "---------------------" (str/join (repeat length "-")))))))
 
     
 

@@ -9,6 +9,7 @@
 (ns lwb.cl.repl
   (:refer-clojure :exclude [==])
   (:require [lwb.cl :refer :all]
+            [lwb.cl.spec :refer :all]
             [clojure.core.logic :refer :all]
             [lwb.cl.printer :as printer]
             [lwb.nd.error :refer :all]
@@ -170,5 +171,4 @@
   (swap '?1 '[a b])
   (red :S)
   (show))
-(swap 'x '[a])
 
