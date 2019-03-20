@@ -369,7 +369,7 @@
   (do
     (println "Truth table")
     (println prop)
-	  (print-table header table)))
+    (print-table header table)))
 
 (s/fdef print-truth-table
         :args (s/cat :tt ::truth-table')
