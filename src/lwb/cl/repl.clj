@@ -150,11 +150,14 @@
   "Replaces a fresh variable of the form `?n` with the given term."
   [var term]
   (try
+    (if (not (wff? term))
+      (throw (ex-error (str "Term should be well-formed, '" term "' is not!")))
+      )
     (if (not (qmsymbol? var)) 
       (throw (ex-error "The var to be substituted must be of the form `?n``")))
     (let [new (for [line (current-session)]
                 (merge line {:term (subst (:term line) var term)}))]
-      (reset! session-store new))
+      (reset! session-store (vec new)))
     (show)
   (catch Exception e
     (handle-exception e)
@@ -168,7 +171,8 @@
   (exp :K 3)
   (swap '_0 '[a b])
   (swap '?0 '[a b])
+  (swap '?1 'a)
   (swap '?1 '[a b])
-  (red :S)
+  (red :K)
   (show))
 

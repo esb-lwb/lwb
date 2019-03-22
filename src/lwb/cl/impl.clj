@@ -135,7 +135,8 @@
   [key redex effect]
     (hash-map key {:redex     redex
                    :effect    effect
-                   :logic-rel (eval (gen-cl-rel redex effect))}))
+                   :logic-rel (binding [*ns* (find-ns 'lwb.cl.impl)]
+                                        (eval (gen-cl-rel redex effect)))}))
 
 ;; Application of logic relation for one-step expansion or reduction
 
