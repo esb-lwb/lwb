@@ -10,6 +10,7 @@
   (:refer-clojure :exclude [==])
   (:require [lwb.cl.impl :as impl]
             [lwb.cl.printer :as printer]
+            [lwb.cl.spec :as spec]
             [clojure.core.logic :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.walk :as walk]))
@@ -207,7 +208,7 @@
     (let [t (max-parens term)
           f (get-in @impl/combs [key :logic-rel])]
       (min-parens (impl/apply* t f i mode)))
-    (throw (AssertionError. "Combinator not defined."))))
+    (throw (AssertionError. (str "Combinator " key " not defined.")))))
 
 (defn cred
   "Reduces the given `term` by applying the combinator `key` at position `i` (default 1)"
@@ -227,14 +228,52 @@
   (def-combinator :S '[S x y z] '[x z (y z)])
   (def-combinator :K '[K x y] '[x])
 
-  (red '[S x y z] :S)
-  (exp '[a c (b c)] :S)
-  (red '[K x y] :K)
-  (exp '[x] :K)
-  (exp '[x] :T)
+  (cred '[S x y z] :S)
+  (cexp '[a c (b c)] :S)
+  (cred '[K x y] :K)
+  (cexp '[x] :K)
+  (cexp '[x] :T)
   )
 
-;; A big collection of combinators
+;; Multi-step reduction ------------------------------------------------------------
+
+(defn def-combinators-ski
+  "Defines the combinators `:S, :K, :I`."
+  []
+  (def-combinator :S '[S x y z] '[x z (y z)])
+  (def-combinator :K '[K x y] '[x])
+  (def-combinator :I '[I x] '[x]))
+
+;; TODO
+(defn creduce'
+  "Reduce the `term` using the set `combs` of combinators (defaults to `#{:S :K :I}`.
+   Returns a map with :cycle true/false and :steps with all intermediate terms."
+  [term combs]
+  (loop [current-term term
+         result {:cycle false :steps [term]}]
+    (let [found (filter #(not= current-term %) (for [s combs] (cred current-term s)))]
+      (cond (empty? found) result
+            ;; cycle detection
+            (some #(= (first found) %) (:steps result)) (update (assoc result :cycle true) :steps conj (first found))
+            :else (recur (first found) (update result :steps conj (first found)))))
+    ))
+
+(defn creduce
+  "Reduce the `term` using the set `combs` of combinators (defaults to `#{:S :K :I}`."
+  ([term]
+   (def-combinators-ski)
+   (creduce term #{:S :K :I}))
+  ([term combs]
+   (last (:steps (creduce' term combs))))
+
+  )
+
+(comment
+  (creduce '[S (K I) a b c])
+  (creduce '[S I I (S I I)])
+  )
+
+;; A big collection of combinators -------------------------------------------------
 
 (defn def-combinatory-birds
   "Defines a huge collection of combinators, borrowed from Raymond Smullyan's To Mock a Mocking Bird."
@@ -353,15 +392,24 @@
 (defn abstract
   [variable term]
   (let [mterm (max-parens term)]
-  (walk/postwalk
-      #(if (= variable %) 'I
-                          (if (symbol? %) (list 'K %) 
-                                          (if (list? %) (list* 'S %) %)))
-      mterm)))
+    (min-parens
+      (walk/postwalk
+        #(if (= variable %) 'I
+                            (if (symbol? %) (list 'K %)
+                                            (if (list? %) (list* 'S %) %)))
+        mterm))))
 
 (comment
   (abstract 'x '[a])
   (abstract 'x '[x])
   (abstract 'x '[M x x])
+  (abstract 'a '[a (b c)])
+  (abstract 'b (abstract 'a '[a (b c)]))
+  (abstract 'c (abstract 'b (abstract 'a '[a (b c)])))
+  (def X1 (abstract 'a (abstract 'b (abstract 'c '[a (b c)]))))
+  (conj X1 'a 'b 'c)
+  ;; wird unheimlich lang!!
+  (creduce (conj X1 'a 'b 'c))
   )
+
 
