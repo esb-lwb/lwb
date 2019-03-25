@@ -45,7 +45,7 @@
   (variable? 'x)
   (variable? '(S x)))
 
-(defn wff? 
+(defn wff?
   "Is `term` a well formed term of combinatory logic?
    `(wff? term)` returns true or false.
    `(wff? phi :exception-if-not)` returns true or throws an exception describing the error in `phi`."
@@ -53,7 +53,7 @@
    (wff? term :bool))
   ([term mode]
    (let [result (s/valid? :lwb.cl.spec/term term)]
-     (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str :lwb.cl.spec/term term))) result))))) 
+     (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str :lwb.cl.spec/term term))) result)))))
 
 (comment
   (wff? '[S x y z])
@@ -65,7 +65,7 @@
   (s/describe :lwb.cl.spec/simpl-expr)
   (s/describe :lwb.cl.spec/compl-expr)
   (s/describe :lwb.cl.spec/term))
-  
+
 ;; Handling of parentheses -------------------------------------------
 
 (defn max-parens
@@ -101,10 +101,10 @@
 
 (defn min-parens
   [term]
-  (-> term 
-      seq 
-      impl/min-parens-seq 
-      impl/rm-outer-parens 
+  (-> term
+      seq
+      impl/min-parens-seq
+      impl/rm-outer-parens
       vec))
 
 (comment
@@ -144,7 +144,7 @@
   (subst (subst (subst '[S x y z] 'x '[K]) 'y '[K]) 'z '[x])
   (subst '[C x y M] 'y '[P P N]))
 
-  
+
 
 ; Bimbó Example 1.2.3
 (subst (subst (subst '[S x y z] 'x '[I]) 'y '[y y]) 'z '[J])
@@ -190,12 +190,12 @@
 (comment
   (def-combinator :S '[S x y z] '[x z (y z)])
   (def-combinator :K '[K x y] '[x])
-  
+
   (show-combinators)
-  
+
   (comb-defined? :S)
   (comb-defined? :T)
-  
+
   (reset-combinators))
 
 ;; One-step reduction and expansion of combinator -----------------------------
@@ -240,7 +240,7 @@
   "Defines a huge collection of combinators, borrowed from Raymond Smullyan's To Mock a Mocking Bird."
   []
   ; Bluebird B := [S (K S) K]
-  (def-combinator :B '[B a b c] '[a (b c)]) 
+  (def-combinator :B '[B a b c] '[a (b c)])
   ; Blackbird B1 := [B B B]
   (def-combinator :B1 '[B1 a b c d] '[a (b c d)])
   ; Bunting B2 := [B (B B B) B]
@@ -248,7 +248,7 @@
   ; Becard B3 := [B (B B) B]
   (def-combinator :B3 '[B3 a b c d] '[a (b (c d))])
   ; Cardinal C := [S (B B S) (K K)]
-  (def-combinator :C '[C a b c] '[a b c])
+  (def-combinator :C '[C a b c] '[a c b])
   ; Dove D := [B B]
   (def-combinator :D '[D a b c d] '[a b (c d)])
   ; Dickcissel D1 := [B (B B)]
@@ -304,7 +304,7 @@
   ; Converse Warbler W1 := [C W]
   (def-combinator :W1 '[W1 a b] '[b a a])
   ; Why Bird aka Sage Bird Y := [S L L]
-  (def-combinator :Y '[Y a] '[a Y a])
+  (def-combinator :Y '[Y a] '[a (Y a)])
   ; Identity Bird Once Removed := [S (S K)]
   (def-combinator :I* '[I* a b] '[a b])
   ; Warbler Once Removed W* := [B W]
@@ -332,16 +332,36 @@
   ; Kite KI := [K I]
   (def-combinator :KI '[KI a b] '[b])
   ; Omega Omega := [M M] TODO: strange bird
-  (def-combinator :Omega '[Omega] '[Omega])
-  ; Konstant Mocker KM := [K M]
   (def-combinator :KM '[KM a b] '[b b])
   ; Crossed Konstant Mocker CKM := [C (K M)]
   (def-combinator :CKM '[CKM a b] '[a a])
-  ; Theta Theta := [Y O] TODO: strange bird
-  (def-combinator :Theta '[Theta x] '[x])
+  ; Phi
+  (def-combinator :Phi '[Phi a b c d] '[a (b d) (c d)])
+  ; Psi
+  (def-combinator :Psi '[Psi a b c d] '[a (b c) (b d)])
+  ; Gamma
+  (def-combinator :Gamma '[Gamma a b c d e] '[b (c d) (a b d e)])
   )
 
 (comment
   (def-combinatory-birds)
   (show-combinators))
-  
+
+
+; Bracket abstraction; S K I
+
+(defn abstract
+  [variable term]
+  (let [mterm (max-parens term)]
+  (walk/postwalk
+      #(if (= variable %) 'I
+                          (if (symbol? %) (list 'K %) 
+                                          (if (list? %) (list* 'S %) %)))
+      mterm)))
+
+(comment
+  (abstract 'x '[a])
+  (abstract 'x '[x])
+  (abstract 'x '[M x x])
+  )
+
