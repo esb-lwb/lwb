@@ -262,25 +262,27 @@
     
 
 (defn creduce
-  "Reduce the `term` using the set `combs` of combinators (defaults to `#{:S :K :I}`."
+  "Reduce the `term` using the set `combs` of combinators (defaults to `#{:S :K :I}`.
+  The metadate of the result indicate cycle detection or overrun of the limit nof steps."
   ([term]
    (def-combinators-ski)
    (creduce term #{:S :K :I} 1000))
   ([term combs limit]
-   (last (:steps (creduce' term combs limit)))))
-
-  
+   (let [result (creduce' term combs limit)]
+     (with-meta (last (:steps result)) {:cycle (:cycle result) :overrun (:overrun result)}))))
+         
 
 (comment
   (creduce '[S (K I) a b c])
   (creduce '[S I I (S I I)])
+  (meta (creduce '[S I I (S I I)]))
   (def-combinator :Y '[Y x] '[x (Y x)])  
   (show-combinators)
-  (creduce' '[Y Y] #{:Y} 100)
+  (creduce '[Y Y] #{:Y} 100)
+  (meta (creduce '[Y Y] #{:Y} 100))
   (creduce '[Y S] #{:S :Y} 10)
   (creduce '[Y K] #{:K :Y} 10)
-  (creduce '[K (K (K (Y K))) a b c])) ;; the black hole
-(show-combinators)
+  (creduce '[K (K (K (Y K))) a b c]) ;; the black hole
 
   
 
