@@ -232,8 +232,8 @@
   (cexp '[a c (b c)] :S)
   (cred '[K x y] :K)
   (cexp '[x] :K)
-  (cexp '[x] :T)
-  )
+  (cexp '[x] :T))
+  
 
 ;; Multi-step reduction ------------------------------------------------------------
 
@@ -255,8 +255,8 @@
       (cond (empty? found) result
             ;; cycle detection
             (some #(= (first found) %) (:steps result)) (update (assoc result :cycle true) :steps conj (first found))
-            :else (recur (first found) (update result :steps conj (first found)))))
-    ))
+            :else (recur (first found) (update result :steps conj (first found)))))))
+    
 
 (defn creduce
   "Reduce the `term` using the set `combs` of combinators (defaults to `#{:S :K :I}`."
@@ -264,14 +264,14 @@
    (def-combinators-ski)
    (creduce term #{:S :K :I}))
   ([term combs]
-   (last (:steps (creduce' term combs))))
+   (last (:steps (creduce' term combs)))))
 
-  )
+  
 
 (comment
   (creduce '[S (K I) a b c])
-  (creduce '[S I I (S I I)])
-  )
+  (creduce '[S I I (S I I)]))
+  
 
 ;; A big collection of combinators -------------------------------------------------
 
@@ -379,25 +379,37 @@
   ; Psi
   (def-combinator :Psi '[Psi a b c d] '[a (b c) (b d)])
   ; Gamma
-  (def-combinator :Gamma '[Gamma a b c d e] '[b (c d) (a b d e)])
-  )
+  (def-combinator :Gamma '[Gamma a b c d e] '[b (c d) (a b d e)]))
+  
 
 (comment
   (def-combinatory-birds)
   (show-combinators))
 
+; Bracket abstraction ----------------------------------------------------------------
 
-; Bracket abstraction; S K I
+(defn curry
+  "Classical algorithm for bracket abstraction for S K I.
+  Pre: terms have max-parens."
+  [variable subterm]
+  (cond
+    (= variable subterm) 'I
+    (symbol? subterm) (list 'K subterm)
+    (list? subterm) (list* 'S subterm)
+    :else subterm))
+
+;; The example of function curry shows how to define other
+;; algorithms for bracket abstraction
 
 (defn abstract
-  [variable term]
-  (let [mterm (max-parens term)]
-    (min-parens
-      (walk/postwalk
-        #(if (= variable %) 'I
-                            (if (symbol? %) (list 'K %)
-                                            (if (list? %) (list* 'S %) %)))
-        mterm))))
+  ([variable term]
+   (abstract variable term curry))
+  ([variable term algo]
+   (let [mterm (max-parens term)]
+     (min-parens
+       (walk/postwalk
+         (partial algo variable)
+         mterm)))))
 
 (comment
   (abstract 'x '[a])
@@ -406,10 +418,10 @@
   (abstract 'a '[a (b c)])
   (abstract 'b (abstract 'a '[a (b c)]))
   (abstract 'c (abstract 'b (abstract 'a '[a (b c)])))
+  ;; wird unheimlich lang!!
   (def X1 (abstract 'a (abstract 'b (abstract 'c '[a (b c)]))))
   (conj X1 'a 'b 'c)
-  ;; wird unheimlich lang!!
-  (creduce (conj X1 'a 'b 'c))
-  )
+  (creduce (conj X1 'a 'b 'c)))
+  
 
 
