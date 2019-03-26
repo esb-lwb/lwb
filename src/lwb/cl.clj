@@ -77,29 +77,6 @@
       (vec seq)
       (vec (list seq)))))
 
-(comment
-  ; Bimbó Example 1.1.3 
-  (max-parens '[(B x y) z])
-  (max-parens '[B W B x (B W B x)])
-  (max-parens '[B x y z])
-
-  ; Bimbó Exercise 1.1.5 
-  (max-parens '[K x (W y z) y])
-  (max-parens '[x x x])
-  (max-parens '[(S I) y B])
-  (max-parens '[x_14 x_152])
-  (max-parens '[M_1 (M_2 (M_3 x y y) z)])
-
-  (max-parens '[(y z) (I I) x])
-  (max-parens '[y z (I I) x])
-
-  (max-parens '[(M x) ((B y) (W z))])
-  (max-parens '[M x ((B y) (W z))])
-  (max-parens '[M x (B y (W z))])
-
-  (max-parens '[(W (I x (I y)) z)])
-  (max-parens '[W (I x (I y)) z]))
-
 (defn min-parens
   [term]
   (-> term
@@ -108,19 +85,7 @@
       impl/rm-outer-parens
       vec))
 
-(comment
-  ; Bimbó Example 1.1.3 
-  (min-parens '[(((B x) y) z)])
-  (min-parens '[((((B W) B) x) (((B W) B) x))])
-
-  ; Bimbó Exercise 1.1.5 
-  (min-parens '[(((y z) (I I)) x)])
-  (min-parens '[((M x) ((B y) (W z)))])
-  (min-parens '[(W (I x_145 (I x_72)) x_58)])
-  (min-parens '[(((S K) K) x)])
-  (min-parens '[(((S M) M) (I (N P)))]))
-
-;; Substitution of variables in terms
+;; Substitution of variables in terms ----------------------------------
 
 (defn subst
   "Substitution of variable `var` in `term` by `st`."
@@ -130,6 +95,19 @@
       #(if (= var %) st' %)
       term)))
 
+;; Subterms of a term --------------------------------------------------
+
+(defn subterms
+  "A sequence of a subterms of the given `term`."
+  [term]
+  (->> term
+       (max-parens)
+       seq
+       (tree-seq seq? identity)
+       (map vector)
+       (map min-parens)
+       distinct))
+  
 (comment
   ; Bimbó Example 1.2.3
   (subst (subst (subst '[S x y z] 'x '[I]) 'y '[y y]) 'z '[J])
