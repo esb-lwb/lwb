@@ -13,15 +13,15 @@
             [clojure.core.logic :refer :all]
             [lwb.cl.printer :as printer]
             [lwb.nd.error :refer :all]
-            [clojure.walk :as walk])
-  )
+            [clojure.walk :as walk]))
+  
 
 ;; The global stores for the current session ----------------------------------
 
 ;; A session is a vector of lines
 ;; a line is a hash-map with keys :lno line number, :term term [S x y z] e.g. :rule e.g. [:exp :S 1] 
 
-(def session-store
+(def ^:private session-store
   "Atom that holds the current session."
   (atom []))
 
@@ -35,32 +35,28 @@
   []
   (printer/print-session (current-session)))
 
-(comment
-  (show)
-  )
-;; Some steps generate fresh  variables.
-;; They get new names beginning with the letter `?` and followed by a unique number.
+;; Some steps generate fresh variables.
+;; They get new names beginning with the questionb mark `?` and followed by a unique number.
 
-(def qmno
+(def ^:private qmno
   "Global counter for the numbers of new question marks."
   (atom 0))
 
-(defn new-qmsymbol
+(defn- new-qmsymbol
   "Generates a new name for a question mark.     
    Uses global `qmno`."
   []
   (symbol (str \? (swap! qmno inc))))
 
-(defn reset-qmno
+(defn- reset-qmno
   "Resets global `qmno`."
   []
   (reset! qmno 0))
 
-(defn qmsymbol?
+(defn- qmsymbol?
   "Is `s` a symbol of the form `?n`?"
   [s]
   (and (symbol? s) (re-matches #"\?\d+$" (name s))))
-
 
 ;; Starting a session ----------------------------------------------------------
 
@@ -73,14 +69,10 @@
     (reset! session-store [given])
     (show)))
 
-(comment
-  (session '[S x y z])
-  )
-
 ;; Doing steps in the session --------------------------------------------------
 
 ; helper functions
-(defn replace-lvars
+(defn- replace-lvars
   "Replaces logical variables from core.logic like `_0` by generated variable names `?1`."     
   [term]
   (let [lvars (set (filter #(.startsWith (str %) "_") (flatten term)))
@@ -88,19 +80,14 @@
     (walk/prewalk-replace smap term)))
 
 (defn undo
+  "Undoes last step in a session."
   []
   (if (> (count (current-session)) 1)
     (swap! session-store pop)
     (println "There is no step to be undone!"))
   (show))
 
-(comment
-  (undo)
-  (session '[S x y z])
-  (undo)
-  )
-
-(defn appx
+(defn- appx
   "Reduction or expansion in current session."
   [comb pos step-fn step-type]
   (try
@@ -124,12 +111,6 @@
   ([comb pos]
    (appx comb pos cred :red)))
 
-(comment
-  (def-combinator :S '[S x y z] '[x z (y z)])
-  (session '[S x y z])
-  (red :S)
-  (undo))
-
 (defn exp
   "Expansion in current session with the given combinator at position `i` (default 1)."
   ([comb]
@@ -137,42 +118,19 @@
   ([comb pos]
    (appx comb pos cexp :exp)))
 
-(comment
-  (show-combinators)
-  (def-combinator :K '[K x y] '[x])
-  (session '[S x y z])
-  (red :S)
-  (exp :K 3)
-  (red :S)
-  (show))
-
 (defn swap
   "Replaces a fresh variable of the form `?n` with the given term."
   [var term]
   (try
     (if (not (wff? term))
-      (throw (ex-error (str "Term should be well-formed, '" term "' is not!")))
-      )
-    (if (not (qmsymbol? var)) 
+      (throw (ex-error (str "Term should be well-formed, '" term "' is not!"))))
+    (if (not (qmsymbol? var))
       (throw (ex-error "The var to be substituted must be of the form `?n``")))
     (let [new (for [line (current-session)]
                 (merge line {:term (subst (:term line) var term)}))]
       (reset! session-store (vec new)))
     (show)
-  (catch Exception e
-    (handle-exception e)
-    (show)))) 
-
-(comment
-  (show-combinators)
-  (def-combinator :K '[K x y] '[x])
-  (session '[S x y z])
-  (red :S)
-  (exp :K 3)
-  (swap '_0 '[a b])
-  (swap '?0 '[a b])
-  (swap '?1 'a)
-  (swap '?1 '[a b])
-  (red :K)
-  (show))
+    (catch Exception e
+      (handle-exception e)
+      (show)))) 
 

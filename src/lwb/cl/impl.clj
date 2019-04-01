@@ -65,20 +65,12 @@
        (filter #(s/valid? :lwb.cl.spec/variable %))
        (into #{})))
 
-(comment
-  (vars '[S x y z])
-  (vars '[K x S x y z])
-  (vars '[(((S x) y) z)]))
-
 (defn gen-fresh-args
   "Vector of fresh variables for the relation to be constructed"
   [redex effect]
   (let [r-vars (vars redex)
         e-vars (vars effect)]
     (vec (set/union r-vars e-vars))))
-
-(comment
-  (gen-fresh-args '(((S x) y) z) '((x z) (y z))))
 
 (defn gen-cl-term'
   "Code from a sequence with all parentheses"
@@ -90,11 +82,6 @@
                       item)))
        seqterm))
 
-(comment
-  (gen-cl-term' '((S x)))
-  (gen-cl-term '(x))
-  (gen-cl-term '((((S x) y) z))) )
-
 (defn gen-cl-term
   "Code from a term without all parentheses"
   [term]
@@ -104,39 +91,41 @@
       (first result)
       (list* 'list result))))
 
-(comment
-  (gen-cl-term '[S])
-  (gen-cl-term '[x])
-  (gen-cl-term '[S x])
-  (gen-cl-term '[S x y])
-  (gen-cl-term '[S x y z])
-  (gen-cl-term '[S x y (z1 z2)])
-  )
-
 (defn gen-cl-rel
-  [redex effect]                                            ;; beides terms
+  [redex effect]                                            ;; both terms
   (let [fresh-args (gen-fresh-args redex effect)
         redex-term (gen-cl-term redex)
         effect-term (gen-cl-term effect)]
     (list 'fn (vector 'term 'q) (list 'fresh fresh-args
                                       (list '== 'term redex-term)
                                       (list '== 'q effect-term)))))
-(comment
-  (gen-cl-rel '[S x y z] '[x z (y z)])
-  (gen-cl-rel '[K x y] '[x])
-  )
 
 ;; Storage for combinators
 
-(def combs
+(def combinator-store
   (atom {}))
 
+(defn combs
+  "The set of combinators in `term`."
+  [term]
+  (->> (flatten term)
+       (filter #(s/valid? :lwb.cl.spec/combinator %))
+       (into #{})))
+
+(defn combs-keys
+  "The set of combinator keys in `term`."
+  [term]
+  (into #{} (map keyword (combs term))))
+
 (defn make-comb
-  [key redex effect]
-    (hash-map key {:redex     redex
-                   :effect    effect
-                   :logic-rel (binding [*ns* (find-ns 'lwb.cl.impl)]
-                                        (eval (gen-cl-rel redex effect)))}))
+  [redex effect]
+  (let [combs (combs redex)
+        key (keyword (first combs))]
+    (if (not key) (throw (AssertionError. (str "Redex '" redex "' has no combinator!")))
+                  (hash-map key {:redex     redex
+                                 :effect    effect
+                                 :logic-rel (binding [*ns* (find-ns 'lwb.cl.impl)]
+                                              (eval (gen-cl-rel redex effect)))}))))
 
 ;; Application of logic relation for one-step expansion or reduction
 
