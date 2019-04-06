@@ -11,7 +11,7 @@
 
 (def-combinators-ski)
 
-;; Definition of truth values
+;; Definition of truth values -------------------------------------------------
 
 (def True '[K])
 (def False '[K I])
@@ -24,7 +24,7 @@
       (= t False) 'False
       :else nil)))
 
-;; Definition of operators
+;; Definition of operators ----------------------------------------------------
 
 (defn And ; = [S S K]
   [term1 term2]
