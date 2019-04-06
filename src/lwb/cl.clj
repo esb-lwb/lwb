@@ -15,7 +15,7 @@
             [clojure.spec.alpha :as s]
             [clojure.walk :as walk]))
 
-;; Syntax -------------------------------------------------------------------
+;; Syntax ---------------------------------------------------------------------
 
 ;; Representation of combinatory logic in Clojure:
 ;; 1. Combinators are represented by Clojure symbols whose name begins with an upper case letter
@@ -63,7 +63,7 @@
     (not= var sterm)
     (every? #(not= var %) (variables sterm))))
 
-;; Handling of parentheses -------------------------------------------
+;; Handling of parentheses ----------------------------------------------------
 
 (defn max-parens
   "Adds parentheses according to left associative binding of application"
@@ -82,7 +82,7 @@
       impl/rm-outer-parens
       vec))
 
-;; Substitution of variables in terms ----------------------------------
+;; Substitution of variables in terms -----------------------------------------
 
 (defn subst
   "Substitution of variable `var` in `term` by `st`."
@@ -92,7 +92,7 @@
       #(if (= var %) st' %)
       term)))
 
-;; Subterms of a term --------------------------------------------------
+;; Subterms of a term ---------------------------------------------------------
 
 (defn subterms
   "A sequence of a subterms of the given `term`."
@@ -104,8 +104,14 @@
        (map vector)
        (map min-parens)
        distinct))
-  
-;; Definition of combinators ------------------------------------------------
+
+;; Concatenation of terms -----------------------------------------------------
+
+(defn comb-concat
+  "Concatenation of the given terms."
+  [& terms]
+  (min-parens (into [] (reduce concat (map max-parens terms)))))  
+;; Definition of combinators --------------------------------------------------
 
 (defn def-combinator
   "Defines and registers combinator in the global storage.
@@ -161,7 +167,7 @@
   ([term comb-key i]
    (one-step-app term comb-key i :exp)))
 
-;; Multi-step reduction ------------------------------------------------------------
+;; Multi-step reduction -------------------------------------------------------
 
 (defn weak-reduce'
   "Reduce the `term` using the set `combs` of combinators and the number `limit` of one-step reductions.
@@ -187,7 +193,7 @@
    (let [result (weak-reduce' term (impl/combs-keys term) limit)]
      (with-meta (last (:steps result)) {:cycle (:cycle result) :overrun (:overrun result)}))))
 
-; Bracket abstraction ----------------------------------------------------------------
+;; Bracket abstraction --------------------------------------------------------
 
 ;; See Jonathan P. Seldin: The search for a reduction in combinatory logic equivalent to λβ-reduction,
 ;; in: Theoretical Computer Science 412 (2011), 4905-4918
@@ -347,11 +353,6 @@
   (def-combinator '[Psi a b c d] '[a (b c) (b d)])
   ; Gamma
   (def-combinator '[Gamma a b c d e] '[b (c d) (a b d e)]))
-  
-
-(comment
-  (def-combinatory-birds)
-  (show-combinators))
 
 
 

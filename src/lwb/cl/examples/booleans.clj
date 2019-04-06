@@ -26,14 +26,9 @@
 
 ;; Definition of operators
 
-; helper function
-(defn- conj'
-  [& terms]
-  (min-parens (into [] (reduce concat (map max-parens terms)))))
-
 (defn And ; = [S S K]
   [term1 term2]
-    (to-boolean (weak-reduce (conj' '[S S K] term1 term2))))
+    (to-boolean (weak-reduce (comb-concat '[S S K] term1 term2))))
   
 (And True True)
 (And True False)
@@ -42,7 +37,7 @@
 
 (defn Or ;  = [S I I]
   [term1 term2]
-  (to-boolean (weak-reduce (conj' '[S I I] term1 term2))))
+  (to-boolean (weak-reduce (comb-concat '[S I I] term1 term2))))
   
 (Or True True)
 (Or True False)
@@ -51,7 +46,7 @@
 
 (defn Not ;  = [S (S I (K (K I))) (K K)] (in normal order)
   [term]
-  (to-boolean (weak-reduce (conj' '[S (S I (K (K I))) (K K)] term))))
+  (to-boolean (weak-reduce (comb-concat '[S (S I (K (K I))) (K K)] term))))
 
 (Not True)
 (Not False)
