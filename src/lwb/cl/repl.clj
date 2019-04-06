@@ -109,14 +109,14 @@
   ([comb]
    (red comb 1))
   ([comb pos]
-   (appx comb pos cred :red)))
+   (appx comb pos one-step-red :red)))
 
 (defn exp
   "Expansion in current session with the given combinator at position `i` (default 1)."
   ([comb]
    (exp comb 1))
   ([comb pos]
-   (appx comb pos cexp :exp)))
+   (appx comb pos one-step-exp :exp)))
 
 (defn swap
   "Replaces a fresh variable of the form `?n` with the given term."

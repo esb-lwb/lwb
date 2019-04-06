@@ -23,7 +23,15 @@
         (->> combs-value vals (map #(count (str (:effect %)))) (apply max))]
     (+ r-length e-length)))
 
-(defn print-combs
+(defn print-comb
+  [key combs-value]
+  (let [item (find combs-value key)]
+    (if item
+      (println (print-combs-item item (count (name key))))
+      (println (str "No combinator with key `" key "` defined.")))))
+
+
+  (defn print-combs
   [combs-value]
   (if (empty? combs-value)
     (println "There are no combinators defined yet!")

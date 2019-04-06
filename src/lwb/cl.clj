@@ -121,6 +121,11 @@
   [comb-key]
   (seq (filter #(= comb-key %) (keys @impl/combinator-store))))
 
+(defn show-combinator
+  "Shows combinator with the given `comb-key`."
+  [comb-key]
+  (printer/print-comb comb-key @impl/combinator-store))
+
 (defn show-combinators
   "Shows the currently defined combinators."
   []
@@ -133,39 +138,39 @@
 
 ;; One-step reduction and expansion of combinator -----------------------------
 
-(defn- app
+(defn- one-step-app
   "Wrapper for `reduce` and `expand`."
-  [term key i mode]
-  (if (comb-defined? key)
+  [term comb-key i mode]
+  (if (comb-defined? comb-key)
     (let [t (max-parens term)
-          f (get-in @impl/combinator-store [key :logic-rel])]
+          f (get-in @impl/combinator-store [comb-key :logic-rel])]
       (min-parens (impl/apply* t f i mode)))
-    (throw (AssertionError. (str "Combinator " key " not defined.")))))
+    (throw (AssertionError. (str "Combinator " comb-key " not defined.")))))
 
-(defn cred
-  "Reduces the given `term` by applying the combinator `key` at position `i` (default 1)"
-  ([term key]
-   (cred term key 1))
-  ([term key i]
-   (app term key i :red)))
+(defn one-step-red
+  "Reduces the given `term` by applying the combinator `comb-key` at position `i` (default 1)"
+  ([term comb-key]
+   (one-step-red term comb-key 1))
+  ([term comb-key i]
+   (one-step-app term comb-key i :red)))
 
-(defn cexp
-  "Expands the given `term` by reversing the combinator `key` at position `i` (default 1)"
-  ([term key]
-   (cexp term key 1))
-  ([term key i]
-   (app term key i :exp)))
+(defn one-step-exp
+  "Expands the given `term` by reversing the combinator `comb-key` at position `i` (default 1)"
+  ([term comb-key]
+   (one-step-exp term comb-key 1))
+  ([term comb-key i]
+   (one-step-app term comb-key i :exp)))
 
 ;; Multi-step reduction ------------------------------------------------------------
 
-(defn creduce'
+(defn weak-reduce'
   "Reduce the `term` using the set `combs` of combinators and the number `limit` of one-step reductions.
    Returns a map with :cycle false/true, :overrun false/true and :steps with all intermediate terms."
   [term combs limit]
   (loop [current-term term
          result {:steps [term] :cycle false :overrun false}
          counter 0]
-    (let [found (filter #(not= current-term %) (for [s combs] (cred current-term s)))]
+    (let [found (filter #(not= current-term %) (for [s combs] (one-step-red current-term s)))]
       (cond (empty? found) result
             ;; cycle detection
             (some #(= (first found) %) (:steps result)) (update (assoc result :cycle true) :steps conj (first found))
@@ -173,13 +178,13 @@
             (> counter limit) (update (assoc result :overrun true) :steps conj (first found))
             :else (recur (first found) (update result :steps conj (first found)) (inc counter))))))
 
-(defn creduce
+(defn weak-reduce
   "Reduce the `term` with the 'limit' of one-step reductions.
   The metadata of the result indicate cycle detection or overrun of the limit of steps."
   ([term]
-   (creduce term 100))
+   (weak-reduce term 100))
   ([term limit]
-   (let [result (creduce' term (impl/combs-keys term) limit)]
+   (let [result (weak-reduce' term (impl/combs-keys term) limit)]
      (with-meta (last (:steps result)) {:cycle (:cycle result) :overrun (:overrun result)}))))
 
 ; Bracket abstraction ----------------------------------------------------------------
