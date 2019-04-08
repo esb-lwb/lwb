@@ -18,36 +18,42 @@
 
 (defn to-boolean
   [term]
-  (let [t (min-parens term)]
+  (let [red (weak-reduce (conj term 't 'f))]
     (cond
-      (= t True) 'True
-      (= t False) 'False
+      (= red '[t]) 'True
+      (= red '[f])   'False
       :else nil)))
 
 ;; Definition of operators ----------------------------------------------------
 
-(defn And ; = [S S K]
-  [term1 term2]
-    (to-boolean (weak-reduce (comb-concat '[S S K] term1 term2))))
-  
-(And True True)
-(And True False)
-(And False True)
-(And False False)
+(def And '[S S K])
 
-(defn Or ;  = [S I I]
+(defn And'
   [term1 term2]
-  (to-boolean (weak-reduce (comb-concat '[S I I] term1 term2))))
+    (to-boolean (weak-reduce (comb-concat And term1 term2))))
   
-(Or True True)
-(Or True False)
-(Or False True)
-(Or False False)
+(And' True True)
+(And' True False)
+(And' False True)
+(And' False False)
 
-(defn Not ;  = [S (S I (K (K I))) (K K)] (in normal order)
+(def Or '[S I I])
+
+(defn Or'
+  [term1 term2]
+  (to-boolean (weak-reduce (comb-concat Or term1 term2))))
+  
+(Or' True True)
+(Or' True False)
+(Or' False True)
+(Or' False False)
+
+(def Not '[S (S I (K (K I))) (K K)])
+
+(defn Not'
   [term]
-  (to-boolean (weak-reduce (comb-concat '[S (S I (K (K I))) (K K)] term))))
+  (to-boolean (weak-reduce (comb-concat Not term))))
 
-(Not True)
-(Not False)
+(Not' True)
+(Not' False)
   
