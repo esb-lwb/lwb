@@ -328,7 +328,7 @@
   ; Finch Once Removed F* := [B C* R*]
   (def-combinator '[F* a b c d] '[a d c b])
   ; Vireo Once Removed V* := [C* F*]
-  (def-combinator '[V* a b c d] '[a c b d])
+  (def-combinator '[V* a b c d] '[a d b c])
   ; Identity Bird Twice Removed I**
   (def-combinator '[I** a b c] '[a b c])
   ; Warbler Twice Removed W** := [B (B W)]
