@@ -8,40 +8,34 @@
 
 (ns lwb.cl.spec
   (:require [clojure.spec.alpha :as s])
-  (:import ))
+  (:import))
 
+;; Specification of the syntax of combinatory logic
+
+;; A combinator is a symbol whose first character is upper case
 (s/def ::combinator (s/and symbol?
                            #(Character/isUpperCase ^char (first (name %)))))
 
-(comment
-  (s/valid? ::combinator 'S)
-  (s/valid? ::combinator 'x)
-  (s/valid? ::combinator 1))
-
+;; A variable is a symbol whose first character is lower case
 (s/def ::variable (s/and symbol?
                          #(Character/isLowerCase ^char (first (name %)))))
 
-(comment
-  (s/valid? ::variable 'S)
-  (s/valid? ::variable 'x)
-  (s/valid? ::variable 1))
-
+;; A simple expression is a combinator or a variable
 (s/def ::simpl-expr (s/or :combinator ::combinator
                           :variable ::variable))
 
-(s/def ::compl-expr (s/and list? #(> (count %) 1) (s/+ (s/or :simpl-expr ::simpl-expr 
-                                                             :compl-expr  ::compl-expr))))
+;; A complex expression is a nested list of complex or simple expression
+(s/def ::compl-expr (s/and list? #(> (count %) 1) (s/+ (s/or :simpl-expr ::simpl-expr
+                                                             :compl-expr ::compl-expr))))
 
+;; A term is a vector of simple or complex expressions
 (s/def ::term (s/and vector? (s/* (s/or :simpl-expr ::simpl-expr
                                         :compl-expr ::compl-expr))))
 
-(comment
-  (s/valid? ::term '[S])
-  (s/valid? ::term '[S x])
-  (s/valid? ::term '[S x y z])
-  (s/valid? ::term '[(S x)])
-  (s/explain ::term '[(S x)])
-  (s/valid? ::term '[x y z (S (x y))])
-  (s/valid? ::term '[(x) y z (S (x y))])
-  (s/explain ::term '[(x) y z (S (x y))])
-  )
+;; An application expression is a nested list of applications
+(s/def ::appl-expr (s/and list? #(= (count %) 2) (s/+ (s/or :simpl-expr ::simpl-expr
+                                                            :appl-expr ::appl-expr))))
+
+;; A sterm is a simple expression or a nested list of sterms with simple expressions as leaves
+(s/def ::sterm (s/or :simpl-expr ::simpl-expr
+                     :appl-expr ::appl-expr))
