@@ -7,8 +7,7 @@
 ; the terms of this license.
 
 (ns lwb.cl.spec
-  (:require [clojure.spec.alpha :as s])
-  (:import))
+  (:require [clojure.spec.alpha :as s]))
 
 ;; Specification of the syntax of combinatory logic
 
