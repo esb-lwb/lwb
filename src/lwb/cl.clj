@@ -11,6 +11,7 @@
   (:require [lwb.cl.impl :as impl]
             [lwb.cl.printer :as printer]
             [lwb.cl.spec :as spec]
+            [lwb.nd.error :refer :all]
             [clojure.core.logic :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.walk :as walk]))
@@ -198,6 +199,31 @@
   (def-combinators-ski)
   (weak-reduce '[S I I (S I I)] {:trace true :cycle true})
 )
+(defmacro with-timeout
+  [msec & body]
+  `(let [f# (future (do ~@body))
+         v# (gensym)
+         result# (deref f# ~msec v#)]
+     (if (= v# result#)
+       (do
+         (future-cancel f#)
+         (throw (ex-error "Timeout")))
+       result#)))
+
+(defn weak-reduce'
+  [term algo limit cycle trace]
+   (let [sterm (first (max-parens term))
+         combs (impl/combs-keys term)]
+     (if trace (println (str 0 ": " (min-parens term))))
+     (loop [current-sterm sterm
+            current-combs combs
+            counter 1]
+       (let [result (impl/weak-reduce current-sterm current-combs counter algo 0 limit cycle trace)
+             new-sterm (:reduced result)
+             new-counter (inc (:no-steps result))]
+         (if (or (= new-sterm current-sterm) (> new-counter limit)) ; fix point of limit exceeded
+           (with-meta (min-parens [new-sterm]) result)
+           (recur new-sterm (impl/combs-keys new-sterm) new-counter))))))
 
 (defn weak-reduce
   ;; TODO Doku of interface
@@ -205,26 +231,24 @@
    (weak-reduce term {}))
   ([term {:keys [algo timeout limit cycle trace]
           :or   {algo :one-step-red timeout 0 limit 100 cycle false trace false}}]
-   (let [sterm (first (max-parens term))
-         combs (impl/combs-keys term)]
-     (if trace (println (str 0 ": " (min-parens term))))
-     (loop [current-sterm sterm
-            current-combs combs
-            counter 1]
-       (let [result (impl/weak-reduce current-sterm current-combs counter algo timeout limit cycle trace)
-             new-sterm (:reduced result)
-             new-counter (inc (:no-steps result))]
-         (if (or (= new-sterm current-sterm) (> new-counter limit)) ; fix point of limit exceeded
-           (with-meta (min-parens [new-sterm]) result)
-           (recur new-sterm (impl/combs-keys new-sterm) new-counter)))))))
+   (if (> timeout 0)
+     (with-timeout timeout (weak-reduce' term algo limit cycle trace))
+     (weak-reduce' term algo limit cycle trace))))
 
 (defn weak-reduce-multi
-  [term]
-    (weak-reduce term {:algo :multi-step-red :timeout 100}))
+  ([term]
+   (weak-reduce-multi term {}))
+  ([term {:keys [timeout limit cycle trace]
+          :or   {timeout 10000 limit false cycle false trace false}
+          :as   options}]
+   (weak-reduce term (merge options {:algo :multi-step-red}))))
 
 (comment
   (def-combinators-ski)
-  (weak-reduce '[S I I (S I I)] {:algo :multi-step-red :trace true :cycle true})
+  (weak-reduce '[S I I (S I I)] {:algo :one-step-red :trace true :cycle true})
+  (weak-reduce-multi '[S I I (S I I)] {:trace true :cycle true})
+  (weak-reduce '[S I I (S I I)] {:algo :multi-step-red :trace true :cycle true :timeout 11})
+  (weak-reduce '[S I I (S I I)] {:algo :one-step-red :trace true :cycle true :timeout 1})
   )
 
 ;; Bracket abstraction --------------------------------------------------------
