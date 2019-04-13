@@ -38,3 +38,17 @@
 ;; A sterm is a simple expression or a nested list of sterms with simple expressions as leaves
 (s/def ::sterm (s/or :simpl-expr ::simpl-expr
                      :appl-expr ::appl-expr))
+
+;; Specification of options for weak-reduce
+
+;; The limit is the maximal number of steps performed in the run of weak-reduce
+(s/def ::limit pos-int?)
+
+;; The entry for `:cycle` determines whether cycle detection is on or off
+(s/def ::cycle boolean?)
+
+;; the entry for `:trace` determines whether intermediate steps are reported.
+(s/def ::trace boolean?)
+
+;; Options for weak-reduceo
+(s/def ::options (s/keys :req-un [::limit ::cycle ::trace]))

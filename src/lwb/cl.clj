@@ -46,12 +46,12 @@
    (let [result (s/valid? :lwb.cl.spec/term term)]
      (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str :lwb.cl.spec/term term))) result)))))
 
-(defn variables 
+(defn variables
   "Set of variables of `term`."
   [term]
   (impl/vars term))
 
-(defn combinators 
+(defn combinators
   "Set of combinators of `term`."
   [term]
   (impl/combs term))
@@ -62,6 +62,12 @@
   (if (symbol? sterm)
     (not= var sterm)
     (every? #(not= var %) (variables sterm))))
+
+(defn size
+  "Size of a term, i.e. the number of combinators and variables"
+  [term]
+  (count (flatten term)))
+
 
 ;; Handling of parentheses ----------------------------------------------------
 
@@ -110,7 +116,8 @@
 (defn comb-concat
   "Concatenation of the given terms."
   [& terms]
-  (min-parens (into [] (reduce concat (map max-parens terms)))))  
+  (min-parens (into [] (reduce concat (map max-parens terms)))))
+
 ;; Definition of combinators --------------------------------------------------
 
 (defn def-combinator
@@ -167,31 +174,58 @@
   ([term comb-key i]
    (one-step-app term comb-key i :exp)))
 
-;; Multi-step reduction -------------------------------------------------------
+;; Weak reduction -------------------------------------------------------------
 
-(defn weak-reduce'
-  "Reduce the `term` using the set `combs` of combinators and the number `limit` of one-step reductions.
-   Returns a map with :cycle false/true, :overrun false/true and :steps with all intermediate terms."
-  [term combs limit]
-  (loop [current-term term
-         result {:steps [term] :cycle false :overrun false}
-         counter 0]
-    (let [found (filter #(not= current-term %) (for [s combs] (one-step-red current-term s)))]
-      (cond (empty? found) result
-            ;; cycle detection
-            (some #(= (first found) %) (:steps result)) (update (assoc result :cycle true) :steps conj (first found))
-            ;; overrun
-            (> counter limit) (update (assoc result :overrun true) :steps conj (first found))
-            :else (recur (first found) (update result :steps conj (first found)) (inc counter))))))
+(comment
+  ;; old version
+  (defn weak-reduce
+    "Reduce the `term` with the given `options`.
+   Default options are: `{:limit 100, :cycle false, :trace false, :timeout 0}` (timeout in secs, 0 = no timeout)
+   Pre: All combinators in `term` are defined.
+   The metadata of the result indicate cycle detection or overrun of the limit of steps."
+    ([term]
+     (weak-reduce term {}))
+    ([term {:keys [limit cycle trace timeout] :or {limit 100 cycle false trace false timeout 0}}]
+     (let [sterm (first (max-parens term))
+           combs (impl/combs-keys term)]
+       (if (every? comb-defined? combs)
+         (let [result (impl/weak-reduce sterm limit cycle trace timeout)]
+           (with-meta (min-parens [(:reduced result)]) result))
+         (throw (ex-error (str "Not all combinators in " term " are defined.")))))))
+  )
+
+(comment
+  (def-combinators-ski)
+  (weak-reduce '[S I I (S I I)] {:trace true :cycle true})
+)
 
 (defn weak-reduce
-  "Reduce the `term` with the 'limit' of one-step reductions.
-  The metadata of the result indicate cycle detection or overrun of the limit of steps."
+  ;; TODO Doku of interface
   ([term]
-   (weak-reduce term 100))
-  ([term limit]
-   (let [result (weak-reduce' term (impl/combs-keys term) limit)]
-     (with-meta (last (:steps result)) {:cycle (:cycle result) :overrun (:overrun result)}))))
+   (weak-reduce term {}))
+  ([term {:keys [algo timeout limit cycle trace]
+          :or   {algo :one-step-red timeout 0 limit 100 cycle false trace false}}]
+   (let [sterm (first (max-parens term))
+         combs (impl/combs-keys term)]
+     (if trace (println (str 0 ": " (min-parens term))))
+     (loop [current-sterm sterm
+            current-combs combs
+            counter 1]
+       (let [result (impl/weak-reduce current-sterm current-combs counter algo timeout limit cycle trace)
+             new-sterm (:reduced result)
+             new-counter (inc (:no-steps result))]
+         (if (or (= new-sterm current-sterm) (> new-counter limit)) ; fix point of limit exceeded
+           (with-meta (min-parens [new-sterm]) result)
+           (recur new-sterm (impl/combs-keys new-sterm) new-counter)))))))
+
+(defn weak-reduce-multi
+  [term]
+    (weak-reduce term {:algo :multi-step-red :timeout 100}))
+
+(comment
+  (def-combinators-ski)
+  (weak-reduce '[S I I (S I I)] {:algo :multi-step-red :trace true :cycle true})
+  )
 
 ;; Bracket abstraction --------------------------------------------------------
 
@@ -202,14 +236,14 @@
 
 (defn curry-naive
   "Curry's algorithm (fab), labeled Primitive Abstraction in the paper of Seldin 2011."
-  [var sterm] ;; sterm is a symbol or a list of (possibly nested) unary applications.
+  [var sterm]                                               ;; sterm is a symbol or a list of (possibly nested) unary applications.
   (cond (= var sterm) 'I
         (symbol? sterm) (list 'K sterm)
         (list? sterm) (list (list 'S (curry-naive var (first sterm))) (curry-naive var (second sterm)))))
 
 (defn curry-weak
   "Curry's algorithm (abf), labeled Weak Abstraction in the paper of Seldin 2011."
-  [var sterm] ;; sterm is a symbol or a list of (possibly nested) unary applications.
+  [var sterm]                                               ;; sterm is a symbol or a list of (possibly nested) unary applications.
   (cond (= var sterm) 'I
         (symbol? sterm) (list 'K sterm)
         (vfree? var sterm) (list 'K sterm)
@@ -217,7 +251,7 @@
 
 (defn curry-eta
   "Curry's algorithm (abcf), labeled η Abstraction in the paper of Seldin 2011."
-  [var sterm] ;; sterm is a symbol or a list of (possibly nested) unary applications.
+  [var sterm]                                               ;; sterm is a symbol or a list of (possibly nested) unary applications.
   (cond (= var sterm) 'I
         (symbol? sterm) (list 'K sterm)
         (vfree? var sterm) (list 'K sterm)

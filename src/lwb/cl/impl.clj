@@ -11,9 +11,11 @@
   (:require [clojure.walk :as walk]
             [clojure.spec.alpha :as s]
             [clojure.core.logic :refer :all]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [lwb.nd.error :refer :all]
+            [clojure.zip :as zip]))
 
-;; Handling of parentheses
+;; Handling of parentheses ----------------------------------------------------
 
 (defn add-parens
   "Adds left-associative parentheses to a seq of symbols or subterms."
@@ -49,14 +51,13 @@
     (walk/postwalk
       #(if (seq? %)
          (let [f (first %)]
-           #_(println %)
            (if (seq? f)
              (concat f (rest %))
              %))
          %)
       seqn)))
 
-;; Logic relation for combinators
+;; Logic relation for combinators ---------------------------------------------
 
 (defn vars
   "The set of variables in `term`."
@@ -100,7 +101,7 @@
                                       (list '== 'term redex-term)
                                       (list '== 'q effect-term)))))
 
-;; Storage for combinators
+;; Storage for combinators ----------------------------------------------------
 
 (def combinator-store
   (atom {}))
@@ -127,7 +128,14 @@
                                  :logic-rel (binding [*ns* (find-ns 'lwb.cl.impl)]
                                               (eval (gen-cl-rel redex effect)))}))))
 
-;; Application of logic relation for one-step expansion or reduction
+(defn get-rule-fn
+  "Get logic function from combinator store."
+  [comb-key]
+  (if-let [f (get-in @combinator-store [comb-key :logic-rel])]
+    f
+    (throw (ex-error (str "Combinator " comb-key " not defined.")))))
+
+;; Application of logic relation for one-step expansion or reduction ----------
 
 (defn apply'
   [rule-fn seqterm mode]
@@ -136,11 +144,146 @@
     (run 1 [q] (rule-fn q seqterm))))
 
 (defn apply*
-  [term rule-fn i mode] ;; pre: term has max parentheses
+  [term rule-fn i mode] ;; Pre: term has max parentheses
   (let [counter (atom 0)]
     (walk/prewalk
       #(let [rep (apply' rule-fn % mode)]
+         ;(println "replace " % " -> " rep)
          (if (and (not (vector? %)) (not-empty rep))
              (if (= i (swap! counter inc)) (first rep) %)
            %))
       term)))
+
+(comment
+  ;; Implementation with walk/prewalk)
+  (defn apply**
+    [sterm comb-key]
+    ;; Pre:  combinator is defined
+    (let [rule-fn (get-in @combinator-store [comb-key :logic-rel])
+          comb (symbol (name comb-key))
+          counter (atom 0)]
+      (walk/prewalk
+        #(let [do? (= comb (first (flatten %)))
+               rep (if do? (apply' rule-fn % :red) ())]
+           (if-let [replace (first rep)]
+             (if (= 1 (swap! counter inc)) replace %)
+             %))
+        sterm)))
+
+  (def apply**m
+    (memoize apply**))
+  )
+
+;; Implementation with zipper
+;; is a bit more performant, but not much :)
+
+(defn apply-z
+  "One-step reduction"
+  [sterm comb-key]
+  (let [rule-fn (get-rule-fn comb-key)
+        comb (symbol (name comb-key))]
+    (loop [loc (zip/seq-zip sterm)]
+      (let [node (zip/node loc)
+            new-node (if (= comb (first (flatten node))) 
+                       (if-let [r (first (apply' rule-fn node :red))] r node)
+                       node)
+            new? (not= new-node node)
+            new-loc (if new?
+                        (zip/replace loc new-node)
+                        loc)
+            new-state (if new? :stop)
+            next-loc (zip/next new-loc)]
+          (if (or (zip/end? loc) (= :stop new-state))
+            (zip/root new-loc)
+            (recur next-loc))))))
+
+(defn apply-z'
+  "Multi-step reduction.
+   Beware of infinite loops!"
+  [sterm comb-key]
+  (let [rule-fn (get-rule-fn comb-key)
+        comb (symbol (name comb-key))]
+    (loop [loc (zip/seq-zip sterm)]
+      (let [node (zip/node loc)
+            new-node (if (= comb (first (flatten node)))
+                       (if-let [r (first (apply' rule-fn node :red))] r node)
+                       node)
+            new? (not= new-node node)
+            new-loc (if new?
+                      (zip/replace loc new-node)
+                      loc)
+            next-loc (zip/next new-loc)]
+        (if (zip/end? next-loc) ;; must be next-loc to prevent a replace at the :end of the zipper!
+          (zip/root new-loc)
+          (recur next-loc))))))
+
+(comment
+  (apply-z' '(((K (K (K I))) ((S B) (K I))) (((K I) ((K (K (K I))) ((S B) (K I)))) ((K ((S B) (K I))) ((S B) (K I))))) :K)
+  (apply-z' '((K (K I)) (I ((S B) (K I)))) :K)
+  (apply-z '((K (K I)) (I ((S B) (K I)))) :K)
+  (apply-z '((K (K I)) (I ((S B) (K I)))) :I)
+  (apply-z '((K (K I)) (I ((S B) (K I)))) :S)
+  (apply-z' '(K I) :K)
+  
+  ;; Ende am Zipper
+  ()
+  ;; weiteres Problem
+  (lwb.cl/def-combinatory-birds)
+  (apply-z '(Y x) :Y)  ; macht nur einen Schritt!!
+  (apply-z' '(Y x) :Y) ; ergibt Endlosschleife, d.h. man muss einen Default timeout einbauen
+  
+                       ; oder? 
+  
+  )
+
+;; Weak reduction -------------------------------------------------------------
+
+(defn vec'
+  [sterm]
+  (if (symbol? sterm) [sterm] (vec sterm)))
+
+(comment
+  ;; old version
+  (defn weak-reduce
+    "Reduce the `sterm` using the set `combs` of combinators "
+    [sterm limit cycle trace timeout]
+    (if trace (println (str 0 ": " (vec' (min-parens-seq sterm)))))
+    (let [steps (atom [])
+          start-time (System/currentTimeMillis)
+          timeouts (* timeout 1000)]
+      (loop [current-sterm sterm
+             result {:reduced sterm :no-steps 0 :cycle :unknown :overrun false}
+             counter 1]
+        (if cycle (swap! steps conj current-sterm))
+        (let [combs (combs-keys [current-sterm])
+              found (first (filter #(not= current-sterm %) (for [s combs] (apply-z' current-sterm s))))]
+          (if (and found trace) (println (str counter ": " (vec' (min-parens-seq found)))))
+          (cond (nil? found) result
+                ;; timeout
+                (and (> timeouts 0) (> (- (System/currentTimeMillis) start-time) timeouts)) (assoc result :reduced found :timeout counter)
+                ;; overrun
+                (> counter limit) (assoc result :reduced found :overrun true)
+                ;; cycle
+                (and cycle (some #(= found %) @steps)) (assoc result :reduced found :cycle true :steps @steps)
+                :else (recur found (assoc result :reduced found :no-steps counter) (inc counter)))))))
+  )
+
+
+(defn weak-reduce
+  "Reduce the `sterm` using the set `combs` of combinators "
+  [sterm combs counter algo timeout limit cycle trace]
+  (let [steps (atom [])
+        algo (if (= algo :one-step-red) apply-z apply-z')]
+    (loop [current-sterm sterm
+           result {:reduced sterm :no-steps 0 :cycle :unknown :overrun false}
+           counter counter]
+      (if cycle (swap! steps conj current-sterm))
+      (let [found (first (filter #(not= current-sterm %) (for [s combs] (algo current-sterm s))))]
+        (if (and found trace) (println (str counter ": " (vec' (min-parens-seq found)))))
+        (cond (nil? found) result
+              ;; overrun
+              (>= counter limit) (assoc result :reduced found :no-steps counter :overrun true)
+              ;; cycle
+              (and cycle (some #(= found %) @steps)) (assoc result :reduced found :cycle true :steps @steps)
+              :else (recur found (assoc result :reduced found :no-steps counter) (inc counter)))))))
+
