@@ -195,10 +195,6 @@
          (throw (ex-error (str "Not all combinators in " term " are defined.")))))))
   )
 
-(comment
-  (def-combinators-ski)
-  (weak-reduce '[S I I (S I I)] {:trace true :cycle true})
-)
 (defmacro with-timeout
   [msec & body]
   `(let [f# (future (do ~@body))
@@ -207,26 +203,46 @@
      (if (= v# result#)
        (do
          (future-cancel f#)
-         (throw (ex-error "Timeout")))
+         (throw (ex-error (str "Timeout after " ~msec " msecs."))))
        result#)))
 
 (defn weak-reduce'
   [term algo limit cycle trace]
-   (let [sterm (first (max-parens term))
-         combs (impl/combs-keys term)]
-     (if trace (println (str 0 ": " (min-parens term))))
-     (loop [current-sterm sterm
-            current-combs combs
-            counter 1]
-       (let [result (impl/weak-reduce current-sterm current-combs counter algo 0 limit cycle trace)
-             new-sterm (:reduced result)
-             new-counter (inc (:no-steps result))]
-         (if (or (= new-sterm current-sterm) (> new-counter limit)) ; fix point of limit exceeded
-           (with-meta (min-parens [new-sterm]) result)
-           (recur new-sterm (impl/combs-keys new-sterm) new-counter))))))
+  (let [sterm (first (max-parens term))
+        combs (impl/combs-keys term)]
+    (if trace (println (str 0 ": " (min-parens term))))
+    (loop [current-sterm sterm
+           current-combs combs
+           counter 1]
+      (let [result (impl/weak-reduce current-sterm current-combs counter algo 0 limit cycle trace)
+            new-sterm (:reduced result)
+            new-counter (inc (:no-steps result))]
+        (if (or (= new-sterm current-sterm) (> new-counter limit)) ; fix point of limit exceeded
+          (with-meta (min-parens [new-sterm]) result)
+          (recur new-sterm (impl/combs-keys new-sterm) new-counter))))))
 
 (defn weak-reduce
-  ;; TODO Doku of interface
+  "Weak reduction of a term.
+   Options {:algo :timeout :limit :cycle :trace}
+   :algo    - which algorithm to use?
+              :one-step-red one-step-reductions (default)
+              :multi-step-reductions all possible reductions with a given combinator as one step
+                       (Caveat: can result in infinite loops)
+   :timeout - stop reduction after <x> msecs, x = 0 means don't stop
+              default: 0
+   :limit   - stop after <x> steps, x = 0 means no limit
+              default: 100
+   :cycle   - detect cycles?
+              default: false
+   :trace   - trace steps
+              default: false.
+   returns the result of the reduction together with a meta data map
+   meta data are
+   :reduced  - reduced term
+   :no-steps - number of steps
+   :cycle    - cycle detected?
+   :steps    - steps performed when cycle detected
+   :overrun  - run over limit?"                             
   ([term]
    (weak-reduce term {}))
   ([term {:keys [algo timeout limit cycle trace]
@@ -236,12 +252,15 @@
      (weak-reduce' term algo limit cycle trace))))
 
 (defn weak-reduce-multi
+  "Does all possible reductions with each combinator as one step.
+   Interface like `weak-reduce`.
+   Defaults: timeout 2000 msec, limit 0"
   ([term]
    (weak-reduce-multi term {}))
   ([term {:keys [timeout limit cycle trace]
-          :or   {timeout 10000 limit false cycle false trace false}
-          :as   options}]
-   (weak-reduce term (merge options {:algo :multi-step-red}))))
+          :or   {timeout 2000 limit 0 cycle false trace false}}]
+   (weak-reduce term {:algo :multi-step-red :timeout timeout :limit limit
+                      :cycle cycle :trace trace})))
 
 (comment
   (def-combinators-ski)

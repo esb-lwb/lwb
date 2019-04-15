@@ -281,9 +281,11 @@
       (let [found (first (filter #(not= current-sterm %) (for [s combs] (algo current-sterm s))))]
         (if (and found trace) (println (str counter ": " (vec' (min-parens-seq found)))))
         (cond (nil? found) result
+              ;; timeout? -> Exception, the result is never returned
+              (.isInterrupted (Thread/currentThread)) (assoc result :result found :timeout true :no-steps counter)
               ;; overrun
-              (>= counter limit) (assoc result :reduced found :no-steps counter :overrun true)
+              (>= counter limit 1) (assoc result :reduced found :no-steps counter :overrun true)
               ;; cycle
-              (and cycle (some #(= found %) @steps)) (assoc result :reduced found :cycle true :steps @steps)
+              (and cycle (some #(= found %) @steps)) (assoc result :reduced found :cycle true :steps @steps :no-steps counter)
               :else (recur found (assoc result :reduced found :no-steps counter) (inc counter)))))))
 
