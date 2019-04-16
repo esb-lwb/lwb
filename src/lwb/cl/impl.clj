@@ -199,7 +199,7 @@
 
 (defn apply-z'
   "Multi-step reduction.
-   Beware of infinite loops!"
+   Beware of infinite loops! Should be called inside `(with-timeout ...)`."
   [sterm comb-key]
   (let [rule-fn (get-rule-fn comb-key)
         comb (symbol (name comb-key))]
@@ -213,28 +213,11 @@
                       (zip/replace loc new-node)
                       loc)
             next-loc (zip/next new-loc)]
-        (if (zip/end? next-loc) ;; must be next-loc to prevent a replace at the :end of the zipper!
-          (zip/root new-loc)
-          (recur next-loc))))))
-
-(comment
-  (apply-z' '(((K (K (K I))) ((S B) (K I))) (((K I) ((K (K (K I))) ((S B) (K I)))) ((K ((S B) (K I))) ((S B) (K I))))) :K)
-  (apply-z' '((K (K I)) (I ((S B) (K I)))) :K)
-  (apply-z '((K (K I)) (I ((S B) (K I)))) :K)
-  (apply-z '((K (K I)) (I ((S B) (K I)))) :I)
-  (apply-z '((K (K I)) (I ((S B) (K I)))) :S)
-  (apply-z' '(K I) :K)
-  
-  ;; Ende am Zipper
-  ()
-  ;; weiteres Problem
-  (lwb.cl/def-combinatory-birds)
-  (apply-z '(Y x) :Y)  ; macht nur einen Schritt!!
-  (apply-z' '(Y x) :Y) ; ergibt Endlosschleife, d.h. man muss einen Default timeout einbauen
-  
-                       ; oder? 
-  
-  )
+        (cond (zip/end? next-loc) ;; must be next-loc to prevent a replace at the :end of the zipper!
+                (zip/root new-loc)
+              ;; timeout? Stops if thread is interruopted
+              (.isInterrupted (Thread/currentThread)) (zip/root new-loc)
+              :else (recur next-loc))))))
 
 ;; Weak reduction -------------------------------------------------------------
 
