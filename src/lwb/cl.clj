@@ -89,17 +89,7 @@
       impl/rm-outer-parens
       vec))
 
-;; Substitution of variables in terms -----------------------------------------
-
-(defn subst
-  "Substitution of variable `var` in `term` by `st`."
-  [term var st]
-  (let [st' (if (= 1 (count st)) (first st) (seq st))]
-    (walk/postwalk
-      #(if (= var %) st' %)
-      term)))
-
-;; Subterms of a term ---------------------------------------------------------
+;; Subterms and substitution --------------------------------------------------
 
 (defn subterms
   "A sequence of a subterms of the given `term`."
@@ -111,6 +101,15 @@
        (map vector)
        (map min-parens)
        distinct))
+
+(defn subst
+  "Substitution of subterm `sterm` in `term` by `term'`."
+  [term sterm term']
+  (let [st (first (max-parens sterm))
+        t' (first (max-parens term'))]
+    (min-parens (walk/postwalk
+                  #(if (= st %) t' %)
+                  term))))
 
 ;; Concatenation of terms -----------------------------------------------------
 
