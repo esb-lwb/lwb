@@ -103,12 +103,12 @@
        distinct))
 
 (defn subst
-  "Substitution of subterm `sterm` in `term` by `term'`."
-  [term sterm term']
-  (let [st (first (max-parens sterm))
-        t' (first (max-parens term'))]
+  "Substitution of subterm `sterm` in `term` by `sterm'`."
+  [term sterm sterm']
+  (let [st  (first (max-parens sterm))
+        st' (first (max-parens sterm'))]
     (min-parens (walk/postwalk
-                  #(if (= st %) t' %)
+                  #(if (= st %) st' %)
                   term))))
 
 ;; Concatenation of terms -----------------------------------------------------
@@ -176,24 +176,6 @@
 
 ;; Weak reduction -------------------------------------------------------------
 
-(comment
-  ;; old version
-  (defn weak-reduce
-    "Reduce the `term` with the given `options`.
-   Default options are: `{:limit 100, :cycle false, :trace false, :timeout 0}` (timeout in secs, 0 = no timeout)
-   Pre: All combinators in `term` are defined.
-   The metadata of the result indicate cycle detection or overrun of the limit of steps."
-    ([term]
-     (weak-reduce term {}))
-    ([term {:keys [limit cycle trace timeout] :or {limit 100 cycle false trace false timeout 0}}]
-     (let [sterm (first (max-parens term))
-           combs (impl/combs-keys term)]
-       (if (every? comb-defined? combs)
-         (let [result (impl/weak-reduce sterm limit cycle trace timeout)]
-           (with-meta (min-parens [(:reduced result)]) result))
-         (throw (ex-error (str "Not all combinators in " term " are defined.")))))))
-  )
-
 (defmacro with-timeout
   [msec & body]
   `(let [f# (future (do ~@body))
@@ -210,13 +192,13 @@
   (let [sterm (first (max-parens term))
         combs (impl/combs-keys term)]
     (if trace (println (str 0 ": " (min-parens term))))
-    (loop [current-sterm sterm
+    (loop [current-sterm sterm     ; we must loop since with improper combinators there mway be new ones in a reduced term
            current-combs combs
            counter 1]
       (let [result (impl/weak-reduce current-sterm current-combs counter algo 0 limit cycle trace)
             new-sterm (:reduced result)
             new-counter (inc (:no-steps result))]
-        (if (or (= new-sterm current-sterm) (> new-counter limit)) ; fix point of limit exceeded
+        (if (or (= new-sterm current-sterm) (> new-counter limit)) ; fix point or limit exceeded
           (with-meta (min-parens [new-sterm]) result)
           (recur new-sterm (impl/combs-keys new-sterm) new-counter))))))
 

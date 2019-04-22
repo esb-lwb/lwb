@@ -112,7 +112,6 @@
       (if (symbol? sterm)
         arity
         (recur (first sterm) (inc arity))))))
-  
 
 ;; Storage for combinators ----------------------------------------------------
 
@@ -149,6 +148,10 @@
     f
     (throw (ex-error (str "Combinator " comb-key " not defined.")))))
 
+(defn get-arity
+  [comb-key]
+  (get-in @combinator-store [comb-key :arity]))
+
 ;; Application of logic relation for one-step expansion or reduction ----------
 
 (defn apply'
@@ -168,46 +171,49 @@
            %))
       term)))
 
-(defn reducible?
-  "Is the given sterm reducblie witn combinator with comb-key?"
-  [sterm comb-key]
-  (let [comb (symbol (name comb-key))
-        arity (get-in @combinator-store [comb-key :arity])]
-    (loop [count 0 st sterm]
-      (cond
-        (= arity count) (if (= st comb) true false) ; test this first!
-        (not (list? st)) false
-        :else (recur (inc count) (first st))))))
+#(defn reducible?
+  "Is the given sterm reducible with combinator comb with arity arity?"
+  [sterm comb arity]
+  (loop [count 0 st sterm]
+    (cond
+      (= arity count) (if (= st comb) true false)           ; test this first!
+      (not (seq? st)) false                                 ; don't test on list? since sterm may be a lazy seq!
+      :else (recur (inc count) (first st)))))
+;; an alternative check: (= comb (first (flatten sterm)))   ; could be even faster, but not so selective
 
 (defn apply-z
   "One-step reduction"
   [sterm comb-key]
   (let [rule-fn (get-rule-fn comb-key)
+        arity (get-arity comb-key)
         comb (symbol (name comb-key))]
     (loop [loc (zip/seq-zip sterm)]
       (let [node (zip/node loc)
-            new-node (if (= comb (first (flatten node))) 
+            ;new-node (if (= comb (first (flatten node))) 
+            new-node (if (reducible? node comb arity)
                        (if-let [r (first (apply' rule-fn node :red))] r node)
                        node)
             new? (not= new-node node)
             new-loc (if new?
-                        (zip/replace loc new-node)
-                        loc)
+                      (zip/replace loc new-node)
+                      loc)
             new-state (if new? :stop)
             next-loc (zip/next new-loc)]
-          (if (or (zip/end? loc) (= :stop new-state))
-            (zip/root new-loc)
-            (recur next-loc))))))
+        (if (or (zip/end? loc) (= :stop new-state))
+          (zip/root new-loc)
+          (recur next-loc))))))
 
 (defn apply-z'
   "Multi-step reduction.
    Beware of infinite loops! Should be called inside `(with-timeout ...)`."
   [sterm comb-key]
   (let [rule-fn (get-rule-fn comb-key)
+        arity (get-arity comb-key)
         comb (symbol (name comb-key))]
     (loop [loc (zip/seq-zip sterm)]
       (let [node (zip/node loc)
-            new-node (if (= comb (first (flatten node)))
+            ;new-node (if (= comb (first (flatten node)))
+            new-node (if (reducible? node comb arity)
                        (if-let [r (first (apply' rule-fn node :red))] r node)
                        node)
             new? (not= new-node node)
