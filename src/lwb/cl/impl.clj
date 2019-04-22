@@ -101,6 +101,19 @@
                                       (list '== 'term redex-term)
                                       (list '== 'q effect-term)))))
 
+;; Arity of combinators -------------------------------------------------------
+
+(defn arity
+  "Arity of redex"
+  [redex]
+  (if (and (= 1 (count redex)) (symbol? (first redex))) ; just one symbol
+    0
+    (loop [sterm (max-parens-seq (seq redex)) arity 0]
+      (if (symbol? sterm)
+        arity
+        (recur (first sterm) (inc arity))))))
+  
+
 ;; Storage for combinators ----------------------------------------------------
 
 (def combinator-store
@@ -125,6 +138,7 @@
     (if (not key) (throw (AssertionError. (str "Redex '" redex "' has no combinator!")))
                   (hash-map key {:redex     redex
                                  :effect    effect
+                                 :arity     (arity redex)
                                  :logic-rel (binding [*ns* (find-ns 'lwb.cl.impl)]
                                               (eval (gen-cl-rel redex effect)))}))))
 
@@ -154,28 +168,16 @@
            %))
       term)))
 
-(comment
-  ;; Implementation with walk/prewalk)
-  (defn apply**
-    [sterm comb-key]
-    ;; Pre:  combinator is defined
-    (let [rule-fn (get-in @combinator-store [comb-key :logic-rel])
-          comb (symbol (name comb-key))
-          counter (atom 0)]
-      (walk/prewalk
-        #(let [do? (= comb (first (flatten %)))
-               rep (if do? (apply' rule-fn % :red) ())]
-           (if-let [replace (first rep)]
-             (if (= 1 (swap! counter inc)) replace %)
-             %))
-        sterm)))
-
-  (def apply**m
-    (memoize apply**))
-  )
-
-;; Implementation with zipper
-;; is a bit more performant, but not much :)
+(defn reducible?
+  "Is the given sterm reducblie witn combinator with comb-key?"
+  [sterm comb-key]
+  (let [comb (symbol (name comb-key))
+        arity (get-in @combinator-store [comb-key :arity])]
+    (loop [count 0 st sterm]
+      (cond
+        (= arity count) (if (= st comb) true false) ; test this first!
+        (not (list? st)) false
+        :else (recur (inc count) (first st))))))
 
 (defn apply-z
   "One-step reduction"
@@ -215,7 +217,7 @@
             next-loc (zip/next new-loc)]
         (cond (zip/end? next-loc) ;; must be next-loc to prevent a replace at the :end of the zipper!
                 (zip/root new-loc)
-              ;; timeout? Stops if thread is interruopted
+              ;; timeout? Stops if thread is interrupted
               (.isInterrupted (Thread/currentThread)) (zip/root new-loc)
               :else (recur next-loc))))))
 
