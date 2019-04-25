@@ -127,7 +127,7 @@
     (if (not (qmsymbol? var))
       (throw (ex-error "The var to be substituted must be of the form `?n``")))
     (let [new (for [line (current-session)]
-                (merge line {:term (subst (:term line) var term)}))]
+                (merge line {:term (subst (:term line) [var] term)}))]
       (reset! session-store (vec new)))
     (show)
     (catch Exception e
