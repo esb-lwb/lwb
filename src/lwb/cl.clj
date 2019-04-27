@@ -133,7 +133,8 @@
 (defn comb-defined?
   "Is combinator with key `comb-key` defined?"
   [comb-key]
-  (seq (filter #(= comb-key %) (keys @impl/combinator-store))))
+  (not (empty? (filter #(= comb-key %) (keys @impl/combinator-store)))))
+
 
 (defn show-combinator
   "Shows combinator with the given `comb-key`."
@@ -188,7 +189,7 @@
          (throw (ex-error (str "Timeout after " ~msec " msecs."))))
        result#)))
 
-(defn weak-reduce'
+(defn- weak-reduce'
   [term limit cycle trace]
   (let [sterm (first (max-parens term))]
     (if trace (println (str 0 ": " (min-parens term))))
@@ -363,7 +364,7 @@
   (def-combinator '[I** a b c] '[a b c])
   ; Warbler Twice Removed W** := [B (B W)]
   (def-combinator '[W** a b c d] '[a b c d d])
-  ; Cardinale Twice Removed C** := [B C*]
+  ; Cardinal Twice Removed C** := [B C*]
   (def-combinator '[C** a b c d e] '[a b c e d])
   ; Robin Twice Removed R** := B R*]
   (def-combinator '[R** a b c d e] '[a b d e c])
@@ -374,6 +375,7 @@
   ; Kite KI := [K I]
   (def-combinator '[KI a b] '[b])
   ; Omega Omega := [M M] TODO: strange bird
+  
   (def-combinator '[KM a b] '[b b])
   ; Crossed Konstant Mocker CKM := [C (K M)]
   (def-combinator '[CKM a b] '[a a])
