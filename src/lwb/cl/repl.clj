@@ -65,7 +65,7 @@
    Modifies: atom `session-store`."
   [given-term]
   (reset-qmno)
-  (let [given {:lno 1, :term (min-parens given-term), :rule [:given]}]
+  (let [given {:lno 0, :term (min-parens given-term), :rule [:given]}]
     (reset! session-store [given])
     (show)))
 
@@ -98,7 +98,7 @@
           new-term (replace-lvars (step-fn current-term comb pos))]
       (if (= new-term current-term)
         (throw (ex-warning (format "Combinator %s has no effect at position %d" comb pos)))
-        (swap! session-store conj {:lno (inc (count (current-session))) :term new-term :rule [step-type comb pos]}))
+        (swap! session-store conj {:lno (count (current-session)) :term new-term :rule [step-type comb pos]}))
       (show))
     (catch Exception e
       (handle-exception e)
