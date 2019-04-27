@@ -28,7 +28,7 @@
   (let [item (find combs-value key)]
     (if item
       (println (print-combs-item item (count (name key))))
-      (println (str "No combinator with key `" key "` defined.")))))
+      (println (str "No combinator with key '" key "' defined.")))))
 
 
   (defn print-combs
