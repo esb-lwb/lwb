@@ -15,7 +15,8 @@
             [lwb.nd.error :refer :all]
             [clojure.zip :as zip]))
 
-;; Handling of parentheses ----------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Handling of parentheses
 
 (defn add-parens
   "Adds left-associative parentheses to a seq of symbols or subterms."
@@ -57,7 +58,8 @@
          %)
       seqn)))
 
-;; Logic relation for combinators ---------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Logic relation for combinators
 
 (defn vars
   "The set of variables in `term`."
@@ -101,7 +103,8 @@
                                       (list '== 'term redex-term)
                                       (list '== 'q effect-term)))))
 
-;; Arity of combinators -------------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Arity of combinators
 
 (defn arity
   "Arity of redex"
@@ -113,7 +116,8 @@
         arity
         (recur (first sterm) (inc arity))))))
 
-;; Storage for combinators ----------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Storage for combinators
 
 (def combinator-store
   (atom {}))
@@ -152,7 +156,8 @@
   [comb-key]
   (get-in @combinator-store [comb-key :arity]))
 
-;; Application of logic relation for one-step expansion or reduction ----------
+; -----------------------------------------------------------------------------
+;; Application of logic relation for one-step expansion or reduction 
 
 (defn apply'
   [rule-fn seqterm mode]
@@ -206,7 +211,8 @@
         (zip/root new-loc)
         (recur next-loc)))))
 
-;; Weak reduction -------------------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Weak reduction
 
 (defn vec'
   [sterm]

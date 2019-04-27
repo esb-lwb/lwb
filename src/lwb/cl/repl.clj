@@ -14,9 +14,10 @@
             [lwb.cl.printer :as printer]
             [lwb.nd.error :refer :all]
             [clojure.walk :as walk]))
-  
 
-;; The global stores for the current session ----------------------------------
+
+; -----------------------------------------------------------------------------
+;; # The global stores for the current session
 
 ;; A session is a vector of lines
 ;; a line is a hash-map with keys :lno line number, :term term [S x y z] e.g. :rule e.g. [:exp :S 1] 
@@ -58,7 +59,8 @@
   [s]
   (and (symbol? s) (re-matches #"\?\d+$" (name s))))
 
-;; Starting a session ----------------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Starting a session
 
 (defn session
   "Starts a new session.     
@@ -69,7 +71,8 @@
     (reset! session-store [given])
     (show)))
 
-;; Doing steps in the session --------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Doing steps in the session
 
 ; helper functions
 (defn- replace-lvars

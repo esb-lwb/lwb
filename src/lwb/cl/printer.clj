@@ -9,7 +9,8 @@
 (ns lwb.cl.printer
   (:require [clojure.string :as str]))
 
-;; printing the defined combinators ---------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Printing the defined combinators
 
 (defn print-combs-item
   [item length-id]
@@ -43,7 +44,8 @@
         (println (print-combs-item item length-id)))
       (println (str "---------------------------" (str/join (repeat length "-")))))))
 
-;; printing the current session --------------------------------------------------
+; -----------------------------------------------------------------------------
+;; Printing the current session 
 
 (defn print-session-line
   [line length]

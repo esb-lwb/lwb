@@ -9,7 +9,8 @@
 (ns lwb.cl.spec
   (:require [clojure.spec.alpha :as s]))
 
-;; Specification of the syntax of combinatory logic
+; -----------------------------------------------------------------------------
+;; # Specification of the syntax of combinatory logic
 
 ;; A combinator is a symbol whose first character is upper case
 (s/def ::combinator (s/and symbol?
@@ -39,10 +40,14 @@
 (s/def ::sterm (s/or :simpl-expr ::simpl-expr
                      :appl-expr ::appl-expr))
 
-;; Specification of options for weak-reduce
+; -----------------------------------------------------------------------------
+;; # Specification of options for weak-reduce
 
 ;; The limit is the maximal number of steps performed in the run of weak-reduce
 (s/def ::limit pos-int?)
+
+;; Timout is the number of milli seconds for the maximal length of a run of weak-reduce
+(s/def ::timeout pos-int?)
 
 ;; The entry for `:cycle` determines whether cycle detection is on or off
 (s/def ::cycle boolean?)
@@ -50,5 +55,5 @@
 ;; the entry for `:trace` determines whether intermediate steps are reported.
 (s/def ::trace boolean?)
 
-;; Options for weak-reduceo
-(s/def ::options (s/keys :req-un [::limit ::cycle ::trace]))
+;; Options for weak-reduce
+(s/def ::options (s/keys :opt-un [::limit ::timeout ::cycle ::trace]))
