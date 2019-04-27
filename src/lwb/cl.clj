@@ -16,9 +16,12 @@
             [clojure.spec.alpha :as s]
             [clojure.walk :as walk]))
 
-;; Syntax ---------------------------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Syntax 
+
 
 ;; Representation of combinatory logic in Clojure:
+
 ;; 1. Combinators are represented by Clojure symbols whose name begins with an upper case letter
 ;; 2. Variables are represented by Clojure symbols whose name begins with a lower case letter
 ;; 3. Application is represented by a Clojure list
@@ -45,7 +48,8 @@
    (wff? term :bool))
   ([term mode]
    (let [result (s/valid? :lwb.cl.spec/term term)]
-     (or result (if (= mode :exception-if-not) (throw (Exception. ^String (s/explain-str :lwb.cl.spec/term term))) result)))))
+     (or result (if (= mode :exception-if-not) 
+                  (throw (Exception. ^String (s/explain-str :lwb.cl.spec/term term))) result)))))
 
 (defn variables
   "Set of variables of `term`."
@@ -69,8 +73,8 @@
   [term]
   (count (flatten term)))
 
-
-;; Handling of parentheses ----------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Handling of parentheses 
 
 (defn max-parens
   "Adds parentheses according to left associative binding of application"
@@ -89,7 +93,8 @@
       impl/rm-outer-parens
       vec))
 
-;; Subterms and substitution --------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Subterms and substitution 
 
 (defn subterms
   "A sequence of a subterms of the given `term`."
@@ -113,14 +118,16 @@
                   t)))))
 (subst '[x] '[t] '[s])
 
-;; Concatenation of terms -----------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Concatenation of terms 
 
 (defn comb-concat
   "Concatenation of the given terms."
   [& terms]
   (min-parens (vec (reduce concat (map max-parens terms)))))
 
-;; Definition of combinators --------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Definition of combinators 
 
 (defn def-combinator
   "Defines and registers combinator in the global storage.
@@ -152,7 +159,8 @@
   []
   (reset! impl/combinator-store {}))
 
-;; One-step reduction and expansion of combinator -----------------------------
+; -----------------------------------------------------------------------------
+;; # One-step reduction and expansion of combinator 
 
 (defn- one-step-app
   "Wrapper for `reduce` and `expand`."
@@ -177,7 +185,8 @@
   ([term comb-key i]
    (one-step-app term comb-key i :exp)))
 
-;; Weak reduction -------------------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Weak reduction 
 
 (defmacro with-timeout
   [msec & body]
@@ -224,23 +233,27 @@
      (with-timeout timeout (weak-reduce' term limit cycle trace))
      (weak-reduce' term limit cycle trace))))
 
-;; Bracket abstraction --------------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Bracket abstraction 
 
-;; See Jonathan P. Seldin: The search for a reduction in combinatory logic equivalent to λβ-reduction,
+;; See 
+;; 
+;; - Jonathan P. Seldin: The search for a reduction in combinatory logic equivalent to λβ-reduction,
 ;; in: Theoretical Computer Science 412 (2011), 4905-4918
-;; and
-;; Haskell B. Curry and Robert Feys: Combinatory Logic I, Amsterdam 1958
+;; - Haskell B. Curry and Robert Feys: Combinatory Logic I, Amsterdam 1958
 
 (defn curry-naive
   "Curry's algorithm (fab), labeled Primitive Abstraction in the paper of Seldin 2011."
-  [var sterm]                                               ;; sterm is a symbol or a list of (possibly nested) unary applications.
+  [var sterm]                                               
+  ;; sterm is a symbol or a list of (possibly nested) unary applications.
   (cond (= var sterm) 'I
         (symbol? sterm) (list 'K sterm)
         (list? sterm) (list (list 'S (curry-naive var (first sterm))) (curry-naive var (second sterm)))))
 
 (defn curry-weak
   "Curry's algorithm (abf), labeled Weak Abstraction in the paper of Seldin 2011."
-  [var sterm]                                               ;; sterm is a symbol or a list of (possibly nested) unary applications.
+  [var sterm]                                               
+  ;; sterm is a symbol or a list of (possibly nested) unary applications.
   (cond (= var sterm) 'I
         (symbol? sterm) (list 'K sterm)
         (vfree? var sterm) (list 'K sterm)
@@ -248,7 +261,8 @@
 
 (defn curry-eta
   "Curry's algorithm (abcf), labeled η Abstraction in the paper of Seldin 2011."
-  [var sterm]                                               ;; sterm is a symbol or a list of (possibly nested) unary applications.
+  [var sterm]                                               
+  ;; sterm is a symbol or a list of (possibly nested) unary applications.
   (cond (= var sterm) 'I
         (symbol? sterm) (list 'K sterm)
         (vfree? var sterm) (list 'K sterm)
@@ -270,7 +284,8 @@
                     (recur (rest args) (algo (first args) result))))]
      (min-parens (list result)))))
 
-;; Collections of combinators -------------------------------------------------
+; -----------------------------------------------------------------------------
+;; # Collections of combinators 
 
 (defn def-combinators-ski
   "Defines the combinators `:S, :K, :I`."
