@@ -2883,7 +2883,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn reset-plid
   []
   (reset! plid 0))</pre></td></tr><tr><td class="docs"><p>Some rules generate new logical variables, e.g. new atomic propositions
-They get new names beginning with the letter <code>V</code> and follwed by a unique number.</p>
+They get new names beginning with the letter <code>?</code> and follwed by a unique number.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Caveat: Don't use this naming convention for propositions in formulas.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Global counter for the numbers of new question marks.</p>
 </td><td class="codes"><pre class="brush: clojure">(def qmno
@@ -2894,7 +2894,7 @@ They get new names beginning with the letter <code>V</code> and follwed by a uni
   (symbol (str \? (swap! qmno inc))))</pre></td></tr><tr><td class="docs"><p>Resets global <code>qmno</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn reset-qmno
   []
-  (reset! qmno 0))</pre></td></tr><tr><td class="docs"><p>Is <code>s</code> a symbol of the form <code>Vn</code>?</p>
+  (reset! qmno 0))</pre></td></tr><tr><td class="docs"><p>Is <code>s</code> a symbol of the form <code>?n</code>?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn qmsymbol?
   [s]
   (and (symbol? s) (re-matches #&quot;\?\d+$&quot; (name s))))</pre></td></tr><tr><td class="docs"><h2>Creating  new proofs</h2>

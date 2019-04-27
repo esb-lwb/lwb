@@ -2874,8 +2874,8 @@ net.brehaut.ClojureTools = (function (SH) {
             [lwb.nd.prereqs :as prereqs]                    ; unused alias, but needed for potemkin
             [lwb.nd.rules :refer [roths reset-roths]]
             [lwb.nd.io :as io]
-            [lwb.nd.printer :as printer])
-  (:import (clojure.lang ExceptionInfo)))</pre></td></tr><tr><td class="docs"><p>Manual</p>
+            [lwb.nd.error :refer :all]
+            [lwb.nd.printer :as printer]))</pre></td></tr><tr><td class="docs"><p>Manual</p>
 </td><td class="codes"><pre class="brush: clojure">(defn man
   []
   (clojure.java.browse/browse-url &quot;https://github.com/esb-dev/lwb/wiki/nd&quot;))</pre></td></tr><tr><td class="docs"><p>Path to the files for rules and theorems as resources</p>
@@ -2919,8 +2919,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(comment
   (load-logic :prop)
   (load-logic :pred)
-  (load-logic :ltl)
-  )</pre></td></tr><tr><td class="docs"><h2>Atoms that hold the state of the proof session</h2>
+  (load-logic :ltl))</pre></td></tr><tr><td class="docs"><h2>Atoms that hold the state of the proof session</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Atom that holds the current proof.</p>
 </td><td class="codes"><pre class="brush: clojure">(def p
   (atom []))</pre></td></tr><tr><td class="docs"><p>Atom that holds the history of the proof as a vector, provided for undo steps.</p>
@@ -2943,15 +2942,7 @@ net.brehaut.ClojureTools = (function (SH) {
    (show)
    (if (empty? @roths)
      (println &quot;[lwb] Info: There are no rules available, please load a logic with load-logic.&quot;))))</pre></td></tr><tr><td class="docs"><h2>Functions that perform steps in proving a conclusion</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Prints message according to type of exception. <br />
-   Requires: throwing <code>ex-info</code>s in lwb.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- handle-exception
-  [e]
-  (if
-    (instance? ExceptionInfo e)
-    (let [type (if (= (-&gt; e ex-data :type) :error) &quot;Error: &quot; &quot;Warning: &quot;)]
-        (println (str &quot;[lwb] &quot; type (.getMessage e))))
-    (println (str &quot;Exception: &quot; (.getMessage e)))))</pre></td></tr><tr><td class="docs"><p>Execute a forward step. <br />
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Execute a forward step. <br />
    Modifies: atom <code>p</code>, the proof, and <br />
              atom <code>p-history</code>, the history of the current proof.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn step-f
@@ -2982,7 +2973,7 @@ net.brehaut.ClojureTools = (function (SH) {
   ([old new]
    (swap old new :unchecked))
   ([old new mode]
-  (try
+   (try
     (let [proof' (deduc/swap @p (:logic (meta #'roths)) old new mode)]
       (swap! p-history conj @p)
       (reset! p proof')
@@ -3050,7 +3041,7 @@ generic solution possible.</p>
    compile the tex code and open to the generated file.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify
   ([] (printer/texify @p))
-   ([filename] (printer/texify @p filename)))</pre></td></tr><tr><td class="docs"><h2>Function that loads the current proof into the storage of rohts for the current session</h2>
+  ([filename] (printer/texify @p filename)))</pre></td></tr><tr><td class="docs"><h2>Function that loads the current proof into the storage of rohts for the current session</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Load proved theorem from the current proof into the theorem storage. <br />
    Requires: theorem is proved and the <code>id</code> is fresh.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn load-theorem

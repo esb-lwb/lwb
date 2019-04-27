@@ -2915,7 +2915,7 @@ In other words: In the substitution of <code>var</code> by <code>t</code> no var
     (not-any? true? (flatten (map #(scope? %1 paths) tvars)))))</pre></td></tr><tr><td class="docs"><h2>Substitution</h2>
 
 <p>A variable <code>var</code> can be substituted by a term <code>t</code>, iff the term is free for the variable.</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Substitution of variable <code>var</code> by term <code>t</code> in formaula <code>phi</code>.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Substitution of variable <code>var</code> by term <code>t</code> in formula <code>phi</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn substitution
   [phi var t]
   (if (not (freefor? phi var t))

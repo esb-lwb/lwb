@@ -2883,7 +2883,7 @@ but also lwb.ltl in which the macros <code>impl</code> etc are defined</p>
     phi
     (let [op (first phi)]
       (if (contains? #{'ite 'equiv 'xor} op)
-        (let [exp-phi (macroexpand-1 phi)]
+        (let [exp-phi (binding [*ns* (find-ns 'lwb.prop)] (macroexpand-1 phi))]
           (apply list (first exp-phi) (map norm-ltl (rest exp-phi))))
         (apply list op (map norm-ltl (rest phi)))))))</pre></td></tr><tr><td class="docs"><p>For <code>ltl2buchi</code> the operators <code>and</code> and <code>or</code> have to be binary.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Makes n formula <code>phi</code> the nary <code>and</code> and <code>or</code> binary.</p>

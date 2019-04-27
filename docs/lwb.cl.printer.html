@@ -2865,143 +2865,50 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.pred.sat" name="lwb.pred.sat"><h1 class="project-name">lwb.pred.sat</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns lwb.pred.sat
-  (:require [lwb.pred :refer :all]
-            [lwb.pred.kic :as kic]))</pre></td></tr><tr><td class="docs"><p>Map of symbols for predicates, propositions, functions and consts and 
-  their corresponding Kodkod relations from the given signature. <br />
-  During the function the bounds for the Kodkod relation are set as well.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sig-&gt;relations
-  [sig factory bounds]
-  (let [mapfn (fn [[key [type arity]]]
-                (cond
-                  (and (= type :func) (zero? arity)) (kic/make-const key factory bounds)
-                  (and (= type :func) (pos? arity)) (kic/make-func key arity factory bounds)
-                  (and (= type :pred) (pos? arity)) (kic/make-pred key arity factory bounds)
-                  (and (= type :pred) (zero? arity)) (kic/make-prop key factory bounds) ))]
-    (into {} (map mapfn sig))))</pre></td></tr><tr><td class="docs"><p>Generates a Kodkod formula expressing that the relation with the given <code>key</code>
-  is actually a function.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn func-&gt;constraint
-  [key arity rels]
-  (let [vars (vec (map #(kic/variable (str &quot;v&quot; %)) (range 1 (inc arity))))
-        func ((symbol (name key)) rels)
-        part (loop [v vars result func]
-          (cond (empty? v) (kic/one result)
-            :else (recur (rest v) (kic/join (first v) result))))]
-    (kic/forall vars part) ))</pre></td></tr><tr><td class="docs"><p>Vector of Kodkod formulas comprising the constraints for functions
-   in the given signature <code>sig</code> and the map of relations <code>rels</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sig-&gt;constraints
-  [sig rels]
-  (let [mapfn (fn [[key [type arity]]]
-                (if (and (= type :func) (pos? arity)) (func-&gt;constraint key arity rels)))]
-    (vec (keep identity (map mapfn sig)))))</pre></td></tr><tr><td class="docs"><p>Generates a Kodkod formula expressing that the relation with the given <code>key</code>
-  is actually a true proposition, i.e. has exactly one tuple.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn prop-&gt;fml
-  [key rels]
-  (let [r ((symbol (name key)) rels)]
-    (kic/one r) ))</pre></td></tr><tr><td class="docs"><p>Map of symbols to Kodkod variables.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn vars-&gt;varmap
-  [vars]
-  (zipmap vars (map kic/variable vars)))</pre></td></tr><tr><td class="docs"><p>Kodkod expression representing the given expression of a phi.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn term-&gt;expression
-  [term sig env rels]
-  (if (or (symbol? term) (keyword? term) (int? term))
-    (cond
-      (logvar? term sig) (term env)
-      (func-0? term sig) (term rels)
-      (const? term) ((symbol (name term)) rels))
-    ;; funcs
-    (cond
-      (func? (first term) sig)
-      (let [func ((first term) rels)
-            args (vec (map #(term-&gt;expression % sig env rels) (rest term)))]
-        (loop [v args result func]
-          (cond (empty? v) result
-                :else (recur (rest v) (kic/join (first v) result))))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def ^:private kic-ops
-  {'not   kic/not
-   'and   kic/and
-   'or    kic/or
-   'impl  kic/impl
-   'equiv kic/equiv
-   'xor   kic/xor
-   'ite   kic/ite})</pre></td></tr><tr><td class="docs"><p>Kodkod formula representing the given formula <code>phi</code> of predicate
-  logic. <br />
-  All variables of <code>phi</code> must be bound. <br />
-  <code>sig</code> is the signature for <code>phi</code>. <br />
-  <code>env</code> is the environment i.e. map of variables for <code>phi</code>. <br />
-  <code>rels</code> is the map of the Kodkod relations from the signature of <code>phi</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn phi-&gt;formula
-  [phi sig env rels]
-  (if (or (symbol? phi) (keyword? phi) (int? phi)) ;; leaf
-    (cond
-      (prop? phi sig) (kic/one (phi rels)) )
-      ;; list
-    (cond
-      ;; operators
-      (op? (first phi)) (let [args (vec (map #(phi-&gt;formula % sig env rels) (rest phi)))] (apply ((first phi) kic-ops) args))
-      ;; quantors
-      (quantor? (first phi))
-      (let [kic-quant (if (= 'forall (first phi)) kic/forall kic/exists)
-            varmap (vars-&gt;varmap (second phi))
-            env' (merge env varmap)]
-            (kic-quant (vec (vals varmap)) (phi-&gt;formula (nth phi 2) sig env' rels)))
-      ;; equality
-      (= (first phi) '=) (kic/eq (term-&gt;expression (second phi) sig env rels) (term-&gt;expression (nth phi 2) sig env rels))
-      ;; predicates
-      :else (let [pred ((first phi) rels)
-                  terms (vec (map #(term-&gt;expression % sig env rels) (rest phi)))]
-              (kic/in (apply kic/product terms) pred)) )))</pre></td></tr><tr><td class="docs"><p>Implementation of sat.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sat-intern
-  [phi sig set mode]
-  (let [universe (kic/universe set)
-        factory (kic/factory universe)
-        bounds (kic/bounds universe)
-        rels (sig-&gt;relations sig factory bounds)
-        cons (sig-&gt;constraints sig rels)
-        phi'  (phi-&gt;formula phi sig {} rels)
-        fmls (conj cons phi')
-        fml (apply kic/and fmls)]
-    (if (= mode :one)
-      (let [sol (kic/solve fml bounds)]
-        (kic/model universe sol))
-      (let [sols (kic/solve-all fml bounds)]
-        (seq (apply hash-set (keep identity (map #(kic/model universe %) sols))))))))</pre></td></tr><tr><td class="docs"><p>Set of consts in signature. <br />
-   `[:func 0]' are consts in kodkod.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sig-&gt;consts
-  [sig]
-  (set (map key (filter #(= [:func 0] (val %)) sig))))</pre></td></tr><tr><td class="docs"><p>Fills the given set with keywords <code>:e1, :e2...</code> until <code>size</code> is reached.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn fill-up
-  [set size]
-  (loop [s set, i 1]
-    (if (= (count s) size) s
-                           (recur (conj s (keyword (str &quot;e&quot; i))) (inc i)))))</pre></td></tr><tr><td class="docs"><p>Satisfiability of a formula of the predicate logic in a finite universe. <br />
-  The one variant of the functions just gives the size of the universe, the
-  other an explicit vector with the elements of the universe.</p>
-</td><td class="codes"><pre class="brush: clojure">(defmulti sat
-  (fn [_ _ utype &amp; _]
-    (if (integer? utype) :int
-                         (when (set? utype) :set))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod sat :int
-  ([phi sig usize]
-    (sat phi sig usize :one))
-  ([phi sig usize mode]
-    (let [consts (sig-&gt;consts sig)
-          ssize (count consts)]
-      (if (&lt; usize ssize)
-        (throw (Exception. &quot;usize must be &gt;= number of unary functions in the signature.&quot;)))
-        (sat-intern phi sig (fill-up consts usize) mode))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod sat :set
-  ([phi sig set]
-    (sat phi sig set :one))
-  ([phi sig set mode]
-    (sat-intern phi sig set mode)))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sat?
-  [phi sig usize]
-  (if (nil? (sat phi sig usize)) false true))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> valid?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn valid?
-  [phi sig usize]
-  (not (sat? (list 'not phi) sig usize)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.cl.printer" name="lwb.cl.printer"><h1 class="project-name">lwb.cl.printer</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns lwb.cl.printer
+  (:require [clojure.string :as str]))</pre></td></tr><tr><td class="docs"><h1>Printing the defined combinators</h1>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn print-combs-item
+  [item length-id]
+  (format (str &quot;%-&quot; length-id &quot;s := %s -&gt; %s&quot;) (name (key item)) (:redex (val item)) (:effect (val item))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn length-item
+  [combs-value]
+  (let [r-length
+        (-&gt;&gt; combs-value vals (map #(count (str (:redex %)))) (apply max))
+        e-length
+        (-&gt;&gt; combs-value vals (map #(count (str (:effect %)))) (apply max))]
+    (+ r-length e-length)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn print-comb
+  [key combs-value]
+  (let [item (find combs-value key)]
+    (if item
+      (println (print-combs-item item (count (name key))))
+      (println (str &quot;No combinator with key '&quot; key &quot;' defined.&quot;)))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">  (defn print-combs
+  [combs-value]
+  (if (empty? combs-value)
+    (println &quot;There are no combinators defined yet!&quot;)
+    (let [length-id (apply max (map #(count (str %)) (keys combs-value)))
+          length-item (length-item combs-value)
+          length (- (+ 2 length-id length-item) (count &quot;Defined combinators&quot;))]
+      (println (str &quot;--- Defined combinators ---&quot; (str/join (repeat length &quot;-&quot;))))
+      (doseq [item combs-value]
+        (println (print-combs-item item length-id)))
+      (println (str &quot;---------------------------&quot; (str/join (repeat length &quot;-&quot;)))))))</pre></td></tr><tr><td class="docs"><p>Printing the current session </p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn print-session-line
+  [line length]
+  (format (str &quot;%5d: %-&quot; length &quot;s %s&quot;) (:lno line) (:term line) (:rule line)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn print-session
+  [session-store-val]
+  (if (empty? session-store-val)
+    (println &quot;There is no current session!\nUse (session term) to start one.&quot;)
+    (let [length (inc (apply max (map #(count (str (:term %))) session-store-val)))]
+      (println (str &quot;--- Current session -&quot; (str/join (repeat length &quot;-&quot;))))
+      (doseq [line session-store-val]
+        (println (print-session-line line length)))
+      (println (str &quot;---------------------&quot; (str/join (repeat length &quot;-&quot;)))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

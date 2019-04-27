@@ -2865,143 +2865,325 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.pred.sat" name="lwb.pred.sat"><h1 class="project-name">lwb.pred.sat</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns lwb.pred.sat
-  (:require [lwb.pred :refer :all]
-            [lwb.pred.kic :as kic]))</pre></td></tr><tr><td class="docs"><p>Map of symbols for predicates, propositions, functions and consts and 
-  their corresponding Kodkod relations from the given signature. <br />
-  During the function the bounds for the Kodkod relation are set as well.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sig-&gt;relations
-  [sig factory bounds]
-  (let [mapfn (fn [[key [type arity]]]
-                (cond
-                  (and (= type :func) (zero? arity)) (kic/make-const key factory bounds)
-                  (and (= type :func) (pos? arity)) (kic/make-func key arity factory bounds)
-                  (and (= type :pred) (pos? arity)) (kic/make-pred key arity factory bounds)
-                  (and (= type :pred) (zero? arity)) (kic/make-prop key factory bounds) ))]
-    (into {} (map mapfn sig))))</pre></td></tr><tr><td class="docs"><p>Generates a Kodkod formula expressing that the relation with the given <code>key</code>
-  is actually a function.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn func-&gt;constraint
-  [key arity rels]
-  (let [vars (vec (map #(kic/variable (str &quot;v&quot; %)) (range 1 (inc arity))))
-        func ((symbol (name key)) rels)
-        part (loop [v vars result func]
-          (cond (empty? v) (kic/one result)
-            :else (recur (rest v) (kic/join (first v) result))))]
-    (kic/forall vars part) ))</pre></td></tr><tr><td class="docs"><p>Vector of Kodkod formulas comprising the constraints for functions
-   in the given signature <code>sig</code> and the map of relations <code>rels</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sig-&gt;constraints
-  [sig rels]
-  (let [mapfn (fn [[key [type arity]]]
-                (if (and (= type :func) (pos? arity)) (func-&gt;constraint key arity rels)))]
-    (vec (keep identity (map mapfn sig)))))</pre></td></tr><tr><td class="docs"><p>Generates a Kodkod formula expressing that the relation with the given <code>key</code>
-  is actually a true proposition, i.e. has exactly one tuple.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn prop-&gt;fml
-  [key rels]
-  (let [r ((symbol (name key)) rels)]
-    (kic/one r) ))</pre></td></tr><tr><td class="docs"><p>Map of symbols to Kodkod variables.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn vars-&gt;varmap
-  [vars]
-  (zipmap vars (map kic/variable vars)))</pre></td></tr><tr><td class="docs"><p>Kodkod expression representing the given expression of a phi.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn term-&gt;expression
-  [term sig env rels]
-  (if (or (symbol? term) (keyword? term) (int? term))
-    (cond
-      (logvar? term sig) (term env)
-      (func-0? term sig) (term rels)
-      (const? term) ((symbol (name term)) rels))
-    ;; funcs
-    (cond
-      (func? (first term) sig)
-      (let [func ((first term) rels)
-            args (vec (map #(term-&gt;expression % sig env rels) (rest term)))]
-        (loop [v args result func]
-          (cond (empty? v) result
-                :else (recur (rest v) (kic/join (first v) result))))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def ^:private kic-ops
-  {'not   kic/not
-   'and   kic/and
-   'or    kic/or
-   'impl  kic/impl
-   'equiv kic/equiv
-   'xor   kic/xor
-   'ite   kic/ite})</pre></td></tr><tr><td class="docs"><p>Kodkod formula representing the given formula <code>phi</code> of predicate
-  logic. <br />
-  All variables of <code>phi</code> must be bound. <br />
-  <code>sig</code> is the signature for <code>phi</code>. <br />
-  <code>env</code> is the environment i.e. map of variables for <code>phi</code>. <br />
-  <code>rels</code> is the map of the Kodkod relations from the signature of <code>phi</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn phi-&gt;formula
-  [phi sig env rels]
-  (if (or (symbol? phi) (keyword? phi) (int? phi)) ;; leaf
-    (cond
-      (prop? phi sig) (kic/one (phi rels)) )
-      ;; list
-    (cond
-      ;; operators
-      (op? (first phi)) (let [args (vec (map #(phi-&gt;formula % sig env rels) (rest phi)))] (apply ((first phi) kic-ops) args))
-      ;; quantors
-      (quantor? (first phi))
-      (let [kic-quant (if (= 'forall (first phi)) kic/forall kic/exists)
-            varmap (vars-&gt;varmap (second phi))
-            env' (merge env varmap)]
-            (kic-quant (vec (vals varmap)) (phi-&gt;formula (nth phi 2) sig env' rels)))
-      ;; equality
-      (= (first phi) '=) (kic/eq (term-&gt;expression (second phi) sig env rels) (term-&gt;expression (nth phi 2) sig env rels))
-      ;; predicates
-      :else (let [pred ((first phi) rels)
-                  terms (vec (map #(term-&gt;expression % sig env rels) (rest phi)))]
-              (kic/in (apply kic/product terms) pred)) )))</pre></td></tr><tr><td class="docs"><p>Implementation of sat.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sat-intern
-  [phi sig set mode]
-  (let [universe (kic/universe set)
-        factory (kic/factory universe)
-        bounds (kic/bounds universe)
-        rels (sig-&gt;relations sig factory bounds)
-        cons (sig-&gt;constraints sig rels)
-        phi'  (phi-&gt;formula phi sig {} rels)
-        fmls (conj cons phi')
-        fml (apply kic/and fmls)]
-    (if (= mode :one)
-      (let [sol (kic/solve fml bounds)]
-        (kic/model universe sol))
-      (let [sols (kic/solve-all fml bounds)]
-        (seq (apply hash-set (keep identity (map #(kic/model universe %) sols))))))))</pre></td></tr><tr><td class="docs"><p>Set of consts in signature. <br />
-   `[:func 0]' are consts in kodkod.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sig-&gt;consts
-  [sig]
-  (set (map key (filter #(= [:func 0] (val %)) sig))))</pre></td></tr><tr><td class="docs"><p>Fills the given set with keywords <code>:e1, :e2...</code> until <code>size</code> is reached.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn fill-up
-  [set size]
-  (loop [s set, i 1]
-    (if (= (count s) size) s
-                           (recur (conj s (keyword (str &quot;e&quot; i))) (inc i)))))</pre></td></tr><tr><td class="docs"><p>Satisfiability of a formula of the predicate logic in a finite universe. <br />
-  The one variant of the functions just gives the size of the universe, the
-  other an explicit vector with the elements of the universe.</p>
-</td><td class="codes"><pre class="brush: clojure">(defmulti sat
-  (fn [_ _ utype &amp; _]
-    (if (integer? utype) :int
-                         (when (set? utype) :set))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod sat :int
-  ([phi sig usize]
-    (sat phi sig usize :one))
-  ([phi sig usize mode]
-    (let [consts (sig-&gt;consts sig)
-          ssize (count consts)]
-      (if (&lt; usize ssize)
-        (throw (Exception. &quot;usize must be &gt;= number of unary functions in the signature.&quot;)))
-        (sat-intern phi sig (fill-up consts usize) mode))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod sat :set
-  ([phi sig set]
-    (sat phi sig set :one))
-  ([phi sig set mode]
-    (sat-intern phi sig set mode)))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sat?
-  [phi sig usize]
-  (if (nil? (sat phi sig usize)) false true))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> valid?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn valid?
-  [phi sig usize]
-  (not (sat? (list 'not phi) sig usize)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.cl" name="lwb.cl"><h1 class="project-name">lwb.cl</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns lwb.cl
+  (:refer-clojure :exclude [==])
+  (:require [lwb.cl.impl :as impl]
+            [lwb.cl.printer :as printer]
+            [lwb.cl.spec :as spec]
+            [lwb.nd.error :refer :all]
+            [clojure.core.logic :refer :all]
+            [clojure.spec.alpha :as s]
+            [clojure.walk :as walk]))</pre></td></tr><tr><td class="docs"><h1>Syntax</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Representation of combinatory logic in Clojure:</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><ol>
+<li>Combinators are represented by Clojure symbols whose name begins with an upper case letter</li>
+<li>Variables are represented by Clojure symbols whose name begins with a lower case letter</li>
+<li>Application is represented by a Clojure list</li>
+<li>A term is represented as a Clojure vector. It may have all parentheses or they are omitted 
+from the left-associated application. The outermost parentheses may be omitted too.
+A sterm is a symbol i.e. a variable or a combinator or a nested list of applications.</li>
+</ol>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Is <code>symbol</code> a symbol for a combinator?
+   Caveat: That does not imply the the combinator is actually defined.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn combinator?
+  [symb]
+  (s/valid? :lwb.cl.spec/combinator symb))</pre></td></tr><tr><td class="docs"><p>Is <code>symbol</code> a symbol for a variable?.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn variable?
+  [symb]
+  (s/valid? :lwb.cl.spec/variable symb))</pre></td></tr><tr><td class="docs"><p>Is <code>term</code> a well formed term of combinatory logic?
+   <code>(wff? term)</code> returns true or false.
+   <code>(wff? phi :exception-if-not)</code> returns true or throws an exception describing the error in <code>phi</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn wff?
+  ([term]
+   (wff? term :bool))
+  ([term mode]
+   (let [result (s/valid? :lwb.cl.spec/term term)]
+     (or result (if (= mode :exception-if-not) 
+                  (throw (Exception. ^String (s/explain-str :lwb.cl.spec/term term))) result)))))</pre></td></tr><tr><td class="docs"><p>Set of variables of <code>term</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn variables
+  [term]
+  (impl/vars term))</pre></td></tr><tr><td class="docs"><p>Set of combinators of <code>term</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn combinators
+  [term]
+  (impl/combs term))</pre></td></tr><tr><td class="docs"><p>Does <code>sterm</code> not have <code>var</code> as a variable?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn vfree?
+  [var sterm]
+  (if (symbol? sterm)
+    (not= var sterm)
+    (every? #(not= var %) (variables sterm))))</pre></td></tr><tr><td class="docs"><p>Size of a term, i.e. the number of combinators and variables</p>
+</td><td class="codes"><pre class="brush: clojure">(defn size
+  [term]
+  (count (flatten term)))</pre></td></tr><tr><td class="docs"><h1>Handling of parentheses</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Adds parentheses according to left associative binding of application</p>
+</td><td class="codes"><pre class="brush: clojure">(defn max-parens
+  [term]
+  (let [seq (impl/max-parens-seq (seq term))]
+    (if (= 1 (count seq))
+      (vec seq)
+      (vec (list seq)))))</pre></td></tr><tr><td class="docs"><p>Removes unnecessary parenthesis according to left associative binding of application.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn min-parens
+  [term]
+  (-&gt; term
+      seq
+      impl/min-parens-seq
+      impl/rm-outer-parens
+      vec))</pre></td></tr><tr><td class="docs"><h1>Subterms and substitution</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>A sequence of a subterms of the given <code>term</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn subterms
+  [term]
+  (-&gt;&gt; term
+       (max-parens)
+       seq
+       (tree-seq seq? identity)
+       (map vector)
+       (map min-parens)
+       distinct))</pre></td></tr><tr><td class="docs"><p>Substitution of subterm <code>subterm</code> in <code>term</code> by <code>subterm'</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn subst
+  [term subterm subterm']
+  (let [t   (first (max-parens term))
+        st  (first (max-parens subterm))
+        st' (first (max-parens subterm'))]
+    (min-parens (vector (walk/postwalk
+                  #(if (= st %) st' %)
+                  t)))))
+(subst '[x] '[t] '[s])</pre></td></tr><tr><td class="docs"><h1>Concatenation of terms</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Concatenation of the given terms.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn comb-concat
+  [&amp; terms]
+  (min-parens (vec (reduce concat (map max-parens terms)))))</pre></td></tr><tr><td class="docs"><h1>Definition of combinators</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Defines and registers combinator in the global storage.
+   Combinators are identified by a keyword build from the name of the combinator.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn def-combinator
+  [redex effect]
+  (let [r (min-parens redex)
+        e (min-parens effect)]
+    (swap! impl/combinator-store merge (impl/make-comb r e))
+    true))</pre></td></tr><tr><td class="docs"><p>Is combinator with key <code>comb-key</code> defined?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn comb-defined?
+  [comb-key]
+  (not (empty? (filter #(= comb-key %) (keys @impl/combinator-store)))))</pre></td></tr><tr><td class="docs"><p>Shows combinator with the given <code>comb-key</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn show-combinator
+  [comb-key]
+  (printer/print-comb comb-key @impl/combinator-store))</pre></td></tr><tr><td class="docs"><p>Shows the currently defined combinators.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn show-combinators
+  []
+  (printer/print-combs (sort @impl/combinator-store)))</pre></td></tr><tr><td class="docs"><p>Undefines all combinators.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn reset-combinators
+  []
+  (reset! impl/combinator-store {}))</pre></td></tr><tr><td class="docs"><h1>One-step reduction and expansion of combinator</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Wrapper for <code>reduce</code> and <code>expand</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- one-step-app
+  [term comb-key i mode]
+  (if (comb-defined? comb-key)
+    (let [t (max-parens term)
+          f (get-in @impl/combinator-store [comb-key :logic-rel])]
+      (min-parens (impl/apply* t f i mode)))
+    (throw (AssertionError. (str &quot;Combinator &quot; comb-key &quot; not defined.&quot;)))))</pre></td></tr><tr><td class="docs"><p>Reduces the given <code>term</code> by applying the combinator <code>comb-key</code> at position <code>i</code> (default 1)</p>
+</td><td class="codes"><pre class="brush: clojure">(defn one-step-red
+  ([term comb-key]
+   (one-step-red term comb-key 1))
+  ([term comb-key i]
+   (one-step-app term comb-key i :red)))</pre></td></tr><tr><td class="docs"><p>Expands the given <code>term</code> by reversing the combinator <code>comb-key</code> at position <code>i</code> (default 1)</p>
+</td><td class="codes"><pre class="brush: clojure">(defn one-step-exp
+  ([term comb-key]
+   (one-step-exp term comb-key 1))
+  ([term comb-key i]
+   (one-step-app term comb-key i :exp)))</pre></td></tr><tr><td class="docs"><h1>Weak reduction</h1>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defmacro with-timeout
+  [msec &amp; body]
+  `(let [f# (future (do ~@body))
+         v# (gensym)
+         result# (deref f# ~msec v#)]
+     (if (= v# result#)
+       (do
+         (future-cancel f#)
+         (throw (ex-error (str &quot;Timeout after &quot; ~msec &quot; msecs.&quot;))))
+       result#)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- weak-reduce'
+  [term limit cycle trace]
+  (let [sterm (first (max-parens term))]
+    (if trace (println (str 0 &quot;: &quot; (min-parens term))))
+     (let [result (impl/weak-reduce sterm 1 limit cycle trace)
+            new-sterm (:reduced result)]
+          (with-meta (min-parens [new-sterm]) result))))</pre></td></tr><tr><td class="docs"><p>Weak reduction of a term.
+   Options {:timeout :limit :cycle :trace}
+   :timeout - stop reduction after <x> msecs, x = 0 means don't stop
+              default: 0
+   :limit   - stop after <x> steps, x = 0 means no limit
+              default: 100
+   :cycle   - detect cycles?
+              default: false
+   :trace   - trace steps
+              default: false.
+   returns the result of the reduction together with a meta data map
+   meta data are
+   :reduced  - reduced term
+   :no-steps - number of steps
+   :cycle    - cycle detected?
+   :steps    - steps performed when cycle detected
+   :overrun  - run over limit?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn weak-reduce
+  ([term]
+   (weak-reduce term {}))
+  ([term {:keys [timeout limit cycle trace]
+          :or   {timeout 0 limit 100 cycle false trace false}}]
+   (if (pos? timeout)
+     (with-timeout timeout (weak-reduce' term limit cycle trace))
+     (weak-reduce' term limit cycle trace))))</pre></td></tr><tr><td class="docs"><h1>Bracket abstraction</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>See </p>
+
+<ul>
+<li>Jonathan P. Seldin: The search for a reduction in combinatory logic equivalent to λβ-reduction,
+in: Theoretical Computer Science 412 (2011), 4905-4918</li>
+<li>Haskell B. Curry and Robert Feys: Combinatory Logic I, Amsterdam 1958</li>
+</ul>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Curry's algorithm (fab), labeled Primitive Abstraction in the paper of Seldin 2011.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn curry-naive
+  [var sterm]                                               
+  ;; sterm is a symbol or a list of (possibly nested) unary applications.
+  (cond (= var sterm) 'I
+        (symbol? sterm) (list 'K sterm)
+        (list? sterm) (list (list 'S (curry-naive var (first sterm))) (curry-naive var (second sterm)))))</pre></td></tr><tr><td class="docs"><p>Curry's algorithm (abf), labeled Weak Abstraction in the paper of Seldin 2011.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn curry-weak
+  [var sterm]                                               
+  ;; sterm is a symbol or a list of (possibly nested) unary applications.
+  (cond (= var sterm) 'I
+        (symbol? sterm) (list 'K sterm)
+        (vfree? var sterm) (list 'K sterm)
+        (list? sterm) (list (list 'S (curry-weak var (first sterm))) (curry-weak var (second sterm)))))</pre></td></tr><tr><td class="docs"><p>Curry's algorithm (abcf), labeled η Abstraction in the paper of Seldin 2011.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn curry-eta
+  [var sterm]                                               
+  ;; sterm is a symbol or a list of (possibly nested) unary applications.
+  (cond (= var sterm) 'I
+        (symbol? sterm) (list 'K sterm)
+        (vfree? var sterm) (list 'K sterm)
+        (and (list? sterm) (= var (second sterm)) (vfree? var (first sterm))) (first sterm)
+        (list? sterm) (list (list 'S (curry-eta var (first sterm))) (curry-eta var (second sterm)))))</pre></td></tr><tr><td class="docs"><p>Bracket abstraction for the vector <code>var-vec</code> of variables for <code>term</code> performed by <code>algo</code>,
+   which defaults to <code>curry-eta</code>.
+   The abstractions for the variables are from right to left.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn abstract
+  ([var-vec term]
+   (abstract var-vec term curry-eta))
+  ([var-vec term algo]
+   (let [sterm (first (max-parens term))
+         result (loop [args (seq (reverse var-vec))
+                       result sterm]
+                  (if (empty? args)
+                    result
+                    (recur (rest args) (algo (first args) result))))]
+     (min-parens (list result)))))</pre></td></tr><tr><td class="docs"><h1>Collections of combinators</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Defines the combinators <code>:S, :K, :I</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn def-combinators-ski
+  []
+  (def-combinator '[S x y z] '[x z (y z)])
+  (def-combinator '[K x y] '[x])
+  (def-combinator '[I x] '[x]))</pre></td></tr><tr><td class="docs"><p>Defines a huge collection of combinators, borrowed from Raymond Smullyan's To Mock a Mocking Bird.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn def-combinatory-birds
+  []
+  ; Bluebird B := [S (K S) K]
+  (def-combinator '[B a b c] '[a (b c)])
+  ; Blackbird B1 := [B B B]
+  (def-combinator '[B1 a b c d] '[a (b c d)])
+  ; Bunting B2 := [B (B B B) B]
+  (def-combinator '[B2 a b c d e] '[a (b c d e)])
+  ; Becard B3 := [B (B B) B]
+  (def-combinator '[B3 a b c d] '[a (b (c d))])
+  ; Cardinal C := [S (B B S) (K K)]
+  (def-combinator '[C a b c] '[a c b])
+  ; Dove D := [B B]
+  (def-combinator '[D a b c d] '[a b (c d)])
+  ; Dickcissel D1 := [B (B B)]
+  (def-combinator '[D1 a b c d e] '[a b c (d e)])
+  ; Dovekies D2 := [B B (B B)]
+  (def-combinator '[D2 a b c d e] '[a (b c) (d e)])
+  ; Eagle E := [B (B B B)]
+  (def-combinator '[E a b c d e] '[a b (c d e)])
+  ; Bald Eagle E' =: [B (B B B) (B (B B B))]
+  (def-combinator '[E' a b c d e f g] '[a (b c d) (e f g)])
+  ; Finch F := [E T T E T]
+  (def-combinator '[F a b c] '[c b a])
+  ; Goldfinch G := [B B C]
+  (def-combinator '[G a b c d] '[a d (b c)])
+  ; Hummingbird H := [B W (B C)]
+  (def-combinator '[H a b c] '[a b c b])
+  ; Identity Bird, aka Idiot I := [S K K]
+  (def-combinator '[I a] '[a])
+  ; Jay J := [B (B C) (W (B C (B (B B B))))]
+  (def-combinator '[J a b c d] '[a b (a d c)])
+  ; Kestrel K
+  (def-combinator '[K a b] '[a])
+  ; Lark L := [C B M]
+  (def-combinator '[L a b] '[a (b b)])
+  ; Mockingbird M := [S I I]
+  (def-combinator '[M a] '[a a])
+  ; Double Mockingbird M2 := [B M]
+  (def-combinator '[M2 a b] '[a b (a b)])
+  ; Owl O := [S I]
+  (def-combinator '[O a b] '[b (a b)])
+  ; Queer Bird Q := [C B] aka B'
+  (def-combinator '[Q a b c] '[b (a c)])
+  ; Quixotic Bird Q1 := [B C B]
+  (def-combinator '[Q1 a b c] '[a (c b)])
+  ; Quizzical Bird Q2 := [C (B C B)]
+  (def-combinator '[Q2 a b c] '[b (c a)])
+  ; Quirky Bird Q3 := [B T] 
+  (def-combinator '[Q3 a b c] '[c (a b)])
+  ; Quacky Bird Q4 := [F* B]
+  (def-combinator '[Q4 a b c] '[c (b a)])
+  ; Robin R := [B B T]
+  (def-combinator '[R a b c] '[b c a])
+  ; Starling  S
+  (def-combinator '[S a b c] '[a c (b c)])
+  ; Thrush T := [C I]
+  (def-combinator '[T a b] '[b a])
+  ; Turing U := [L O]
+  (def-combinator '[U a b] '[b (a a b)])
+  ; Vireo aka Pairing V := [B C T]
+  (def-combinator '[V a b c] '[c a b])
+  ; Warbler W := [C (B M R)]
+  (def-combinator '[W a b] '[a b b])
+  ; Converse Warbler W1 := [C W]
+  (def-combinator '[W1 a b] '[b a a])
+  ; Why Bird aka Sage Bird Y := [S L L]
+  (def-combinator '[Y a] '[a (Y a)])
+  ; Identity Bird Once Removed := [S (S K)]
+  (def-combinator '[I* a b] '[a b])
+  ; Warbler Once Removed W* := [B W]
+  (def-combinator '[W* a b c] '[a b c c])
+  ; Cardinal Once Removed := [B C]
+  (def-combinator '[C* a b c d] '[a b d c])
+  ; Robin Once Removed R* := [C* C*]
+  (def-combinator '[R* a b c d] '[a c d b])
+  ; Finch Once Removed F* := [B C* R*]
+  (def-combinator '[F* a b c d] '[a d c b])
+  ; Vireo Once Removed V* := [C* F*]
+  (def-combinator '[V* a b c d] '[a d b c])
+  ; Identity Bird Twice Removed I**
+  (def-combinator '[I** a b c] '[a b c])
+  ; Warbler Twice Removed W** := [B (B W)]
+  (def-combinator '[W** a b c d] '[a b c d d])
+  ; Cardinal Twice Removed C** := [B C*]
+  (def-combinator '[C** a b c d e] '[a b c e d])
+  ; Robin Twice Removed R** := B R*]
+  (def-combinator '[R** a b c d e] '[a b d e c])
+  ; Finch Twice Removed
+  (def-combinator '[F** a b c d e] '[a b e d c])
+  ; Vireo Twice Removed
+  (def-combinator '[V** a b c d e] '[a b e c d])
+  ; Kite KI := [K I]
+  (def-combinator '[KI a b] '[b])
+  ; Omega Omega := [M M] TODO: strange bird
+  (def-combinator '[KM a b] '[b b])
+  ; Crossed Konstant Mocker CKM := [C (K M)]
+  (def-combinator '[CKM a b] '[a a])
+  ; Phi
+  (def-combinator '[Phi a b c d] '[a (b d) (c d)])
+  ; Psi
+  (def-combinator '[Psi a b c d] '[a (b c) (b d)])
+  ; Gamma
+  (def-combinator '[Gamma a b c d e] '[b (c d) (a b d e)]))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

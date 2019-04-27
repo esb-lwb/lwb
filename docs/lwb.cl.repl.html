@@ -2865,143 +2865,99 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.pred.sat" name="lwb.pred.sat"><h1 class="project-name">lwb.pred.sat</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns lwb.pred.sat
-  (:require [lwb.pred :refer :all]
-            [lwb.pred.kic :as kic]))</pre></td></tr><tr><td class="docs"><p>Map of symbols for predicates, propositions, functions and consts and 
-  their corresponding Kodkod relations from the given signature. <br />
-  During the function the bounds for the Kodkod relation are set as well.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sig-&gt;relations
-  [sig factory bounds]
-  (let [mapfn (fn [[key [type arity]]]
-                (cond
-                  (and (= type :func) (zero? arity)) (kic/make-const key factory bounds)
-                  (and (= type :func) (pos? arity)) (kic/make-func key arity factory bounds)
-                  (and (= type :pred) (pos? arity)) (kic/make-pred key arity factory bounds)
-                  (and (= type :pred) (zero? arity)) (kic/make-prop key factory bounds) ))]
-    (into {} (map mapfn sig))))</pre></td></tr><tr><td class="docs"><p>Generates a Kodkod formula expressing that the relation with the given <code>key</code>
-  is actually a function.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn func-&gt;constraint
-  [key arity rels]
-  (let [vars (vec (map #(kic/variable (str &quot;v&quot; %)) (range 1 (inc arity))))
-        func ((symbol (name key)) rels)
-        part (loop [v vars result func]
-          (cond (empty? v) (kic/one result)
-            :else (recur (rest v) (kic/join (first v) result))))]
-    (kic/forall vars part) ))</pre></td></tr><tr><td class="docs"><p>Vector of Kodkod formulas comprising the constraints for functions
-   in the given signature <code>sig</code> and the map of relations <code>rels</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sig-&gt;constraints
-  [sig rels]
-  (let [mapfn (fn [[key [type arity]]]
-                (if (and (= type :func) (pos? arity)) (func-&gt;constraint key arity rels)))]
-    (vec (keep identity (map mapfn sig)))))</pre></td></tr><tr><td class="docs"><p>Generates a Kodkod formula expressing that the relation with the given <code>key</code>
-  is actually a true proposition, i.e. has exactly one tuple.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn prop-&gt;fml
-  [key rels]
-  (let [r ((symbol (name key)) rels)]
-    (kic/one r) ))</pre></td></tr><tr><td class="docs"><p>Map of symbols to Kodkod variables.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn vars-&gt;varmap
-  [vars]
-  (zipmap vars (map kic/variable vars)))</pre></td></tr><tr><td class="docs"><p>Kodkod expression representing the given expression of a phi.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn term-&gt;expression
-  [term sig env rels]
-  (if (or (symbol? term) (keyword? term) (int? term))
-    (cond
-      (logvar? term sig) (term env)
-      (func-0? term sig) (term rels)
-      (const? term) ((symbol (name term)) rels))
-    ;; funcs
-    (cond
-      (func? (first term) sig)
-      (let [func ((first term) rels)
-            args (vec (map #(term-&gt;expression % sig env rels) (rest term)))]
-        (loop [v args result func]
-          (cond (empty? v) result
-                :else (recur (rest v) (kic/join (first v) result))))))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def ^:private kic-ops
-  {'not   kic/not
-   'and   kic/and
-   'or    kic/or
-   'impl  kic/impl
-   'equiv kic/equiv
-   'xor   kic/xor
-   'ite   kic/ite})</pre></td></tr><tr><td class="docs"><p>Kodkod formula representing the given formula <code>phi</code> of predicate
-  logic. <br />
-  All variables of <code>phi</code> must be bound. <br />
-  <code>sig</code> is the signature for <code>phi</code>. <br />
-  <code>env</code> is the environment i.e. map of variables for <code>phi</code>. <br />
-  <code>rels</code> is the map of the Kodkod relations from the signature of <code>phi</code>.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn phi-&gt;formula
-  [phi sig env rels]
-  (if (or (symbol? phi) (keyword? phi) (int? phi)) ;; leaf
-    (cond
-      (prop? phi sig) (kic/one (phi rels)) )
-      ;; list
-    (cond
-      ;; operators
-      (op? (first phi)) (let [args (vec (map #(phi-&gt;formula % sig env rels) (rest phi)))] (apply ((first phi) kic-ops) args))
-      ;; quantors
-      (quantor? (first phi))
-      (let [kic-quant (if (= 'forall (first phi)) kic/forall kic/exists)
-            varmap (vars-&gt;varmap (second phi))
-            env' (merge env varmap)]
-            (kic-quant (vec (vals varmap)) (phi-&gt;formula (nth phi 2) sig env' rels)))
-      ;; equality
-      (= (first phi) '=) (kic/eq (term-&gt;expression (second phi) sig env rels) (term-&gt;expression (nth phi 2) sig env rels))
-      ;; predicates
-      :else (let [pred ((first phi) rels)
-                  terms (vec (map #(term-&gt;expression % sig env rels) (rest phi)))]
-              (kic/in (apply kic/product terms) pred)) )))</pre></td></tr><tr><td class="docs"><p>Implementation of sat.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sat-intern
-  [phi sig set mode]
-  (let [universe (kic/universe set)
-        factory (kic/factory universe)
-        bounds (kic/bounds universe)
-        rels (sig-&gt;relations sig factory bounds)
-        cons (sig-&gt;constraints sig rels)
-        phi'  (phi-&gt;formula phi sig {} rels)
-        fmls (conj cons phi')
-        fml (apply kic/and fmls)]
-    (if (= mode :one)
-      (let [sol (kic/solve fml bounds)]
-        (kic/model universe sol))
-      (let [sols (kic/solve-all fml bounds)]
-        (seq (apply hash-set (keep identity (map #(kic/model universe %) sols))))))))</pre></td></tr><tr><td class="docs"><p>Set of consts in signature. <br />
-   `[:func 0]' are consts in kodkod.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sig-&gt;consts
-  [sig]
-  (set (map key (filter #(= [:func 0] (val %)) sig))))</pre></td></tr><tr><td class="docs"><p>Fills the given set with keywords <code>:e1, :e2...</code> until <code>size</code> is reached.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn fill-up
-  [set size]
-  (loop [s set, i 1]
-    (if (= (count s) size) s
-                           (recur (conj s (keyword (str &quot;e&quot; i))) (inc i)))))</pre></td></tr><tr><td class="docs"><p>Satisfiability of a formula of the predicate logic in a finite universe. <br />
-  The one variant of the functions just gives the size of the universe, the
-  other an explicit vector with the elements of the universe.</p>
-</td><td class="codes"><pre class="brush: clojure">(defmulti sat
-  (fn [_ _ utype &amp; _]
-    (if (integer? utype) :int
-                         (when (set? utype) :set))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod sat :int
-  ([phi sig usize]
-    (sat phi sig usize :one))
-  ([phi sig usize mode]
-    (let [consts (sig-&gt;consts sig)
-          ssize (count consts)]
-      (if (&lt; usize ssize)
-        (throw (Exception. &quot;usize must be &gt;= number of unary functions in the signature.&quot;)))
-        (sat-intern phi sig (fill-up consts usize) mode))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod sat :set
-  ([phi sig set]
-    (sat phi sig set :one))
-  ([phi sig set mode]
-    (sat-intern phi sig set mode)))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> satisfiable?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn sat?
-  [phi sig usize]
-  (if (nil? (sat phi sig usize)) false true))</pre></td></tr><tr><td class="docs"><p>Is <code>phi</code> valid?</p>
-</td><td class="codes"><pre class="brush: clojure">(defn valid?
-  [phi sig usize]
-  (not (sat? (list 'not phi) sig usize)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+</script><title>lwb -- Marginalia</title></head><body><table><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#lwb.cl.repl" name="lwb.cl.repl"><h1 class="project-name">lwb.cl.repl</h1><a class="toc-link" href="toc.html">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns lwb.cl.repl
+  (:refer-clojure :exclude [==])
+  (:require [lwb.cl :refer :all]
+            [lwb.cl.spec :refer :all]
+            [clojure.core.logic :refer :all]
+            [lwb.cl.printer :as printer]
+            [lwb.nd.error :refer :all]
+            [clojure.walk :as walk]))</pre></td></tr><tr><td class="docs"><h1>The global stores for the current session</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>A session is a vector of lines
+a line is a hash-map with keys :lno line number, :term term [S x y z] e.g. :rule e.g. [:exp :S 1] </p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Atom that holds the current session.</p>
+</td><td class="codes"><pre class="brush: clojure">(def ^:private session-store
+  (atom []))</pre></td></tr><tr><td class="docs"><p>Current session.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn current-session
+  []
+  @session-store)</pre></td></tr><tr><td class="docs"><p>Print the current state of the session.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn show
+  []
+  (printer/print-session (current-session)))</pre></td></tr><tr><td class="docs"><p>Some steps generate fresh variables.
+They get new names beginning with the questionb mark <code>?</code> and followed by a unique number.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Global counter for the numbers of new question marks.</p>
+</td><td class="codes"><pre class="brush: clojure">(def ^:private qmno
+  (atom 0))</pre></td></tr><tr><td class="docs"><p>Generates a new name for a question mark. <br />
+   Uses global <code>qmno</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- new-qmsymbol
+  []
+  (symbol (str \? (swap! qmno inc))))</pre></td></tr><tr><td class="docs"><p>Resets global <code>qmno</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- reset-qmno
+  []
+  (reset! qmno 0))</pre></td></tr><tr><td class="docs"><p>Is <code>s</code> a symbol of the form <code>?n</code>?</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- qmsymbol?
+  [s]
+  (and (symbol? s) (re-matches #&quot;\?\d+$&quot; (name s))))</pre></td></tr><tr><td class="docs"><h1>Starting a session</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Starts a new session. <br />
+   Modifies: atom <code>session-store</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn session
+  [given-term]
+  (reset-qmno)
+  (let [given {:lno 0, :term (min-parens given-term), :rule [:given]}]
+    (reset! session-store [given])
+    (show)))</pre></td></tr><tr><td class="docs"><h1>Doing steps in the session</h1>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Replaces logical variables from core.logic like <code>_0</code> by generated variable names <code>?1</code>.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- replace-lvars
+  [term]
+  (let [lvars (set (filter #(.startsWith (str %) &quot;_&quot;) (flatten term)))
+        smap (reduce #(assoc %1 %2 (new-qmsymbol)) {} lvars)]
+    (walk/prewalk-replace smap term)))</pre></td></tr><tr><td class="docs"><p>Undoes last step in a session.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn undo
+  []
+  (if (&gt; (count (current-session)) 1)
+    (swap! session-store pop)
+    (println &quot;There is no step to be undone!&quot;))
+  (show))</pre></td></tr><tr><td class="docs"><p>Reduction or expansion in current session.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- appx
+  [comb pos step-fn step-type]
+  (try
+    ;; error handling
+    (if (not (comb-defined? comb))
+      (throw (ex-error (str &quot;Combinator &quot; comb &quot; not yet defined.&quot;))))
+    (let [current-term (:term (last (current-session)))
+          new-term (replace-lvars (step-fn current-term comb pos))]
+      (if (= new-term current-term)
+        (throw (ex-warning (format &quot;Combinator %s has no effect at position %d&quot; comb pos)))
+        (swap! session-store conj {:lno (count (current-session)) :term new-term :rule [step-type comb pos]}))
+      (show))
+    (catch Exception e
+      (handle-exception e)
+      (show)))) </pre></td></tr><tr><td class="docs"><p>Reduction in current session with the given combinator at position <code>i</code> (default 1).</p>
+</td><td class="codes"><pre class="brush: clojure">(defn red
+  ([comb]
+   (red comb 1))
+  ([comb pos]
+   (appx comb pos one-step-red :red)))</pre></td></tr><tr><td class="docs"><p>Expansion in current session with the given combinator at position <code>i</code> (default 1).</p>
+</td><td class="codes"><pre class="brush: clojure">(defn exp
+  ([comb]
+   (exp comb 1))
+  ([comb pos]
+   (appx comb pos one-step-exp :exp)))</pre></td></tr><tr><td class="docs"><p>Replaces a fresh variable of the form <code>?n</code> with the given term.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn swap
+  [var term]
+  (try
+    (if (not (wff? term))
+      (throw (ex-error (str &quot;Term should be well-formed, '&quot; term &quot;' is not!&quot;))))
+    (if (not (qmsymbol? var))
+      (throw (ex-error &quot;The var to be substituted must be of the form `?n``&quot;)))
+    (let [new (for [line (current-session)]
+                (merge line {:term (subst (:term line) (vector var) term)}))]
+      (reset! session-store (vec new)))
+    (show)
+    (catch Exception e
+      (handle-exception e)
+      (show)))) </pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

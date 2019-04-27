@@ -2956,7 +2956,8 @@ several formulas as arguments whose number matches the arity of the operator.</p
       (cond (contains? #{'and 'or 'not 'atnext 'until 'release} op) (apply list op (map impl-free (rest phi)))
             (= op 'finally) (apply list 'until true (map impl-free (rest phi)))
             (= op 'always) (apply list 'release false (map impl-free (rest phi)))
-            :else (let [exp-phi (macroexpand-1 phi)] (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs"><h3>Transformation to nnf</h3>
+            :else (let [exp-phi (binding [*ns* (find-ns 'lwb.prop)] (macroexpand-1 phi))] 
+                    (apply list (first exp-phi) (map impl-free (rest exp-phi))))))))</pre></td></tr><tr><td class="docs"><h3>Transformation to nnf</h3>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Transforms <code>phi</code> into negation normal form.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn nnf
   [phi]
