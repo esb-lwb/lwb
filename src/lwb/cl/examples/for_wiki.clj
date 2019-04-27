@@ -59,6 +59,8 @@
 (size '[(S I) y B])
 ; => 4
 
+; Parentheses
+
 (max-parens '[(B x y) z])
 ; => [(((B x) y) z)]
 (max-parens '[B W B x (B W B x)])
@@ -77,6 +79,8 @@
 (min-parens '[(((S M) M) (I (N P)))])
 ; => [S M M (I (N P))]
 
+; subterms and substitution
+
 (subterms '[(((S M) M) (I (N P)))])
 ; => ([S M M (I (N P))] [S M M] [S M] [S] [M] [I (N P)] [I] [N P] [N] [P])
 
@@ -93,6 +97,8 @@
 ; => [S B (K I) f x]
 (comb-concat '[B] '[S B (K I)] '[S B (K I)])
 ; => [B (S B (K I)) (S B (K I))]
+
+; Definition of combinators
 
 (def-combinator '[S x y z] '[x z (y z)])
 (def-combinator '[K x y] '[x])
@@ -131,6 +137,8 @@
 ; => nil
 
 (def-combinators-ski)
+
+; One-step reduction and expansion
 
 (one-step-red '[S x y z] :S)
 ; => [x z (y z)]
@@ -214,7 +222,7 @@
 ; Timeout after 1000 msecs.
 
 
-; Abstraction
+; Bracket Abstraction
 (abstract '[x] '[K x y])
 ; => [S K (K y)]
 
