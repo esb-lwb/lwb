@@ -37,7 +37,7 @@
   "Defines Church numeral for `i`."
   [i]
   (cond
-    (< i 0) nil
+    (neg? i) nil
     (>= i 0) (loop [current 0
                     result Zero]
                (if (= current i)
@@ -49,9 +49,8 @@
   [term]
   (let [red (weak-reduce (conj term 'f 'x) {:limit 1000})
         nof (count (filter #(= 'f %) (flatten red)))]
-    (if (= red (weak-reduce (conj (Num nof) 'f 'x)))
-      (list 'Num nof)
-      nil)))
+    (when (= red (weak-reduce (conj (Num nof) 'f 'x)))
+      (list 'Num nof))))
 
 (comment
   (Num 0)
