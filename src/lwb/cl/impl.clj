@@ -128,18 +128,18 @@
 (defn combs-keys
   "The set of combinator keys in `term`."
   [term]
-  (into #{} (map keyword (combs term))))
+  (set (map keyword (combs term))))
 
 (defn make-comb
   [redex effect]
   (let [combs (combs redex)
         key (keyword (first combs))]
-    (if (not key) (throw (AssertionError. (str "Redex '" redex "' has no combinator!")))
-                  (hash-map key {:redex     redex
-                                 :effect    effect
-                                 :arity     (arity redex)
-                                 :logic-rel (binding [*ns* (find-ns 'lwb.cl.impl)]
-                                              (eval (gen-cl-rel redex effect)))}))))
+    (if-not key (throw (AssertionError. (str "Redex '" redex "' has no combinator!")))
+                (hash-map key {:redex     redex
+                               :effect    effect
+                               :arity     (arity redex)
+                               :logic-rel (binding [*ns* (find-ns 'lwb.cl.impl)]
+                                            (eval (gen-cl-rel redex effect)))}))))
 
 (defn get-rule-fn
   "Get logic function from combinator store."
@@ -185,9 +185,7 @@
   [sterm]
   "Lookup for first combinator in term and try to reduce"
   (let [comb (->> (flatten sterm) (filter #(s/valid? :lwb.cl.spec/combinator %)) (first))]
-    (if (nil? comb) 
-      nil
-      ; else
+    (when-not (nil? comb)
       (let [comb-key (keyword comb)
             rule-fn (get-rule-fn comb-key)]
         (first (apply' rule-fn sterm :red))))))
@@ -222,8 +220,8 @@
            result {:reduced sterm :no-steps 0 :cycle :unknown :overrun false}
            counter counter]
       (if cycle (swap! steps conj current-sterm))
-      (let [red (apply-z current-sterm)                ;; one step with apply
-            found (if (= red current-sterm) nil red)]  ;; reduced term found
+      (let [red (apply-z current-sterm)                     ;; one step with apply
+            found (when-not (= red current-sterm) red)]     ;; reduced term found
         (if (and found trace) (println (str counter ": " (vec' (min-parens-seq found)))))
         (cond (nil? found) result
               ;; timeout? -> Exception, the result is never returned
