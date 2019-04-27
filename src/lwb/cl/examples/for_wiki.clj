@@ -243,3 +243,29 @@
 
 (weak-reduce '[S (K (S I)) K a b])
 ; => [b a]
+
+; Interactive Combinatory Logic
+(session '[B M (R M B) x])
+
+(def-combinator '[B f g x] '[f (g x)])
+(def-combinator '[M x] '[x x])
+(def-combinator '[R x y z] '[y z x])
+
+(red :B)
+(red :M)
+(red :R)
+(red :B)
+(red :M)
+(exp :B 2)
+(red :B)
+(exp :M)
+(exp :B 2)
+
+
+(def-combinators-ski)
+(session '[x])
+(exp :K)
+(swap '?1 '[(K x)])
+(exp :K)
+(undo)
+(exp :S)

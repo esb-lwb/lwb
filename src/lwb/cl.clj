@@ -108,9 +108,10 @@
   (let [t   (first (max-parens term))
         st  (first (max-parens subterm))
         st' (first (max-parens subterm'))]
-    (min-parens (walk/postwalk
+    (min-parens (vector (walk/postwalk
                   #(if (= st %) st' %)
-                  t))))
+                  t)))))
+(subst '[x] '[t] '[s])
 
 ;; Concatenation of terms -----------------------------------------------------
 
