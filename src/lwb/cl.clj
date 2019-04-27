@@ -118,7 +118,7 @@
 (defn comb-concat
   "Concatenation of the given terms."
   [& terms]
-  (min-parens (into [] (reduce concat (map max-parens terms)))))
+  (min-parens (vec (reduce concat (map max-parens terms)))))
 
 ;; Definition of combinators --------------------------------------------------
 
@@ -195,8 +195,7 @@
   (let [sterm (first (max-parens term))]
     (if trace (println (str 0 ": " (min-parens term))))
      (let [result (impl/weak-reduce sterm 1 limit cycle trace)
-            new-sterm (:reduced result)
-            new-counter (inc (:no-steps result))]
+            new-sterm (:reduced result)]
           (with-meta (min-parens [new-sterm]) result))))
 
 (defn weak-reduce
@@ -221,7 +220,7 @@
    (weak-reduce term {}))
   ([term {:keys [timeout limit cycle trace]
           :or   {timeout 0 limit 100 cycle false trace false}}]
-   (if (> timeout 0)
+   (if (pos? timeout)
      (with-timeout timeout (weak-reduce' term limit cycle trace))
      (weak-reduce' term limit cycle trace))))
 
