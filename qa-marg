@@ -16,4 +16,5 @@ lein marg -m src/lwb/main.clj\
   src/lwb/nd/swap/pred.clj src/lwb/nd/swap/ltl.clj \
   src/lwb/nd/io.clj src/lwb/nd/prereqs.clj src/lwb/nd/printer.clj\
   src/lwb/util/shell.clj\
-  src/lwb/cl.clj src/lwb/cl/impl.clj src/lwb/cl/printer.clj src/lwb/cl/repl.clj src/lwb/cl/spec.clj
+  src/lwb/cl.clj src/lwb/cl/impl.clj src/lwb/cl/printer.clj\
+	src/lwb/cl/repl.clj src/lwb/cl/spec.clj

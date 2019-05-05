@@ -16,6 +16,13 @@
   [item length-id]
   (format (str "%-" length-id "s := %s -> %s") (name (key item)) (:redex (val item)) (:effect (val item))))
 
+(defn print-comb-nickname
+  [item]
+  (let [n (:nickname (val item))]
+    (if n
+      (str "  '" n "'")
+      "")))
+
 (defn length-item
   [combs-value]
   (let [r-length
@@ -28,11 +35,11 @@
   [key combs-value]
   (let [item (find combs-value key)]
     (if item
-      (println (print-combs-item item (count (name key))))
+      (println (str (print-combs-item item (count (name key))) (print-comb-nickname item)))
       (println (str "No combinator with key '" key "' defined.")))))
 
 
-  (defn print-combs
+(defn print-combs
   [combs-value]
   (if (empty? combs-value)
     (println "There are no combinators defined yet!")
@@ -41,7 +48,8 @@
           length (- (+ 2 length-id length-item) (count "Defined combinators"))]
       (println (str "--- Defined combinators ---" (str/join (repeat length "-"))))
       (doseq [item combs-value]
-        (println (print-combs-item item length-id)))
+        (println (format (str "%-" (+ 8 length-id length-item) "s %s") (print-combs-item item length-id) (print-comb-nickname item))))
+        
       (println (str "---------------------------" (str/join (repeat length "-")))))))
 
 ; -----------------------------------------------------------------------------

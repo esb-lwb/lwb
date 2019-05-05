@@ -137,6 +137,14 @@
 ; => nil
 
 (def-combinators-ski)
+(show-combinators)
+
+(def-combinator '[I x] '[x] "Identitätsfunktion")
+(def-combinator '[K x y] '[x] "Konstanzfunktion")
+(def-combinator '[S x y z] '[x z (y z)] "Verschmelzungsfunktion")
+(show-combinators)
+
+(show-combinator :S)
 
 ; One-step reduction and expansion
 

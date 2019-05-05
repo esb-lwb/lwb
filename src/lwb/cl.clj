@@ -132,11 +132,13 @@
 (defn def-combinator
   "Defines and registers combinator in the global storage.
    Combinators are identified by a keyword build from the name of the combinator."
-  [redex effect]
+  ([redex effect]
+   (def-combinator redex effect nil))
+  ([redex effect nickname]
   (let [r (min-parens redex)
         e (min-parens effect)]
-    (swap! impl/combinator-store merge (impl/make-comb r e))
-    true))
+    (swap! impl/combinator-store merge (impl/make-comb r e nickname))
+    true)))
 
 (defn comb-defined?
   "Is combinator with key `comb-key` defined?"

@@ -91,22 +91,29 @@
   (is (= '[S K K x] (min-parens '[(((S K) K) x)])))
   (is (= '[S M M (I (N P))] (min-parens '[(((S M) M) (I (N P)))]))))
 
-(run-tests)
 ;; Subterms and substitution ------------------------------------------
 
 ;; subterms
+(deftest subterms-test
+  (is (= '([S M M (I (N P))] [S M M] [S M] [S] [M] [I (N P)] [I] [N P] [N] [P])
+         (subterms '[(((S M) M) (I (N P)))]))))
 
 ;; subst
-
-(comment
-  (subst '[B f g x] '[B] '[S (K S) K])
-  (subst '[B f g x] '[S (K S) K] '[B])
-  )
+(deftest subst-test
+  (is (= '[I x y]                  (subst '[S K K x y] '[S K K] '[I])))
+  (is (= '[S K K (x y) z]         (subst '[I (x y) z] '[I] '[S K K])))
+  (is (= '[S K K (x y) (S K K) z]  (subst '[I (x y) I z] '[I] '[S K K]))))
 
 
 ;; Concatenation of terms ------------------------------------------------
 
 ;; comb-concat
+(deftest comb-concat-test
+  (is (= '[S K K] (comb-concat '[S] '[K] '[K])))
+  (is (= '[S B (K I) f x] (comb-concat '[S B (K I)] '[f] '[x])))
+  (is (= '[B (S B (K I)) (S B (K I))]  (comb-concat '[B] '[S B (K I)] '[S B (K I)]))))
+
+(run-tests)
 
 ;; Definition ------------------------------------------------------------
 

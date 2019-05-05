@@ -135,13 +135,14 @@
   (set (map keyword (combs term))))
 
 (defn make-comb
-  [redex effect]
+  [redex effect nickname]
   (let [combs (combs redex)
         key (keyword (first combs))]
     (if-not key (throw (AssertionError. (str "Redex '" redex "' has no combinator!")))
                 (hash-map key {:redex     redex
                                :effect    effect
                                :arity     (arity redex)
+                               :nickname  nickname
                                :logic-rel (binding [*ns* (find-ns 'lwb.cl.impl)]
                                             (eval (gen-cl-rel redex effect)))}))))
 
