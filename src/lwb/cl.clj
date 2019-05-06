@@ -14,7 +14,9 @@
             [lwb.nd.error :refer :all]
             [clojure.core.logic :refer :all]
             [clojure.spec.alpha :as s]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk])
+  (:import (java.text Collator)
+           (java.util Locale)))
 
 ; -----------------------------------------------------------------------------
 ;; # Syntax 
@@ -154,7 +156,8 @@
 (defn show-combinators
   "Shows the currently defined combinators."
   []
-  (printer/print-combs (sort @impl/combinator-store)))
+  (let [^Collator collator (Collator/getInstance Locale/US)]
+    (printer/print-combs (sort-by #(name (key %)) collator @impl/combinator-store))))
 
 (defn reset-combinators
   "Undefines all combinators."
@@ -296,45 +299,46 @@
   (def-combinator '[K x y] '[x])
   (def-combinator '[I x] '[x]))
 
+
 (defn def-combinatory-birds
   "Defines a huge collection of combinators, borrowed from Raymond Smullyan's To Mock a Mocking Bird."
   []
-  ; Bluebird B := [S (K S) K]
-  (def-combinator '[B a b c] '[a (b c)])
-  ; Blackbird B1 := [B B B]
-  (def-combinator '[B1 a b c d] '[a (b c d)])
-  ; Bunting B2 := [B (B B B) B]
-  (def-combinator '[B2 a b c d e] '[a (b c d e)])
-  ; Becard B3 := [B (B B) B]
-  (def-combinator '[B3 a b c d] '[a (b (c d))])
+  ; Bluebird B p.95 B = [S (K S) K]
+  (def-combinator '[B x y z] '[x (y z)] "Bluebird")
+  ; Blackbird B1 p.97 B1 = [B B B]
+  (def-combinator '[B1 x y z w] '[x (y z w)] "Blackbird")
+  ; Bunting B2 p.97 B2 = [B (B B B) B]
+  (def-combinator '[B2 x y z w v] '[x (y z w v)] "Bunting")
+  ; Becard B3 p.98 B3 = [B (B B) B]
+  (def-combinator '[B3 x y z w] '[x (y (z w))] "Becard")
   ; Cardinal C := [S (B B S) (K K)]
   (def-combinator '[C a b c] '[a c b])
-  ; Dove D := [B B]
-  (def-combinator '[D a b c d] '[a b (c d)])
-  ; Dickcissel D1 := [B (B B)]
-  (def-combinator '[D1 a b c d e] '[a b c (d e)])
-  ; Dovekies D2 := [B B (B B)]
-  (def-combinator '[D2 a b c d e] '[a (b c) (d e)])
-  ; Eagle E := [B (B B B)]
-  (def-combinator '[E a b c d e] '[a b (c d e)])
-  ; Bald Eagle E' =: [B (B B B) (B (B B B))]
-  (def-combinator '[E' a b c d e f g] '[a (b c d) (e f g)])
+  ; Dove D p.97 D = [B B]
+  (def-combinator '[D x y z w] '[x y (z w)] "Dove")
+  ; Dickcissel D1 p.97 D1 = [B (B B)]
+  (def-combinator '[D1 x y z w v] '[x y z (w v)] "Dickcissel")
+  ; Dovekie D2 p.98 D2 = [B B (B B)]
+  (def-combinator '[D2 x y z w v] '[x (y z) (w v)] "Dovekie")
+  ; Eagle E p.97 E = [B (B B B)]
+  (def-combinator '[E x y z w v] '[x y (z w v)] "Eagle")
+  ; Bald Eagle p.98 Ê = [B (B B B) (B (B B B))]
+  (def-combinator '[Ê x y1 y2 y3 z1 z2 z3] '[x (y1 y2 y3) (z1 z2 z3)] "Bald Eagle")
   ; Finch F := [E T T E T]
   (def-combinator '[F a b c] '[c b a])
   ; Goldfinch G := [B B C]
   (def-combinator '[G a b c d] '[a d (b c)])
   ; Hummingbird H := [B W (B C)]
   (def-combinator '[H a b c] '[a b c b])
-  ; Identity Bird, aka Idiot I := [S K K]
-  (def-combinator '[I a] '[a])
+  ; Identity Bird, aka Idiot I p.78 I = [S K K]
+  (def-combinator '[I x] '[x] "Identity Bird")
   ; Jay J := [B (B C) (W (B C (B (B B B))))]
   (def-combinator '[J a b c d] '[a b (a d c)])
-  ; Kestrel K
-  (def-combinator '[K a b] '[a])
-  ; Lark L := [C B M]
-  (def-combinator '[L a b] '[a (b b)])
-  ; Mockingbird M := [S I I]
-  (def-combinator '[M a] '[a a])
+  ; Kestrel K p.77
+  (def-combinator '[K x y] '[x] "Kestrel")
+  ; Lark L p. 80 L = [C B M]
+  (def-combinator '[L x y] '[x (y y)] "Lark")
+  ; Mockingbird M p.73 M = [S I I]
+  (def-combinator '[M x] '[x x] "Mockingbird")
   ; Double Mockingbird M2 := [B M]
   (def-combinator '[M2 a b] '[a b (a b)])
   ; Owl O := [S I]
