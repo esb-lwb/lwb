@@ -8,8 +8,8 @@
 
 
 ; Remember: update rev and date in consts.clj too 
-(defproject lwb "1.0.6"
-  :date "2018-09-23"
+(defproject lwb "2.0.0"
+  :date "2019-05-17"
   :description "lwb Logic WorkBench"
   :url "http://esb-dev.github.io/lwb.html"
   :scm {:name "git" :url "https://github.com/esb-lwb/lwb"}
