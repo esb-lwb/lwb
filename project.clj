@@ -6,7 +6,6 @@
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
-
 ; Remember: update rev and date in consts.clj too 
 (defproject lwb "2.0.0"
   :date "2019-05-17"

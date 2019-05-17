@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Constants
 
-; Copyright (c) 2016 - 2018 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2016 - 2019 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -10,10 +10,10 @@
   (:require [clojure.edn :as edn]))
 
 (def ^:const
-  rev "1.0.5")
+  rev "2.0.0")
 
 (def ^:const
-  rev-date "2018-09-23")
+  rev-date "2019-05-17")
 
 (def ^:const
    welcome (str "This is lwb, Version " rev ", " rev-date))
