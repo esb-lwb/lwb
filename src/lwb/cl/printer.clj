@@ -19,9 +19,7 @@
 (defn print-comb-nickname
   [item]
   (let [n (:nickname (val item))]
-    (if n
-      (str "  '" n "'")
-      "")))
+    (if n (str "  '" n "'") "")))
 
 (defn length-item
   [combs-value]
