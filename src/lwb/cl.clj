@@ -301,7 +301,7 @@
 
 
 (defn def-combinatory-birds
-  "Defines a huge collection of combinators, borrowed from Raymond Smullyan's To Mock a Mocking Bird."
+  "Defines a huge collection of combinators from Raymond Smullyan's To Mock a Mocking Bird."
   []
   ; Bluebird B p.95 B = [S (K S) K]
   (def-combinator '[B x y z] '[x (y z)] "Bluebird")
@@ -311,8 +311,12 @@
   (def-combinator '[B2 x y z w v] '[x (y z w v)] "Bunting")
   ; Becard B3 p.98 B3 = [B (B B) B]
   (def-combinator '[B3 x y z w] '[x (y (z w))] "Becard")
-  ; Cardinal C := [S (B B S) (K K)]
-  (def-combinator '[C a b c] '[a c b])
+  ; Cardinal C p.100 C = [S (B B S) (K K)]
+  (def-combinator '[C x y z] '[x z y] "Cardinal")
+  ; Cardinal Once Removed p.104 C* = [B C]
+  (def-combinator '[C* x y z w] '[x y w z] "Cardinal once removed")
+  ; Cardinal Twice Removed p.105  C** = [B C*]
+  (def-combinator '[C** x y z1 z2 z3] '[x y z1 z3 z2] "Cardinal twice removed")
   ; Dove D p.97 D = [B B]
   (def-combinator '[D x y z w] '[x y (z w)] "Dove")
   ; Dickcissel D1 p.97 D1 = [B (B B)]
@@ -323,89 +327,91 @@
   (def-combinator '[E x y z w v] '[x y (z w v)] "Eagle")
   ; Bald Eagle p.98 Ê = [B (B B B) (B (B B B))]
   (def-combinator '[Ê x y1 y2 y3 z1 z2 z3] '[x (y1 y2 y3) (z1 z2 z3)] "Bald Eagle")
-  ; Finch F := [E T T E T]
-  (def-combinator '[F a b c] '[c b a])
-  ; Goldfinch G := [B B C]
-  (def-combinator '[G a b c d] '[a d (b c)])
-  ; Hummingbird H := [B W (B C)]
-  (def-combinator '[H a b c] '[a b c b])
+  ; Finch p.102  F = [E T T E T]
+  (def-combinator '[F x y z] '[z y x] "Finch")
+  ; Finch Once Removed p.104 F* = [B C* R*]
+  (def-combinator '[F* x y z w] '[x w z y] "Finch once removed")
+  ; Finch Twice Removed p.105 F** = [B F*]
+  (def-combinator '[F** x y z1 z2 z3] '[x y z3 z2 z1] "Finch twice removed")
+  ; Goldfinch p.107 G = [B B C]
+  (def-combinator '[G x y z w] '[x w (y z)] "Goldfinch")
+  ;; G1 p.124 G1 = B (B B C)
+  (def-combinator '[G1 x y z w v] '[x y v (z w)] "G1")
+  ;; G2 p.124 G2 = G1 (B M)
+  (def-combinator '[G2 x y z w] '[x w (x w) (y z)] "G2")
+  ;; Gamma p.124 Gamma = Phi (Phi (Phi B)) B
+  (def-combinator '[Gamma x y z w v] '[y (z w)  (x y w v)] "Gamma")
+  ; Hummingbird p.120  H = [B W (B C)]
+  (def-combinator '[H x y z] '[x y z y] "Hummingbird")
+  ;; H* p. 124 H* = B H
+  (def-combinator '[H* x y z w] '[x y z w z] "Hummingbird once removed")
   ; Identity Bird, aka Idiot I p.78 I = [S K K]
   (def-combinator '[I x] '[x] "Identity Bird")
-  ; Jay J := [B (B C) (W (B C (B (B B B))))]
-  (def-combinator '[J a b c d] '[a b (a d c)])
+  ; Identity Bird Once Removed := [S (S K)]
+  (def-combinator '[I* a b] '[a b] "Identity Bird Once Removed")
+  ; Identity Bird Twice Removed I**
+  (def-combinator '[I** a b c] '[a b c] "Identity Bird Twice Removed")
+  ;; I2 p.124 I2 = B (T I) (T I)
+  (def-combinator '[I2 x] '[x I I] "I2")
+  ; Jaybird p.181 J = B (B C) (W (B C (B (B B B))))
+  (def-combinator '[J x y z w] '[x y (x w z)] "Jaybird")
+  ; J1 p.183 J1 = B J T
+  (def-combinator '[J1 x y z w] '[y x (w x z)] "J1")
   ; Kestrel K p.77
   (def-combinator '[K x y] '[x] "Kestrel")
   ; Lark L p. 80 L = [C B M]
   (def-combinator '[L x y] '[x (y y)] "Lark")
   ; Mockingbird M p.73 M = [S I I]
   (def-combinator '[M x] '[x x] "Mockingbird")
-  ; Double Mockingbird M2 := [B M]
-  (def-combinator '[M2 a b] '[a b (a b)])
-  ; Owl O := [S I]
-  (def-combinator '[O a b] '[b (a b)])
-  ; Queer Bird Q := [C B] aka B'
-  (def-combinator '[Q a b c] '[b (a c)])
-  ; Quixotic Bird Q1 := [B C B]
-  (def-combinator '[Q1 a b c] '[a (c b)])
-  ; Quizzical Bird Q2 := [C (B C B)]
-  (def-combinator '[Q2 a b c] '[b (c a)])
-  ; Quirky Bird Q3 := [B T] 
-  (def-combinator '[Q3 a b c] '[c (a b)])
-  ; Quacky Bird Q4 := [F* B]
-  (def-combinator '[Q4 a b c] '[c (b a)])
-  ; Robin R := [B B T]
-  (def-combinator '[R a b c] '[b c a])
-  ; Starling  S
-  (def-combinator '[S a b c] '[a c (b c)])
-  ; Thrush T := [C I]
-  (def-combinator '[T a b] '[b a])
-  ; Turing U := [L O]
-  (def-combinator '[U a b] '[b (a a b)])
-  ; Vireo aka Pairing V := [B C T]
-  (def-combinator '[V a b c] '[c a b])
-  ; Warbler W := [C (B M R)]
-  (def-combinator '[W a b] '[a b b])
-  ; Converse Warbler W1 := [C W]
-  (def-combinator '[W1 a b] '[b a a])
-  ; Why Bird aka Sage Bird Y := [S L L]
-  (def-combinator '[Y a] '[a (Y a)])
-  ; Identity Bird Once Removed := [S (S K)]
-  (def-combinator '[I* a b] '[a b])
-  ; Warbler Once Removed W* := [B W]
-  (def-combinator '[W* a b c] '[a b c c])
-  ; Cardinal Once Removed := [B C]
-  (def-combinator '[C* a b c d] '[a b d c])
-  ; Robin Once Removed R* := [C* C*]
-  (def-combinator '[R* a b c d] '[a c d b])
-  ; Finch Once Removed F* := [B C* R*]
-  (def-combinator '[F* a b c d] '[a d c b])
-  ; Vireo Once Removed V* := [C* F*]
-  (def-combinator '[V* a b c d] '[a d b c])
-  ; Identity Bird Twice Removed I**
-  (def-combinator '[I** a b c] '[a b c])
-  ; Warbler Twice Removed W** := [B (B W)]
-  (def-combinator '[W** a b c d] '[a b c d d])
-  ; Cardinal Twice Removed C** := [B C*]
-  (def-combinator '[C** a b c d e] '[a b c e d])
-  ; Robin Twice Removed R** := B R*]
-  (def-combinator '[R** a b c d e] '[a b d e c])
-  ; Finch Twice Removed
-  (def-combinator '[F** a b c d e] '[a b e d c])
-  ; Vireo Twice Removed
-  (def-combinator '[V** a b c d e] '[a b e c d])
-  ; Kite KI := [K I]
-  (def-combinator '[KI a b] '[b])
-  ; Omega Omega := [M M] TODO: strange bird
-  
-  (def-combinator '[KM a b] '[b b])
-  ; Crossed Konstant Mocker CKM := [C (K M)]
-  (def-combinator '[CKM a b] '[a a])
-  ; Phi
-  (def-combinator '[Phi a b c d] '[a (b d) (c d)])
-  ; Psi
-  (def-combinator '[Psi a b c d] '[a (b c) (b d)])
-  ; Gamma
-  (def-combinator '[Gamma a b c d e] '[b (c d) (a b d e)]))
+  ; Double Mockingbird p.118 M2 = [B M]
+  (def-combinator '[M2 x y] '[x y (x y)] "Double Mockingbird")
+  ;; Owl O p.133  U = B W (C B) = S I
+  (def-combinator '[O x y] '[y (x y)] "Owl")
+  ;; Phoenix p. 124 Phi = B (B S) B
+  (def-combinator '[Phi x y z w] '[x (y w) (z w)] "Phoenix")
+  ;; Psi p.124 Psi = B H (B B (B B))
+  (def-combinator '[Psi x y z w] '[x (y z) (y w)] "Psi")
+  ; Queer p.105 Q = [C B] aka B'
+  (def-combinator '[Q x y z] '[y (x z)] "Queer")
+  ; Quixotic p.106 Q1 = [B C B]
+  (def-combinator '[Q1 x y z] '[x (z y)] "Quixotic")
+  ; Quizzical p.106  Q2 = [C (B C B)]
+  (def-combinator '[Q2 x y z] '[y (z x)] "Quizzical")
+  ; Quirky p.106 Q3 = [B T] = [V* B]
+  (def-combinator '[Q3 x y z] '[z (x y)] "Quirky")
+  ; Quacky p.107 Q4 = [F* B]
+  (def-combinator '[Q4 x y z] '[z (y x)] "Quacky")
+  ; Robin R p.101 R = [B B T] = [C C]
+  (def-combinator '[R x y z] '[y z x] "Robin")
+  ; Robin Once Removed p.104 R* = [C* C*]
+  (def-combinator '[R* x y z w] '[x z w y] "Robin once removed")
+  ; Robin Twice Removed p.105 R** = [B R*]
+  (def-combinator '[R** x y z1 z2 z3] '[x y z2 z3 z1] "Robin twice removed")
+  ; Starling  S p.121
+  (def-combinator '[S x y z] '[x z (y z)] "Starling")
+  ;; S' p.125 S' = [C S]
+  (def-combinator '[S' x y z] '[y z (x z)] "S'")
+  ; Thrush T p.100 T = [C I]
+  (def-combinator '[T x y] '[y x] "Trush")
+  ;; Turing Bird U p.132  U = [L (S (C T))] = [L O]
+  (def-combinator '[U x y] '[y (x x y)] "Turing Bird")
+  ; Vireo aka Pairing p.103 V = [B C T]
+  (def-combinator '[V x y z] '[z x y] "Vireo")
+  ; Vireo Once Removed p.104 V* = [C* F*]
+  (def-combinator '[V* x y z w] '[x w y z] "Vireo once removed")
+  ; Vireo Twice Removed p.105 V** = [B V*]
+  (def-combinator '[V** x y z1 z2 z3] '[x y z3 z1 z2] "Vireo twice removed")
+  ; Warbler W p.99 W = [C (B M R)]
+  (def-combinator '[W x y] '[x y y] "Warbler")
+  ; Converse Warbler p.119 W' := [C W]
+  (def-combinator '[W' x y] '[y x x] "Converse Warbler")
+  ; Warbler Once Removed p.120 W* = [B W]
+  (def-combinator '[W* x y z] '[x y z z] "Warbler once removed")
+  ; Warbler Twice Removed  p.120 W** = [B (B W)]
+  (def-combinator '[W** x y z w] '[x y z w w] "Warbler twice removed")
+  ; Sage Bird Y := [S L L]
+  (def-combinator '[Y x] '[ax(Y x)] "Sage Bird")
+  )
 
 
 
