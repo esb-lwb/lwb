@@ -57,4 +57,30 @@
 (Not' True)
 (Not' False)
 
-  
+; (abstract '[x1 x2 x3 x4] '[x1 (x2 x3 x4) x3])
+
+(def IfThen '[S (S (K S) (S (K (S (K S))) (S (K (S (K (S (K S))))) (S (K S) (S (K K) (S (K S) K)))))) (K (K K))])
+
+(defn IfThen'
+  [term1 term2]
+  (to-boolean (weak-reduce (comb-concat IfThen term1 term2))))
+
+(IfThen' True True)
+(IfThen' True False)
+(IfThen' False True)
+(IfThen' False False)
+
+; (abstract '[x1 x2 x3 x4] '[x1 (x2 x3 x4) (x2 x4 x3)])
+
+(def Equiv '[S
+              (S (K S) (S (K (S (K S))) (S (K (S (K (S (K S))))) (S (K S) (S (K K) (S (K S) K))))))
+              (K (S (S (K S) (S (K K) S)) (K K)))])
+
+(defn Equiv'
+  [term1 term2]
+  (to-boolean (weak-reduce (comb-concat Equiv term1 term2))))
+
+(Equiv' True True)
+(Equiv' True False)
+(Equiv' False True)
+(Equiv' False False)
