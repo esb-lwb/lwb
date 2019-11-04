@@ -10,7 +10,7 @@
   (:require [clojure.edn :as edn]))
 
 (def ^:const
-  rev "2.1.1")
+  rev "2.1.2")
 
 (def ^:const
   rev-date "2019-11-04")
