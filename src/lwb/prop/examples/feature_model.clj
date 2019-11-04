@@ -108,11 +108,15 @@
 (defn some-ofs
   "Parts of the formula for a group of features, where at least one is mandatory"
   [ft some-of-expr]
-  ;(conj (opts ft some-of-expr) (concat (list 'or) (next some-of-expr))))
   (list 'equiv ft (concat (list 'or) (next some-of-expr))))
+
+(defn some-ofs'
+  [ft some-of-expr]
+  (list (some-ofs ft some-of-expr)))
 
 (comment
   (some-ofs 'safety '(some-of overloaded onemore x y z))
+  (some-ofs' 'safety '(some-of overloaded onemore x y z))
   )
 
 (defn one-ofs
@@ -133,7 +137,7 @@
               (let [func (case (first (first g))
                            opt opts
                            man mans
-                           some-of some-ofs
+                           some-of some-ofs'
                            one-of one-ofs
                            (constantly nil))]
                 (recur (next g) (concat result (func ft (first g)))))
@@ -182,26 +186,50 @@
   (sat elevator-phi)
   ; => 
   {rush-hour false,
-   sabbath false,
+   sabbath true,
    service false,
    floor-priority false,
-   permission true,
-   priorities true,
+   permission false,
+   priorities false,
    fifo false,
-   shortest-path true,
+   shortest-path false,
    undirected-call false,
-   security true,
+   security false,
    modes true,
    behavior true,
-   directed-call true,
+   directed-call false,
    floor-permission false,
    voice-output false,
    safety false,
-   call-buttons true,
+   call-buttons false,
    elevator true,
-   person-priority true,
-   permission-control true,
+   person-priority false,
+   permission-control false,
    overloaded false}
+  
+  (eval-phi elevator-phi
+            '{rush-hour false,
+             sabbath true,
+             service false,
+             floor-priority false,
+             permission false,
+             priorities false,
+             fifo false,
+             shortest-path false,
+             undirected-call false,
+             security false,
+             modes true,
+             behavior true,
+             directed-call false,
+             floor-permission false,
+             voice-output false,
+             safety false,
+             call-buttons false,
+             elevator true,
+             person-priority false,
+             permission-control false,
+             overloaded false})
+  ;=> true
   )
 
 ;; One more example: the Graph Library
@@ -223,21 +251,21 @@
   ;; Compare this with the formula in the book of Apel et al. p.34
   (sat gl-phi)
   ; => 
-  {directed false,
-   prim true,
+  {directed true,
+   prim false,
    kruskal false,
    cycle false,
-   algorithm true,
+   algorithm false,
    shortest-path false,
    edge-type true,
    transpose false,
-   undirected true,
+   undirected false,
    search true,
-   bfs true,
+   bfs false,
    graph-library true,
-   dfs false,
-   mst true,
-   weighted true}
+   dfs true,
+   mst false,
+   weighted false}
 
   (eval-phi gl-phi
             '{directed false,
