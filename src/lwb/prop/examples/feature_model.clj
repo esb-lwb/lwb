@@ -108,7 +108,8 @@
 (defn some-ofs
   "Parts of the formula for a group of features, where at least one is mandatory"
   [ft some-of-expr]
-  (conj (opts ft some-of-expr) (concat (list 'or) (next some-of-expr))))
+  ;(conj (opts ft some-of-expr) (concat (list 'or) (next some-of-expr))))
+  (list 'equiv ft (concat (list 'or) (next some-of-expr))))
 
 (comment
   (some-ofs 'safety '(some-of overloaded onemore x y z))
@@ -117,7 +118,7 @@
 (defn one-ofs
   "Parts of the formula for a group of features, where at exactly one is mandatory"
   [ft one-of-expr]
-  (concat (some-ofs ft one-of-expr) (max-kof 1 (next one-of-expr))))
+  (conj (max-kof 1 (next one-of-expr)) (some-ofs ft one-of-expr)))
 
 (comment
   (one-ofs 'safety '(one-of overloaded onemore x y z))
@@ -141,6 +142,7 @@
 
 (comment
   (fts '(ft renovation-factory (man source-lang impl-lang) (opt x y z)))
+  (fts '(ft size (one-of s5-8 s6-1 s6-5)))
   )
 
 (defn ctcs
@@ -271,5 +273,118 @@
               dfs false,
               mst true,
               weighted true})
+  ; => false
+  )
+
+;; Example iPhone 2019
+
+(def iphone2019
+  '(fm iphone
+       (ft iphone (man size camera memory color) (opt service))
+       (ft size (one-of s5-8 s6-1 s6-5))
+       (ft camera (one-of c3 c2))
+       (ft memory (one-of m64 m128 m256 m512))
+       (ft color (one-of cg1 cg2))
+       (ft cg1 (one-of red purple yellow green black white))
+       (ft cg2 (one-of spacegrey midnightgreen gold silver))
+       (ctc (impl (or s5-8 s6-5) c3))
+       (ctc (impl s6-1 c2))
+       (ctc (impl c3 cg2))
+       (ctc (impl c2 cg1))
+       (ctc (impl c3 (or m64 m256 m512)))
+       (ctc (impl c2 (or m64 m128 m256)))))
+
+(comment
+  (def iphone2019-phi (eval iphone2019))
+  iphone2019-phi
+  
+  (sat iphone2019-phi)
+  ; => 
+  {s6-1 false,
+   midnightgreen true,
+   s5-8 false,
+   purple false,
+   silver false,
+   black false,
+   m512 true,
+   service false,
+   color true,
+   m256 false,
+   spacegrey false,
+   c3 true,
+   white false,
+   iphone true,
+   yellow false,
+   green false,
+   memory true,
+   cg2 true,
+   m64 false,
+   m128 false,
+   c2 false,
+   cg1 false,
+   size true,
+   gold false,
+   red false,
+   s6-5 true,
+   camera true}
+
+  (eval-phi iphone2019-phi
+            '{iphone true 
+              size true
+              s5-8 true
+              s6-1 false
+              s6-5 false 
+              camera true 
+              c3 true 
+              c2 false 
+              memory true 
+              m64 false 
+              m128 false 
+              m256 true 
+              m512 false 
+              color true 
+              cg1 false 
+              red false 
+              purple false 
+              yellow false 
+              green false 
+              black false
+              white false 
+              cg2 true 
+              spacegrey true 
+              midnightgreen false 
+              gold false 
+              silver false
+              service false})
+  ; => true
+  
+  (eval-phi iphone2019-phi
+            '{iphone true
+              size true
+              s5-8 true
+              s6-1 false
+              s6-5 false
+              camera true
+              c3 true
+              c2 false
+              memory true
+              m64 false
+              m128 false
+              m256 true
+              m512 false
+              color true
+              cg1 true
+              red true  ; iPhone 11 Pro in red??
+              purple false
+              yellow false
+              green false
+              black false
+              white false
+              cg2 false
+              spacegrey false
+              midnightgreen false
+              gold false
+              silver false
+              service false})
   ; => false
   )
