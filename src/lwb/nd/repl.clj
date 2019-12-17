@@ -207,9 +207,9 @@
                      :all (constantly true)
                      :rules #(= :rule (:type (val %)))
                      :theorems #(= :theorem (:type (val %))))]
-     (for [roth (sort (filter filter-fn @roths))]
+     (dorun (for [roth (sort (filter filter-fn @roths))]
        (let [id (key roth)]
-         (show-roth id))))))
+         (show-roth id)))))))
 
 (defn show-rules
   "Print the rules of the current logic."
