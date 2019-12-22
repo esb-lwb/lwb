@@ -8,7 +8,13 @@
 ; the terms of this license.
 
 ; The definition of the rules for ltl is based on the PhD Thesis
-; "Natural Deduction Systems for Temporal Logics" by Davide Marchignoli
+; "Natural Deduction Systems for Temporal Logics" by Davide Marchignoli;
+; see also: Alexander Bolotv et al. "Automated Natural Deduction for
+; Propositional Linear-time Temporal Logic" in: Proceedings of the 14th
+; International Symposium on Temporal Representation and Reasoning, 2007.
+
+; The proof system is sound and complete with respect to the path semantics of 
+; linear temporal logic.
 
 ; AND
 {:id :and-i
