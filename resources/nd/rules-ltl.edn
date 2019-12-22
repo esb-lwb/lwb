@@ -94,10 +94,9 @@
 
 ; INDUCTION
 {:id :induction
- :given      [(<= i j) 
-              (at [i] phi) 
-              (infer [(<= i k) (succ k k') (at [k] phi)] (at [k'] phi))]
- :conclusion [(at [j] phi)]}
+ :given      [(at [i] phi) 
+              (infer [(<= i j) (succ j j') (at [j] phi)] (at [j'] phi))]
+ :conclusion [(at [i] (always phi))]}
 
 ; UNTIL
 {:id :until-i1

@@ -319,6 +319,7 @@
 ; -----------------------------------------------------------------------------------------
 ; not-always->finally-not  Kröger/Merz T2
 
+; geht so nicht??
 (proof '(at [i] (not (always A))) '(at [i] (finally (not A))))
 (step-b :raa 3)
 (swap '?1 'i)
@@ -327,6 +328,19 @@
 (step-f :not-e 1 4)
 (swap '?2 'i)
 
+(proof '(at [i] (not (always A))) '(at [i] (finally (not A))))
+(subclaim '(at [i] (always A)))
+(step-b :always-i 3)
+(swap '?1 'j)
+
+(step-f :<=serial)
+(swap '?1 'i)
+(swap '?2 'j)
+(step-b :finally-i 4 :? 2)
+(step-b :not-i 4)
+(subclaim '(at [i] (always A)))
+(step-b :always-i 5)
+(swap '?4 'k)
 ;(export "resources/nd/theorems-ltl.edn" :not-always->finally-not)
 ;(load-logic :ltl)
 
@@ -491,15 +505,13 @@
 (proof '(at [i] (and A (always (impl A (atnext A))))) '(at [i] (always A)))
 (step-f :and-e1 1)
 (step-f :and-e2 1)
-(step-b :always-i 5)
+(step-b :induction 5)
 (swap '?1 'j)
-(step-b :induction 6 4)
-(swap '?2 'k)
-(swap '?3 'k')
-(step-f :always-e 3 5)
-(step-f :impl-e 8 7)
-(step-f :atnext-e 9 11)
-(swap '?4 'k')
+(swap '?2 'j')
+(step-f :always-e 3 4)
+(step-f :impl-e 7 6)
+(step-f :atnext-e 8 10)
+(swap '?3 'j')
 
 ;(export "resources/nd/theorems-ltl.edn" :always-inductive)
 ;(load-logic :ltl)

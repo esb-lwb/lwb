@@ -26,7 +26,7 @@
 ;; Example:
 ;; In the book "Mastering Software Variability with FeatureIDE the authors (Jens Meinecke, Thomas Thüm,
 ;; Raimar Schröter, Fabian Bendhuhn, Thomas Leich, and Gunter Saake) have the example of a software
-;; controlling an elevator as running example. The feature model für this software product line is 
+;; controlling an elevator as running example. The feature model for this software product line is 
 ;; Fig. 5.7 on page 52 of the book.  
 
 ;; From a feature model is quite straight forward to build a propositional formula that represents
@@ -35,19 +35,19 @@
 ;; value is false.
 ;;
 ;; SAT solvers that solve the satisfiability problem of propositional logic can therefore be 
-;; used to check whether a configuration of features are valid, They can also determine all
+;; used to check whether a configuration of features is valid. They can also determine all
 ;; possible configurations of products from a given feature model. Tools like the FeatureIDE
-;; from the book above use SAT solver for analyzing and managing feature models. 
+;; from the book above use SAT solving for analyzing and managing feature models. 
 
 ;; Definition of the syntax for a feature model in lwb
 
 ;; A feature is denoted by a Clojure symbol, e.g. elevator
 ;;
-;; There are reserved keywords that era used in the head position of lists in the notation
+;; There are reserved keywords that are used in the head position of lists in the notation
 ;; of a feature model in lwb. They are:
 ;;
 ;; fm (feature model) 
-;; fm is followed by the name of the root feature as well as feature definitions ans cross tree
+;; fm is followed by the name of the root feature as well as feature definitions and cross tree
 ;; constraints
 ;;
 ;; ft (feature)

@@ -7,8 +7,8 @@
 ; the terms of this license.
 
 ; Remember: update rev and date in consts.clj too 
-(defproject lwb "2.1.2"
-  :date "2019-11-04"
+(defproject lwb "2.1.3"
+  :date "2019-12-22"
   :description "lwb Logic WorkBench"
   :url "http://esb-dev.github.io/lwb.html"
   :scm {:name "git" :url "https://github.com/esb-lwb/lwb"}
@@ -20,7 +20,7 @@
                  [org.clojure/core.logic "0.8.11"]
                  [net.mikera/core.matrix "0.62.0"]
                  [org.clojure/tools.macro "0.1.5"]
-                 [org.clojure/math.combinatorics "0.1.4"]
+                 [org.clojure/math.combinatorics "0.1.6"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [potemkin "0.4.5"]
                  [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]
