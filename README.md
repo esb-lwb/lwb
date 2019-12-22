@@ -12,6 +12,9 @@ lwb is a playground, it's work in progress.
 - 1.0.1 [2018-01-31] First published version on Clojars
 - 1.0.2 [2018-02-16] Improved use of macroexpand-1 
 - 1.0.4 [2018-06-14] Improved model found in sat for predicate logic
+- 2.0.0 [2019-05-03] Combinatory Logic added 
+- 2.1.2 [2019-11-04] Example Feature model
+- 2.1.3 [2019-12-22] Minor changes
 
 Latest version on Clojars [![Clojars Project](https://img.shields.io/clojars/v/lwb.svg)](https://clojars.org/lwb)
 
