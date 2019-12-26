@@ -477,25 +477,6 @@
         :args (s/& (s/cat :phi any? :model ::model) (fn [param] (wff? (:phi param) (sig-from-model (:model param)))))
         :ret boolean?)
 
-(def m
-  {:univ #{:0 :1 :2}
-   'op   [:func 2 (fn [x y] (+ x y))]
-   'inv  [:func 1 (fn [x] (- x))]
-   'unit [:func 0 :0]
-   'R    [:pred 2 (make-pred #{[:1 :1] [:0 :0]})]
-   'S    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
-   'P    [:pred 0 'true]})
-; just for the tests
-
-(s/valid? ::model m)
-(s/explain ::model m)
-
-(def phi1 '(exists [x] (R x x)))
-
-(pred2prop (:univ m) phi1)
-
-(eval-phi phi1 m)
-
 ;; ## Visualisation of a formula
 
 (defn texify

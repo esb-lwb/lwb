@@ -20,7 +20,7 @@ Latest version on Clojars [![Clojars Project](https://img.shields.io/clojars/v/l
 
 ### License
 
-Copyright (C) 2014 - 2018 by Burkhardt Renz, Technische Hochschule Mittelhessen (THM).
+Copyright (C) 2014 - 2020 by Burkhardt Renz, Technische Hochschule Mittelhessen (THM).
 Contributors see [documentation](https://github.com/esb-lwb/lwb/wiki).
 
 Distributed under the Eclipse Public License, the same as Clojure.

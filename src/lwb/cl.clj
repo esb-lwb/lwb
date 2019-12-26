@@ -14,9 +14,15 @@
             [lwb.nd.error :refer :all]
             [clojure.core.logic :refer :all]
             [clojure.spec.alpha :as s]
-            [clojure.walk :as walk])
+            [clojure.walk :as walk]
+            [clojure.java.browse :as browse])
   (:import (java.text Collator)
            (java.util Locale)))
+
+(defn man
+  "Manual"
+  []
+  (browse/browse-url "https://github.com/esb-lwb/lwb/wiki/cl"))
 
 ; -----------------------------------------------------------------------------
 ;; # Syntax 
