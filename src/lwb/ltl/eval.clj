@@ -26,7 +26,7 @@
 ;; 1. Construct a Büchi automaton corresponding to the given Kripke structure `ks`.
 ;; 2. Take the negation `(not phi)` of the formula and translate it to a Büchi automaton.
 ;; 3. Build the synchronized product of the two automaton. A successful run
-;;    in the product correspond to the initial runs of `ks`  satisfying `(not phi)`.
+;;    in the product corresponds to the initial runs of `ks`  satisfying `(not phi)`.
 ;;    Thus: if the product is empty, `phi` is true in `ks` otherwise the product
 ;;    automaton gives a counterexample.
 

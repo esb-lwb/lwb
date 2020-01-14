@@ -250,7 +250,7 @@
 ;; 9.2 Model Checking Using Automata on p. 123
 
 (defn- baguard
-  "Returns a guard for the transition to state `state` int the Büchi automaton
+  "Returns a guard for the transition to state `state` in the Büchi automaton
    constructed from Kripke structure `ks`.      
    Requires: `state` is a state of the Kripke structure"
   [ks state]
