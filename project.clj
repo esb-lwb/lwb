@@ -1,14 +1,14 @@
 ; lwb Logic WorkBench -- Project definition 
 
-; Copyright (c) 2014 - 2018 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2014 - 2020 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
 ; the terms of this license.
 
 ; Remember: update rev and date in consts.clj too 
-(defproject lwb "2.1.4"
-  :date "2019-12-26"
+(defproject lwb "2.1.5"
+  :date "2020-01-15"
   :description "lwb Logic WorkBench"
   :url "http://esb-dev.github.io/lwb.html"
   :scm {:name "git" :url "https://github.com/esb-lwb/lwb"}
