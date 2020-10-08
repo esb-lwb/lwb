@@ -134,7 +134,7 @@
   (let [fts' (fn [ft & ftgroups]
           (loop [g ftgroups result '()]
             (if g
-              (let [func (case (first (first g))
+              (let [func (case (ffirst g)
                            opt opts
                            man mans
                            some-of some-ofs'
