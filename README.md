@@ -15,6 +15,7 @@ lwb is a playground, it's work in progress.
 - 2.0.0 [2019-05-03] Combinatory Logic added 
 - 2.1.2 [2019-11-04] Example Feature model
 - 2.1.3 [2019-12-22] Minor changes
+- 2.1.5 [2020-01-15] Minor changes
 
 Latest version on Clojars [![Clojars Project](https://img.shields.io/clojars/v/lwb.svg)](https://clojars.org/lwb)
 
