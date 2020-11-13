@@ -2870,7 +2870,7 @@ net.brehaut.ClojureTools = (function (SH) {
   (:require [lwb.ltl :refer :all]
             [lwb.ltl.buechi :as ba]
             [clojure.spec.alpha :as s]
-            [clojure.set :as set]))</pre></td></tr><tr><td class="docs"><h1>Satisfiability in the linear temporal logic</h1>
+            [clojure.set :as set]))</pre></td></tr><tr><td class="docs"><h1>Satisfiability in linear temporal logic</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The basic steps are:</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ol>
 <li>Generate a Büchi automaton for the formula of LTL that has the property
@@ -2894,8 +2894,8 @@ construct a model, i.e. a Kripke structure for the formula.</li>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>The idea:        </p>
 </td><td class="codes"></td></tr><tr><td class="docs"><ol>
 <li>We determine a path from the init node of the automaton to a cycle that contains
-an acccpeting state</li>
-<li>The we use this path to construct a Kripke structure.</li>
+an accepting state</li>
+<li>Then we use this path to construct a Kripke structure.</li>
 </ol>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A Kripke structure is generated from a Büchi automaton as a model <br />
    for the formula the automaton accepts.</p>

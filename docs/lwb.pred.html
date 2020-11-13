@@ -3189,20 +3189,7 @@ evaluating.</p>
       (eval `(let ~assign-vec ~phi')))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(s/fdef eval-phi
         :args (s/&amp; (s/cat :phi any? :model ::model) (fn [param] (wff? (:phi param) (sig-from-model (:model param)))))
-        :ret boolean?)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def m
-  {:univ #{:0 :1 :2}
-   'op   [:func 2 (fn [x y] (+ x y))]
-   'inv  [:func 1 (fn [x] (- x))]
-   'unit [:func 0 :0]
-   'R    [:pred 2 (make-pred #{[:1 :1] [:0 :0]})]
-   'S    [:pred 3 (make-pred #{[:1 :1 :1] [:2 :2 :2]})]
-   'P    [:pred 0 'true]})</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(s/valid? ::model m)
-(s/explain ::model m)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def phi1 '(exists [x] (R x x)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(pred2prop (:univ m) phi1)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(eval-phi phi1 m)</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
+        :ret boolean?)</pre></td></tr><tr><td class="docs"><h2>Visualisation of a formula</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Generates TeX code for TikZ or a pdf file if filename given. <br />
    Requires: TeX installation, commands in <code>lwb.util.shell</code>.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn texify

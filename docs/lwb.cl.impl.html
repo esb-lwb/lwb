@@ -2964,13 +2964,14 @@ net.brehaut.ClojureTools = (function (SH) {
   [term]
   (set (map keyword (combs term))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn make-comb
-  [redex effect]
+  [redex effect nickname]
   (let [combs (combs redex)
         key (keyword (first combs))]
     (if-not key (throw (AssertionError. (str &quot;Redex '&quot; redex &quot;' has no combinator!&quot;)))
                 (hash-map key {:redex     redex
                                :effect    effect
                                :arity     (arity redex)
+                               :nickname  nickname
                                :logic-rel (binding [*ns* (find-ns 'lwb.cl.impl)]
                                             (eval (gen-cl-rel redex effect)))}))))</pre></td></tr><tr><td class="docs"><p>Get logic function from combinator store.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn get-rule-fn
@@ -3004,10 +3005,9 @@ net.brehaut.ClojureTools = (function (SH) {
       (= arity count) (if (= st comb) true false)           ; test this first!
       (not (seq? st)) false                                 ; don't test on list? since sterm may be a lazy seq!
       :else (recur (inc count) (first st)))))</pre></td></tr><tr><td class="docs"><p>an alternative check: (= comb (first (flatten sterm)))   ; could be even faster, but not so selective</p>
-</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Lookup for first combinator in term and try to reduce</p>
 </td><td class="codes"><pre class="brush: clojure">(defn apply**
   [sterm]
-  &quot;Lookup for first combinator in term and try to reduce&quot;
   (let [comb (-&gt;&gt; (flatten sterm) (filter #(s/valid? :lwb.cl.spec/combinator %)) (first))]
     (when-not (nil? comb)
       (let [comb-key (keyword comb)

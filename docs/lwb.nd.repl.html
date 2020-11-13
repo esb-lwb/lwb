@@ -3025,9 +3025,9 @@ generic solution possible.</p>
                      :all (constantly true)
                      :rules #(= :rule (:type (val %)))
                      :theorems #(= :theorem (:type (val %))))]
-     (for [roth (sort (filter filter-fn @roths))]
+     (dorun (for [roth (sort (filter filter-fn @roths))]
        (let [id (key roth)]
-         (show-roth id))))))</pre></td></tr><tr><td class="docs"><p>Print the rules of the current logic.</p>
+         (show-roth id)))))))</pre></td></tr><tr><td class="docs"><p>Print the rules of the current logic.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn show-rules
   []
   (show-roths :rules))</pre></td></tr><tr><td class="docs"><p>Print the theorems of the current logic.</p>

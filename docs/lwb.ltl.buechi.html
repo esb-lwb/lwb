@@ -3044,7 +3044,7 @@ representing a Büchi automaton into a Clojure data structure</p>
   (seq (ids-&gt;edge ba id id)))</pre></td></tr><tr><td class="docs"><h1>Constructing a Büchi automaton from a given Kripke structure</h1>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>see Edmund M. Clarke, Orna Grumberg and Doron A. Peled: Model Checking, 
 9.2 Model Checking Using Automata on p. 123</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a guard for the transition to state <code>state</code> int the Büchi automaton
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a guard for the transition to state <code>state</code> in the Büchi automaton
    constructed from Kripke structure <code>ks</code>. <br />
    Requires: <code>state</code> is a state of the Kripke structure</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- baguard

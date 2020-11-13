@@ -2872,6 +2872,10 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn print-combs-item
   [item length-id]
   (format (str &quot;%-&quot; length-id &quot;s := %s -&gt; %s&quot;) (name (key item)) (:redex (val item)) (:effect (val item))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn print-comb-nickname
+  [item]
+  (let [n (:nickname (val item))]
+    (if n (str &quot;  '&quot; n &quot;'&quot;) )))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn length-item
   [combs-value]
   (let [r-length
@@ -2883,9 +2887,9 @@ net.brehaut.ClojureTools = (function (SH) {
   [key combs-value]
   (let [item (find combs-value key)]
     (if item
-      (println (print-combs-item item (count (name key))))
+      (println (str (print-combs-item item (count (name key))) (print-comb-nickname item)))
       (println (str &quot;No combinator with key '&quot; key &quot;' defined.&quot;)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">  (defn print-combs
+</td><td class="codes"><pre class="brush: clojure">(defn print-combs
   [combs-value]
   (if (empty? combs-value)
     (println &quot;There are no combinators defined yet!&quot;)
@@ -2894,7 +2898,7 @@ net.brehaut.ClojureTools = (function (SH) {
           length (- (+ 2 length-id length-item) (count &quot;Defined combinators&quot;))]
       (println (str &quot;--- Defined combinators ---&quot; (str/join (repeat length &quot;-&quot;))))
       (doseq [item combs-value]
-        (println (print-combs-item item length-id)))
+        (println (format (str &quot;%-&quot; (+ 8 length-id length-item) &quot;s %s&quot;) (print-combs-item item length-id) (print-comb-nickname item))))
       (println (str &quot;---------------------------&quot; (str/join (repeat length &quot;-&quot;)))))))</pre></td></tr><tr><td class="docs"><p>Printing the current session </p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn print-session-line

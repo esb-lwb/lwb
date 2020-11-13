@@ -2880,7 +2880,7 @@ paths beginning at the initial state of the Kripke structure</p>
 <li>Construct a Büchi automaton corresponding to the given Kripke structure <code>ks</code>.</li>
 <li>Take the negation <code>(not phi)</code> of the formula and translate it to a Büchi automaton.</li>
 <li>Build the synchronized product of the two automaton. A successful run
-in the product correspond to the initial runs of <code>ks</code>  satisfying <code>(not phi)</code>.
+in the product corresponds to the initial runs of <code>ks</code>  satisfying <code>(not phi)</code>.
 Thus: if the product is empty, <code>phi</code> is true in <code>ks</code> otherwise the product
 automaton gives a counterexample.</li>
 </ol>
@@ -2913,7 +2913,7 @@ automaton gives a counterexample.</li>
                       :edges (vec (edges ba1 ba2)))
          paths (ba/paths bap)]
      (if (= mode :bool)
-       (if (empty? paths) true false)
+       (if (empty? (filter some? paths)) true false)
        (let [node-vec (into [:init-3961] (keys (:nodes ks))) ; same as in ba/ks-&gt;ba
              path (map first (first paths))]
          (mapv #(nth node-vec %) (rest path)))))))</pre></td></tr><tr><td class="docs"><p>Is the pre condition of <code>eval-phi</code> fulfilled? <br />
