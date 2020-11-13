@@ -221,3 +221,15 @@
 (comment
   (ks/texify (sat fair) "ks") ; see ufair
   )
+
+; Example in lecture notes
+(def lex '(until P (and Q R)))
+
+(ba/ba lex)
+;=> {:nodes [{:id 1, :accepting true} {:id 0, :init true}],
+;    :edges [{:from 1, :to 1, :guard #{}} {:from 0, :to 0, :guard #{P}} {:from 0, :to 1, :guard #{R Q}}]}
+
+(sat lex)
+;=> {:atoms #{R Q P}, :nodes {:s_1 #{R Q}}, :initial :s_1, :edges #{[:s_1 :s_1]}}
+
+

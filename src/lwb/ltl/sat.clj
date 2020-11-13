@@ -12,7 +12,7 @@
             [clojure.spec.alpha :as s]
             [clojure.set :as set]))
 
-;; # Satisfiability in the linear temporal logic
+;; # Satisfiability in linear temporal logic
 
 ;; The basic steps are:
 
@@ -43,8 +43,8 @@
 ;; The idea:        
 
 ;; 1. We determine a path from the init node of the automaton to a cycle that contains
-;;    an acccpeting state
-;; 2. The we use this path to construct a Kripke structure.
+;;    an accepting state
+;; 2. Then we use this path to construct a Kripke structure.
 
 (defn ba->ks
   "A Kripke structure is generated from a Büchi automaton as a model       

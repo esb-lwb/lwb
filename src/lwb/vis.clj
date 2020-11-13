@@ -24,7 +24,7 @@
 ;; linear temporal logic is transformed into code for tikz and the package
 ;; `tikz-tree`.
 
-;; With the help of `texi2pdf` a pdf file is generated.
+;; With the help of `tex2pdf` (see lwb.util.shell) a pdf file is generated.
 
 ;; A running TeX is a prerequisite.
 
@@ -144,7 +144,8 @@
    Makes a pdf file with the visualisation of the syntax tree of `phi`.        
    `filename` is the name of the file to be generated, must have no extension.       
    The function uses the commands defined in `lwb.util.shell` to generate
-   a tex file and open it."
+   a tex file and open it.
+   The function requires that TeX could be found on the path of a subshell."
   ([phi]
    (let [tikz-body (vis-tikz-body phi)]
      (str tikz-header "\n" tikz-body "\n" tikz-footer)))
@@ -153,4 +154,7 @@
      (spit (str filename ".tex") tex-code)
      (shell/tex2pdf (str filename ".tex"))
      (shell/open (str filename ".pdf")))))
+
+(comment
+  (texify '(and P Q) "example"))
 

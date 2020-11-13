@@ -61,7 +61,7 @@
          ba2 (ba/ba (list 'not phi))
          bap (hash-map :nodes (vec (nodes ba1 ba2)) 
                       :edges (vec (edges ba1 ba2)))
-         paths (ba/paths bap)
+         paths (ba/paths bap)]
      (if (= mode :bool)
        (if (empty? (filter some? paths)) true false)
        (let [node-vec (into [:init-3961] (keys (:nodes ks))) ; same as in ba/ks->ba

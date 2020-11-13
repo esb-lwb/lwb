@@ -188,8 +188,8 @@
 ;; an alternative check: (= comb (first (flatten sterm)))   ; could be even faster, but not so selective
 
 (defn apply**
-  [sterm]
   "Lookup for first combinator in term and try to reduce"
+  [sterm]
   (let [comb (->> (flatten sterm) (filter #(s/valid? :lwb.cl.spec/combinator %)) (first))]
     (when-not (nil? comb)
       (let [comb-key (keyword comb)
