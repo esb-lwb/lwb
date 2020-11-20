@@ -236,8 +236,6 @@
 (step-f :not-e 1 4)
 (swap '?4 'i')
 
-(texify)
-
 ;(export "resources/nd/theorems-ltl.edn" :not-atnext->atnext-not)
 ;(load-logic :ltl)
 
