@@ -11,8 +11,6 @@
 
 (load-logic :ltl)
 
-; interactive checking in the repl for nd
-
 ; -----------------------------------------------------------------------------------------
 ; Derived rules
 
@@ -593,11 +591,9 @@
 (swap '?2 'j')
 (step-b :finally-i 7)
 (swap '?3 'j)
-(step-f :succ)
-(swap '?4 'j)  ; okay since j' is after i'
-(swap '?5 'j' :checked)
+(step-b :atnext-i' 7)
+(swap '?4 'j' :checked)
 (step-f :succsucc<=/<= 2 6 4)
-(step-f :atnext-i 5 6)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-finally->finally-atnext)
 ;(load-logic :ltl)
