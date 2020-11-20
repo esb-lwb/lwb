@@ -9,7 +9,7 @@
 
 ; The definition of the rules for ltl is based on the PhD Thesis
 ; "Natural Deduction Systems for Temporal Logics" by Davide Marchignoli;
-; see also: Alexander Bolotv et al. "Automated Natural Deduction for
+; see also: Alexander Bolotov et al. "Automated Natural Deduction for
 ; Propositional Linear-time Temporal Logic" in: Proceedings of the 14th
 ; International Symposium on Temporal Representation and Reasoning, 2007.
 
@@ -72,12 +72,15 @@
 
 ; ATNEXT
 {:id :atnext-i
- :given      [(at [j] phi) (succ i j)]
+ :given      [(at [i'] phi) (succ i i')]
  :conclusion [(at [i] (atnext phi))]}
 {:id :atnext-e
  :given      [(at [i] (atnext phi)) 
               (infer [(succ i i') (at [i'] phi)] chi)]
  :conclusion [chi]}
+{:id :atnext-e'
+ :given      [(at [i] (atnext phi)) (succ i i')]
+ :conclusion [(at [i'] phi)]}
 
 ; ALWAYS
 {:id :always-i
