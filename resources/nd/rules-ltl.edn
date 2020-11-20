@@ -74,6 +74,9 @@
 {:id :atnext-i
  :given      [(at [i'] phi) (succ i i')]
  :conclusion [(at [i] (atnext phi))]}
+{:id :atnext-i'
+ :given      [(infer (succ i i') (at [i'] phi))]
+ :conclusion [(at [i] (atnext phi))]}
 {:id :atnext-e
  :given      [(at [i] (atnext phi)) 
               (infer [(succ i i') (at [i'] phi)] chi)]
