@@ -236,6 +236,8 @@
 (step-f :not-e 1 4)
 (swap '?4 'i')
 
+(texify)
+
 ;(export "resources/nd/theorems-ltl.edn" :not-atnext->atnext-not)
 ;(load-logic :ltl)
 
@@ -247,10 +249,9 @@
 (swap '?1 'i')
 (step-b :not-i 5)
 (swap '?2 'i')
-(step-f :atnext-e 4 6)
-(swap '?3 'i' :checked)
-(step-f :not-e 3 6)
-(swap '?4 'i')
+(step-f :atnext-e' 4 2)
+(step-f :not-e 3 5)
+(swap '?3 'i')
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-not->not-atnext)
 ;(load-logic :ltl)
@@ -259,11 +260,10 @@
 (proof '(at [i] (atnext (not A))) '(at [i] (not (atnext A))))
 (step-b :not-i 3)
 (swap '?1 'i')
-(step-f :atnext-e 1 4)
+(step-f :atnext-e 2 4)
 (swap '?2 'i')
-(step-f :atnext-e 2 6)
-(swap '?3 'i' :checked)
-(step-b :not-e 8 4)
+(step-f :atnext-e' 1 3)
+(step-b :not-e 7 5)
 
 ; Corollary
 (proof '(at [i] (atnext A)) '(at [i] (not (atnext (not A)))))
@@ -587,6 +587,20 @@
 (step-f :succsucc<=/<= 2 6 4)
 (step-f :finally-i 7 8)
 
+; or
+(proof '(at [i] (atnext (finally A))) '(at [i] (finally (atnext A))))
+(step-f :atnext-e 1 3)
+(swap '?1 'i')
+(step-f :finally-e 3 5)
+(swap '?2 'j')
+(step-b :finally-i 7)
+(swap '?3 'j)
+(step-f :succ)
+(swap '?4 'j)  ; okay since j' is after i'
+(swap '?5 'j' :checked)
+(step-f :succsucc<=/<= 2 6 4)
+(step-f :atnext-i 5 6)
+
 ;(export "resources/nd/theorems-ltl.edn" :atnext-finally->finally-atnext)
 ;(load-logic :ltl)
 
@@ -597,10 +611,9 @@
 (step-b :impl-i 3)
 (step-f :atnext-e 1 4)
 (swap '?1 'i')
-(step-f :atnext-e 2 6)
-(swap '?2 'i' :checked)
-(step-f :impl-e 4 6)
-(step-b :atnext-i 9 7)
+(step-f :atnext-e' 2 3)
+(step-f :impl-e 4 5)
+(step-b :atnext-i 8 6)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-impl-dist1)
 ;(load-logic :ltl)
@@ -616,8 +629,7 @@
 (step-b :impl-i 4)
 (step-f :atnext-i 3 2)
 (step-f :impl-e 1 4)
-(step-f :atnext-e 5 7)
-(swap '?3 'i' :checked)
+(step-f :atnext-e' 5 2)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-impl-dist2)
 ;(load-logic :ltl)
@@ -645,10 +657,9 @@
 (step-f :atnext-e 2 4)
 (swap '?1 'i')
 (step-f :and-e2 1)
-(step-f :atnext-e 5 7)
-(swap '?2 'i' :checked)
-(step-f :and-i 4 7)
-(step-b :atnext-i 10 8)
+(step-f :atnext-e' 5 3)
+(step-f :and-i 4 6)
+(step-b :atnext-i 9 7)
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-and-dist2)
 ;(load-logic :ltl)
@@ -666,14 +677,12 @@
 (step-f :and-e2 5)
 (step-f :not-atnext->atnext-not 6)
 (step-f :not-atnext->atnext-not 7)
-(step-f :atnext-e 8 11)
-(swap '?3 'i' :checked)
-(step-f :atnext-e 9 13)
-(swap '?4 'i' :checked)
-(step-f :and-i 11 13)
-(step-f :and-not->not-or 14)
-(step-f :not-e 15 3)
-(swap '?5 'i')
+(step-f :atnext-e' 8 2)
+(step-f :atnext-e' 9 2)
+(step-f :and-i 10 11)
+(step-f :and-not->not-or 12)
+(step-f :not-e 13 3)
+(swap '?3 'i')
 
 ;(export "resources/nd/theorems-ltl.edn" :atnext-or-dist1)
 ;(load-logic :ltl)
@@ -1132,7 +1141,7 @@
 ;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
-; until->finally  Ben-Ari Axiom 6
+; until->finally  Ben-Ari Axiom 7
 
 (proof '(at [i] (until A B)) '(at [i] (finally B)))
 (step-f :until-e 1 3)
@@ -1153,7 +1162,7 @@
 ;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
-; until-expansion1  Ben-Ari Axiom 7
+; until-expansion1  Ben-Ari Axiom 6
 
 (proof '(at [i] (or B (and A (atnext (until A B))))) '(at [i] (until A B)))
 (step-f :or-e 1 3)
@@ -1167,7 +1176,7 @@
 ;(load-logic :ltl)
 
 ; -----------------------------------------------------------------------------------------
-; until-expansion2  Ben-Ari Axiom 7
+; until-expansion2  Ben-Ari Axiom 6
 
 (proof '(at [i] (until A B)) '(at [i] (or B (and A (atnext (until A B))))))
 (step-f :until-e 1 3)
