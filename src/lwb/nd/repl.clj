@@ -232,7 +232,7 @@
   ([] (printer/texify @p))
   ([filename] (printer/texify @p filename)))
 
-;; ## Function that loads the current proof into the storage of rohts for the current session
+;; ## Function that loads the current proof into the storage of roths for the current session
 
 (defn load-theorem
   "Load proved theorem from the current proof into the theorem storage.      
