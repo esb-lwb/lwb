@@ -221,6 +221,16 @@
   []
   (show-roths :theorems))
 
+(defn show-proof
+  "Print proof of the given theorem
+   Resets the current proof!"
+  [id]
+  (if-let [proof (:proof (@roths id))]
+    (do
+      (reset! p proof)
+      (printer/pprint @p))
+    (println "[lwb] Info: No such theorem found for the current logic.")))
+
 ;; ## TeX-Code for typesetting the current proof
 
 (defn texify

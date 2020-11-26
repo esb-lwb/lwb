@@ -108,6 +108,7 @@
             {:type       :theorem
              :given      (:given theorem)
              :conclusion (:conclusion theorem)
+             :proof      (:proof theorem)
              :forward    (roth-structure-f (:given theorem) (:extra theorem) (:conclusion theorem))
              :backward   (roth-structure-b (:given theorem) (:extra theorem) (:conclusion theorem))
              :logic-rel  (eval (gen-roth-relation nil (:given theorem) nil (:conclusion theorem)))}))
