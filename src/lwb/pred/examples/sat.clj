@@ -9,6 +9,13 @@
 (ns lwb.pred.examples.sat
   (:require [lwb.pred.sat :refer :all]))
 
+;; Propositional formulae
+(def prop-sig {'P [:pred 0] 'Q [:pred 0]})
+
+(sat 'P prop-sig 3)
+(sat '(and P Q) prop-sig 2)
+(sat '(and P (not P)) prop-sig 2)
+
 ;; First definition of a group
 ;; Signature of a group in the spirit of the universal algebra
 (def grp-sig

@@ -85,8 +85,9 @@ lwb.pred.kic
   of the proposition is false, true if there is an element in the relation."
   [key factory bounds]
   (let [r  (Relation/unary (name key))
-        ts (.setOf factory (to-array [(first (.universe bounds))]))
-        _ (.bound bounds r ts)]
+        lower (.noneOf factory 1)
+        upper (.setOf factory (to-array [(first (.universe bounds))]))
+        _ (.bound bounds r lower upper)]
     [(symbol (name key)) r]))
 
 ;; ##Operators in kic
