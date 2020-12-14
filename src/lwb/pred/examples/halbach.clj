@@ -17,9 +17,12 @@
    'a    [:func 0 :florence]
    'b    [:func 0 :london]
    'Q    [:pred 1 (make-pred #{[:florence] [:stockholm] [:barcelona]})]
-   'R    [:pred 2 (make-pred #{[:florence :london] 
-                               [:barcelona :london]
-                               [:stockholm :london]})]
+   'R    [:pred 2 (make-pred #{[:florence :stockholm]
+                               [:florence :barcelona] 
+                               [:florence :london]
+                               [:stockholm :barcelona]
+                               [:stockholm :london]
+                               [:barcelona :london]})]
    })
 
 (def phi1 '(R a b))
