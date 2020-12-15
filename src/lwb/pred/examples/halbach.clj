@@ -12,6 +12,9 @@
 ;; Examples from Volker Halbach: The Logic Manual Chap 5
 
 ;; European cities
+; (Q x) = city x is on continent
+; (R x y) = city x is smalleer than city y
+
 (def cities
   {:univ #{:florence :stockholm :barcelona :london}
    'a    [:func 0 :florence]
