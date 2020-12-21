@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Natural deduction
 
-; Copyright (c) 2016 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2016 - 2020 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -324,19 +324,6 @@
 (step-f :not-e 1 4)
 (swap '?2 'i)
 
-(proof '(at [i] (not (always A))) '(at [i] (finally (not A))))
-(subclaim '(at [i] (always A)))
-(step-b :always-i 3)
-(swap '?1 'j)
-
-(step-f :<=serial)
-(swap '?1 'i)
-(swap '?2 'j)
-(step-b :finally-i 4 :? 2)
-(step-b :not-i 4)
-(subclaim '(at [i] (always A)))
-(step-b :always-i 5)
-(swap '?4 'k)
 ;(export "resources/nd/theorems-ltl.edn" :not-always->finally-not)
 ;(load-logic :ltl)
 
@@ -509,6 +496,31 @@
 (step-f :atnext-e 8 10)
 (swap '?3 'j')
 
+
+; TODO: check improved proof with atnext-e'
+
+(proof '(at [i] (and A (always (impl A (atnext A))))) '(at [i] (always A)))
+(step-f :and-e1 1)
+(step-f :and-e2 1)
+(step-b :induction 5)
+(swap '?1 'j)
+(swap '?2 'j')
+(step-f :always-e 3 4)
+(step-f :impl-e 7 6)
+(step-f :atnext-e' 8 5)
+
+; this is Axiom 4!!
+(proof '(at [i] (always (impl A (atnext A)))) '(at [i] (impl A (always A))))
+(step-b :impl-i 3)
+(step-f :always->current 1)
+(step-f :impl-e 3 2)
+(step-b :induction 6)
+(swap '?1 'j)
+(swap '?2 'j')
+(step-f :always-e 1 5)
+(step-f :impl-e 8 7)
+(step-f :atnext-e' 9 6)
+
 ;(export "resources/nd/theorems-ltl.edn" :always-inductive)
 ;(load-logic :ltl)
 
@@ -605,6 +617,18 @@
 (step-b :impl-i 3)
 (step-f :atnext-e 1 4)
 (swap '?1 'i')
+(step-f :atnext-e' 2 3)
+(step-f :impl-e 4 5)
+(step-b :atnext-i 8 6)
+
+; TODO: Check the difference between these two proofs, the second seems to be better
+
+(proof '(at [i] (atnext (impl A B))) '(at [i] (impl (atnext A) (atnext B))))
+(step-b :impl-i 3)
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'i')
+(step-f :atnext-e' 1 3)
 (step-f :atnext-e' 2 3)
 (step-f :impl-e 4 5)
 (step-b :atnext-i 8 6)
@@ -1131,6 +1155,16 @@
 (step-f :notnot-e 4)
 (step-b :atnext-i 7 :? 3)
 
+; improved
+(proof '(at [i] (not (atnext (not A)))) '(at [i] (atnext A)))
+(step-f :not-atnext->atnext-not 1)
+(step-f :succ)
+(swap '?1 'i)
+(swap '?2 'i')
+(step-f :atnext-e' 2 3)
+(step-f :notnot-e 4)
+(step-b :atnext-i 7 :? 3)
+
 ;(export "resources/nd/theorems-ltl.edn" :linearity2)
 ;(load-logic :ltl)
 
@@ -1148,6 +1182,25 @@
 (swap '?3 'j')
 (step-f :finally-e 10 12)
 (swap '?4 'k)
+(step-f :succ/<= 9)
+(step-f :<=trans 13 11)
+(step-f :finally-i 12 14)
+
+; impoved:
+
+(proof '(at [i] (until A B)) '(at [i] (finally B)))
+(step-f :until-e 1 3)
+(swap '?1 'j)
+(step-f :<=refl)
+(swap '?2 'j)
+(step-f :finally-i 3 4)
+(step-f :and-e2 7)
+(step-f :succ)
+(swap '?3 'j)
+(swap '?4 'j')
+(step-f :atnext-e' 8 9)
+(step-f :finally-e 10 12)
+(swap '?5 'k)
 (step-f :succ/<= 9)
 (step-f :<=trans 13 11)
 (step-f :finally-i 12 14)
@@ -1185,6 +1238,22 @@
 (step-f :and-i 8 12)
 (step-b :or-i2 15)
 
+; improved
+
+(proof '(at [i] (until A B)) '(at [i] (or B (and A (atnext (until A B))))))
+(step-f :until-e 1 3)
+(swap '?1 'j)
+(step-b :or-i1 5)
+(step-f :and-e2 6)
+(step-f :and-e1 6)
+(step-f :succ)
+(swap '?2 'j)
+(swap '?3 'j')
+(step-f :atnext-e' 7 9)
+(step-f :until-expansion1 10)
+(step-f :atnext-i 11 9)
+(step-f :and-i 8 12)
+(step-b :or-i2 15)
 ;(export "resources/nd/theorems-ltl.edn" :until-expansion2)
 ;(load-logic :ltl)
 
