@@ -1,6 +1,6 @@
 ; lwb Logic WorkBench -- Predicate logic
 
-; Copyright (c) 2015 Burkhardt Renz, THM. All rights reserved.
+; Copyright (c) 2015 -2021 Burkhardt Renz, THM. All rights reserved.
 ; The use and distribution terms for this software are covered by the
 ; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php).
 ; By using this software in any fashion, you are agreeing to be bound by
@@ -8,82 +8,81 @@
 
 (ns lwb.resolution
   (:require [clojure.math.combinatorics :as combo])
+  (:require [lwb.prop.nf :refer [cnf]])
+  (:require [lwb.prop.sat :refer [cnf->dimacs]])
   (:require [clojure.set :as set]))
 
-(defn clause
-  "Returns a clause of the distinct non-zero integers in coll,
-   nil if the clause is trivially true."
-  [coll]
-  (loop [in coll
-         result (transient #{})]
-    (if (empty? in)
-      (persistent! result)
-      (let [l (first in)
-            l' (- l)]
-        (when-not (= (result l') l')  ; contains? does not work with transient set, see CLJ-700
-          (recur (next in) (conj! result l)))))))
+; We need to remember which pairs of clauses have already been resolved
+(def resolved (atom (transient {})))
 
-; examples
-;(clause '(-1 2 -3 -6))
-;(clause (filter pos? (range 6)))
-;(clause [1 2 3 -1])
-;(clause [1 2])
-;(clause [1 -1])
-;(clause [1 -1 2 -2 3])
-;(clause (filter pos? (range 1000)))
+(defn- reset-resolved
+  []
+  (reset! resolved (transient{})))
 
-(defn cl-set
-  "Returns the set of the distinct elements in the collection of clauses"
-  [cl-coll]
-  (set cl-coll))
-; better using a transient -> persistent! pattern?
+(defn- is-resolved?
+  "Is the pair [cl1 cl2] already resolved?"
+  [[cl1 cl2]]
+  (get @resolved #{cl1 cl2}))
 
-; example
-;(cl-set [(clause [1 2]) (clause [-1 2]) (clause [1 -2]) (clause [-1 -2])])
+(defn- add-resolved 
+  "Add the pair [cl1 cl2] and its resolvent to resolved."
+  [[cl1 cl2] res]
+  (swap! resolved assoc! #{cl1 cl2} res))
 
-(defn resolvents
-  "Returns the set of the resolvents of the clauses,
-   ignoring tautologies, i.e. with tautlogy elimination."
-  ([c1 c2]
-   (cl-set (remove nil?
-                   (map #(clause (concat (disj c1 %) (disj c2 (- %))))
-                        (filter #(contains? c2 (- %)) c1)))))
-  ([c1 c2 & more]
-   (let [pairs (combo/combinations (cons c1 (cons c2 more)) 2)]
-     (reduce set/union (map #(resolvents (first %) (second %)) pairs)))))
+(defn tauto?
+  "Is the clause a tautology?"
+  [cl]
+  (if (seq (filter #(contains? cl (- %)) cl))
+    true
+    false))
 
-; examples
-;(resolvents (clause [1]) (clause [2 -1]))
-;(resolvents (clause [1 -2]) (clause [2 -1]))
-;(resolvents (clause [1]) (clause [-1]))
-;(resolvents (clause [1]) (clause [2]))
-;(resolvents (clause [1 2 3]) (clause [1 2 -3]))
-;(resolvents (clause [1 2 3]) (clause [1 2 -3 -4]))
-;(resolvents (clause [1 2 3 -4]) (clause [1 2 -3 -4]))
-;(resolvents (clause [1 2 3 4]) (clause [1 2 -3 -4]))
-;(resolvents (clause [1 2 3 4]) (clause [1 2 -3 -4]) (clause [-1 2]))
-
-;(resolvents #{1 2} #{-1 2} #{1 -2} #{-1 -2})
-;(resolvents #{1} #{-1 2} #{-2})
-;(resolvents #{-1 2} #{-3 4} #{1} #{3} #{-2 -4})
-;(resolvents #{1} #{-1 3} #{1 2} #{-3})
-;(resolvents #{1 2} #{-1 3} #{-1 -3} #{-1 -2})
-
-
-(defn resolution
-  "Return :unsat if the given set of clauses is unsatisfiable,
-   :sat otherwise"
+(defn- resolve-pair
+  "Returns the resolvent of two clauses,
+   checks resolved if that's necessary;
+   throws an exception if the resolvent is the contradiction #{}."
+  [cl1 cl2]
+  (if (is-resolved? [cl1 cl2])
+    nil
+    (if-let [literal (first (filter #(contains? cl2 (- %)) cl1))]
+      (let [res (set/union (disj cl1 literal) (disj cl2 (- literal)))]
+        (cond
+          (= res #{}) (throw (ex-info "Contradiction found" {:from :lwb}))
+          (tauto? res) nil
+          :else (do
+                  (add-resolved [cl1 cl2] res)
+                  res))))))
+  
+(defn- resolution
+  "Return true if the given set of clauses is satisfiable."
   [cl-set]
-  (let [res (apply resolvents cl-set) ext-cl-set (set/union cl-set res)]
-    (cond
-      (contains? res #{}) :unsat
-      (= cl-set ext-cl-set) :sat
-      :else (recur ext-cl-set))))
+  (try
+    (if-let [pairs (seq (filter #(not= (first %) (second %)) (combo/combinations cl-set 2)))]
+      (let [resolvents (doall (remove nil? (map #(apply resolve-pair %) pairs)))
+            ext-cl-set (set/union cl-set resolvents)]
+        (if (= cl-set ext-cl-set)
+          true
+          (resolution ext-cl-set))
+        )
+      true)
+    (catch Exception e
+      (if (= (ex-data e) {:from :lwb})
+        false
+        (throw e)))))
 
-; examples
-;(resolution #{#{1} #{-1}})
-;(resolution #{#{1} #{2}})
-;(resolution #{(clause [1 2]) (clause [-1 2]) (clause [1 -2]) (clause [-1 -2])})
-;(resolution #{(clause [1]) (clause [-1 2]) (clause [-2])})
-;(resolution #{(clause [-1 2]) (clause [-3 4]) (clause [1]) (clause [3]) (clause [-4 -2])})
+(defn sat?
+  "returns if the given propositional formula is satisfiable."
+  [phi]
+  (reset-resolved)
+  (if (true? (cnf phi))
+    true                                                    ; trivially true
+    (let [phi-d (cnf->dimacs phi)]
+      (resolution (:cl-set phi-d)))))
 
+(comment
+  (sat? '(and (or P)))
+  (sat? '(and (or P (not P))))
+  (sat? '(and (or P) (or (not P))))
+  (sat? '(impl (impl F (impl G H)) (impl (impl F G) (impl F H))))
+  (sat? '(and (or A B (not C)) (or (not A)) (or A B C) (or A (not B))))
+  (sat? '(and (or A1 (not A2) A3) (or A2 (not A3) A4)))
+  )
