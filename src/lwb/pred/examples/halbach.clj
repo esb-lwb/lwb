@@ -13,7 +13,7 @@
 
 ;; European cities
 ; (Q x) = city x is on continent
-; (R x y) = city x is smalleer than city y
+; (R x y) = city x is smaller than city y
 
 (def cities
   {:univ #{:florence :stockholm :barcelona :london}
