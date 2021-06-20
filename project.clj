@@ -7,23 +7,23 @@
 ; the terms of this license.
 
 ; Remember: update rev and date in consts.clj too 
-(defproject lwb "2.2.1"
-  :date "2020-11-26"
+(defproject lwb "2.2.3"
+  :date "2021-06-20"
   :description "lwb Logic WorkBench"
   :url "http://esb-dev.github.io/lwb.html"
   :scm {:name "git" :url "https://github.com/esb-lwb/lwb"}
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.10.1"]
-                 [org.clojure/spec.alpha "0.2.187"]
-                 [org.clojure/core.specs.alpha "0.2.44"]
+  :dependencies [[org.clojure/clojure "1.10.3"]
+                 [org.clojure/spec.alpha "0.2.194"]
+                 [org.clojure/core.specs.alpha "0.2.56"]
                  [org.clojure/core.logic "1.0.0"]
                  [net.mikera/core.matrix "0.62.0"]
                  [org.clojure/tools.macro "0.1.5"]
                  [org.clojure/math.combinatorics "0.1.6"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [potemkin "0.4.5"]
-                 [org.ow2.sat4j/org.ow2.sat4j.core "2.3.5"]
+                 [org.ow2.sat4j/org.ow2.sat4j.core "2.3.6"]
                  [de.fosd.typechef/javabdd_repackaged_2.10 "0.1"]
                  [ltl2buchi/ltl2buchi "1.0.0"]
                  [kodkod/kodkod "2.1.0"]]

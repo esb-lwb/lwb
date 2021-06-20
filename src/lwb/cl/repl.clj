@@ -114,6 +114,16 @@
   ([comb pos]
    (appx comb pos one-step-red :red)))
 
+(defn red*
+  "Reduction in current session with the given combinator in several sequential steps."
+  [comb positions]
+  (for [x positions]
+    (red comb x)))
+
+; Example for red*
+; (session '[S (S x y z)(S x y z) z])
+; (red* S [2 1 1])
+
 (defn exp
   "Expansion in current session with the given combinator at position `i` (default 1)."
   ([comb]
