@@ -7,8 +7,8 @@
 ; the terms of this license.
 
 ; Remember: update rev and date in consts.clj too 
-(defproject lwb "2.2.3"
-  :date "2021-06-20"
+(defproject lwb "2.2.4"
+  :date "2021-06-29"
   :description "lwb Logic WorkBench"
   :url "http://esb-dev.github.io/lwb.html"
   :scm {:name "git" :url "https://github.com/esb-lwb/lwb"}
