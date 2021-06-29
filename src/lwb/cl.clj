@@ -416,7 +416,7 @@
   ; Warbler Twice Removed  p.120 W** = [B (B W)]
   (def-combinator '[W** x y z w] '[x y z w w] "Warbler twice removed")
   ; Sage Bird Y := [S L L]
-  (def-combinator '[Y x] '[ax(Y x)] "Sage Bird")
+  (def-combinator '[Y x] '[x (Y x)] "Sage Bird")
   )
 
 
